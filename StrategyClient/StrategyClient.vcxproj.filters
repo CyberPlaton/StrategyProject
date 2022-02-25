@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\Main.cpp" />
+    <ClCompile Include="src\SplashScreenScene.cpp">
+      <Filter>Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="src\InitializationScene.cpp">
+      <Filter>Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GamerService.cpp">
+      <Filter>GamerServices</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PlatformClient.cpp">
+      <Filter>GamerServices</Filter>
+    </ClCompile>
+    <ClCompile Include="src\StateMachine.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Localization.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Main.h" />
+    <ClInclude Include="src\SplashScreenScene.h">
+      <Filter>Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\InitializationScene.h">
+      <Filter>Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EventSystem.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EventListener.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EventEmitter.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GamerService.h">
+      <Filter>GamerServices</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PlatformClient.h">
+      <Filter>GamerServices</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Event.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\StateMachine.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Localization.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Scenes">
+      <UniqueIdentifier>{ee02cbda-efe3-4ba6-9c77-097a45e51a46}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components">
+      <UniqueIdentifier>{a41ae596-2e0e-45b1-992e-5bf1770aa85c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GamerServices">
+      <UniqueIdentifier>{6e01cdb3-4281-4df1-be75-b26582a0d7e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Util">
+      <UniqueIdentifier>{3076a31f-79f2-44d8-9910-a2d7d146c7ea}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
