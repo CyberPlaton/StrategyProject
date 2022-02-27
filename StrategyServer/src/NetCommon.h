@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include <algorithm>
+#include <chrono>
 
 #define FORCE_INLINE __forceinline 
 
@@ -12,30 +13,22 @@ namespace net
 	// Forward Decl.
 	// Description of the clients user specific data.
 	struct UserDesc;
-	// Description of clients in game car.
-	struct PlayerCarDesc;
 	// Description of the clients application.
 	struct ClientAppDesc;
 	// Description of Game Server the client is playing on.
 	struct GameServerDesc;
 
-
 	enum Message
 	{
 
-		NET_MSG_REQUEST_USER_VALIDATION_DATA, // MS requests validation data from client.
+		NET_MSG_REQUEST_USER_VALIDATION_DATA, // MSs validation data request for client.
 		NET_MSG_USER_VALIDATION_DATA,		  // Clients validation data.
 
 
 		// Management related messages
-		//NET_MSG_INVALID_USER_DATA,			// The case where stored user data is invalid or user is baned etc
-		NET_MSG_USER_DATA,					// msg with Data of a User in it
+		NET_MSG_USER_DATA,					// Data of a User in it
 		NET_MSG_REQUEST_USER_DATA_UPDATE,	// Client requests to update data for a given user
 
-		NET_MSG_SERVER_SHUTDOWN,			// A GameServer has been shutdown
-		NET_MSG_SERVER_STARTUP,				// A GameServer has startup
-
-		NET_MSG_USER_DISCONNECT,			// A Client is disconnecting
 		NET_MSG_CLIENT_ACCEPT,				// A Clients connection attempt was accepted
 		NET_MSG_CLIENT_REJECT,				// A Clients connection attempt was rejected
 
@@ -43,10 +36,6 @@ namespace net
 
 
 		// Game related messages
-		NET_MSG_UPDATE_CAR,						   // Client sends his updated car data, or
-												   // Gameserver sends updated data back to client
-		NET_MSG_PHYSICS_AI_SERVER_STEP_SIMULATION, // Ping the PhysicsServer and AIServer to make a simulation step in box2d
-
 	};
 
 
@@ -121,6 +110,9 @@ namespace net
 
 		bool operator==(const UserDesc& other);
 		
+		// Network Info.
+		size_t m_netId = 0;
+
 		// Platform Info.
 		EUserPlatform m_userPlatform = EUserPlatform::UP_INVALID;
 
@@ -136,22 +128,6 @@ namespace net
 		std::vector< EAchievement > m_achievementsVec;
 		std::vector< EServiceItem > m_serviceItemsVec;
 	};
-	struct PlayerCarDesc
-	{
-		size_t m_carId; // The id of the car in the current game.
-
-		float m_xPos;	// Where the car currently is.
-		float m_yPos;
-		
-		// Car components data and stats.
-		float m_torque;		  // How much the car should turn left or right. {-1.0f - 1.0f}
-		float m_brakingPower; // How fast the car is stopping on braking. {0.0f - x}
-		float m_topSpeed;	  // The max available speed for a car. {0.0f - x}
-		float m_acceleration; // Current acceleration of the car. {0.0f - 1.0f}
-		float m_hullMass;	  // The mass of the car object. {0.0f - x}
-		float m_nitroAmount;  // How much nitro the car has. {0.0f - x}
-		float m_turnSpeed;	  // How fast the car can turn. {0.0f - x}
-	};
 	struct ClientAppDesc
 	{
 		size_t m_majorVersion = 0;
@@ -162,6 +138,54 @@ namespace net
 	{
 		size_t id;
 	};
+
+
+	enum ENetGameobject
+	{
+		NET_GO_MAPTILE,		// General Maptiles.
+		NET_GO_MAPOBJECT,	// Forests, Mountains ...
+		NET_GO_BUILDING,	// Townhalls, Castles, Buildings ...
+		NET_GO_UNIT			// All units ...
+	};
+	struct NetGameobject
+	{
+		std::string m_name;
+		size_t m_netId = 0;
+		size_t m_playerId = 0;
+		ENetGameobject m_objectType;
+
+
+		// Unit stats.
+		std::string m_unitName;
+		size_t m_unitHealth = 0;
+		size_t m_unitArmor = 0;
+		size_t m_unitAttack = 0;
+		size_t m_unitDefense = 0;
+
+
+		// Building stats.
+		std::string m_buildingName;
+		size_t m_buildingHealth = 0;
+
+
+		// Maptile stats.
+		std::string m_MaptileType;
+		std::string m_MaptileBiome;
+
+		// Mapobject stats.
+		std::string m_mapObjectType;
+		std::string m_mapObjectBiome;
+	};
+
+
+
+
+
+	FORCE_INLINE static size_t CreateNetworkUUID()
+	{
+		return (size_t)std::chrono::high_resolution_clock::now().time_since_epoch().count();
+	}
+
 
 	FORCE_INLINE static const char* GetAchievementText(EAchievement achiev)
 	{
@@ -319,6 +343,7 @@ FORCE_INLINE void EncryptMessage(net::UserDesc& desc)
 
 	EncryptData<size_t>(desc.m_currency, key);
 	EncryptData<size_t>(desc.m_uuid, key);
+	EncryptData<size_t>(desc.m_netId, key);
 
 	EncryptData<size_t>(desc.m_steamId, key);
 	EncryptData<size_t>(desc.m_nintendoId, key);
@@ -338,20 +363,13 @@ FORCE_INLINE void DecryptMessage(net::UserDesc& desc)
 
 	DecryptData<size_t>(desc.m_currency, key);
 	DecryptData<size_t>(desc.m_uuid, key);
+	DecryptData<size_t>(desc.m_netId, key);
 
 	DecryptData<size_t>(desc.m_steamId, key);
 	DecryptData<size_t>(desc.m_nintendoId, key);
 
 	DecryptText(desc.m_steamName, key);
 	DecryptText(desc.m_nintendoName, key);
-}
-FORCE_INLINE void EncryptMessage(net::PlayerCarDesc& desc)
-{
-	// TODO
-}
-FORCE_INLINE void DecryptMessage(net::PlayerCarDesc& desc)
-{
-	// TODO
 }
 FORCE_INLINE void EncryptMessage(net::ClientAppDesc& desc)
 {

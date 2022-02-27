@@ -802,12 +802,6 @@ namespace olc
 		{
 		public:
 			// Create a server, ready to listen on specified port
-			/*
-			server_interface(uint16_t port)
-				: m_asioAcceptor(m_asioContext, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port))
-			{
-			}
-			*/
 			server_interface(uint16_t port)
 				: m_asioAcceptor(m_asioContext, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port))
 			{
@@ -999,6 +993,11 @@ namespace olc
 
 					nMessageCount++;
 				}
+			}
+
+			size_t GetLastConnectedClientId()
+			{
+				return m_deqConnections.back()->GetID();
 			}
 
 		protected:

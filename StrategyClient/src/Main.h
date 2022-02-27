@@ -25,7 +25,7 @@ static size_t g_iEntityID = 0;
 #include "PlatformClient.h"
 
 #define MASTER_SERVER_PORT 60777
-#define MASTER_SERVER_IP "100.81.181.154"
+#define MASTER_SERVER_IP "100.81.173.84"
 #define CLIENT_MAJOR_VERSION 0
 #define CLIENT_MINOR_VERSION 1
 #define CLIENT_REVIEW_VERSION 0
@@ -41,6 +41,7 @@ bool TEST_EmitEvent()
 // GAME SCENES
 #include "InitializationScene.h"
 #include "SplashScreenScene.h"
+
 
 
 class App : public olc::net::client_interface< net::Message >,	// Networking Client.
@@ -84,8 +85,7 @@ private:
 
 	// Networking and Multiplayer related Classes.
 	net::UserDesc* m_localUserDesc = nullptr;
-	net::PlayerCarDesc* m_localCarDesc = nullptr;
-
+	
 
 	StateMachine* m_stateMachine = nullptr;
 

@@ -1,5 +1,6 @@
 #include "GameServer.h"
 
+/*
 GameServer& GameServer::CreateGameServerCluster(size_t id, size_t port, double update_freq)
 {
 	// Create and start the server.
@@ -55,22 +56,6 @@ void GameServer::ServerImpl::OnMessage(std::shared_ptr<olc::net::connection< net
 
 	switch (msg.header.id)
 	{
-	case net::NET_MSG_UPDATE_CAR:
-	{
-		// Received Car updates from PhysicsServer.
-		// Redirect back to MasterServer.
-		net::PlayerCarDesc car;
-		msg >> car;
-
-		net_msg msmsg;
-		msmsg.header.id = net::NET_MSG_UPDATE_CAR;
-
-		msmsg << car;
-
-		m_gameServer->m_clientImpl->Send(msmsg);
-	}
-	break;
-
 
 
 	default:
@@ -84,17 +69,6 @@ void GameServer::ClientImpl::Update()
 		m_gameServer->m_shouldExit = true;
 		return;
 	}
-
-	// Trigger Physics and AI servers to do an update.
-	if (m_gameServer->m_timer.MillisecondsElapsed() > m_gameServer->m_updateFrequency)
-	{
-		net_msg psmsg;
-		psmsg.header.id = net::NET_MSG_PHYSICS_AI_SERVER_STEP_SIMULATION;
-
-		m_gameServer->m_serverImpl->MessageAllClients(psmsg);
-	}
-
-
 
 
 	if (!Incoming().empty())
@@ -144,3 +118,4 @@ void GameServer::ClientImpl::Update()
 		}
 	}
 }
+*/

@@ -120,6 +120,7 @@ void App::Initialize()
 		App::Exit();
 		return;
 	}
+	printf("Localization initialized\n");
 
 	// Initialize the Platform Client.
 	if (!InitializePlatformClient())
@@ -127,6 +128,7 @@ void App::Initialize()
 		App::Exit();
 		return;
 	}
+	printf("Platform Client initialized\n");
 
 	// Initialize the GamerService.
 	if (!InitializeGamerService())
@@ -134,12 +136,14 @@ void App::Initialize()
 		App::Exit();
 		return;
 	}
+	printf("GamerService initialized\n");
 
 	if (!InitializeMasterConnection())
 	{
 		App::Exit();
 		return;
 	}
+	printf("MasterServer initialized\n");
 
 	// Everything went OK. Startup the engine!
 	base::Initialize();
@@ -582,7 +586,8 @@ void InitializationScene::SceneImpl::Update()
 				DecryptMessage(desc);
 
 				// Store user data in the client for usage.
-				m_application->m_localUserDesc = &desc;
+				// Take ownership over the Object.
+				m_application->m_localUserDesc = new net::UserDesc(desc);
 
 				m_initializationComplete = true;
 			}
@@ -614,6 +619,20 @@ void SplashSceenScene::SceneImpl::Update()
 
 	static bool show_demo;
 	ImGui::ShowDemoWindow(&show_demo);
+
+
+	net::NetGameobject netentity;
+	netentity.m_name = "TestEntity";
+	netentity.m_netId = net::CreateNetworkUUID();
+	netentity.m_playerId = m_application->m_localUserDesc->m_netId;
+	netentity.m_objectType = net::ENetGameobject::NET_GO_UNIT;
+
+
+	olc::net::message < net::Message > msg;
+	msg << netentity;
+
+
+	m_application->Send(msg);
 }
 void SplashSceenScene::SceneImpl::Begin()
 {
@@ -633,23 +652,55 @@ void SplashSceenScene::SceneImpl::Begin()
 
 
 	// Create Entity for Text.
-	auto text_entity = new cherrysoda::Entity();
-	text_entity->AddTag(++g_iEntityID);
+	auto text1 = new cherrysoda::Entity();
+	auto text2 = new cherrysoda::Entity();
+	auto text3 = new cherrysoda::Entity();
+	auto text4 = new cherrysoda::Entity();
+	text1->AddTag(++g_iEntityID);
+	text2->AddTag(++g_iEntityID);
+	text3->AddTag(++g_iEntityID);
+	text4->AddTag(++g_iEntityID);
 
 
 	// Create Text.
-	cherrysoda::String s = Localization::GetLocalizedString("Main Menu");
+	Localization::SetLanguage("English");
+	cherrysoda::String s = Localization::GetLocalizedString("Main Menu");			  // Eng.
 	Localization::SetLanguage("Russian");
-	s += ",\n" + Localization::GetLocalizedString("Options");
-	s += ",\n" + Localization::GetLocalizedString("Single Player");
-	auto text = new cherrysoda::PixelText(m_application->m_font, s.c_str(), cherrysoda::Color::Red);
-	text->Position(cherrysoda::Math::Vec2(0.0f, 30.0f));
-	text->Size(32.0f);
+	cherrysoda::String ss = Localization::GetLocalizedString("Options");			  // Ru.
+	cherrysoda::String sss = Localization::GetLocalizedString("Single Player");		  // Ru.
+	Localization::SetLanguage("German");
+	cherrysoda::String ssss = Localization::GetLocalizedString("Main Menu");		  // Germ.
 
-	text_entity->Add(text);
+	auto t = new cherrysoda::PixelText(m_application->m_font, s.c_str(), cherrysoda::Color::Red);
+	t->Position(cherrysoda::Math::Vec2(-100.0f, -100.0f));
+	t->Size(32.0f);
+
+	auto tt = new cherrysoda::PixelText(m_application->m_font, ss.c_str(), cherrysoda::Color::Yellow);
+	tt->Position(cherrysoda::Math::Vec2(10.0f, 1.0f));
+	tt->Size(32.0f);
+
+	auto ttt = new cherrysoda::PixelText(m_application->m_font, sss.c_str(), cherrysoda::Color::Blue);
+	ttt->Position(cherrysoda::Math::Vec2(250.0f, 35.0f));
+	ttt->Size(32.0f);
+
+	auto tttt = new cherrysoda::PixelText(m_application->m_font, ssss.c_str(), cherrysoda::Color::Green);
+	tttt->Position(cherrysoda::Math::Vec2(0.0f, 300.0f));
+	tttt->Size(32.0f);
+
+
+
+	text1->Add(t);
+	text2->Add(tt);
+	text3->Add(ttt);
+	text4->Add(tttt);
+
 
 	// Add Text to Scene.
-	Add(text_entity);
+	Add(text1);
+	Add(text2);
+	Add(text3);
+	Add(text4);
+
 
 	m_initializationComplete = true;
 }

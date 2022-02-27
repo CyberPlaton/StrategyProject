@@ -11,7 +11,7 @@
 #define MASTER_SERVER_MAJOR_VERSION 0
 #define MASTER_SERVER_MINOR_VERSION 1
 #define MASTER_SERVER_REVIEW_VERSION 0
-#define MASTER_SERVER_PORT 55777
+
 
 class MasterServer : public olc::net::server_interface<net::Message>
 {
@@ -39,8 +39,11 @@ private:
 
 	bool m_shouldExit = false;
 
+
+	std::map< size_t, size_t > m_clientIdMap;
+
 	std::vector< net::UserDesc* > m_userVec;			// Holding client information.
-	std::vector< net::PlayerCarDesc* > m_playerCarVec;	// Holding game car related information.
+	//std::vector< net::PlayerCarDesc* > m_playerCarVec;	// Holding game car related information.
 
 private:
 };

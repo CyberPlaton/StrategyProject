@@ -43,6 +43,7 @@ void MasterServer::OnMessage(std::shared_ptr<olc::net::connection<net::Message>>
 
 	switch (msg.header.id)
 	{
+	/*
 	case Message::NET_MSG_SERVER_SHUTDOWN:
 	{
 		// The GameServer informs us that he shut down.
@@ -57,7 +58,7 @@ void MasterServer::OnMessage(std::shared_ptr<olc::net::connection<net::Message>>
 		// ...
 	}
 	break;
-
+	*/
 	// Validation of Client.
 	case Message::NET_MSG_USER_VALIDATION_DATA:
 	{
@@ -91,6 +92,9 @@ void MasterServer::OnMessage(std::shared_ptr<olc::net::connection<net::Message>>
 			}
 		}
 
+		// Assign the Network id.
+		user_desc.m_netId = GetLastConnectedClientId();
+
 		EncryptMessage(user_desc);
 
 		olc::net::message< net::Message > message;
@@ -99,6 +103,8 @@ void MasterServer::OnMessage(std::shared_ptr<olc::net::connection<net::Message>>
 
 
 		MessageClient(client, message);
+
+
 	}
 	break;
 
@@ -135,7 +141,7 @@ void MasterServer::OnMessage(std::shared_ptr<olc::net::connection<net::Message>>
 
 
 	default:
-		printf("[MasterServer::OnMessage] Unrecognized Client Message: MsgId=\"%d\", ClientId=\"%d\"!", (int)msg.header.id, client->GetID());
+		printf("[MasterServer::OnMessage] Unrecognized Client Message: MsgId=\"%d\", ClientId=\"%d\"! \n", (int)msg.header.id, client->GetID());
 		return;
 	}
 }

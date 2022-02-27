@@ -59,6 +59,7 @@ void Localization::SetLanguage(const cherrysoda::String& name)
 bool Localization::Initialize()
 {
 	Localization::get();
+	Localization::SetLanguage("English");
 	return true;
 }
 cherrysoda::String Localization::_getLocString(loc_strings::ELocalizedString s, size_t lang)
