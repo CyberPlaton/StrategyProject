@@ -4,7 +4,9 @@
 #include <string>
 #include <unordered_map>
 #include <algorithm>
-#include <chrono>
+
+
+#include "Random.h"
 
 #define FORCE_INLINE __forceinline 
 
@@ -36,6 +38,7 @@ namespace net
 
 
 		// Game related messages
+		NET_MSG_GAMEOBJECT,
 	};
 
 
@@ -181,9 +184,10 @@ namespace net
 
 
 
-	FORCE_INLINE static size_t CreateNetworkUUID()
+	FORCE_INLINE static uint32_t CreateNetworkUUID()
 	{
-		return (size_t)std::chrono::high_resolution_clock::now().time_since_epoch().count();
+		Random rand;
+		return rand.Int();
 	}
 
 

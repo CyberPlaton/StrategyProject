@@ -139,6 +139,47 @@ void MasterServer::OnMessage(std::shared_ptr<olc::net::connection<net::Message>>
 
 
 
+	case net::Message::NET_MSG_GAMEOBJECT:
+	{
+		printf("[MasterServer::OnMessage] Received Gameobject\n");
+
+		// Get Gameobject.
+		net::NetGameobject entity;
+		msg >> entity;
+
+		printf("\tName: %s \n", entity.m_name.c_str());
+		printf("\tUnitName: %s \n", entity.m_unitName.c_str());
+		printf("\tNetId: %zu \n", entity.m_netId);
+		printf("\tType: %d \n", entity.m_objectType);
+
+		// Chek whether his ID is unique...
+		if (std::find(g_netIdVec.begin(), g_netIdVec.end(), entity.m_netId)
+			!= g_netIdVec.end())
+		{
+			printf("\tCollision: %zu \n\n\n\n\n", ++g_NetIdCollisionCount);
+		}
+		else
+		{
+			g_netIdVec.push_back(entity.m_netId);
+		}
+		printf("\tCollision Count: %zu \n", g_NetIdCollisionCount);
+		printf("\tIDs Generated: %zu \n", ++g_NetIdGeneratedCount);
+
+		// Peform some kind of an update...
+		entity.m_unitArmor += 25;
+		entity.m_unitAttack += 5;
+		entity.m_unitDefense += 20;
+		entity.m_unitHealth += 1;
+
+		// Send Updated Gameobject back..
+		olc::net::message< net::Message > out;
+		out.header.id = net::Message::NET_MSG_GAMEOBJECT;
+		out << entity;
+
+		MessageClient(client, out);
+	}
+	break;
+
 
 	default:
 		printf("[MasterServer::OnMessage] Unrecognized Client Message: MsgId=\"%d\", ClientId=\"%d\"! \n", (int)msg.header.id, client->GetID());

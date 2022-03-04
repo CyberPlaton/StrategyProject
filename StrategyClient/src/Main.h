@@ -19,13 +19,15 @@
 static size_t g_iEntityID = 0;
 
 // NETWORKING
+#include "Random.h"
 #include "NetCommon.h"
 #include <olcPGEX_Network.h>
 #include "GamerService.h"
 #include "PlatformClient.h"
 
+
 #define MASTER_SERVER_PORT 60777
-#define MASTER_SERVER_IP "100.81.173.84"
+#define MASTER_SERVER_IP "100.81.190.242"
 #define CLIENT_MAJOR_VERSION 0
 #define CLIENT_MINOR_VERSION 1
 #define CLIENT_REVIEW_VERSION 0

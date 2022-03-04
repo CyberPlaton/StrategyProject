@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <vector>
 
 #include <olcPGEX_Network.h>
 
@@ -11,6 +12,10 @@
 #define MASTER_SERVER_MAJOR_VERSION 0
 #define MASTER_SERVER_MINOR_VERSION 1
 #define MASTER_SERVER_REVIEW_VERSION 0
+
+static std::vector< size_t > g_netIdVec;
+static size_t g_NetIdCollisionCount = 0;
+static size_t g_NetIdGeneratedCount = 0;
 
 
 class MasterServer : public olc::net::server_interface<net::Message>

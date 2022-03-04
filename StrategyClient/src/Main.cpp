@@ -623,12 +623,14 @@ void SplashSceenScene::SceneImpl::Update()
 
 	net::NetGameobject netentity;
 	netentity.m_name = "TestEntity";
+	netentity.m_unitName = "Chinnperator";
 	netentity.m_netId = net::CreateNetworkUUID();
 	netentity.m_playerId = m_application->m_localUserDesc->m_netId;
 	netentity.m_objectType = net::ENetGameobject::NET_GO_UNIT;
 
 
 	olc::net::message < net::Message > msg;
+	msg.header.id = net::Message::NET_MSG_GAMEOBJECT;
 	msg << netentity;
 
 
