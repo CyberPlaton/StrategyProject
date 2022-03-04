@@ -40,8 +40,6 @@ class StateMachine
 public:
 	StateMachine(App* app) : m_currentState(nullptr), m_previousState(nullptr), m_application(app){}
 	
-
-	void Update();
 	void Transit(const cherrysoda::String& name);
 	void AddState(State* state) { m_states.try_emplace(state->GetStateName(), state); }
 	void SetInitialState(State* state) { m_currentState = state; }

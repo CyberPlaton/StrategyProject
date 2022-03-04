@@ -4,7 +4,7 @@
 App::App() : base(), 
 m_DefaultTexture(nullptr), m_Image(nullptr)
 {
-	SetTitle("CherrySoda Project");
+	SetTitle(CLIENT_TITLE_STRING);
 	SetClearColor(cherrysoda::Color::Gray);
 }
 
@@ -12,19 +12,12 @@ m_DefaultTexture(nullptr), m_Image(nullptr)
 void App::Update()
 {
 	using namespace std;
-
 	
 	// ENGINE UPDATE
 	base::Update();
-
-
+	
 	// STEAM UPDATE
 	SteamAPI_RunCallbacks();
-
-
-	// STATEMACHINE UPDATE
-	// The Statemachine updates the Current Scene.
-	m_stateMachine->Update();
 
 	
 	/*

@@ -31,6 +31,11 @@ static size_t g_iEntityID = 0;
 #define CLIENT_MAJOR_VERSION 0
 #define CLIENT_MINOR_VERSION 1
 #define CLIENT_REVIEW_VERSION 0
+#ifdef _DEBUG
+#define CLIENT_TITLE_STRING "Strategy Prototype"
+#else
+#define CLIENT_TITLE_STRING "Strategy"
+#endif
 
 
 
@@ -83,7 +88,6 @@ private:
 
 	// Font
 	cherrysoda::PixelFont* m_font = nullptr;
-
 
 	// Networking and Multiplayer related Classes.
 	net::UserDesc* m_localUserDesc = nullptr;
