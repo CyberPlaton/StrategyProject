@@ -88,6 +88,8 @@ private:
 	// Networking and Multiplayer related Classes.
 	net::UserDesc* m_localUserDesc = nullptr;
 	
+	net::NetGameobject* m_NetGameobject = nullptr;
+
 
 	StateMachine* m_stateMachine = nullptr;
 

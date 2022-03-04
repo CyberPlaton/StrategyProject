@@ -620,25 +620,50 @@ void SplashSceenScene::SceneImpl::Update()
 	static bool show_demo;
 	ImGui::ShowDemoWindow(&show_demo);
 
-
-	net::NetGameobject netentity;
-	netentity.m_name = "TestEntity";
-	netentity.m_unitName = "Chinnperator";
-	netentity.m_netId = net::CreateNetworkUUID();
-	netentity.m_playerId = m_application->m_localUserDesc->m_netId;
-	netentity.m_objectType = net::ENetGameobject::NET_GO_UNIT;
-
+	int armor, defense, attack, health;
+	armor = m_application->m_NetGameobject->m_unitArmor;
+	defense = m_application->m_NetGameobject->m_unitDefense;
+	attack = m_application->m_NetGameobject->m_unitAttack;
+	health = m_application->m_NetGameobject->m_unitHealth;
+	ImGui::Begin("NetGameobject Data");
+	ImGui::SliderInt("Armor", &armor, 1, 1000);
+	ImGui::SliderInt("Defense", &defense, 1, 1000);
+	ImGui::SliderInt("Attack", &attack, 1, 1000);
+	ImGui::SliderInt("Health", &health, 1, 1000);
+	ImGui::End();
+	m_application->m_NetGameobject->m_unitArmor = armor;
+	m_application->m_NetGameobject->m_unitAttack = attack;
+	m_application->m_NetGameobject->m_unitDefense = defense;
+	m_application->m_NetGameobject->m_unitHealth = health;
 
 	olc::net::message < net::Message > msg;
 	msg.header.id = net::Message::NET_MSG_GAMEOBJECT;
-	msg << netentity;
+	msg << *m_application->m_NetGameobject;
 
 
 	m_application->Send(msg);
+
+
+	ImGui::Begin("Test");
+	ImGui::Text("Hello World");
+	ImGui::End();
 }
 void SplashSceenScene::SceneImpl::Begin()
 {
 	printf("[SplashSceenScene] Begin\n");
+
+	// Create a NetGameobjct
+	m_application->m_NetGameobject = new net::NetGameobject();
+	m_application->m_NetGameobject->m_name = "TestEntity";
+	m_application->m_NetGameobject->m_unitName = "Chinnperator";
+	m_application->m_NetGameobject->m_netId = net::CreateNetworkUUID();
+	m_application->m_NetGameobject->m_playerId = m_application->m_localUserDesc->m_netId;
+	m_application->m_NetGameobject->m_objectType = net::ENetGameobject::NET_GO_UNIT;
+	m_application->m_NetGameobject->m_unitArmor = 200;
+	m_application->m_NetGameobject->m_unitAttack = 20;
+	m_application->m_NetGameobject->m_unitDefense = 50;
+	m_application->m_NetGameobject->m_unitHealth = 50;
+
 
 	// Initialize rendering.
 	cherrysoda::Graphics::SetPointTextureSampling();

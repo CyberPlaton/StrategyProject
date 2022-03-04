@@ -151,32 +151,10 @@ void MasterServer::OnMessage(std::shared_ptr<olc::net::connection<net::Message>>
 		printf("\tUnitName: %s \n", entity.m_unitName.c_str());
 		printf("\tNetId: %zu \n", entity.m_netId);
 		printf("\tType: %d \n", entity.m_objectType);
-
-		// Chek whether his ID is unique...
-		if (std::find(g_netIdVec.begin(), g_netIdVec.end(), entity.m_netId)
-			!= g_netIdVec.end())
-		{
-			printf("\tCollision: %zu \n\n\n\n\n", ++g_NetIdCollisionCount);
-		}
-		else
-		{
-			g_netIdVec.push_back(entity.m_netId);
-		}
-		printf("\tCollision Count: %zu \n", g_NetIdCollisionCount);
-		printf("\tIDs Generated: %zu \n", ++g_NetIdGeneratedCount);
-
-		// Peform some kind of an update...
-		entity.m_unitArmor += 25;
-		entity.m_unitAttack += 5;
-		entity.m_unitDefense += 20;
-		entity.m_unitHealth += 1;
-
-		// Send Updated Gameobject back..
-		olc::net::message< net::Message > out;
-		out.header.id = net::Message::NET_MSG_GAMEOBJECT;
-		out << entity;
-
-		MessageClient(client, out);
+		printf("\tArmor: %zu \n", entity.m_unitArmor);
+		printf("\tAttack: %zu \n", entity.m_unitAttack);
+		printf("\tDefense: %zu \n", entity.m_unitDefense);
+		printf("\tHealth: %zu \n", entity.m_unitHealth);
 	}
 	break;
 
