@@ -4,7 +4,7 @@
 App::App() : base(), 
 m_DefaultTexture(nullptr), m_Image(nullptr)
 {
-	SetTitle(CLIENT_TITLE_STRING);
+	SetTitle(TITLE(CLIENT_TITLE_STRING, CLIENT_MAJOR_VERSION, CLIENT_MINOR_VERSION, CLIENT_REVIEW_VERSION));
 	SetClearColor(cherrysoda::Color::Gray);
 }
 

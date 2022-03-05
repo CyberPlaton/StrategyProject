@@ -31,10 +31,32 @@ static size_t g_iEntityID = 0;
 #define CLIENT_MAJOR_VERSION 0
 #define CLIENT_MINOR_VERSION 1
 #define CLIENT_REVIEW_VERSION 0
-#ifdef _DEBUG
-#define CLIENT_TITLE_STRING "Strategy Prototype"
-#else
-#define CLIENT_TITLE_STRING "Strategy"
+
+// Create application Title Version string.
+#define STRING(text) #text
+#define CLIENT_TITLE_STRING Strategy v
+#ifdef DEBUG
+#define TITLE(title, major, minor, review) \
+STRING(title) \
+STRING(major) \
+"." STRING(minor) \
+"." STRING(review) \
+"_" STRING(DEBUG)
+#endif
+#ifdef RELEASE
+#define TITLE(title, major, minor, review) \
+STRING(title) \
+STRING(major) \
+"." STRING(minor) \
+"." STRING(review) \
+"_" STRING(RELEASE)
+#endif
+#ifdef DISTR
+#define TITLE(title, major, minor, review) \
+STRING(title) \
+STRING(major) \
+"." STRING(minor) \
+"." STRING(review)
 #endif
 
 

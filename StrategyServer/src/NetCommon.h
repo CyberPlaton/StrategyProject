@@ -157,6 +157,11 @@ namespace net
 		size_t m_playerId = 0;
 		ENetGameobject m_objectType;
 
+		// General stats.
+		float m_positionX = 0;
+		float m_positionY = 0;
+		size_t m_tilePositionX = 0;
+		size_t m_tilePositionY = 0;
 
 		// Unit stats.
 		std::string m_unitName;
@@ -165,11 +170,9 @@ namespace net
 		size_t m_unitAttack = 0;
 		size_t m_unitDefense = 0;
 
-
 		// Building stats.
 		std::string m_buildingName;
 		size_t m_buildingHealth = 0;
-
 
 		// Maptile stats.
 		std::string m_MaptileType;
