@@ -625,76 +625,10 @@ void SplashSceenScene::SceneImpl::Update()
 
 	static bool show_demo;
 	ImGui::ShowDemoWindow(&show_demo);
-
-
-
-	// TESTING CODE:
-	// SEND A GAMEOBJECTS DATA TO SERVER AND OBSERVER ANY
-	// DYNAMIC CHANGE IN CLIENT IN THE SERVER.
-	int armor, defense, attack, health;
-	armor = m_application->m_NetGameobject->m_unitArmor;
-	defense = m_application->m_NetGameobject->m_unitDefense;
-	attack = m_application->m_NetGameobject->m_unitAttack;
-	health = m_application->m_NetGameobject->m_unitHealth;
-	ImGui::Begin("NetGameobject Data");
-	ImGui::SliderInt("Armor", &armor, 1, 1000);
-	ImGui::SliderInt("Defense", &defense, 1, 1000);
-	ImGui::SliderInt("Attack", &attack, 1, 1000);
-	ImGui::SliderInt("Health", &health, 1, 1000);
-	ImGui::End();
-	m_application->m_NetGameobject->m_unitArmor = armor;
-	m_application->m_NetGameobject->m_unitAttack = attack;
-	m_application->m_NetGameobject->m_unitDefense = defense;
-	m_application->m_NetGameobject->m_unitHealth = health;
-
-	olc::net::message < net::Message > msg;
-	msg.header.id = net::Message::NET_MSG_GAMEOBJECT_UPDATE;
-	msg << *m_application->m_NetGameobject;
-
-
-	m_application->Send(msg);
-
-
-	ImGui::Begin("Test");
-	ImGui::Text("Hello World");
-	ImGui::End();
-
-	std::vector< net::NetGameobject > mapdata;
-	mapdata.resize(5);
-	for (int i = 0; i < 5; i++)
-	{
-		mapdata[i].m_MaptileType = "Ground";
-		mapdata[i].m_MaptileBiome = "Temperate";
-		mapdata[i].m_netId = net::CreateNetworkUUID();
-		mapdata[i].m_tilePositionX = i;
-		mapdata[i].m_tilePositionY = 1;
-		mapdata[i].m_positionX = i;
-		mapdata[i].m_positionY = 2;
-	}
-
-	olc::net::message < net::Message > mapmsg;
-	mapmsg.header.id = net::Message::NET_MSG_MAPDATA;
-	mapmsg << mapdata;
-	m_application->Send(mapmsg);
-
-
-	// TESTING END
 }
 void SplashSceenScene::SceneImpl::Begin()
 {
 	printf("[SplashSceenScene] Begin\n");
-
-	// Create a NetGameobjct
-	m_application->m_NetGameobject = new net::NetGameobject();
-	m_application->m_NetGameobject->m_name = "TestEntity";
-	m_application->m_NetGameobject->m_unitName = "Chinnperator";
-	m_application->m_NetGameobject->m_netId = net::CreateNetworkUUID();
-	m_application->m_NetGameobject->m_playerId = m_application->m_localUserDesc->m_netId;
-	m_application->m_NetGameobject->m_objectType = net::ENetGameobject::NET_GO_UNIT;
-	m_application->m_NetGameobject->m_unitArmor = 200;
-	m_application->m_NetGameobject->m_unitAttack = 20;
-	m_application->m_NetGameobject->m_unitDefense = 50;
-	m_application->m_NetGameobject->m_unitHealth = 50;
 
 
 	// Initialize rendering.

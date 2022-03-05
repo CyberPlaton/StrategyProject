@@ -89,6 +89,8 @@ public:
 
 	typedef cherrysoda::Engine base;
 
+
+
 	// ENGINE OVERRIDES
 	App();
 	void Update() override;
@@ -115,10 +117,9 @@ private:
 	// Font
 	cherrysoda::PixelFont* m_font = nullptr;
 
+
 	// Networking and Multiplayer related Classes.
 	net::UserDesc* m_localUserDesc = nullptr;
-	
-	net::NetGameobject* m_NetGameobject = nullptr;
 
 
 	StateMachine* m_stateMachine = nullptr;

@@ -150,6 +150,7 @@
     <ClInclude Include="src\PlatformClient.h" />
     <ClInclude Include="src\SplashScreenScene.h" />
     <ClInclude Include="src\StateMachine.h" />
+    <ClInclude Include="src\Unit.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\EventSystem.cpp" />

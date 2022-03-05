@@ -59,6 +59,9 @@
     <ClInclude Include="src\Observer.h">
       <Filter>Components\NetObserver</Filter>
     </ClInclude>
+    <ClInclude Include="src\Unit.h">
+      <Filter>Components\Game</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Scenes">
@@ -78,6 +81,9 @@
     </Filter>
     <Filter Include="Components\NetObserver">
       <UniqueIdentifier>{4cc4899e-894f-487c-9b43-087d8a8a828a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Game">
+      <UniqueIdentifier>{cd276cc7-d536-4cec-a3e0-e73665ac72b4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
