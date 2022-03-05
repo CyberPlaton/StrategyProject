@@ -52,8 +52,13 @@
 	Author
 	~~~~~~
 	David Barr, aka javidx9, �OneLoneCoder 2019, 2020, 2021
-
 */
+
+/*
+* Modified by Bogdan Strohonov
+* 05.03.2022: Add: friend message<T>& operator << (message<T>& msg, const std::vector< DataType >& datavector)
+*/
+
 
 #pragma once 
 
@@ -146,6 +151,7 @@ namespace olc
 				// Return the target message so it can be "chained"
 				return msg;
 			}
+			
 
 			// Pulls any POD-like data form the message buffer
 			template<typename DataType>
@@ -168,7 +174,8 @@ namespace olc
 
 				// Return the target message so it can be "chained"
 				return msg;
-			}			
+			}
+
 		};
 
 
@@ -834,6 +841,19 @@ namespace olc
 			{
 				// May as well try and tidy up
 				Stop();
+			}
+
+			size_t GetPort()
+			{
+				return m_asioAcceptor.local_endpoint().port();
+			}
+			std::string GetIPv4Address()
+			{
+				return m_asioAcceptor.local_endpoint().address().to_string();
+			}
+			size_t GetLastConnectedClientId()
+			{
+				return m_deqConnections.back()->GetID();
 			}
 
 			// Starts the server!

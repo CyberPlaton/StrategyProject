@@ -139,7 +139,7 @@ void MasterServer::OnMessage(std::shared_ptr<olc::net::connection<net::Message>>
 
 
 
-	case net::Message::NET_MSG_GAMEOBJECT:
+	case net::Message::NET_MSG_GAMEOBJECT_UPDATE:
 	{
 		printf("[MasterServer::OnMessage] Received Gameobject\n");
 
@@ -158,6 +158,13 @@ void MasterServer::OnMessage(std::shared_ptr<olc::net::connection<net::Message>>
 	}
 	break;
 
+	case net::Message::NET_MSG_MAPDATA:
+	{
+		std::vector< net::NetGameobject > mapdata;
+		msg >> mapdata;
+		printf("NetId: %zu\n", mapdata[0].m_netId);
+	}
+	break;
 
 	default:
 		printf("[MasterServer::OnMessage] Unrecognized Client Message: MsgId=\"%d\", ClientId=\"%d\"! \n", (int)msg.header.id, client->GetID());

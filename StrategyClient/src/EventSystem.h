@@ -5,14 +5,85 @@
 #include <CherrySoda/Util/Pool.h>
 #include <CherrySoda/Util/String.h>
 #include <CherrySoda/Util/STL.h>
-
-#include "Event.h"
-#include "EventListener.h"
-#include "EventEmitter.h"
-
+#include <CherrySoda/Scene.h>
+#include <CherrySoda/Entity.h>
 
 namespace cherrysoda
 {
+	class EventSystem;
+	class EventListener;
+	class EventEmitter;
+
+	struct Event
+	{
+		Event(const String& event_type) : m_eventType(event_type) {}
+		virtual ~Event(){}
+
+		String m_eventType;
+	};
+
+
+	class EventEmitter : public Component
+	{
+	public:
+		CHERRYSODA_DECLARE_COMPONENT(EventEmitter, Component);
+
+
+		EventEmitter(size_t event_system_id) : base(true, false)
+		{
+			m_eventSystemID = event_system_id;
+		}
+
+		void Update() override final
+		{
+			if (EmitCheck()) EmitEvent();
+		}
+
+	protected:
+		CHERRYSODA_FRIEND_CLASS_POOL;
+
+		size_t m_eventSystemID;
+
+	protected:
+
+		virtual void EmitEvent() {}
+		virtual bool EmitCheck() { return false; }
+		EventSystem* GetEventSystem();
+	};
+
+
+
+	class EventListener : public Component
+	{
+	public:
+		CHERRYSODA_DECLARE_COMPONENT(EventListener, Component);
+
+		EventListener(const String& event_listen_type) : EventListener(true, false)
+		{
+			m_listenEventType = event_listen_type;
+
+		}
+
+		// The Delegate function that is called
+		// on the occurance of the to listen event type.
+		virtual void operator()(Event* evnt)
+		{
+		}
+
+		const String& EventType() { return m_listenEventType; }
+
+	private:
+		CHERRYSODA_FRIEND_CLASS_POOL;
+
+		EventListener(bool active, bool visible) : base(active, visible) {};
+
+
+	private:
+		String m_listenEventType;
+	};
+
+
+
 	class EventSystem : public Component
 	{
 	public:

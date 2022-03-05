@@ -52,8 +52,13 @@
 	Author
 	~~~~~~
 	David Barr, aka javidx9, �OneLoneCoder 2019, 2020, 2021
-
 */
+
+/*
+* Modified by Bogdan Strohonov
+* 05.03.2022: Add: friend message<T>& operator << (message<T>& msg, const std::vector< DataType >& datavector)
+*/
+
 
 #pragma once 
 
@@ -139,14 +144,14 @@ namespace olc
 
 				// Physically copy the data into the newly allocated vector space
 				std::memcpy(msg.body.data() + i, &data, sizeof(DataType));
-				
+
 				// Recalculate the message size
 				msg.header.size = msg.size();
-
 
 				// Return the target message so it can be "chained"
 				return msg;
 			}
+			
 
 			// Pulls any POD-like data form the message buffer
 			template<typename DataType>
@@ -169,7 +174,7 @@ namespace olc
 
 				// Return the target message so it can be "chained"
 				return msg;
-			}			
+			}
 		};
 
 
@@ -719,9 +724,32 @@ namespace olc
 			{
 				try
 				{
+					std::string port_str = std::to_string(port);
+
+					asio::io_service ios;
+					asio::ip::tcp::resolver::query query(host, port_str,
+														asio::ip::tcp::resolver::query::numeric_service);
+
+					asio::ip::tcp::resolver resolver(ios);
+					asio::error_code error_code;
+
+					asio::ip::tcp::resolver::results_type endpoints = resolver.resolve(query, error_code);
+
+					if (error_code.value() != 0)
+					{
+						printf("[client_interface::Connect] Failed to resolve DNS name! \"%s:%s\". Error Code: \"%s\"\n", host.c_str(), port_str.c_str(), error_code.message());
+						return false;
+					}
+					else
+					{
+						printf("[client_interface::Connect] Successfully resolved DNS name! \"%s:%s\"\n", host.c_str(), port_str.c_str());
+					}
+
+
 					// Resolve hostname/ip-address into tangiable physical address
-					asio::ip::tcp::resolver resolver(m_context);
-					asio::ip::tcp::resolver::results_type endpoints = resolver.resolve(host, std::to_string(port));
+					//asio::ip::tcp::resolver resolver(m_context);
+					//asio::ip::tcp::resolver::results_type endpoints = resolver.resolve(host, std::to_string(port));
+
 
 					// Create connection
 					m_connection = std::make_unique<connection<T>>(connection<T>::owner::client, m_context, asio::ip::tcp::socket(m_context), m_qMessagesIn);
@@ -805,6 +833,7 @@ namespace olc
 			server_interface(uint16_t port)
 				: m_asioAcceptor(m_asioContext, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port))
 			{
+
 			}
 
 			virtual ~server_interface()
@@ -821,6 +850,10 @@ namespace olc
 			std::string GetIPv4Address()
 			{
 				return m_asioAcceptor.local_endpoint().address().to_string();
+			}
+			size_t GetLastConnectedClientId()
+			{
+				return m_deqConnections.back()->GetID();
 			}
 
 			// Starts the server!
@@ -993,11 +1026,6 @@ namespace olc
 
 					nMessageCount++;
 				}
-			}
-
-			size_t GetLastConnectedClientId()
-			{
-				return m_deqConnections.back()->GetID();
 			}
 
 		protected:

@@ -20,6 +20,12 @@
     <ClCompile Include="src\Localization.cpp">
       <Filter>Util</Filter>
     </ClCompile>
+    <ClCompile Include="src\NetCommMngr.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="src\EventSystem.cpp">
+      <Filter>Components\Event</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Main.h" />
@@ -29,29 +35,29 @@
     <ClInclude Include="src\InitializationScene.h">
       <Filter>Scenes</Filter>
     </ClInclude>
-    <ClInclude Include="src\EventSystem.h">
-      <Filter>Components</Filter>
-    </ClInclude>
-    <ClInclude Include="src\EventListener.h">
-      <Filter>Components</Filter>
-    </ClInclude>
-    <ClInclude Include="src\EventEmitter.h">
-      <Filter>Components</Filter>
-    </ClInclude>
     <ClInclude Include="src\GamerService.h">
       <Filter>GamerServices</Filter>
     </ClInclude>
     <ClInclude Include="src\PlatformClient.h">
       <Filter>GamerServices</Filter>
     </ClInclude>
-    <ClInclude Include="src\Event.h">
-      <Filter>Components</Filter>
-    </ClInclude>
     <ClInclude Include="src\StateMachine.h">
       <Filter>Util</Filter>
     </ClInclude>
     <ClInclude Include="src\Localization.h">
       <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\NetCommMngr.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EventSystem.h">
+      <Filter>Components\Event</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Observable.h">
+      <Filter>Components\NetObserver</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Observer.h">
+      <Filter>Components\NetObserver</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -66,6 +72,12 @@
     </Filter>
     <Filter Include="Util">
       <UniqueIdentifier>{3076a31f-79f2-44d8-9910-a2d7d146c7ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Event">
+      <UniqueIdentifier>{4e70503b-c975-4329-bb7d-ac821a4abe74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\NetObserver">
+      <UniqueIdentifier>{4cc4899e-894f-487c-9b43-087d8a8a828a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

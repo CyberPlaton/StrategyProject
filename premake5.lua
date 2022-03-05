@@ -64,6 +64,7 @@ workspace "Strategy"
 			"%{prj.name}/common/include/tinyxml2",		-- Engine
 			"%{prj.name}/common/include/asio",			-- Networking
 			"%{prj.name}/common/include/olc",			-- Networking
+			"%{prj.name}/common/include/LuaBridge",		-- Scripting
 			"StrategyServer/src"						-- For NetCommon.h include common for all projects
 		}	
 		-- Link thirdparty libraries for each configuration
@@ -83,6 +84,7 @@ workspace "Strategy"
 				"SDL2main",
 				"steam_api64",
 				"tinyxml2",
+				"Lua52"
 			}
 		filter "configurations:Release"
 			libdirs{"libs", "%{prj.name}/common/lib/Release"}
@@ -100,6 +102,7 @@ workspace "Strategy"
 				"SDL2main",
 				"steam_api64",
 				"tinyxml2",
+				"Lua52"
 			}
 		filter "configurations:Distr"
 			libdirs{"libs", "%{prj.name}/common/lib/Distr"}
@@ -117,6 +120,7 @@ workspace "Strategy"
 				"SDL2main",
 				"steam_api64",
 				"tinyxml2",
+				"Lua52"
 			}
 		-- Everything defined below is only if we building on windows
 		filter "system:Windows"

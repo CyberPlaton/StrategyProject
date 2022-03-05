@@ -1,14 +1,19 @@
 ﻿#include "Main.h"
 
+void NetCommMngr::UpdateNetGameobject(net::NetGameobject& object)
+{
+	olc::net::message< net::Message > out;
+	out.header.id = net::Message::NET_MSG_GAMEOBJECT_UPDATE;
+	out << object;
 
+	g_App->Send(out);
+}
 App::App() : base(), 
 m_DefaultTexture(nullptr), m_Image(nullptr)
 {
 	SetTitle(TITLE(CLIENT_TITLE_STRING, CLIENT_MAJOR_VERSION, CLIENT_MINOR_VERSION, CLIENT_REVIEW_VERSION));
 	SetClearColor(cherrysoda::Color::Gray);
 }
-
-
 void App::Update()
 {
 	using namespace std;
@@ -137,6 +142,14 @@ void App::Initialize()
 		return;
 	}
 	printf("MasterServer initialized\n");
+
+
+	if (!NetCommMngr::Initialize(this))
+	{
+		App::Exit();
+		return;
+	}
+	printf("NetCommMngr initialized\n");
 
 	// Everything went OK. Startup the engine!
 	base::Initialize();
@@ -613,6 +626,11 @@ void SplashSceenScene::SceneImpl::Update()
 	static bool show_demo;
 	ImGui::ShowDemoWindow(&show_demo);
 
+
+
+	// TESTING CODE:
+	// SEND A GAMEOBJECTS DATA TO SERVER AND OBSERVER ANY
+	// DYNAMIC CHANGE IN CLIENT IN THE SERVER.
 	int armor, defense, attack, health;
 	armor = m_application->m_NetGameobject->m_unitArmor;
 	defense = m_application->m_NetGameobject->m_unitDefense;
@@ -630,7 +648,7 @@ void SplashSceenScene::SceneImpl::Update()
 	m_application->m_NetGameobject->m_unitHealth = health;
 
 	olc::net::message < net::Message > msg;
-	msg.header.id = net::Message::NET_MSG_GAMEOBJECT;
+	msg.header.id = net::Message::NET_MSG_GAMEOBJECT_UPDATE;
 	msg << *m_application->m_NetGameobject;
 
 
@@ -640,6 +658,27 @@ void SplashSceenScene::SceneImpl::Update()
 	ImGui::Begin("Test");
 	ImGui::Text("Hello World");
 	ImGui::End();
+
+	std::vector< net::NetGameobject > mapdata;
+	mapdata.resize(5);
+	for (int i = 0; i < 5; i++)
+	{
+		mapdata[i].m_MaptileType = "Ground";
+		mapdata[i].m_MaptileBiome = "Temperate";
+		mapdata[i].m_netId = net::CreateNetworkUUID();
+		mapdata[i].m_tilePositionX = i;
+		mapdata[i].m_tilePositionY = 1;
+		mapdata[i].m_positionX = i;
+		mapdata[i].m_positionY = 2;
+	}
+
+	olc::net::message < net::Message > mapmsg;
+	mapmsg.header.id = net::Message::NET_MSG_MAPDATA;
+	mapmsg << mapdata;
+	m_application->Send(mapmsg);
+
+
+	// TESTING END
 }
 void SplashSceenScene::SceneImpl::Begin()
 {
