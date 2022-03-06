@@ -4,10 +4,16 @@ namespace cherrysoda
 {
 	EventSystem* EventEmitter::GetEventSystem()
 	{
-		auto scene = GetScene();
-		auto entities = scene->GetEntitiesByTagMask((cherrysoda::BitTagValueType)m_eventSystemID);
-		auto entity = entities.front();
-		return entity->Get< EventSystem >();
+		Scene* scene = GetScene();
+		for (auto& e : scene->GetEntitiesByTagMask(m_eventSystemID))
+		{
+			if (e->Tag() == m_eventSystemID)
+			{
+				return e->Get< EventSystem >();
+			}
+		}
+
+		return nullptr;
 	}
 }
 

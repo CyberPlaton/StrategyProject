@@ -34,10 +34,15 @@ namespace cherrysoda
 
 		bool EmitCheck() override final
 		{
+			// TODO
+			// Should return true if and only if the underlying Gameobject
+			// data was changed. Meaning we should add a "dirty_state" variable.
 			return true;
 		}
 		void EmitEvent() override final
 		{
+			printf("Observable::EmitEvent\n");
+
 			// Get Data from Entity.
 			auto unit = GetEntity()->Get< Unit >();
 

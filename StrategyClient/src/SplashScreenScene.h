@@ -21,6 +21,7 @@ public:
 		m_impl->m_initializationComplete = false;
 		m_impl->m_stateMachine = state_machine;
 	}
+
 	// Statemachine Override.
 	void OnUpdate() override final { m_impl->Update(); }
 	void OnBegin() override final { m_impl->Begin(); }
@@ -28,14 +29,20 @@ public:
 	cherrysoda::Scene* AsScene() override final { return m_impl; }
 
 
-	struct SceneImpl : public cherrysoda::Scene
+	class SceneImpl : public cherrysoda::Scene
 	{
+	public:
+		SceneImpl() = default;
+		~SceneImpl() = default;
+
+
 		void Update() override;
 		void Begin() override;
 		void End() override;
 
+
 		App* m_application = nullptr;
-		bool m_initializationComplete;
+		bool m_initializationComplete = false;
 		StateMachine* m_stateMachine = nullptr;
 	};
 private:

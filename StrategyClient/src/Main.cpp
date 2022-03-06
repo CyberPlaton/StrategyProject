@@ -2,6 +2,8 @@
 
 void NetCommMngr::UpdateNetGameobject(net::NetGameobject& object)
 {
+	printf("NetCommMngr::UpdateNetGameobject\n");
+
 	olc::net::message< net::Message > out;
 	out.header.id = net::Message::NET_MSG_GAMEOBJECT_UPDATE;
 	out << object;
@@ -623,6 +625,9 @@ void SplashSceenScene::SceneImpl::Update()
 	if (!m_initializationComplete) return;
 	printf("[SplashSceenScene] Update\n");
 
+	// Base update.
+	cherrysoda::Scene::Update();
+
 	static bool show_demo;
 	ImGui::ShowDemoWindow(&show_demo);
 }
@@ -641,13 +646,27 @@ void SplashSceenScene::SceneImpl::Begin()
 	// Make Entity (Observable unit)
 	auto e = new cherrysoda::Entity();
 	e->AddTag(++g_iEntityID);
-	e->Add(new cherrysoda::Unit());
+	auto unit = new cherrysoda::Unit();
+	unit->SetUnitName("Chinperator");
+	unit->SetHealth(20);
+	unit->SetArmor(250);
+	unit->SetDefense(50);
+	unit->SetAttack(30);
+	unit->SetTilePositionX(1);
+	unit->SetTilePositionY(18);
+	unit->SetPositionX(128.0f);
+	unit->SetPositionY(128.0f * 18);
+	unit->SetPlayerId(1);
+	e->Add(unit);
 	e->Add(new cherrysoda::Observable(event_system_id));
 
 	// Make Entity (Observer)
 	auto listener = new cherrysoda::Entity();
 	listener->AddTag(++g_iEntityID);
 	listener->Add(new cherrysoda::Observer("NetGameobjectUpdate", e->Get< cherrysoda::Observable >()->GetNetId()));
+
+	// Add EventListener(Observer)
+	event_system->Get< cherrysoda::EventSystem >()->Add(listener->Get< cherrysoda::Observer >(), "NetGameobjectUpdate");
 
 	// Add Entity to Scene.
 	Add(e);

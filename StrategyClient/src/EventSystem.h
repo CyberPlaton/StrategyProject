@@ -11,7 +11,6 @@
 
 #include <future>
 
-
 namespace cherrysoda
 {
 	class EventSystem;
@@ -70,9 +69,7 @@ namespace cherrysoda
 
 		// The Delegate function that is called
 		// on the occurance of the to listen event type.
-		virtual void operator()(Event* evnt)
-		{
-		}
+		virtual void operator()(Event* evnt) = 0;
 
 		const String& EventType() { return m_listenEventType; }
 
@@ -95,13 +92,19 @@ namespace cherrysoda
 
 		EventSystem() : EventSystem(true, false)
 		{
+			m_realtimeQueue[0] = STL::Vector<Event*>();
+			m_realtimeQueue[1] = STL::Vector<Event*>();
 		}
 
 
 		// Update the Event System.
 		// Redirect all gathered Events to Listeners.
-		void Update() override final
+		void Update() override
 		{
+			printf("EventSystem::Update\n");
+
+			m_activeQueue = (m_activeQueue == 0) ? 1 : 0;
+
             // Get Active Queue q.
 			auto queue = m_realtimeQueue[ m_activeQueue ];
             // For each Event e in q:
@@ -120,8 +123,7 @@ namespace cherrysoda
 
 				for (int j = 0; j < vector.size(); ++j)
 				{
-					// Launch the Listener func asynchronous.
-					std::async(&EventListener::operator(), *vector[i], evnt);
+					std::async(&EventListener::operator(), vector[j], evnt);
 				}
 			}
 
@@ -161,7 +163,7 @@ namespace cherrysoda
 
 	private:
 
-        int m_activeQueue;
+        int m_activeQueue = 0;
         STL::Vector<Event*> m_realtimeQueue[2];
 		STL::HashMap<String, STL::Vector<EventListener*>> m_listenerMap;
 	};
