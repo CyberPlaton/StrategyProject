@@ -17,6 +17,12 @@ void CONCAT(Set, name)(returntype value) \
 	member = value; \
 } \
 
+#define DECLARE_QUERY(name, member) \
+bool CONCAT(Is, name)()\
+{ \
+	return member; \
+} \
+
 
 namespace cherrysoda
 {
@@ -44,6 +50,9 @@ namespace cherrysoda
 		DECLARE_GET_SET(float, PositionX, m_positionX);
 		DECLARE_GET_SET(float, PositionY, m_positionY);
 
+		// QUERYING
+		DECLARE_QUERY(Dirty, m_isDirty);
+
 	private:
 		String m_unitName;
 		size_t m_playerId = 0;
@@ -55,6 +64,8 @@ namespace cherrysoda
 		size_t m_tilePositionY = 0;
 		float m_positionX = 0;
 		float m_positionY = 0;
+
+		bool m_isDirty = false;
 
 	private:
 		CHERRYSODA_FRIEND_CLASS_POOL;

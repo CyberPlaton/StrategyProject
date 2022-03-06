@@ -487,15 +487,14 @@ void StateMachine::Transit(const cherrysoda::String& name)
 
 
 		// Call unloading and loading functions async and wait for them to end on end.
-		auto on_end_result = std::async(&State::OnEnd, m_previousState);
-		auto on_begin_result = std::async(&State::OnBegin, m_currentState);
+		//auto on_end_result = std::async(&State::OnEnd, m_previousState);
+		//auto on_begin_result = std::async(&State::OnBegin, m_currentState);
 
 		//m_previousState->OnEnd();
 		//m_currentState->OnBegin();
 
 		// Wait for loading to finish. Unloading can proceed in the background.
-		on_begin_result.wait();
-
+		//on_begin_result.wait();
 
 		m_application->SetScene(m_currentState->AsScene());
 	}

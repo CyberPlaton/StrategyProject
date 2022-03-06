@@ -106,7 +106,7 @@ namespace cherrysoda
 			m_activeQueue = (m_activeQueue == 0) ? 1 : 0;
 
             // Get Active Queue q.
-			auto queue = m_realtimeQueue[ m_activeQueue ];
+			auto& queue = m_realtimeQueue[ m_activeQueue ];
             // For each Event e in q:
                 // Get Type t of Event e.
                 // Get a List l of all Listeners for the Event Type t.

@@ -3,6 +3,7 @@
 #include "EventSystem.h"
 #include "NetCommon.h"
 #include "Unit.h"
+#include "Timer.h"
 
 namespace cherrysoda
 {
@@ -28,16 +29,25 @@ namespace cherrysoda
 		Observable(size_t event_system_id) : EventEmitter(event_system_id)
 		{
 			m_networkId = net::CreateNetworkUUID();
+			m_timer.StartTimer();
 		}
 
 		size_t GetNetId() { return m_networkId; }
 
 		bool EmitCheck() override final
 		{
-			// TODO
-			// Should return true if and only if the underlying Gameobject
-			// data was changed. Meaning we should add a "dirty_state" variable.
-			return true;
+			printf("Observable::EmitCheck\n");
+			printf("\tSeconds elapsed: %.3f\n", m_timer.SecondsElapsed());
+
+			if (m_timer.SecondsElapsed() > 10)
+			{
+				printf("\t...60 seconds elapsed\n");
+				m_timer.StartTimer();
+				return true;
+			}
+
+
+			return GetEntity()->Get< Unit >()->IsDirty();
 		}
 		void EmitEvent() override final
 		{
@@ -71,5 +81,6 @@ namespace cherrysoda
 
 	private:
 		size_t m_networkId = 0;
+		Timer m_timer;
 	};
 }
