@@ -8,6 +8,10 @@
 #include <CherrySoda/Scene.h>
 #include <CherrySoda/Entity.h>
 
+
+#include <future>
+
+
 namespace cherrysoda
 {
 	class EventSystem;
@@ -99,7 +103,7 @@ namespace cherrysoda
 		void Update() override final
 		{
             // Get Active Queue q.
-
+			auto queue = m_realtimeQueue[ m_activeQueue ];
             // For each Event e in q:
                 // Get Type t of Event e.
                 // Get a List l of all Listeners for the Event Type t.
@@ -107,23 +111,46 @@ namespace cherrysoda
                         // Get a List l_ of all Delegates of the Listener.
                             // For each Delegate d in l_:
                                 // Call Function d();
+			for (int i = 0; i < queue.size(); ++i)
+			{
+				auto evnt = queue[i];
+				auto evnt_type = evnt->m_eventType;
 
+				auto vector = m_listenerMap[evnt_type];
+
+				for (int j = 0; j < vector.size(); ++j)
+				{
+					// Launch the Listener func asynchronous.
+					std::async(&EventListener::operator(), *vector[i], evnt);
+				}
+			}
 
             // Store unprocessed events (due to time constraints) in other queue.
 
             // Clear Active Queue q.
+			queue.clear();
 		}
 
 
 		// Add an Event to the Event System for Redirecting.
 		void Add(Event* evnt)
 		{
-            m_realtimeQueue[m_activeQueue == 0 ? 1 : 0].push(evnt);
+            m_realtimeQueue[m_activeQueue == 0 ? 1 : 0].push_back(evnt);
 		}
 
 		void Add(EventListener* listener, const String& event_listen_type)
 		{
-			STL::Add<String, EventListener*>(m_listenerMap, STL::MakePair(event_listen_type, listener));
+			for (auto& pair : m_listenerMap)
+			{
+				if (pair.first.compare(event_listen_type) == 0)
+				{
+					m_listenerMap[event_listen_type].push_back(listener);
+					return;
+				}
+			}
+
+			m_listenerMap.emplace(event_listen_type, STL::Vector<EventListener*>());
+			m_listenerMap[event_listen_type].push_back(listener);
 		}
 
 	private:
@@ -135,8 +162,8 @@ namespace cherrysoda
 	private:
 
         int m_activeQueue;
-        STL::Queue<Event*> m_realtimeQueue[2];
-		STL::HashMap<String, EventListener*> m_listenerMap;
+        STL::Vector<Event*> m_realtimeQueue[2];
+		STL::HashMap<String, STL::Vector<EventListener*>> m_listenerMap;
 	};
 }
 

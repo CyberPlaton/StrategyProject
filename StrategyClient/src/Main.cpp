@@ -630,6 +630,31 @@ void SplashSceenScene::SceneImpl::Begin()
 {
 	printf("[SplashSceenScene] Begin\n");
 
+	// TESTING
+	// Make Entity (EventSystem)
+	auto event_system = new cherrysoda::Entity();
+	event_system->AddTag(++g_iEntityID);
+	auto event_system_id = g_iEntityID;
+	event_system->Add(new cherrysoda::EventSystem());
+
+
+	// Make Entity (Observable unit)
+	auto e = new cherrysoda::Entity();
+	e->AddTag(++g_iEntityID);
+	e->Add(new cherrysoda::Unit());
+	e->Add(new cherrysoda::Observable(event_system_id));
+
+	// Make Entity (Observer)
+	auto listener = new cherrysoda::Entity();
+	listener->AddTag(++g_iEntityID);
+	listener->Add(new cherrysoda::Observer("NetGameobjectUpdate", e->Get< cherrysoda::Observable >()->GetNetId()));
+
+	// Add Entity to Scene.
+	Add(e);
+	Add(event_system);
+	Add(listener);
+	// TESTING END
+
 
 	// Initialize rendering.
 	cherrysoda::Graphics::SetPointTextureSampling();

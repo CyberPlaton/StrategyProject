@@ -30,6 +30,7 @@ namespace cherrysoda
 			m_networkId = net::CreateNetworkUUID();
 		}
 
+		size_t GetNetId() { return m_networkId; }
 
 		bool EmitCheck() override final
 		{
