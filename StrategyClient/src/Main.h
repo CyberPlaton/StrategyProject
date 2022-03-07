@@ -3,20 +3,26 @@
 #include <memory>
 #include <future>
 
-#include "Platform.h"
-#include "StateMachine.h"
-#include "Localization.h"
-
 // ENGINE
 #include <CherrySoda/CherrySoda.h>
 #include <CherrySoda/Main.h>
 
+#include "Platform.h"
+#include "StateMachine.h"
+#include "Localization.h"
+#include "Factory.h"
+
+
 
 // SOUND
+
+
 
 // EVENT SYSTEM
 #include "EventSystem.h"
 static size_t g_iEntityID = 0;
+
+
 
 // NETWORKING
 #include "NetCommon.h"
@@ -34,6 +40,7 @@ static size_t g_iEntityID = 0;
 // SCRIPTING
 #include "LuaLibrary.h"
 #include "LuaBridge.h"
+
 
 
 // Create application Title Version string.

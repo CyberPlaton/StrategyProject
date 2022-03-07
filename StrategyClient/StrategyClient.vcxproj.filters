@@ -26,6 +26,9 @@
     <ClCompile Include="src\EventSystem.cpp">
       <Filter>Components\Event</Filter>
     </ClCompile>
+    <ClCompile Include="src\Factory.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Main.h" />
@@ -61,6 +64,9 @@
     </ClInclude>
     <ClInclude Include="src\Unit.h">
       <Filter>Components\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Factory.h">
+      <Filter>Util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

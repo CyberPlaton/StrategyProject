@@ -140,6 +140,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\EventSystem.h" />
+    <ClInclude Include="src\Factory.h" />
     <ClInclude Include="src\GamerService.h" />
     <ClInclude Include="src\InitializationScene.h" />
     <ClInclude Include="src\Localization.h" />
@@ -154,6 +155,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\EventSystem.cpp" />
+    <ClCompile Include="src\Factory.cpp" />
     <ClCompile Include="src\GamerService.cpp" />
     <ClCompile Include="src\InitializationScene.cpp" />
     <ClCompile Include="src\Localization.cpp" />
