@@ -13,6 +13,9 @@
 #include "Factory.h"
 
 
+// LOGGING
+#include "Logging.h"
+
 
 // SOUND
 
@@ -115,9 +118,15 @@ public:
 	bool InitializeMasterConnection();
 	void TerminateMasterConnection();
 
-	// MISC SUBSYSTEMS
+	// SUBSYSTEMS
 	bool InitializeLocalization();
 	void TerminateLocalization();
+	bool InitializeLogger();
+	void TerminateLogger();
+	
+	// UTIL
+	void RegisterCommands();
+
 
 private:
 

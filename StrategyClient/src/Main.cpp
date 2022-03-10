@@ -15,6 +15,13 @@ m_DefaultTexture(nullptr), m_Image(nullptr)
 {
 	SetTitle(TITLE(CLIENT_TITLE_STRING, CLIENT_MAJOR_VERSION, CLIENT_MINOR_VERSION, CLIENT_REVIEW_VERSION));
 	SetClearColor(cherrysoda::Color::Gray);
+
+	// Hide Windows Console for Release.
+#if defined PLATFORM_WINDOWS
+	#if defined RELEASE || defined DISTR
+		ShowWindow(GetConsoleWindow(), SW_HIDE);
+	#endif
+#endif
 }
 void App::Update()
 {
@@ -26,7 +33,10 @@ void App::Update()
 	// STEAM UPDATE
 	SteamAPI_RunCallbacks();
 
-	
+	// LOGGER UPDATE
+	static bool log_open = true;
+	cherrysoda::Logger::Update("Log", &log_open);
+
 	/*
 	// PHYSICS UPDATE
 	float time_step = 0.16f;
@@ -114,44 +124,74 @@ void App::Update()
 
 void App::Initialize()
 {
-	// Initialize Localization (So we can provide Localized Error Messages)
-	if (!InitializeLocalization())
+	if (!InitializeLogger())
 	{
+		LOG_DBG_CRITICAL("[{:.4f}] Logger not initialized!", APP_RUN_TIME());
+		LOG_FILE_CRITICAL("[{:.4f}] Logger not initialized!", APP_RUN_TIME());
 		App::Exit();
 		return;
 	}
-	printf("Localization initialized\n");
+	LOG_DBG_INFO("[{:.4f}] Logger initialized...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}] Logger initialized...", APP_RUN_TIME());
+
+
+	if (!InitializeLocalization())
+	{
+		LOG_DBG_CRITICAL("[{:.4f}] Localization not initialized!", APP_RUN_TIME());
+		LOG_FILE_CRITICAL("[{:.4f}] Localization not initialized!", APP_RUN_TIME());
+		App::Exit();
+		return;
+	}
+	LOG_DBG_INFO("[{:.4f}] Localization initialized...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}] Localization initialized...", APP_RUN_TIME());
+
 
 	// Initialize the Platform Client.
 	if (!InitializePlatformClient())
 	{
+		LOG_DBG_CRITICAL("[{:.4f}] Platform client not initialized!", APP_RUN_TIME());
+		LOG_FILE_CRITICAL("[{:.4f}] Platform client not initialized!", APP_RUN_TIME());
 		App::Exit();
 		return;
 	}
-	printf("Platform Client initialized\n");
+	LOG_DBG_INFO("[{:.4f}] Platform client initialized...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}] Platform client initialized...", APP_RUN_TIME());
+
 
 	// Initialize the GamerService.
 	if (!InitializeGamerService())
 	{
+		LOG_DBG_CRITICAL("[{:.4f}] Gamer service not initialized!", APP_RUN_TIME());
+		LOG_FILE_CRITICAL("[{:.4f}] Gamer service not initialized!", APP_RUN_TIME());
 		App::Exit();
 		return;
 	}
-	printf("GamerService initialized\n");
+	LOG_DBG_INFO("[{:.4f}] Gamer service initialized...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}] Gamer service initialized...", APP_RUN_TIME());
 
 	if (!InitializeMasterConnection())
 	{
+		LOG_DBG_CRITICAL("[{:.4f}] Master connection not initialized!", APP_RUN_TIME());
+		LOG_FILE_CRITICAL("[{:.4f}] Master connection not initialized!", APP_RUN_TIME());
 		App::Exit();
 		return;
 	}
-	printf("MasterServer initialized\n");
+	LOG_DBG_INFO("[{:.4f}] Master connection initialized...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}] Master connection initialized...", APP_RUN_TIME());
 
 
 	if (!NetCommMngr::Initialize(this))
 	{
+		LOG_DBG_CRITICAL("[{:.4f}] Net communication manager not initialized!", APP_RUN_TIME());
+		LOG_FILE_CRITICAL("[{:.4f}] Net communication manager not initialized!", APP_RUN_TIME());
 		App::Exit();
 		return;
 	}
-	printf("NetCommMngr initialized\n");
+	LOG_DBG_INFO("[{:.4f}] Net communication manager initialized...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}] Net communication manager initialized...", APP_RUN_TIME());
+	LOG_DBG_INFO("[{:.4f}] SUBSYSTEMS SUCCESSFULLY INITIALIZED!", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}] SUBSYSTEMS SUCCESSFULLY INITIALIZED!", APP_RUN_TIME());
+
 
 	// Everything went OK. Startup the engine!
 	base::Initialize();
@@ -391,22 +431,44 @@ void App::Terminate()
 	// ...
 
 	// DELETE PLATFORMCLIENT
+	LOG_DBG_INFO("[{:.4f}] Terminating Platform client...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}] Terminating Platform client...", APP_RUN_TIME());
 	TerminatePlatformClient();
 
 	// DELETE GAMERSERVICE
+	LOG_DBG_INFO("[{:.4f}] Terminating Gamer service...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}] Terminating Gamer service...", APP_RUN_TIME());
 	TerminateGamerService();
 
 	// DELTET MASTERSERVER CONNECTION
+	LOG_DBG_INFO("[{:.4f}] Terminating Master connection...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}] Terminating Master connection...", APP_RUN_TIME());
 	TerminateMasterConnection();
 
 	// DELETE STEAM
+	LOG_DBG_INFO("[{:.4f}] Terminating SteamAPI...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}] Terminating SteamAPI...", APP_RUN_TIME());
 	SteamAPI_Shutdown();
 
 	// DELETE LOCALIZATION
+	LOG_DBG_INFO("[{:.4f}] Terminating Localization...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}] Terminating Localization...", APP_RUN_TIME());
 	TerminateLocalization();
+
+	// DELETE LOG
+	LOG_DBG_INFO("[{:.4f}] Terminating Logger...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}] Terminating Logger...", APP_RUN_TIME());
+	TerminateLogger();
 }
 
-
+bool App::InitializeLogger()
+{
+	return cherrysoda::Logger::Initialize();
+}
+void App::TerminateLogger()
+{
+	cherrysoda::Logger::Terminate();
+}
 bool App::InitializePlatformClient()
 {
 	if (!App::ShouldExit())
@@ -445,7 +507,7 @@ bool App::InitializeMasterConnection()
 {
 	if (!App::ShouldExit())
 	{
-		printf("[App::InitializeMasterConnection] Starting Connection Attempt!\n");
+		LOG_GAME_INFO("[App::InitializeMasterConnection] Try connect to Master server");
 
 		// Establish connection with MasterServer.
 		if (Connect(MASTER_SERVER_IP, MASTER_SERVER_PORT))
@@ -511,16 +573,30 @@ void App::TerminateLocalization()
 {
 	Localization::del();
 }
+void App::RegisterCommands()
+{
+#if defined DEBUG || RELEASE
+	cherrysoda::CommandRegisterHelper("TestCommand", TestCommandBatchFunction, "No Help");
+#endif
+}
 
 
 // SCENE FUNCTION IMPLEMENTATIONS
 void InitializationScene::SceneImpl::Begin()
 {
-	printf("[InitializationScene] Begin\n");
+	LOG_GAME_INFO("[InitializationScene] Begin");
+}
+void InitializationScene::SceneImpl::End()
+{
+	LOG_GAME_INFO("[InitializationScene] End");
 }
 void InitializationScene::SceneImpl::Update()
 {
-	printf("[InitializationScene] Update\n");
+	LOG_GAME_INFO("[InitializationScene] Update");
+
+	static bool show_demo;
+	ImGui::ShowDemoWindow(&show_demo);
+
 
 	if (m_application->IsConnected() && m_initializationComplete == false)
 	{
@@ -536,7 +612,8 @@ void InitializationScene::SceneImpl::Update()
 			{
 			case net::NET_MSG_REQUEST_USER_VALIDATION_DATA:
 			{
-				printf("[InitializationScene] User Data for validation requested!\n");
+				LOG_GAME_INFO("[InitializationScene] User Data for validation requested");
+
 				net::UserDesc user_desc;
 				net::ClientAppDesc app_desc;
 
@@ -577,7 +654,7 @@ void InitializationScene::SceneImpl::Update()
 
 			// We were rejected.
 			case net::NET_MSG_CLIENT_REJECT:
-				printf("[InitializationScene] Received rejection!\n");
+				LOG_GAME_INFO("[InitializationScene] Rejected by Master server");
 				m_application->Exit();
 				break;
 
@@ -585,7 +662,7 @@ void InitializationScene::SceneImpl::Update()
 			// We were accepted and received our user data from Database.
 			case net::NET_MSG_USER_DATA:
 			{
-				printf("[InitializationScene] Received User Data!\n");
+				LOG_GAME_INFO("[InitializationScene] Received user data");
 
 				net::UserDesc desc;
 				msg >> desc;
@@ -615,24 +692,21 @@ void InitializationScene::SceneImpl::Update()
 
 	if (m_initializationComplete)
 	{
-		printf("[InitializationScene] Initialization Complete!\n");
+		LOG_GAME_INFO("[InitializationScene] initialization complete");
 		m_stateMachine->Transit("SplashScreen");
 	}
 }
 void SplashSceenScene::SceneImpl::Update()
 {
 	if (!m_initializationComplete) return;
-	printf("[SplashSceenScene] Update\n");
+	LOG_GAME_INFO("[SplashSceenScene] Update");
 
 	// Base update.
 	cherrysoda::Scene::Update();
-
-	static bool show_demo;
-	ImGui::ShowDemoWindow(&show_demo);
 }
 void SplashSceenScene::SceneImpl::Begin()
 {
-	printf("[SplashSceenScene] Begin\n");
+	LOG_GAME_INFO("[SplashSceenScene] Begin");
 
 	// TESTING
 	// Make Entity (EventSystem)
@@ -742,7 +816,7 @@ void SplashSceenScene::SceneImpl::Begin()
 }
 void SplashSceenScene::SceneImpl::End()
 {
-	printf("[SplashSceenScene] End\n");
+	LOG_GAME_INFO("[SplashSceenScene] End");
 }
 
 using GameApp = App;

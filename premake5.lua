@@ -26,7 +26,7 @@ workspace "Strategy"
 		-- specify location of Project rel. to root directory
 		location "StrategyClient"
 		-- what the application actually is
-		kind "ConsoleApp"
+		kind "WindowedApp"
 		-- the programming language of the project
 		language "C++"
 		-- where the output binaries go
@@ -65,6 +65,8 @@ workspace "Strategy"
 			"%{prj.name}/common/include/asio",			-- Networking
 			"%{prj.name}/common/include/olc",			-- Networking
 			"%{prj.name}/common/include/LuaBridge",		-- Scripting
+			"%{prj.name}/common/include/spdlog",		-- Logging
+		
 			"StrategyServer/src"						-- For NetCommon.h include common for all projects
 		}	
 		-- Link thirdparty libraries for each configuration
@@ -84,7 +86,8 @@ workspace "Strategy"
 				"SDL2main",
 				"steam_api64",
 				"tinyxml2",
-				"Lua52"
+				"Lua52",
+				"spdlogd",
 			}
 		filter "configurations:Release"
 			libdirs{"libs", "%{prj.name}/common/lib/Release"}
@@ -102,7 +105,8 @@ workspace "Strategy"
 				"SDL2main",
 				"steam_api64",
 				"tinyxml2",
-				"Lua52"
+				"Lua52",
+				"spdlog",
 			}
 		filter "configurations:Distr"
 			libdirs{"libs", "%{prj.name}/common/lib/Distr"}
@@ -120,7 +124,8 @@ workspace "Strategy"
 				"SDL2main",
 				"steam_api64",
 				"tinyxml2",
-				"Lua52"
+				"Lua52",
+				"spdlog",
 			}
 		-- Everything defined below is only if we building on windows
 		filter "system:Windows"
@@ -221,13 +226,14 @@ workspace "Strategy"
 		includedirs
 		{
 			"%{prj.name}/common/include",
-			"%{prj.name}/common/include/steam", 			-- For querying Steam User data
-			"%{prj.name}/common/include/tinyxml2", 			-- For ...
-			"%{prj.name}/common/include/asio", 				-- For olcPGEX_Network
-			"%{prj.name}/common/include/olc", 				-- For server implementation
-			"%{prj.name}/common/include/mongocxx", 			-- For MongoDB intergration
-			"%{prj.name}/common/include/bsoncxx", 			-- For MongoDB intergration
-			"C://boost_1_78_0"								-- MongoDB requires Boost
+			"%{prj.name}/common/include/steam", 			-- querying Steam User data
+			"%{prj.name}/common/include/tinyxml2", 			-- ...
+			"%{prj.name}/common/include/asio", 				-- olcPGEX_Network
+			"%{prj.name}/common/include/olc", 				-- server implementation
+			"%{prj.name}/common/include/mongocxx", 			-- MongoDB intergration
+			"%{prj.name}/common/include/bsoncxx", 			-- MongoDB intergration
+			"C://boost_1_78_0",								-- MongoDB requires Boost
+			"%{prj.name}/common/include/spdlog",			-- Logging
 		}
 		filter "configurations:Debug"
 			-- Set working directory for debugging
@@ -247,6 +253,7 @@ workspace "Strategy"
 				"tinyxml2",
 				"bsoncxx",
 				"mongocxx",
+				"spdlog",
 			}
 		filter "configurations:Debug"
 			libdirs{"libs", "%{prj.name}/common/lib/Debug"}
@@ -256,6 +263,7 @@ workspace "Strategy"
 				"tinyxml2",
 				"bsoncxx",
 				"mongocxx",
+				"spdlogd",
 			}
 		filter "configurations:Release"
 			libdirs{"libs", "%{prj.name}/common/lib/Release"}
@@ -265,6 +273,7 @@ workspace "Strategy"
 				"tinyxml2",
 				"bsoncxx",
 				"mongocxx",
+				"spdlog",
 			}
 		-- Everything defined below is only if we building on windows
 		filter "system:Windows"

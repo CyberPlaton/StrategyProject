@@ -31,6 +31,7 @@ public:
 	{
 		void Update() override;
 		void Begin() override;
+		void End() override;
 
 		App* m_application = nullptr;
 		bool m_initializationComplete;

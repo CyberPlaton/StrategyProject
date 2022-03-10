@@ -232,7 +232,7 @@ void GUI::Update()
 		if (!Engine::Instance()->DoShowCursor() && !io.MouseDrawCursor) {
 			SDL_ShowCursor(SDL_ENABLE);
 		}
-		ImGui::SetNextWindowSizeConstraints(ImVec2(300.f, 180.f), ImVec2(FLT_MAX, FLT_MAX));
+		ImGui::SetNextWindowSizeConstraints(ImVec2(300.0f, 180.0f), ImVec2(FLT_MAX, FLT_MAX));
 		ImGui::Begin("Console", nullptr, ImGuiWindowFlags_NoDocking);
 		{
 			bool isLogOutputFocused = false;
