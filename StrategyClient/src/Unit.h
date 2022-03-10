@@ -34,9 +34,16 @@ namespace cherrysoda
 		Unit() : Unit(true, false)
 		{
 		}
-
-
-
+		Unit::Unit(const String& unit_name,
+						  size_t player_id,
+						  size_t health,
+						  size_t armor,
+						  size_t defense,
+						  size_t attack,
+						  size_t tile_position_x,
+						  size_t tile_position_y,
+						  float position_x,
+						  float position_y);
 
 		// GETTER/SETTER
 		DECLARE_GET_SET(const String&, UnitName, m_unitName);
@@ -62,8 +69,8 @@ namespace cherrysoda
 		size_t m_attack = 0;
 		size_t m_tilePositionX = 0;
 		size_t m_tilePositionY = 0;
-		float m_positionX = 0;
-		float m_positionY = 0;
+		float  m_positionX = 0.0f;
+		float  m_positionY = 0.0f;
 
 		bool m_isDirty = false;
 

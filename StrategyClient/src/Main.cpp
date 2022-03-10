@@ -704,6 +704,30 @@ void SplashSceenScene::SceneImpl::Begin()
 {
 	LOG_GAME_INFO("[SplashSceenScene] Begin");
 
+	using namespace cherrysoda;
+	auto factory = Factory::get();
+
+	// Event System.
+	auto event_system = factory->Begin(this)
+		.Add(new EventSystem())
+		.End();
+
+	// Net Entity.
+	auto chin = factory->Begin(this)
+		.Add(new Unit("Chinperator", 1, 50, 200, 25, 25, 2, 1, 256.0f, 128.0f))
+		.Add(new Observable(event_system->Tag()))
+		.End();
+
+	// Observer.
+	auto observer = factory->Begin(this)
+		.Add(new Observer("NetGameobjectUpdate", chin->Get< Observable >()->GetNetId()))
+		.End();
+
+	// Register Observer.
+	event_system->Get< EventSystem >()->Add(observer->Get< Observer >(), "NetGameobjectUpdate");
+
+
+	/*
 	// TESTING
 	// Make Entity (EventSystem)
 	auto event_system = new cherrysoda::Entity();
@@ -742,6 +766,7 @@ void SplashSceenScene::SceneImpl::Begin()
 	Add(event_system);
 	Add(listener);
 	// TESTING END
+	*/
 
 
 	// Initialize rendering.
@@ -756,7 +781,7 @@ void SplashSceenScene::SceneImpl::Begin()
 	Add(renderer);
 
 
-
+	/*
 	// Create Entity for Text.
 	auto text1 = new cherrysoda::Entity();
 	auto text2 = new cherrysoda::Entity();
@@ -806,7 +831,7 @@ void SplashSceenScene::SceneImpl::Begin()
 	Add(text2);
 	Add(text3);
 	Add(text4);
-
+	*/
 
 	m_initializationComplete = true;
 }

@@ -35,6 +35,9 @@
     <ClCompile Include="src\AppCommands.cpp">
       <Filter>Util</Filter>
     </ClCompile>
+    <ClCompile Include="src\Unit.cpp">
+      <Filter>Components\Game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Main.h" />

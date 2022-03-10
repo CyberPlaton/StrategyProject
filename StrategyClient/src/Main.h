@@ -23,8 +23,6 @@
 
 // EVENT SYSTEM
 #include "EventSystem.h"
-static size_t g_iEntityID = 0;
-
 
 
 // NETWORKING
