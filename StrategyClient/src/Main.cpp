@@ -34,8 +34,7 @@ void App::Update()
 	SteamAPI_RunCallbacks();
 
 	// LOGGER UPDATE
-	static bool log_open = true;
-	cherrysoda::Logger::Update("Log", &log_open);
+	cherrysoda::Logger::Update();
 
 	/*
 	// PHYSICS UPDATE
@@ -124,7 +123,7 @@ void App::Update()
 
 void App::Initialize()
 {
-	if (!InitializeLogger())
+	if (!InitializeLogger(true, false, 256))
 	{
 		LOG_DBG_CRITICAL("[{:.4f}] Logger not initialized!", APP_RUN_TIME());
 		LOG_FILE_CRITICAL("[{:.4f}] Logger not initialized!", APP_RUN_TIME());
@@ -461,9 +460,9 @@ void App::Terminate()
 	TerminateLogger();
 }
 
-bool App::InitializeLogger()
+bool App::InitializeLogger(bool gamelog_open, bool limit_number_of_retained_messages, size_t count)
 {
-	return cherrysoda::Logger::Initialize();
+	return cherrysoda::Logger::Initialize(gamelog_open, limit_number_of_retained_messages, count);
 }
 void App::TerminateLogger()
 {
@@ -592,8 +591,6 @@ void InitializationScene::SceneImpl::End()
 }
 void InitializationScene::SceneImpl::Update()
 {
-	LOG_GAME_INFO("[InitializationScene] Update");
-
 	static bool show_demo;
 	ImGui::ShowDemoWindow(&show_demo);
 
@@ -692,14 +689,13 @@ void InitializationScene::SceneImpl::Update()
 
 	if (m_initializationComplete)
 	{
-		LOG_GAME_INFO("[InitializationScene] initialization complete");
+		LOG_GAME_INFO("[InitializationScene] Initialization complete");
 		m_stateMachine->Transit("SplashScreen");
 	}
 }
 void SplashSceenScene::SceneImpl::Update()
 {
 	if (!m_initializationComplete) return;
-	LOG_GAME_INFO("[SplashSceenScene] Update");
 
 	// Base update.
 	cherrysoda::Scene::Update();

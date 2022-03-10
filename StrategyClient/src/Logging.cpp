@@ -5,6 +5,7 @@ namespace cherrysoda
 	Logger* Logger::g_Logger = nullptr;
 	bool Logger::g_LimitMessages = false;
 	size_t Logger::g_MessageLimit = 256;
+	bool Logger::g_GamelogOpen = false;
 	ImVector< char* > Logger::g_Items;
 	bool Logger::g_AutoScroll = true;
 	ImVec4 Logger::g_Color(0.0f, 0.0f, 0.0f, 0.0f);
@@ -12,13 +13,14 @@ namespace cherrysoda
 	std::shared_ptr< spdlog::logger > Logger::g_ConsoleLog;
 	std::shared_ptr< spdlog::logger > Logger::g_FileLog;
 
-	bool Logger::Initialize(bool limit_number_of_retained_messages, size_t count)
+	bool Logger::Initialize(bool gamelog_open, bool limit_number_of_retained_messages, size_t count)
 	{
 		Logger::get();
 		g_AppStartingTime = Time::GetSystemTime();
 
 		g_LimitMessages = limit_number_of_retained_messages;
 		g_MessageLimit = count;
+		g_GamelogOpen = gamelog_open;
 
 #ifdef DEBUG
 		// Complete tracing.

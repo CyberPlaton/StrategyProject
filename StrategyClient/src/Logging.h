@@ -23,10 +23,10 @@ namespace cherrysoda
 	public:
 		STATIC_GET_DEL(Logger, g_Logger);
 
-		static bool Initialize(bool limit_number_of_retained_messages = false, size_t count = 256);
+		static bool Initialize(bool gamelog_open = false, bool limit_number_of_retained_messages = false, size_t count = 256);
 		static void Terminate();
 
-		static void Update(const String& title, bool* opened = nullptr)
+		static void Update()
 		{
 #ifdef DEBUG || RELEASE
 
@@ -40,9 +40,9 @@ namespace cherrysoda
 					g_Items.pop_back();
 				}
 			}
-			if (opened)
+			if (g_GamelogOpen)
 			{
-				RenderLog(title, opened);
+				RenderLog("Gamelog", &g_GamelogOpen);
 			}
 #endif
 		}
@@ -62,6 +62,7 @@ namespace cherrysoda
 		static Logger* g_Logger;
 		static bool g_LimitMessages;
 		static size_t g_MessageLimit;
+		static bool g_GamelogOpen;
 
 		static double g_AppStartingTime;
 

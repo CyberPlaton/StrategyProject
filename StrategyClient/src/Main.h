@@ -121,7 +121,7 @@ public:
 	// SUBSYSTEMS
 	bool InitializeLocalization();
 	void TerminateLocalization();
-	bool InitializeLogger();
+	bool InitializeLogger(bool gamelog_open, bool limit_number_of_retained_messages, size_t count);
 	void TerminateLogger();
 	
 	// UTIL
