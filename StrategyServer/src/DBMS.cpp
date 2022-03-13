@@ -14,7 +14,6 @@ namespace dbms
 	using bsoncxx::builder::basic::concatenate;
 
 
-
 	DBMS* DBMS::g_DBMS = nullptr;
 	const std::string DBMS::m_database = "test_database";
 	const std::string DBMS::m_userDataCollection = "test_collection_user_data";

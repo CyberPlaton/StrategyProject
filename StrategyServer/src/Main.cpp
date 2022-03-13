@@ -22,7 +22,6 @@ int main()
 		}
 	}
 
-
 	dbms::DBMS::del();
 	return 0;
 }

@@ -19,6 +19,8 @@ workspace "Strategy"
 	{
 		"Win64", --"XboxOne", "Switch"
 	}
+
+
 	-- ##################################################################################################################################
 	-- Client Application - Crossplatform (Windows, Linux, Switch, Xbox...)
 	-- ##################################################################################################################################
@@ -234,6 +236,7 @@ workspace "Strategy"
 			"%{prj.name}/common/include/bsoncxx", 			-- MongoDB intergration
 			"C://boost_1_78_0",								-- MongoDB requires Boost
 			"%{prj.name}/common/include/spdlog",			-- Logging
+
 		}
 		filter "configurations:Debug"
 			-- Set working directory for debugging

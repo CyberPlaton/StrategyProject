@@ -34,6 +34,10 @@ public:
 	void BackupUserNumber();
 	bool CheckClientVersion(uint16_t maj, uint16_t min, uint16_t rev);
 
+	// UTIL
+	std::string MapdataToText(tinyxml2::XMLDocument& doc);
+	tinyxml2::XMLDocument& MapdataFromText(std::string& maptext);
+
 private:
 
 	Timer m_timer;

@@ -43,22 +43,6 @@ void MasterServer::OnMessage(std::shared_ptr<olc::net::connection<net::Message>>
 
 	switch (msg.header.id)
 	{
-	/*
-	case Message::NET_MSG_SERVER_SHUTDOWN:
-	{
-		// The GameServer informs us that he shut down.
-		// Delete his data from storage.
-		// ...
-	}
-	break;
-	case Message::NET_MSG_SERVER_STARTUP:
-	{
-		// The GameServer informs us that he started up.
-		// We can store his data and acknowledge him.
-		// ...
-	}
-	break;
-	*/
 	// Validation of Client.
 	case Message::NET_MSG_USER_VALIDATION_DATA:
 	{
@@ -154,15 +138,34 @@ void MasterServer::OnMessage(std::shared_ptr<olc::net::connection<net::Message>>
 		printf("\tArmor: %zu \n", entity.m_unitArmor);
 		printf("\tAttack: %zu \n", entity.m_unitAttack);
 		printf("\tDefense: %zu \n", entity.m_unitDefense);
-		printf("\tHealth: %zu \n", entity.m_unitHealth);
+		printf("\tHealth: %zu \n", entity.m_unitHealth);		
 	}
 	break;
 
 	case net::Message::NET_MSG_MAPDATA:
 	{
-		std::vector< net::NetGameobject > mapdata;
-		msg >> mapdata;
-		printf("NetId: %zu\n", mapdata[0].m_netId);
+		printf("[MasterServer::OnMessage] Client requests Mapdata\n");
+
+		
+		tinyxml2::XMLDocument doc;
+		tinyxml2::XMLError result = doc.LoadFile("mapdata.xml");
+		
+		net::GameDesc desc;
+		desc.m_mapdata = "<Mapdata></Mapdata>";//MapdataToText(doc);
+		desc.m_id = 7199928;
+		desc.m_players.push_back(19929878768768768);
+		desc.m_players.push_back(100091822);
+		desc.m_players.push_back(1888172);
+		desc.m_players.push_back(91882);
+		desc.m_players.push_back(1251);
+		
+
+		olc::net::message< net::Message > message;
+		message.header.id = net::Message::NET_MSG_MAPDATA;
+		
+		message << desc;
+
+		MessageClient(client, message);
 	}
 	break;
 
@@ -170,4 +173,22 @@ void MasterServer::OnMessage(std::shared_ptr<olc::net::connection<net::Message>>
 		printf("[MasterServer::OnMessage] Unrecognized Client Message: MsgId=\"%d\", ClientId=\"%d\"! \n", (int)msg.header.id, client->GetID());
 		return;
 	}
+}
+
+std::string MasterServer::MapdataToText(tinyxml2::XMLDocument& doc)
+{
+	using namespace tinyxml2;
+
+	XMLPrinter p;
+	doc.Accept(&p);
+	std::string buffer(p.CStr());
+	return buffer;
+}
+tinyxml2::XMLDocument& MasterServer::MapdataFromText(std::string& maptext)
+{
+	using namespace tinyxml2;
+
+	XMLDocument doc;
+	doc.Parse(maptext.c_str());
+	return doc;
 }

@@ -147,9 +147,17 @@ namespace net
 		size_t m_minorVersion = 0;
 		size_t m_reviewVersion = 0;
 	};
-	struct GameServerDesc
+	struct GameDesc
 	{
-		size_t id;
+		GameDesc() = default;
+		GameDesc(const GameDesc& rh) = default;
+		GameDesc& operator=(const GameDesc& rh) = default;
+		~GameDesc() = default;
+
+
+		size_t m_id;
+		std::string m_mapdata;
+		std::vector< int64_t > m_players;
 	};
 
 

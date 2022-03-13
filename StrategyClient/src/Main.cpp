@@ -699,6 +699,24 @@ void SplashSceenScene::SceneImpl::Update()
 
 	// Base update.
 	cherrysoda::Scene::Update();
+
+
+	if (!m_application->Incoming().empty())
+	{
+		auto msg = m_application->Incoming().pop_front().msg;
+
+		switch (msg.header.id)
+		{
+		case net::Message::NET_MSG_MAPDATA:
+		{
+			net::GameDesc desc;
+
+			msg >> desc;
+
+			printf("%s", desc.m_mapdata.c_str());
+		}
+		}
+	}
 }
 void SplashSceenScene::SceneImpl::Begin()
 {
@@ -725,6 +743,12 @@ void SplashSceenScene::SceneImpl::Begin()
 
 	// Register Observer.
 	event_system->Get< EventSystem >()->Add(observer->Get< Observer >(), "NetGameobjectUpdate");
+
+
+	// TEST: REQUEST MAP DATA FROM SERVER.
+	olc::net::message < net::Message > msg;
+	msg.header.id = net::Message::NET_MSG_MAPDATA;
+	m_application->Send(msg);
 
 
 	/*
