@@ -155,7 +155,6 @@ void MasterServer::OnMessage(std::shared_ptr<olc::net::connection<net::Message>>
 	{
 		printf("[MasterServer::OnMessage] Client requests Mapdata\n");
 
-		// TODO
 		// FOR EACH stored game entity in appropriate MongoDB collection entry
 		// create a Netgameobject with according data and send to requesting client.
 		net::GameDesc game;
