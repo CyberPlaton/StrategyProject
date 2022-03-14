@@ -128,21 +128,26 @@ void MasterServer::OnMessage(std::shared_ptr<olc::net::connection<net::Message>>
 		printf("[MasterServer::OnMessage] Received Gameobject\n");
 
 		// Get Gameobject.
+		net::GameDesc game;
 		net::NetGameobject entity;
 		msg >> entity;
+		msg >> game;
 
-		printf("\tName: %s \n", entity.m_name.c_str());
-		printf("\tUnitName: %s \n", entity.m_unitName.c_str());
-		printf("\tNetId: %zu \n", entity.m_netId);
-		printf("\tType: %d \n", entity.m_objectType);
-		printf("\tArmor: %zu \n", entity.m_unitArmor);
-		printf("\tAttack: %zu \n", entity.m_unitAttack);
-		printf("\tDefense: %zu \n", entity.m_unitDefense);
-		printf("\tHealth: %zu \n", entity.m_unitHealth);
-
-		// TODO
 		// Store/Update object in appropriate Game in MongoDB
 		// and redirect update to all other connected clients...
+		if (!dbms::DBMS::TryEmplaceNetGameobject(entity, game.m_id))
+		{
+			printf("[MasterServer::OnMessage] Failed to update Gameobject:\n");
+			printf("\tGame: \"%s\", Gameobject: name - \"%s\", netId - \"%zu\"\n", game.m_id.c_str(), entity.m_name.c_str(), entity.m_netId);
+		}
+		else
+		{
+			// Redirect to clients...
+			olc::net::message< net::Message > message;
+			message.header.id = net::Message::NET_MSG_GAMEOBJECT_UPDATE;
+			message << entity;
+			MessageAllClients(message, client);
+		}
 	}
 	break;
 
@@ -153,6 +158,60 @@ void MasterServer::OnMessage(std::shared_ptr<olc::net::connection<net::Message>>
 		// TODO
 		// FOR EACH stored game entity in appropriate MongoDB collection entry
 		// create a Netgameobject with according data and send to requesting client.
+		net::GameDesc game;
+		msg >> game;
+
+		std::vector< std::shared_ptr< net::NetGameobject > > entities;
+		if (dbms::DBMS::GetNetGameobjects(game.m_id, entities))
+		{
+			for (auto& e : entities)
+			{
+				olc::net::message< net::Message > message;
+				message.header.id = net::Message::NET_MSG_MAPDATA;
+				message << e;
+				MessageClient(client, message);
+			}
+
+			// As we go out of scope,
+			// Gameobjects should be released by smart pointer.
+		}
+		else
+		{
+			printf("[MasterServer::OnMessage] Failed to retrieve Gameobjects for Game:\n");
+			printf("\tGame: \"%s\"\n", game.m_id.c_str());
+		}
+	}
+	break;
+
+	case net::Message::NET_MSG_CREATE_GAME:
+	{
+		// Create a Game in DB.
+		// Send an acknowledgement to client to inform of the success.
+		net::GameDesc game;
+		msg >> game;
+
+		dbms::DBMS::CreateGame(game.m_id);
+
+		olc::net::message< net::Message > message;
+		message.header.id = net::Message::NET_MSG_CREATE_GAME;
+
+		MessageClient(client, message);
+	}
+	break;
+
+	case net::Message::NET_MSG_DELETE_GAME:
+	{
+		// Delete a Game from DB.
+		// Send an acknowledgement to client to inform of the success.
+		net::GameDesc game;
+		msg >> game;
+
+		dbms::DBMS::DeleteGame(game.m_id);
+
+		olc::net::message< net::Message > message;
+		message.header.id = net::Message::NET_MSG_DELETE_GAME;
+
+		MessageClient(client, message);
 	}
 	break;
 

@@ -323,16 +323,15 @@ namespace dbms
 		// Get Database.
 		mongocxx::database db = DBMS::get()->m_mongoClient[m_database];
 
-		if (db.has_collection(name))
+		if (!db.has_collection(name))
 		{
-			return;
+			db.create_collection(name);
 		}
-		db.create_collection(name);
 	}
 
-	bool DBMS::DeleteGame(std::string gamename)
+	void DBMS::DeleteGame(std::string gamename)
 	{
-		if (!m_initialized) return "";
+		if (!m_initialized) return;
 
 		std::string name = "game_" + gamename;
 
@@ -344,11 +343,9 @@ namespace dbms
 			mongocxx::collection game = db[name];
 			game.drop();
 		}
-
-		return true;
 	}
 
-	bool DBMS::GetNetGameobjects(const std::string& gamename, std::vector< net::NetGameobject* >& backv)
+	bool DBMS::GetNetGameobjects(const std::string& gamename, std::vector< std::shared_ptr< net::NetGameobject > >& backv)
 	{
 		std::string name = "game_" + gamename;
 		mongocxx::database db = DBMS::get()->m_mongoClient[m_database];
@@ -364,7 +361,7 @@ namespace dbms
 
 				for (auto&& doc : cursor)
 				{
-					auto obj = new net::NetGameobject();
+					auto obj = std::make_shared< net::NetGameobject >();
 					obj->m_name = "NetGameobject";
 					obj->m_unitName = doc["unitName"].get_utf8().value.to_string();
 					obj->m_unitHealth = doc["unitHealth"].get_int64();

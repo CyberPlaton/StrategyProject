@@ -40,6 +40,7 @@ static void del() \
 #include <bsoncxx/exception/exception.hpp>
 #include <bsoncxx/exception/error_code.hpp>
 
+#include <memory>
 
 namespace dbms
 {
@@ -53,17 +54,17 @@ namespace dbms
 		* GAME/GAMEOBJECT MANAGEMENT
 		*/
 		// Create a new Game entry.
-		// Returns the string id of the game.
+		// Always succeeds.
 		static void CreateGame(const std::string& gamename);
 		
 		// Delete a Game from entry.
-		// Returns true on success.
-		static bool DeleteGame(std::string gamename);
+		// Always succeeds.
+		static void DeleteGame(std::string gamename);
 
 		// Retrieve all Gameobjects in a Game from Database.
 		// Objects are pushed into given vector.
 		// Returns true on success.
-		static bool GetNetGameobjects(const std::string& gamename, std::vector< net::NetGameobject* >& backv);
+		static bool GetNetGameobjects(const std::string& gamename, std::vector< std::shared_ptr< net::NetGameobject > >& backv);
 
 		// Add a Gameobject to Game storage in Database
 		// If it already exists, override it.

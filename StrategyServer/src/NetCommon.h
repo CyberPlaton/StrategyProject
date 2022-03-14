@@ -48,8 +48,10 @@ namespace net
 
 
 		// Game related messages
-		NET_MSG_GAMEOBJECT_UPDATE,
-		NET_MSG_MAPDATA,
+		NET_MSG_DELETE_GAME,				// Client requests deletion of Game in DB
+		NET_MSG_CREATE_GAME,				// Client requests creation of Game in DB
+		NET_MSG_GAMEOBJECT_UPDATE,			// Client/Server sends updated data for a NetGameobject
+		NET_MSG_MAPDATA,					// Bulk Message. Client requests ALL NetGameobjects for a Game
 	};
 
 
@@ -156,8 +158,8 @@ namespace net
 		~GameDesc() = default;
 
 
-		size_t m_id;
-		std::string m_mapdata;
+		std::string m_id;
+		std::string m_mapName;
 		std::vector< int64_t > m_players;
 	};
 
@@ -170,6 +172,11 @@ namespace net
 	};
 	struct NetGameobject
 	{
+		NetGameobject() = default;
+		NetGameobject(const NetGameobject& rh) = default;
+		NetGameobject& operator=(const NetGameobject& rh) = default;
+		~NetGameobject() = default;
+
 		std::string m_name;
 		size_t m_netId = 0;
 		size_t m_playerId = 0;

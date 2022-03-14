@@ -11,12 +11,6 @@ int main()
 		return 0;
 	}
 
-	if (DBMS::DeleteGame("Bogdans_Test_Game"))
-	{
-		return 0;
-	}
-
-
 	// Startup the Main Server.
 	auto server = new MasterServer(60777);
 	if (server->Start())
