@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <map>
 
 #include <olcPGEX_Network.h>
 
@@ -43,7 +44,6 @@ private:
 	Timer m_timer;
 
 	bool m_shouldExit = false;
-
 
 	std::map< size_t, size_t > m_clientIdMap;
 

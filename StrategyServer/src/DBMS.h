@@ -48,9 +48,36 @@ namespace dbms
 	public:
 		STATIC_GET_DEL_WITH_INIT_AND_SHUTDOWN(DBMS, g_DBMS);
 
-		// Get the Data for a gamemap from DB as XML.
-		static tinyxml2::XMLDocument GetMapdata(size_t gameid);
+		
+		/*
+		* GAME/GAMEOBJECT MANAGEMENT
+		*/
+		// Create a new Game entry.
+		// Returns the string id of the game.
+		static void CreateGame(const std::string& gamename);
+		
+		// Delete a Game from entry.
+		// Returns true on success.
+		static bool DeleteGame(std::string gamename);
 
+		// Retrieve all Gameobjects in a Game from Database.
+		// Objects are pushed into given vector.
+		// Returns true on success.
+		static bool GetNetGameobjects(const std::string& gamename, std::vector< net::NetGameobject* >& backv);
+
+		// Add a Gameobject to Game storage in Database
+		// If it already exists, override it.
+		// Returns true on success.
+		static bool TryEmplaceNetGameobject(net::NetGameobject& object, const std::string& gamename);
+
+
+
+
+
+		
+		/*
+		* USER MANAGEMENT
+		*/
 		// Create an empty entry for a new user in the DB.
 		// Returns the uuid of the new User.
 		static size_t CreateUser();

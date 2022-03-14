@@ -709,11 +709,12 @@ void SplashSceenScene::SceneImpl::Update()
 		{
 		case net::Message::NET_MSG_MAPDATA:
 		{
-			net::GameDesc desc;
-
-			msg >> desc;
-
-			printf("%s", desc.m_mapdata.c_str());
+			// We receive NetGameobject from the MongoDB Database.
+			// Create an Entity from the data and store in the current scene
+			// ( and add it to the map definition )
+			//
+			// Each message represents one Entity, and we
+			// will receive x many messages...
 		}
 		}
 	}
@@ -732,7 +733,7 @@ void SplashSceenScene::SceneImpl::Begin()
 
 	// Net Entity.
 	auto chin = factory->Begin(this)
-		.Add(new Unit("Chinperator", 1, 50, 200, 25, 25, 2, 1, 256.0f, 128.0f))
+		.Add(new Unit("Chinperator Hans the Second the Great Emperor of Chinlandia the Mighty One", 1, 50, 200, 25, 25, 2, 1, 256.0f, 128.0f))
 		.Add(new Observable(event_system->Tag()))
 		.End();
 

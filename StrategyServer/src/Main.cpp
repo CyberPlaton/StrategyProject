@@ -2,12 +2,20 @@
 
 int main()
 {	
+	using namespace dbms;
+
 	// Startup the Database Manager.
-	dbms::DBMS::get();
-	if (!dbms::DBMS::Initialized())
+	DBMS::get();
+	if (!DBMS::Initialized())
 	{
 		return 0;
 	}
+
+	if (DBMS::DeleteGame("Bogdans_Test_Game"))
+	{
+		return 0;
+	}
+
 
 	// Startup the Main Server.
 	auto server = new MasterServer(60777);

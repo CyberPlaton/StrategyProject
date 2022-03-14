@@ -313,6 +313,186 @@ namespace dbms
 		}
 	}
 
+
+	void DBMS::CreateGame(const std::string& gamename)
+	{
+		if (!m_initialized) return;
+
+		std::string name = "game_" + gamename;
+
+		// Get Database.
+		mongocxx::database db = DBMS::get()->m_mongoClient[m_database];
+
+		if (db.has_collection(name))
+		{
+			return;
+		}
+		db.create_collection(name);
+	}
+
+	bool DBMS::DeleteGame(std::string gamename)
+	{
+		if (!m_initialized) return "";
+
+		std::string name = "game_" + gamename;
+
+		// Get Database.
+		mongocxx::database db = DBMS::get()->m_mongoClient[m_database];
+
+		if (db.has_collection(name))
+		{
+			mongocxx::collection game = db[name];
+			game.drop();
+		}
+
+		return true;
+	}
+
+	bool DBMS::GetNetGameobjects(const std::string& gamename, std::vector< net::NetGameobject* >& backv)
+	{
+		std::string name = "game_" + gamename;
+		mongocxx::database db = DBMS::get()->m_mongoClient[m_database];
+			
+		try
+		{
+			if (db.has_collection(name))
+			{
+				mongocxx::collection game = db[name];
+
+				// Get cursor to all Documents in Collection.
+				auto cursor = game.find({});
+
+				for (auto&& doc : cursor)
+				{
+					auto obj = new net::NetGameobject();
+					obj->m_name = "NetGameobject";
+					obj->m_unitName = doc["unitName"].get_utf8().value.to_string();
+					obj->m_unitHealth = doc["unitHealth"].get_int64();
+					obj->m_unitArmor = doc["unitArmor"].get_int64();
+					obj->m_unitAttack = doc["unitAttack"].get_int64();
+					obj->m_unitDefense = doc["unitDefense"].get_int64();
+
+					obj->m_positionX = doc["positionX"].get_double();
+					obj->m_positionY = doc["positionY"].get_double();
+					obj->m_tilePositionX = doc["tilePositionX"].get_int64();
+					obj->m_tilePositionY = doc["tilePositionY"].get_int64();
+
+					obj->m_netId = (size_t)doc["netId"].get_int64().value;
+					obj->m_objectType = (net::ENetGameobject)doc["objectType"].get_int64().value;
+
+					obj->m_buildingHealth = doc["buildingHealth"].get_int64();
+					obj->m_buildingName = doc["buildingName"].get_utf8().value.to_string();
+
+					obj->m_MaptileType = doc["mapTileType"].get_utf8().value.to_string();
+					obj->m_MaptileBiome = doc["mapTileBiome"].get_utf8().value.to_string();
+
+					obj->m_mapObjectType = doc["mapObjectType"].get_utf8().value.to_string();
+					obj->m_mapObjectBiome = doc["mapObjectBiome"].get_utf8().value.to_string();
+
+
+					backv.push_back(obj);
+				}
+
+				return true;
+			}
+		}
+		catch (const mongocxx::v_noabi::logic_error& e)
+		{
+			printf("DBMS::GetNetGameobjects - mongocxx::v_noabi::logic_error - Message: \n\t\t \"%s\"\n", e.what());
+		}
+
+		return false;
+	}
+
+
+
+	bool DBMS::TryEmplaceNetGameobject(net::NetGameobject& object, const std::string& gamename)
+	{
+		std::string name = "game_" + gamename;
+
+		mongocxx::database db = DBMS::get()->m_mongoClient[m_database];
+		mongocxx::collection game = db[name];
+
+		// Try finding the Gameobject.
+		// If it exists, update it.
+		bool found = false;
+		auto cursor = game.find(
+			make_document(kvp("netId", (int64_t)object.m_netId))
+		);
+
+		for (auto& it : cursor)
+		{
+			// Found the Gameobject.
+			found = true;
+			break;
+		}
+
+
+		auto update_or_create_doc = make_document(
+			kvp("netId", (int64_t)object.m_netId),
+			kvp("name", object.m_name.c_str()),
+			kvp("playerId", (int64_t)object.m_playerId),
+			kvp("objectType", (int64_t)object.m_objectType),
+			kvp("positionX", (double)object.m_positionX),
+			kvp("positionY", (double)object.m_positionY),
+			kvp("tilePositionX", (int64_t)object.m_tilePositionX),
+			kvp("tilePositionY", (int64_t)object.m_tilePositionY),
+			kvp("unitName", object.m_unitName.c_str()),
+			kvp("unitHealth", (int64_t)object.m_unitHealth),
+			kvp("unitArmor", (int64_t)object.m_unitArmor),
+			kvp("unitAttack", (int64_t)object.m_unitAttack),
+			kvp("unitDefense", (int64_t)object.m_unitDefense),
+			kvp("buildingName", object.m_buildingName.c_str()),
+			kvp("buildingHealth", (int64_t)object.m_buildingHealth),
+			kvp("mapTileType", object.m_MaptileType.c_str()),
+			kvp("mapTileBiome", object.m_MaptileBiome.c_str()),
+			kvp("mapObjectType", object.m_mapObjectType.c_str()),
+			kvp("mapObjectBiome", object.m_mapObjectBiome.c_str())
+		);
+
+
+		try
+		{
+			if (found)
+			{
+				bsoncxx::stdx::optional<mongocxx::result::update> result;
+
+				// Create an Update command.
+				result = game.update_one(
+					make_document(kvp("netId", (int64_t)object.m_netId)),
+					make_document(kvp("$set", update_or_create_doc.view()))
+				);
+				
+				if (result.value().result().modified_count() > 0)
+				{
+					return true;
+				}
+			}
+			else
+			{
+				bsoncxx::stdx::optional<mongocxx::result::insert_one> result;
+
+				// Create an Insert command.
+				result = game.insert_one(
+					std::move(update_or_create_doc)
+				);
+
+				if (result.value().result().inserted_count() > 0)
+				{
+					return true;
+				}
+			}
+		}
+		catch (const mongocxx::v_noabi::logic_error& e)
+		{
+			printf("DBMS::TryEmplaceNetGameobject - mongocxx::v_noabi::logic_error - Message: \n\t\t \"%s\"\n", e.what());
+		}
+
+
+		return false;
+	}
+
+
 	void DBMS::_shutdown() noexcept
 	{
 		// Write current UUID in the File.

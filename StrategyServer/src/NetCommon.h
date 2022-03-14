@@ -10,6 +10,7 @@
 #include "Random.h"
 #include "olcPGEX_Network.h"
 
+
 #define FORCE_INLINE __forceinline 
 
 
@@ -159,7 +160,6 @@ namespace net
 		std::string m_mapdata;
 		std::vector< int64_t > m_players;
 	};
-
 
 	enum ENetGameobject
 	{

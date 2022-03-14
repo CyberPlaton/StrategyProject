@@ -138,7 +138,11 @@ void MasterServer::OnMessage(std::shared_ptr<olc::net::connection<net::Message>>
 		printf("\tArmor: %zu \n", entity.m_unitArmor);
 		printf("\tAttack: %zu \n", entity.m_unitAttack);
 		printf("\tDefense: %zu \n", entity.m_unitDefense);
-		printf("\tHealth: %zu \n", entity.m_unitHealth);		
+		printf("\tHealth: %zu \n", entity.m_unitHealth);
+
+		// TODO
+		// Store/Update object in appropriate Game in MongoDB
+		// and redirect update to all other connected clients...
 	}
 	break;
 
@@ -146,26 +150,9 @@ void MasterServer::OnMessage(std::shared_ptr<olc::net::connection<net::Message>>
 	{
 		printf("[MasterServer::OnMessage] Client requests Mapdata\n");
 
-		
-		tinyxml2::XMLDocument doc;
-		tinyxml2::XMLError result = doc.LoadFile("mapdata.xml");
-		
-		net::GameDesc desc;
-		desc.m_mapdata = "<Mapdata></Mapdata>";//MapdataToText(doc);
-		desc.m_id = 7199928;
-		desc.m_players.push_back(19929878768768768);
-		desc.m_players.push_back(100091822);
-		desc.m_players.push_back(1888172);
-		desc.m_players.push_back(91882);
-		desc.m_players.push_back(1251);
-		
-
-		olc::net::message< net::Message > message;
-		message.header.id = net::Message::NET_MSG_MAPDATA;
-		
-		message << desc;
-
-		MessageClient(client, message);
+		// TODO
+		// FOR EACH stored game entity in appropriate MongoDB collection entry
+		// create a Netgameobject with according data and send to requesting client.
 	}
 	break;
 
@@ -181,8 +168,7 @@ std::string MasterServer::MapdataToText(tinyxml2::XMLDocument& doc)
 
 	XMLPrinter p;
 	doc.Accept(&p);
-	std::string buffer(p.CStr());
-	return buffer;
+	return p.CStr();
 }
 tinyxml2::XMLDocument& MasterServer::MapdataFromText(std::string& maptext)
 {
