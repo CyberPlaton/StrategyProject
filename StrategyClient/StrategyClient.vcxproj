@@ -140,6 +140,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\AppCommands.h" />
+    <ClInclude Include="src\DebugGameScene.h" />
     <ClInclude Include="src\EventSystem.h" />
     <ClInclude Include="src\Factory.h" />
     <ClInclude Include="src\GamerService.h" />
@@ -151,12 +152,14 @@
     <ClInclude Include="src\Observable.h" />
     <ClInclude Include="src\Observer.h" />
     <ClInclude Include="src\PlatformClient.h" />
+    <ClInclude Include="src\SceneCommon.h" />
     <ClInclude Include="src\SplashScreenScene.h" />
     <ClInclude Include="src\StateMachine.h" />
     <ClInclude Include="src\Unit.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AppCommands.cpp" />
+    <ClCompile Include="src\DebugGameScene.cpp" />
     <ClCompile Include="src\EventSystem.cpp" />
     <ClCompile Include="src\Factory.cpp" />
     <ClCompile Include="src\GamerService.cpp" />

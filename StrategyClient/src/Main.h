@@ -82,22 +82,19 @@ bool TEST_EmitEvent()
 // GAME SCENES
 #include "InitializationScene.h"
 #include "SplashScreenScene.h"
-
+#include "DebugGameScene.h"
 
 
 class App : public olc::net::client_interface< net::Message >,	// Networking Client.
 			public cherrysoda::Engine							// Engine Client.
 {
-
-	// SCENES MAY NEED TO ACCESS APP DATA.
-	friend class InitializationScene;
-	friend class SplashSceenScene;
+	friend class cherrysoda::SceneGraphFactory;
+	friend class cherrysoda::InitializationScene;
+	friend class cherrysoda::SplashSceenScene;
+	friend class cherrysoda::DebugGameScene;
 
 public:
-
 	typedef cherrysoda::Engine base;
-
-
 
 	// ENGINE OVERRIDES
 	App();
@@ -136,7 +133,7 @@ private:
 	net::UserDesc* m_localUserDesc = nullptr;
 
 
-	StateMachine* m_stateMachine = nullptr;
+	cherrysoda::CStateMachine* m_stateMachine = nullptr;
 
 
 	cherrysoda::Image* m_Image;

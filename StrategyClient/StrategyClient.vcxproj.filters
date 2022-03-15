@@ -38,6 +38,9 @@
     <ClCompile Include="src\Unit.cpp">
       <Filter>Components\Game</Filter>
     </ClCompile>
+    <ClCompile Include="src\DebugGameScene.cpp">
+      <Filter>Scenes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Main.h" />
@@ -82,6 +85,12 @@
     </ClInclude>
     <ClInclude Include="src\Logging.h">
       <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DebugGameScene.h">
+      <Filter>Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SceneCommon.h">
+      <Filter>Scenes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

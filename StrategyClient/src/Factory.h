@@ -8,7 +8,7 @@
 #include <CherrySoda/Entity.h>
 #include <CherrySoda/Scene.h>
 
-
+class App;
 
 namespace cherrysoda
 {
@@ -16,19 +16,19 @@ namespace cherrysoda
 	{
 	public:
 		STATIC_GET_DEL(Factory, g_Factory);
-		
 
-		Factory& Begin(Scene* scene)
+
+		Factory& Begin(cherrysoda::Scene* scene)
 		{
 			m_constructingEntity = new cherrysoda::Entity();
 			m_constructingEntity->AddTag(Factory::g_NextEntityId++);
-			
+
 			m_scene = scene;
 			// Return self for concatening calls.
 			return *this;
 		}
 
-		Entity* End()
+		cherrysoda::Entity* End()
 		{
 			m_scene->Add(m_constructingEntity);
 
@@ -51,12 +51,27 @@ namespace cherrysoda
 		static Factory* g_Factory;
 		static size_t g_NextEntityId;
 
-		Entity* m_constructingEntity = nullptr;
-		Scene* m_scene = nullptr;
+		cherrysoda::Entity* m_constructingEntity = nullptr;
+		cherrysoda::Scene* m_scene = nullptr;
 
 
 	private:
 		Factory() = default;
 		~Factory() = default;
 	};
+
+
+	class StateMachine;
+	class Scene;
+	class SceneGraphFactory
+	{
+	public:
+		STATIC_GET_DEL(SceneGraphFactory, g_SceneGraphFactory);
+
+		static bool LoadSceneGraph(const cherrysoda::String& filename, App* app);
+
+	private:
+		static SceneGraphFactory* g_SceneGraphFactory;
+	};
+
 }

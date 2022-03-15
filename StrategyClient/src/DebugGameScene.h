@@ -4,11 +4,12 @@
 
 namespace cherrysoda
 {
-	class SplashSceenScene : public State
+	class DebugGameScene : public State
 	{
 	public:
-		DECLARE_SCENE_COMMON(SplashSceenScene);
+		DECLARE_SCENE_COMMON(DebugGameScene);
 
 	private:
+
 	};
 }

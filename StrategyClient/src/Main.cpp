@@ -1,5 +1,84 @@
 ﻿#include "Main.h"
 
+bool cherrysoda::SceneGraphFactory::LoadSceneGraph(const cherrysoda::String& filename, App* app)
+{
+	using namespace cherrysoda;
+	using namespace cherrysoda::XML;
+
+	XMLUtil xml;
+	XMLDocument doc;
+	if (xml.ReadXMLFile(doc, filename))
+	{
+		app->m_stateMachine = new CStateMachine(app);
+
+
+		auto root = doc.RootElement();
+		auto scene = root->FirstChildElement("Scene");
+		while(scene)
+		{
+			State* new_scene = nullptr;
+
+			auto name = scene->FirstChildElement("Name")->GetText();
+			auto initial = scene->FirstChildElement("Initial")->BoolText();
+
+
+			LOG_DBG_INFO("[{:.4f}] Loading Scene: {}:", APP_RUN_TIME(), name);
+			LOG_GAME_INFO("[%.4f] Loading Scene: \"%s\"", APP_RUN_TIME(), name);
+
+			// Create Scene. Very Sad...
+			if (strcmp(name, "Initialization") == 0)
+			{
+				new_scene = new InitializationScene(name, app->m_stateMachine, app);
+			}
+			else if(strcmp(name, "SplashScreen") == 0)
+			{
+				new_scene = new SplashSceenScene(name, app->m_stateMachine, app);
+			}
+			else if (strcmp(name, "DebugGame") == 0)
+			{
+				new_scene = new DebugGameScene(name, app->m_stateMachine, app);
+			}
+			else
+			{
+				LOG_DBG_CRITICAL("[{:.4f}] Could not load unknown scene type: {}", APP_RUN_TIME(), name);
+				LOG_FILE_CRITICAL("[{:.4f}] Could not load unknown scene type: {}", APP_RUN_TIME(), name);
+				return false;
+			}
+
+
+			// Set as starting scene if declared.
+			if (initial)
+			{
+				app->m_stateMachine->SetInitialState(new_scene);
+				app->SetScene(new_scene->AsScene());
+				LOG_DBG_INFO("\t ... as Initial");
+				LOG_GAME_INFO("\t ... as Initial");
+			}
+
+
+			auto transit = scene->FirstChildElement("Transit");
+			while (transit)
+			{
+				auto transit_to = transit->GetText();
+
+				// Add Transit.
+				LOG_DBG_INFO("\tAdd Transition To: {}", transit_to);
+				LOG_GAME_INFO("\tAdd Transition To: \"%s\"", transit_to);
+
+				new_scene->AddTransition(transit_to);
+
+				transit = transit->NextSiblingElement("Transit");
+			}
+
+			scene = scene->NextSiblingElement("Scene");
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
 void NetCommMngr::UpdateNetGameobject(net::NetGameobject& object)
 {
 	printf("NetCommMngr::UpdateNetGameobject\n");
@@ -35,90 +114,6 @@ void App::Update()
 
 	// LOGGER UPDATE
 	cherrysoda::Logger::Update();
-
-	/*
-	// PHYSICS UPDATE
-	float time_step = 0.16f;
-	int32 velocityIterations = 6;
-	int32 positionIterations = 2;
-	m_World->Step(time_step, velocityIterations, positionIterations);
-	
-
-	ImGui::Begin("Test");
-	if (ImGui::Button("Close"))
-	{
-		App::Exit();
-	}
-	if (ImGui::Button("Toggle Fullscreen"))
-	{
-		App::ToggleFullscreen();
-	}
-	ImGui::End();
-
-
-	size_t entities_count = 0;
-	for (auto e = GetScene()->Entities()->begin();
-		e != GetScene()->Entities()->end();
-		e++)
-	{
-		entities_count++;
-	}
-
-	ImGui::Begin("Perf");
-	ImGui::Text("FPS \"%d\"", FPS());
-	ImGui::Text("Entites \"%d\"", entities_count);
-
-	ImGui::End();
-
-	auto padone = cherrysoda::MInput::GamePads(0);
-	auto padtwo = cherrysoda::MInput::GamePads(1);
-
-	if (padone->Attached())
-	{
-		cout << "Pad One Attached" << endl;
-	}
-	else
-	{
-		padone->UpdateNull();
-		cout << "Pad One NOT Attached" << endl;
-	}
-	if (padtwo->Attached())
-	{
-		cout << "Pad Two Attached" << endl;
-	}
-	else
-	{
-		padtwo->UpdateNull();
-		cout << "Pad Two NOT Attached" << endl;
-	}
-
-	if (padone->Pressed(cherrysoda::Buttons::A))
-	{
-		padone->Rumble(0.4f, 5.0f);
-
-		// Draw Line
-		// Line Initialized and Rendered constantly.
-		cherrysoda::Line::CreateLine2D(GetScene(), cherrysoda::Math::Vec2(-rand() % 1000, rand() % 1000),
-			cherrysoda::Math::Vec2(rand() % 1000, -rand() % 1000), cherrysoda::Color::Blue, 1.0f);
-	}
-	if (padtwo->Pressed(cherrysoda::Buttons::A))
-	{
-		padtwo->Rumble(0.4f, 5.0f);
-
-		// Draw Line
-		// Line Initialized and Rendered constantly.
-		cherrysoda::Line::CreateLine2D(GetScene(), cherrysoda::Math::Vec2(-rand() % 1000, rand() % 1000),
-			cherrysoda::Math::Vec2(rand() % 1000, -rand() % 1000), cherrysoda::Color::DarkRed, 1.0f);
-	}
-
-
-	// Try and find Walter
-	auto list = m_scene->GetEntitiesByTagMask(m_entityNameTagMap["Walter"]);
-	if (!list.empty())
-	{
-		printf("Size of List with name \"Walter\" %d \n", list.size());
-	}
-	*/
 }
 
 void App::Initialize()
@@ -195,222 +190,18 @@ void App::Initialize()
 	// Everything went OK. Startup the engine!
 	base::Initialize();
 
-	// Create a Statemachine for scene transitions.
-	m_stateMachine = new StateMachine(this);
-
-	// Create a scene for first connection to masterserver and loging in.
-	auto init_scene = new InitializationScene("Initialization", m_stateMachine, this);
-	init_scene->AddTransition("SplashScreen");
-	m_stateMachine->SetInitialState(init_scene);
-	auto scene = init_scene->AsScene();
-	SetScene(scene);
-
-	// Load other Scenes.
-	// It would be a good Idea not to load all scenes in the start,
-	// but rather load the needed one async in another scene.
-	auto splash_screen = new SplashSceenScene("SplashScreen", m_stateMachine, this);
-	splash_screen->AddTransition("MainMenu");
-
+	// Load Game Scenes!
+	if (!cherrysoda::SceneGraphFactory::LoadSceneGraph("assets/SceneGraph.xml", this))
+	{
+		LOG_DBG_CRITICAL("[{:.4f}] Failed loading SceneGraph!", APP_RUN_TIME());
+		LOG_FILE_CRITICAL("[{:.4f}] Failed loading SceneGraph!", APP_RUN_TIME());
+		App::Exit();
+		return;
+	}
 
 	m_font = new cherrysoda::PixelFont("PixelFont");
 	auto atlas = cherrysoda::Atlas::FromAtlas("assets/font/atlases.json");
 	m_font->AddFontSize("assets/font/font_json.json", atlas);
-
-	// Check whether connection was initialized and we are connected.
-	if (!IsConnected())
-	{
-		App::Exit();
-	}
-
-
-	/*
-	cherrysoda::Graphics::SetPointTextureSampling();
-
-	// Create a scene.
-	auto scene = new cherrysoda::Scene();
-
-	// Create a renderer.
-	auto renderer = new cherrysoda::EverythingRenderer();
-	auto camera = renderer->GetCamera();
-	camera->Position(cherrysoda::Math::Vec3(0.0f, 0.0f, 200.0f));
-	renderer->SetEffect(cherrysoda::Graphics::GetEmbeddedEffect("sprite")); // Make a sprite renderer.
-	renderer->KeepCameraCenterOrigin(true);
-	camera->UseOrthoProjection(true);
-	camera->CenterOrigin();
-
-
-	// Add renderer to scene to render it...
-	scene->Add(renderer);
-
-	// .. and set it as running scene.
-	SetScene(scene);
-
-	// Add entity with sprite to scene.
-	cherrysoda::String json_path = Platform::GetDefaultAssetsPath() + "/maptiles.json";
-	auto sprite = new cherrysoda::Sprite(json_path);
-	sprite->Position2D(cherrysoda::Math::Vec2(160.02f, 250.0f));
-	sprite->AddLoop("title", "forest_jungle_normal"); // For the whole animation define "name"
-	//sprite->AddLoop("title", "cherrysoda00"); // For the just a sprite in "images" from the animation sprites
-	sprite->Play("title");
-	sprite->CenterOrigin();
-	sprite->Justify(cherrysoda::Math::Vec2(0.5f));
-
-	auto entity = new cherrysoda::Entity();
-	entity->Add(sprite);
-	entity->AddTag(++g_iEntityID);
-
-
-	scene->Add(entity);
-
-
-	// INITIALIZE BOX2D
-	b2Vec2 gravity_vec(0.0f, 0.0f);
-	m_World = new b2World(gravity_vec);
-
-	b2BodyDef ground_body_def;
-	ground_body_def.position.Set(5.0f, 5.0f);
-
-	b2Body* ground_body = m_World->CreateBody(&ground_body_def);
-
-	b2PolygonShape ground_box;
-	ground_box.SetAsBox(10.0f, 3.0f);
-
-	ground_body->CreateFixture(&ground_box, 0.5f);
-
-	b2BodyDef body_def;
-	body_def.type = b2_dynamicBody;
-	body_def.linearDamping = 1.0f;
-	body_def.angularDamping = 1.0f;
-	body_def.position.Set(5.0f, 4.0f);
-	b2Body* body = m_World->CreateBody(&body_def);
-
-	b2PolygonShape dynamic_box;
-	dynamic_box.SetAsBox(1.0f, 1.0f);
-	b2FixtureDef fixture_def;
-	fixture_def.shape = &dynamic_box;
-	fixture_def.density = 1.0f;
-	fixture_def.friction = 0.7f;
-
-	body->CreateFixture(&fixture_def);
-
-	float time_step = 0.16f;
-	int32 velocityIterations = 6;
-	int32 positionIterations = 2;
-
-
-
-	// INITIALIZE AUDIO
-	cherrysoda::Audio::Initialize();
-	cherrysoda::Audio::LoadFile("main_theme", "assets/atmosphere_2.ogg");
-	cherrysoda::Audio::MasterVolume(0);
-
-	cherrysoda::Audio::EventInstance& inst = cherrysoda::Audio::Loop("main_theme");
-	if (inst.IsValid())
-	{
-		cherrysoda::Audio::Stop(inst);
-	}
-
-
-
-	// TESTING XML
-	cherrysoda::XML::XMLDocument doc;
-	if (cherrysoda::XMLUtil::ReadXMLFile(doc, "assets/sheet_data.xml"))
-	{
-		printf_s("Reading XML sucessful!");
-		doc.Clear();
-	}
-
-
-
-
-
-	// TESTING EVENT SYSTEM
-	// Create Event listeners, which wait for certain events.
-	cherrysoda::EventListener* event_listener = new cherrysoda::EventListener("Evnt_Application_Start");
-	cherrysoda::EventListener* event_listener_2 = new cherrysoda::EventListener("Evnt_Application_Update");
-	
-	// Create Scene wide event system.
-	cherrysoda::EventSystem* event_system = new cherrysoda::EventSystem();
-
-	// Create entities for scene.
-	auto event_listener_entity = new cherrysoda::Entity();
-	event_listener_entity->Add(event_listener);
-	event_listener_entity->AddTag(++g_iEntityID);
-	size_t event_system_id = g_iEntityID;
-
-	auto event_listener_entity_2 = new cherrysoda::Entity();
-	event_listener_entity_2->Add(event_listener_2);
-	event_listener_entity_2->AddTag(++g_iEntityID);
-
-	auto event_system_entity = new cherrysoda::Entity();
-	event_system_entity->Add(event_system);
-	event_system_entity->AddTag(++g_iEntityID);
-
-
-	// Add listeners to the event system.
-	event_system_entity->Get<cherrysoda::EventSystem>()->Add(event_listener, event_listener->EventType());
-	event_system_entity->Get<cherrysoda::EventSystem>()->Add(event_listener_2, event_listener_2->EventType());
-
-
-	// Create an emitter.
-	cherrysoda::EventEmitter* emitter = new cherrysoda::EventEmitter(TEST_EmitEvent, event_system_id);
-	auto event_emitter_entity = new cherrysoda::Entity();
-	event_emitter_entity->Add(emitter);
-	event_emitter_entity->AddTag(++g_iEntityID);
-
-
-	// Add event entities to scene.
-	scene->Add(event_listener_entity);
-	scene->Add(event_listener_entity_2);
-	scene->Add(event_system_entity);
-	scene->Add(event_emitter_entity);
-
-
-	// Sound Entity
-	auto sound_entity = new cherrysoda::Entity();
-	auto sound = new cherrysoda::Sound("", "");
-	sound_entity->Add(sound);
-	sound_entity->AddTag(++g_iEntityID);
-
-
-
-	auto particle_system = new cherrysoda::ParticleSystem(0, 20000);
-	auto particle_type = new cherrysoda::ParticleType();
-	particle_type->m_color = cherrysoda::Color::Yellow;
-	particle_type->m_color2 = cherrysoda::Color::Red;
-	particle_type->m_speedMin = 0.f;
-	particle_type->m_speedMax = 200.f;
-	particle_type->m_sizeRange = .5f;
-	particle_type->m_lifeMin = 1.f;
-	particle_type->m_lifeMax = 10.f;
-	particle_type->m_directionRange = cherrysoda::Math::Pi2;
-	particle_type->m_colorMode = cherrysoda::ParticleType::ColorModes::Fade;
-	particle_type->m_rotationMode = cherrysoda::ParticleType::RotationModes::Random;
-	particle_type->m_acceleration = cherrysoda::Math::Vec2(0.f, -100.f);
-	particle_type->m_scaleOut = true;
-	particle_type->m_source = sprite->Texture();
-
-	auto particle_emitter = new cherrysoda::ParticleEmitter(particle_system, particle_type,
-															cherrysoda::Math::Vec2(0.0f, 0.0f),
-															cherrysoda::Math::Vec2(-50.0f, 50.0f), 500, 1.0f);
-
-	auto particle_entity = new cherrysoda::Entity();
-	particle_entity->Add(particle_emitter);
-	particle_entity->AddTag(++g_iEntityID);
-
-
-	// Add to scene the Particle Entity and System to get desired effect.
-	scene->Add(particle_entity);
-	scene->Add(particle_system);
-
-
-
-	auto dude = new cherrysoda::Entity();
-	dude->AddTag(++g_iEntityID);
-	m_entityNameTagMap.emplace("Walter", g_iEntityID);
-
-	scene->Add(dude);
-	*/
 }
 
 
@@ -535,7 +326,7 @@ void App::_onSteamGameOverlayActivated(GameOverlayActivated_t* pCallback)
 	}
 }
 
-void StateMachine::Transit(const cherrysoda::String& name)
+void cherrysoda::CStateMachine::Transit(const cherrysoda::String& name)
 {
 	if (cherrysoda::STL::Find(m_currentState->m_transitions, name) != m_currentState->m_transitions.end())
 	{
@@ -545,17 +336,6 @@ void StateMachine::Transit(const cherrysoda::String& name)
 
 		m_previousState = m_currentState;
 		m_currentState = m_states[name];
-
-
-		// Call unloading and loading functions async and wait for them to end on end.
-		//auto on_end_result = std::async(&State::OnEnd, m_previousState);
-		//auto on_begin_result = std::async(&State::OnBegin, m_currentState);
-
-		//m_previousState->OnEnd();
-		//m_currentState->OnBegin();
-
-		// Wait for loading to finish. Unloading can proceed in the background.
-		//on_begin_result.wait();
 
 		m_application->SetScene(m_currentState->AsScene());
 	}
@@ -581,15 +361,15 @@ void App::RegisterCommands()
 
 
 // SCENE FUNCTION IMPLEMENTATIONS
-void InitializationScene::SceneImpl::Begin()
+void cherrysoda::InitializationScene::SceneImpl::Begin()
 {
 	LOG_GAME_INFO("[InitializationScene] Begin");
 }
-void InitializationScene::SceneImpl::End()
+void cherrysoda::InitializationScene::SceneImpl::End()
 {
 	LOG_GAME_INFO("[InitializationScene] End");
 }
-void InitializationScene::SceneImpl::Update()
+void cherrysoda::InitializationScene::SceneImpl::Update()
 {
 	static bool show_demo;
 	ImGui::ShowDemoWindow(&show_demo);
@@ -693,106 +473,22 @@ void InitializationScene::SceneImpl::Update()
 		m_stateMachine->Transit("SplashScreen");
 	}
 }
-void SplashSceenScene::SceneImpl::Update()
+void cherrysoda::SplashSceenScene::SceneImpl::Update()
 {
 	if (!m_initializationComplete) return;
 
 	// Base update.
 	cherrysoda::Scene::Update();
 
+	LOG_DBG_WARN("[{:.4f}] SplashScreenScene transitions directly to GameScene...", APP_RUN_TIME());
 
-	if (!m_application->Incoming().empty())
-	{
-		auto msg = m_application->Incoming().pop_front().msg;
-
-		switch (msg.header.id)
-		{
-		case net::Message::NET_MSG_MAPDATA:
-		{
-			// We receive NetGameobject from the MongoDB Database.
-			// Create an Entity from the data and store in the current scene
-			// ( and add it to the map definition )
-			//
-			// Each message represents one Entity, and we
-			// will receive x many messages...
-		}
-		}
-	}
+	m_stateMachine->Transit("GameScene");
 }
-void SplashSceenScene::SceneImpl::Begin()
+void cherrysoda::SplashSceenScene::SceneImpl::Begin()
 {
 	LOG_GAME_INFO("[SplashSceenScene] Begin");
 
 	using namespace cherrysoda;
-	auto factory = Factory::get();
-
-	// Event System.
-	auto event_system = factory->Begin(this)
-		.Add(new EventSystem())
-		.End();
-
-	// Net Entity.
-	auto chin = factory->Begin(this)
-		.Add(new Unit("Chinperator Hans the Second the Great Emperor of Chinlandia the Mighty One", 1, 50, 200, 25, 25, 2, 1, 256.0f, 128.0f))
-		.Add(new Observable(event_system->Tag()))
-		.End();
-
-	// Observer.
-	auto observer = factory->Begin(this)
-		.Add(new Observer("NetGameobjectUpdate", chin->Get< Observable >()->GetNetId()))
-		.End();
-
-	// Register Observer.
-	event_system->Get< EventSystem >()->Add(observer->Get< Observer >(), "NetGameobjectUpdate");
-
-
-	// TEST: REQUEST MAP DATA FROM SERVER.
-	olc::net::message < net::Message > msg;
-	msg.header.id = net::Message::NET_MSG_MAPDATA;
-	m_application->Send(msg);
-
-
-	/*
-	// TESTING
-	// Make Entity (EventSystem)
-	auto event_system = new cherrysoda::Entity();
-	event_system->AddTag(++g_iEntityID);
-	auto event_system_id = g_iEntityID;
-	event_system->Add(new cherrysoda::EventSystem());
-
-
-	// Make Entity (Observable unit)
-	auto e = new cherrysoda::Entity();
-	e->AddTag(++g_iEntityID);
-	auto unit = new cherrysoda::Unit();
-	unit->SetUnitName("Chinperator");
-	unit->SetHealth(20);
-	unit->SetArmor(250);
-	unit->SetDefense(50);
-	unit->SetAttack(30);
-	unit->SetTilePositionX(1);
-	unit->SetTilePositionY(18);
-	unit->SetPositionX(128.0f);
-	unit->SetPositionY(128.0f * 18);
-	unit->SetPlayerId(1);
-	e->Add(unit);
-	e->Add(new cherrysoda::Observable(event_system_id));
-
-	// Make Entity (Observer)
-	auto listener = new cherrysoda::Entity();
-	listener->AddTag(++g_iEntityID);
-	listener->Add(new cherrysoda::Observer("NetGameobjectUpdate", e->Get< cherrysoda::Observable >()->GetNetId()));
-
-	// Add EventListener(Observer)
-	event_system->Get< cherrysoda::EventSystem >()->Add(listener->Get< cherrysoda::Observer >(), "NetGameobjectUpdate");
-
-	// Add Entity to Scene.
-	Add(e);
-	Add(event_system);
-	Add(listener);
-	// TESTING END
-	*/
-
 
 	// Initialize rendering.
 	cherrysoda::Graphics::SetPointTextureSampling();
@@ -805,65 +501,28 @@ void SplashSceenScene::SceneImpl::Begin()
 	camera->CenterOrigin();
 	Add(renderer);
 
-
-	/*
-	// Create Entity for Text.
-	auto text1 = new cherrysoda::Entity();
-	auto text2 = new cherrysoda::Entity();
-	auto text3 = new cherrysoda::Entity();
-	auto text4 = new cherrysoda::Entity();
-	text1->AddTag(++g_iEntityID);
-	text2->AddTag(++g_iEntityID);
-	text3->AddTag(++g_iEntityID);
-	text4->AddTag(++g_iEntityID);
-
-
-	// Create Text.
-	Localization::SetLanguage("English");
-	cherrysoda::String s = Localization::GetLocalizedString("Main Menu");			  // Eng.
-	Localization::SetLanguage("Russian");
-	cherrysoda::String ss = Localization::GetLocalizedString("Options");			  // Ru.
-	cherrysoda::String sss = Localization::GetLocalizedString("Single Player");		  // Ru.
-	Localization::SetLanguage("German");
-	cherrysoda::String ssss = Localization::GetLocalizedString("Main Menu");		  // Germ.
-
-	auto t = new cherrysoda::PixelText(m_application->m_font, s.c_str(), cherrysoda::Color::Red);
-	t->Position(cherrysoda::Math::Vec2(-100.0f, -100.0f));
-	t->Size(32.0f);
-
-	auto tt = new cherrysoda::PixelText(m_application->m_font, ss.c_str(), cherrysoda::Color::Yellow);
-	tt->Position(cherrysoda::Math::Vec2(10.0f, 1.0f));
-	tt->Size(32.0f);
-
-	auto ttt = new cherrysoda::PixelText(m_application->m_font, sss.c_str(), cherrysoda::Color::Blue);
-	ttt->Position(cherrysoda::Math::Vec2(250.0f, 35.0f));
-	ttt->Size(32.0f);
-
-	auto tttt = new cherrysoda::PixelText(m_application->m_font, ssss.c_str(), cherrysoda::Color::Green);
-	tttt->Position(cherrysoda::Math::Vec2(0.0f, 300.0f));
-	tttt->Size(32.0f);
-
-
-
-	text1->Add(t);
-	text2->Add(tt);
-	text3->Add(ttt);
-	text4->Add(tttt);
-
-
-	// Add Text to Scene.
-	Add(text1);
-	Add(text2);
-	Add(text3);
-	Add(text4);
-	*/
-
 	m_initializationComplete = true;
 }
-void SplashSceenScene::SceneImpl::End()
+void cherrysoda::SplashSceenScene::SceneImpl::End()
 {
 	LOG_GAME_INFO("[SplashSceenScene] End");
 }
+void cherrysoda::DebugGameScene::SceneImpl::Update()
+{
+	LOG_GAME_INFO("[DebugGameScene] Update");
+}
+void cherrysoda::DebugGameScene::SceneImpl::End()
+{
+	LOG_GAME_INFO("[DebugGameScene] End");
+}
+void cherrysoda::DebugGameScene::SceneImpl::Begin()
+{
+	LOG_GAME_INFO("[DebugGameScene] Begin");
+}
+
+
+
+
 
 using GameApp = App;
 CHERRYSODA_DEFAULT_MAIN
