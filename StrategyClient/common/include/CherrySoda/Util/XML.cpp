@@ -1,10 +1,13 @@
-#include "XML.h"
+#include <CherrySoda/Util/XML.h>
 
-bool cherrysoda::XMLUtil::ReadXMLFile(cherrysoda::XML::XMLDocument& doc, const cherrysoda::String& filename)
+using cherrysoda::String;
+using cherrysoda::XMLUtil;
+
+
+bool XMLUtil::ReadXMLFile(cherrysoda::xml::XMLDocument& doc, const String& filename)
 {
-	cherrysoda::XML::XMLError result = doc.LoadFile(filename.c_str());
-	if (result != cherrysoda::XML::XMLError::XML_SUCCESS)
-	{
+	cherrysoda::xml::XMLError result = doc.LoadFile(filename.c_str());
+	if (result != cherrysoda::xml::XMLError::XML_SUCCESS) {
 		// Clean up.
 		doc.Clear();
 		return false;

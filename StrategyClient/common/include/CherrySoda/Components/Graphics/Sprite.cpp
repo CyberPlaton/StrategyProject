@@ -43,7 +43,7 @@ void Sprite::Update()
 					if (!m_currentAnimation->m_goto.IsEmpty()) {
 						m_currentAnimationID = m_currentAnimation->m_goto.Choose();
 						if (m_onChange) {
-							m_onChange(m_lastAnimationID, m_currentAnimationID);	
+							m_onChange(m_lastAnimationID, m_currentAnimationID);
 						}
 						m_lastAnimationID = m_currentAnimationID;
 						m_currentAnimation = &m_animations[m_lastAnimationID];
@@ -86,10 +86,15 @@ void Sprite::Update()
 	}
 }
 
-void Sprite::SetFrame(MTexture texture)
+void Sprite::SetFrame(const MTexture& texture)
 {
+	if (Texture() == texture)
+		return;
+
 	Texture(texture);
-	Origin(Math::Vec2(Texture().Size()) * m_justify);
+	if (m_justifyHasValue) {
+		Origin(Math::Vec2(Texture().Size()) * m_justify);
+	}
 	if (m_onFrameChange) {
 		m_onFrameChange(m_currentAnimationID);
 	}
@@ -98,7 +103,7 @@ void Sprite::SetFrame(MTexture texture)
 void Sprite::Play(const StringID& id, bool restart/* = false*/, bool randomizeFrame/* = false*/)
 {
 	if (m_currentAnimationID != id || restart) {
-		CHERRYSODA_ASSERT_FORMAT(STL::ContainsKey(m_animations, id), "No Animation defined for ID: %s\n", id.GetStr().c_str()); 
+		CHERRYSODA_ASSERT_FORMAT(Has(id), "No Animation defined for ID: %s\n", id.GetStr().c_str());
 
 		if (m_onChange) {
 			m_onChange(m_lastAnimationID, id);
@@ -125,8 +130,14 @@ Sprite* Sprite::CloneInto(Sprite* clone)
 	clone->Justify(Justify());
 	clone->Origin(Origin());
 
+	clone->m_justifyHasValue = m_justifyHasValue;
 	clone->m_animations = m_animations;
-	clone->m_currentAnimation = m_currentAnimation;
+	if (STL::ContainsKey(m_animations, m_currentAnimationID)) {
+		clone->m_currentAnimation = &clone->m_animations[m_currentAnimationID];
+	}
+	else {
+		clone->m_currentAnimation = nullptr;
+	}
 	clone->m_animationTimer = m_animationTimer;
 	clone->m_width = m_width;
 	clone->m_height = m_height;

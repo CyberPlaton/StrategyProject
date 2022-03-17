@@ -12,9 +12,8 @@ class SingleTagRenderer : public RendererBase
 {
 public:
 	SingleTagRenderer(const BitTag& tag)
-	: m_tag(tag)
-	{
-	}
+		: m_tag(tag)
+	{}
 
 	void Render(Scene* scene) override;
 
@@ -24,4 +23,4 @@ private:
 
 } // namespace cherrysoda
 
-#endif // _CHERRYSODA_RENDERERS_SINGLETAGRENDERER_H_ 
+#endif // _CHERRYSODA_RENDERERS_SINGLETAGRENDERER_H_

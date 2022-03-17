@@ -17,7 +17,7 @@ public:
 
 	enum class LockModes { Open, Locked, Error };
 
-	template<class T> 
+	template<class T>
 	T* Get()
 	{
 		for (auto component : m_components) {
@@ -31,6 +31,8 @@ public:
 	inline Entity* GetEntity() { return m_entity; }
 
 private:
+	CHERRYSODA_ITERABLE(m_components);
+
 	friend class Entity;
 
 	ComponentList(Entity* entity);
@@ -40,8 +42,8 @@ private:
 
 	void Add(Component* component);
 	void Remove(Component* component);
-	void Add(IterableComponents& component);
-	void Remove(IterableComponents& component);
+	void Add(const IterableComponents& component);
+	void Remove(const IterableComponents& component);
 
 	void Update();
 	void Render();
@@ -62,10 +64,8 @@ private:
 	HashSetComponents m_removing;
 
 	Entity* m_entity;
-
-	CHERRYSODA_ITERABLE(m_components);
 };
 
 } // namespace cherrysoda
 
-#endif // _CHERRYSODA_INTERNALUTILITIES_COMPONENTLIST_H_ 
+#endif // _CHERRYSODA_INTERNALUTILITIES_COMPONENTLIST_H_

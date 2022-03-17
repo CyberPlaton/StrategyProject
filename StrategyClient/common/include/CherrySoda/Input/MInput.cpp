@@ -130,7 +130,7 @@ void MInput::Initialize()
 	SDL_Event evt[1];
 	while (SDL_PeepEvents(evt, 1, SDL_GETEVENT, SDL_CONTROLLERDEVICEADDED, SDL_CONTROLLERDEVICEADDED) == 1) {
 		AddControllerInstance(evt[0].cdevice.which);
-	}	
+	}
 
 	ms_keyboard = new KeyboardData();
 	ms_mouse = new MouseData();
@@ -244,8 +244,7 @@ const MInput::MouseState MInput::GetMouseState()
 const MInput::GamePadState MInput::GetGamePadState(int index)
 {
 	SDL_GameController* device = (SDL_GameController*)ms_internalDevices[index];
-	if (device == nullptr)
-	{
+	if (device == nullptr) {
 		return GamePadState();
 	}
 
@@ -342,28 +341,22 @@ const MInput::GamePadState MInput::GetGamePadState(int index)
 
 #if SDL_VERSION_ATLEAST(2,0,14)
 	// Extensions
-	if (SDL_GameControllerGetButton(device, SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_MISC1) != 0)
-	{
+	if (SDL_GameControllerGetButton(device, SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_MISC1) != 0) {
 		buttonState |= Buttons::Misc1EXT;
 	}
-	if (SDL_GameControllerGetButton(device, SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_PADDLE1) != 0)
-	{
+	if (SDL_GameControllerGetButton(device, SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_PADDLE1) != 0) {
 		buttonState |= Buttons::Paddle1EXT;
 	}
-	if (SDL_GameControllerGetButton(device, SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_PADDLE2) != 0)
-	{
+	if (SDL_GameControllerGetButton(device, SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_PADDLE2) != 0) {
 		buttonState |= Buttons::Paddle2EXT;
 	}
-	if (SDL_GameControllerGetButton(device, SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_PADDLE3) != 0)
-	{
+	if (SDL_GameControllerGetButton(device, SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_PADDLE3) != 0) {
 		buttonState |= Buttons::Paddle3EXT;
 	}
-	if (SDL_GameControllerGetButton(device, SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_PADDLE4) != 0)
-	{
+	if (SDL_GameControllerGetButton(device, SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_PADDLE4) != 0) {
 		buttonState |= Buttons::Paddle4EXT;
 	}
-	if (SDL_GameControllerGetButton(device, SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_TOUCHPAD) != 0)
-	{
+	if (SDL_GameControllerGetButton(device, SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_TOUCHPAD) != 0) {
 		buttonState |= Buttons::TouchPadEXT;
 	}
 #endif // SDL_VERSION_ATLEAST(2,0,14)
@@ -391,8 +384,7 @@ void MInput::SetMousePosition(const Math::IVec2& pos)
 bool MInput::SetGamePadVibration(int index, float leftMotor, float rightMotor)
 {
 	SDL_GameController* device = (SDL_GameController*)ms_internalDevices[index];
-	if (device == nullptr)
-	{
+	if (device == nullptr) {
 		return false;
 	}
 

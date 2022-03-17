@@ -15,7 +15,7 @@ public:
 	CHERRYSODA_DECLARE_COMPONENT(StateMachine, Component);
 
 	StateMachine(int maxStates = 32)
-	: base(true, false)
+		: base(true, false)
 	{
 		STL::Resize(m_begins, maxStates);
 		STL::Resize(m_updates, maxStates);
@@ -32,16 +32,15 @@ public:
 
 	void SetCallbacks(int state, STL::Func<int> onUpdate, STL::Func<void> coroutine = nullptr, STL::Action<> begin = nullptr, STL::Action<> end = nullptr);
 
-
 	void Update() override;
 
 private:
 	int m_state = -1;
-	int m_previousState = -1;	
+	int m_previousState = -1;
 
 	bool m_changedStates = false;
 	// TODO: log state change in debug console
-	// bool m_log = false; 
+	// bool m_log = false;
 	bool m_locked = false;
 
 	STL::Vector<STL::Action<>> m_begins;

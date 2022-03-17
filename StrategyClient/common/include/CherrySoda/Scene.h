@@ -21,11 +21,11 @@ public:
 	virtual ~Scene();
 
 	virtual void Begin();
-	virtual void End(); 
+	virtual void End();
 
-	virtual void BeforeUpdate();	
-	virtual void Update();	
-	virtual void AfterUpdate();	
+	virtual void BeforeUpdate();
+	virtual void Update();
+	virtual void AfterUpdate();
 
 	virtual void BeforeRender();
 	virtual void Render();
@@ -39,7 +39,7 @@ public:
 
 	void Add(Entity* entity);
 	void Remove(Entity* entity);
-	
+
 	const STL::List<Entity*> GetEntitiesByTagMask(BitTagValueType mask) const;
 	const STL::List<Entity*> GetEntitiesExcludingTagMask(BitTagValueType mask) const;
 
@@ -63,10 +63,12 @@ public:
 		return (int)((TimeActive() - Engine::Instance()->DeltaTime()) / interval) < (int)(TimeActive() / interval);
 	}
 
-	bool CollideCheck(const Math::Vec2& point, int tag);
-	Math::Vec2 LineWalkCheck(const Math::Vec2& from, const Math::Vec2& to, int tag, float precision);
+	bool CollideCheck(const Math::Vec2& point, int tag) const;
+	bool CollideCheck(const Math::Vec2& from, const Math::Vec2& to, int tag) const;
+	Math::Vec2 LineWalkCheck(const Math::Vec2& from, const Math::Vec2& to, int tag, float precision) const;
 
 	const STL::List<Entity*>& operator [] (const BitTag& tag) const;
+	const STL::List<Entity*>& Get(const BitTag& tag) const;
 
 	void AddActionOnEndOfFrame(STL::Action<> func);
 

@@ -7,7 +7,9 @@ namespace cherrysoda {
 
 class Camera;
 class Circle;
+class ColliderList;
 class Color;
+class Grid;
 
 class Hitbox : public Collider
 {
@@ -15,21 +17,30 @@ public:
 	CHERRYSODA_DECLARE_COLLIDER(Hitbox, Collider);
 
 	Hitbox(float width, float height, float x = 0.f, float y = 0.f)
-	: m_width(width)
-	, m_height(height)
+		: m_width(width)
+		, m_height(height)
 	{
 		Position2D(Math::Vec2(x, y));
 	}
 
 	bool Collide(const Circle* circle) const override;
+	bool Collide(const ColliderList* list) const override;
 	bool Collide(const Hitbox* hitbox) const override;
+	bool Collide(const Grid* grid) const override;
 	bool Collide(const Math::Vec2& point) const override;
+	bool Collide(const Math::Rectangle& rect) const override;
+	bool Collide(const Math::Vec2& from, const Math::Vec2& to) const override;
 	void Render(const Camera* camera, const Color& color) const override;
 
 	float Left() const override { return InternalLeft(); }
 	float Right() const override { return InternalRight(); }
 	float Bottom() const override { return InternalBottom(); }
 	float Top() const override { return InternalTop(); }
+
+	float Width() const override { return m_width; }
+	float Height() const override { return m_height; }
+	void Width(float width) { m_width = width; }
+	void Height(float height) { m_height = height; }
 
 	inline float AbsoluteLeft() const { return GetEntity() ? InternalLeft() + GetEntity()->PositionX() : InternalLeft(); }
 	inline float AbsoluteRight() const { return GetEntity() ? InternalRight() + GetEntity()->PositionX() : InternalRight(); }
@@ -42,11 +53,10 @@ public:
 		PositionY(-m_height / 2.f);
 	}
 
-	bool Intersects(const Hitbox* hitbox) const
+	inline bool Intersects(const Hitbox* hitbox) const
 	{
 		return AbsoluteLeft() < hitbox->AbsoluteRight() && AbsoluteRight() > hitbox->AbsoluteLeft() &&
 			AbsoluteBottom() < hitbox->AbsoluteTop() && AbsoluteTop() > hitbox->AbsoluteBottom();
-		return false;
 	}
 
 private:

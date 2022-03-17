@@ -13,6 +13,8 @@
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtx/quaternion.hpp>
 
+#include <cmath>
+#include <limits>
 #include <type_traits>
 
 
@@ -43,8 +45,8 @@
 	inline void NAME(const cherrysoda::Math::Vec2& v) { NAME(cherrysoda::Math::Vec3(v, NAME().z)); } \
 	inline void NAME##2D(const cherrysoda::Math::Vec2& v) { NAME(cherrysoda::Math::Vec3(v, NAME().z)); } \
 	inline void Move##NAME(const cherrysoda::Math::Vec3& v) { NAME(VALUE + v); } \
-	inline void Move##NAME(const cherrysoda::Math::Vec2& v) { NAME(VALUE + cherrysoda::Math::Vec3(v, VALUE.z)); } \
-	inline void Move##NAME##2D(const cherrysoda::Math::Vec2& v) { NAME(VALUE + cherrysoda::Math::Vec3(v, VALUE.z)); } \
+	inline void Move##NAME(const cherrysoda::Math::Vec2& v) { NAME(VALUE + cherrysoda::Math::Vec3(v, 0.f)); } \
+	inline void Move##NAME##2D(const cherrysoda::Math::Vec2& v) { NAME(VALUE + cherrysoda::Math::Vec3(v, 0.f)); } \
 	inline void Move##NAME##X(float x) { NAME##X(VALUE.x + x); } \
 	inline void Move##NAME##Y(float y) { NAME##Y(VALUE.y + y); } \
 	inline void Move##NAME##Z(float z) { NAME##Z(VALUE.z + z); } \
@@ -137,15 +139,17 @@ inline ENUM_T operator - (ENUM_T lhs, ENUM_T rhs) \
 
 #define Math_Atan2      glm::atan
 #define Math_Abs        glm::abs
+#define Math_Ceiling    glm::ceil
 #define Math_Cross      glm::cross
 #define Math_Cos        glm::cos
 #define Math_Clamp      glm::clamp
 #define Math_Dot        glm::dot
+#define Math_Degrees    glm::degrees
 #define Math_Floor      glm::floor
 #define Math_Length     glm::length
 #define Math_LengthSq   glm::length2
-#define Math_Min        glm::min 
-#define Math_Max        glm::max 
+#define Math_Max        glm::max
+#define Math_Min        glm::min
 #define Math_Mod        glm::mod
 #define Math_Normalize  glm::normalize
 #define Math_Pow        glm::pow
@@ -174,10 +178,29 @@ namespace cherrysoda {
 class Math
 {
 public:
-	static constexpr float Pi     = 3.14159265357878323846f;
+	static constexpr float Pi     = 3.14159265358979323846f;
 	static constexpr float Pi2    = Pi * 2.0f;
 	static constexpr float PiHalf = Pi * 0.5f;
+	static constexpr float PiQuarter = Pi * 0.25f;
 	static constexpr float epsf   = 1E-06f;
+
+	static constexpr float FloatMin = std::numeric_limits<float>::min();
+	static constexpr float FloatMax = std::numeric_limits<float>::max();
+
+	static constexpr int IntMin = std::numeric_limits<int>::min();
+	static constexpr int IntMax = std::numeric_limits<int>::max();
+
+	static const double NaN()
+	{
+		static double nan = std::nan("");
+		return nan;
+	}
+
+	static const float NaNf()
+	{
+		static float nanf = std::nanf("");
+		return nanf;
+	}
 
 	using Vec2 = glm::vec2;
 	using Vec3 = glm::vec3;
@@ -211,7 +234,13 @@ public:
 		inline float Bottom() const { return Y(); }
 
 		inline void Move(const Vec2& delta) { m_coord += delta; }
-		inline Vec2 Clamp(const Vec2& pos) { return Vec2(Math_Clamp(pos.x, Left(), Right()), Math_Clamp(pos.y, Bottom(), Top())); }
+		inline void Size(const Vec2& size) { m_size = size; }
+		inline Vec2 Clamp(const Vec2& pos) const { return Vec2(Math_Clamp(pos.x, Left(), Right()), Math_Clamp(pos.y, Bottom(), Top())); }
+
+		inline bool Intersects(const Rectangle& rect) const
+		{
+			return Left() < rect.Right() && Right() > rect.Left() && Bottom() < rect.Top() && Top() > rect.Bottom();
+		}
 	};
 
 	struct IRectangle
@@ -230,7 +259,10 @@ public:
 		inline int Bottom() const { return Y(); }
 
 		inline void Move(const IVec2& delta) { m_coord += delta; }
-		inline IVec2 Clamp(const IVec2& pos) { return IVec2(Math_Clamp(pos.x, Left(), Right()), Math_Clamp(pos.y, Bottom(), Top())); }
+		inline IVec2 Clamp(const IVec2& pos) const { return IVec2(Math_Clamp(pos.x, Left(), Right()), Math_Clamp(pos.y, Bottom(), Top())); }
+
+		inline bool operator == (const IRectangle& rect) const { return m_coord == rect.m_coord && m_size == rect.m_size; }
+		inline bool operator != (const IRectangle& rect) const { return m_coord != rect.m_coord || m_size != rect.m_size; }
 	};
 
 	static inline Vec3 RotateVector_(const Vec3& v3, float angle, const Vec3& axis = Vec3_ZUp)

@@ -3,7 +3,7 @@
 bool cherrysoda::SceneGraphFactory::LoadSceneGraph(const cherrysoda::String& filename, App* app)
 {
 	using namespace cherrysoda;
-	using namespace cherrysoda::XML;
+	using namespace cherrysoda::xml;
 
 	XMLUtil xml;
 	XMLDocument doc;
@@ -122,7 +122,7 @@ void App::Initialize()
 	{
 		LOG_DBG_CRITICAL("[{:.4f}] Logger not initialized!", APP_RUN_TIME());
 		LOG_FILE_CRITICAL("[{:.4f}] Logger not initialized!", APP_RUN_TIME());
-		App::Exit();
+		App::Exit(); 
 		return;
 	}
 	LOG_DBG_INFO("[{:.4f}] Logger initialized...", APP_RUN_TIME());
@@ -202,13 +202,16 @@ void App::Initialize()
 	m_font = new cherrysoda::PixelFont("PixelFont");
 	auto atlas = cherrysoda::Atlas::FromAtlas("assets/font/atlases.json");
 	m_font->AddFontSize("assets/font/font_json.json", atlas);
+
+
+	m_initialized = true;
 }
 
 
 void App::LoadContent()
 {
 	// Load only if Initialization went OK.
-	if (!App::ShouldExit())
+	if (!App::IsInitialized())
 	{
 		base::LoadContent();
 	}
@@ -261,7 +264,7 @@ void App::TerminateLogger()
 }
 bool App::InitializePlatformClient()
 {
-	if (!App::ShouldExit())
+	if (!App::IsInitialized())
 	{
 		if (PlatformClient::get()->Initialize())
 		{
@@ -278,7 +281,7 @@ void App::TerminatePlatformClient()
 }
 bool App::InitializeGamerService()
 {
-	if (!App::ShouldExit())
+	if (!App::IsInitialized())
 	{
 		if (GamerService::get()->Initialize())
 		{
@@ -295,7 +298,7 @@ void App::TerminateGamerService()
 }
 bool App::InitializeMasterConnection()
 {
-	if (!App::ShouldExit())
+	if (!App::IsInitialized())
 	{
 		LOG_GAME_INFO("[App::InitializeMasterConnection] Try connect to Master server");
 
@@ -374,6 +377,11 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 	static bool show_demo;
 	ImGui::ShowDemoWindow(&show_demo);
 
+#ifdef DEBUG
+	LOG_GAME_WARN("[InitializationScene] Debug: Transit to DebugGameScene");
+	LOG_DBG_WARN("[InitializationScene] Debug: Transit to DebugGameScene");
+	m_stateMachine->Transit("DebugGame");
+#endif
 
 	if (m_application->IsConnected() && m_initializationComplete == false)
 	{
@@ -510,6 +518,10 @@ void cherrysoda::SplashSceenScene::SceneImpl::End()
 void cherrysoda::DebugGameScene::SceneImpl::Update()
 {
 	LOG_GAME_INFO("[DebugGameScene] Update");
+
+	// Base update.
+	cherrysoda::Scene::Update();
+
 }
 void cherrysoda::DebugGameScene::SceneImpl::End()
 {
@@ -518,6 +530,31 @@ void cherrysoda::DebugGameScene::SceneImpl::End()
 void cherrysoda::DebugGameScene::SceneImpl::Begin()
 {
 	LOG_GAME_INFO("[DebugGameScene] Begin");
+
+	// Initialize rendering.
+	cherrysoda::Graphics::SetPointTextureSampling();
+	auto renderer = new cherrysoda::EverythingRenderer();
+	auto camera = renderer->GetCamera();
+	camera->Position(cherrysoda::Math::Vec3(0.0f, 0.0f, 200.0f));
+	renderer->SetEffect(cherrysoda::Graphics::GetEmbeddedEffect("sprite")); // Make a sprite renderer.
+	renderer->KeepCameraCenterOrigin(true);
+	camera->UseOrthoProjection(true);
+	camera->CenterOrigin();
+	Add(renderer);
+
+
+
+	auto factory = Factory::get();
+	
+	auto entity = factory->Begin(this)
+		.Add(new  Sprite("assets/King.json"))
+		.End();
+
+	entity->Get< Sprite >()->AddLoop("Idle", "tile", 1/ 60.0f * 15.0f, { 0, 3, 4, 2, 1 });
+
+	entity->Get< Sprite >()->Play("Idle");
+	entity->Get< Sprite >()->Position2D(Math::Vec2(100.0f, 100.0f));
+	entity->Get< Sprite >()->CenterOrigin();
 }
 
 

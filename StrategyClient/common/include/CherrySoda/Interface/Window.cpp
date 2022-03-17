@@ -4,6 +4,7 @@
 #include <CherrySoda/Graphics/Graphics.h>
 #include <CherrySoda/Input/MInput.h>
 #include <CherrySoda/Util/Color.h>
+#include <CherrySoda/Util/GUI.h>
 #include <CherrySoda/Util/NumType.h>
 #include <CherrySoda/Util/STL.h>
 
@@ -38,12 +39,20 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 #   undef CreateWindow
 #endif // defined(CreateWindow)
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif // __EMSCRIPTEN__
+
 using cherrysoda::Color;
+using cherrysoda::CursorTypes;
 using cherrysoda::Graphics;
+using cherrysoda::GUI;
 using cherrysoda::Keys;
 using cherrysoda::MInput;
 using cherrysoda::String;
 using cherrysoda::STL;
+
+static SDL_Cursor* s_mouseCursors[(size_t)CursorTypes::Count] = {};
 
 #ifdef CHERRYSODA_ENABLE_DEBUG
 #define ENUM_NAME_PAIR(ENUM) { (int)ENUM, #ENUM }
@@ -385,8 +394,7 @@ namespace entry {
 		SDL_SysWMinfo wmi;
 		SDL_VERSION(&wmi.version);
 #ifndef __EMSCRIPTEN__
-		if (!SDL_GetWindowWMInfo(_window, &wmi))
-		{
+		if (!SDL_GetWindowWMInfo(_window, &wmi)) {
 			return nullptr;
 		}
 #endif // __EMSCRIPTEN__
@@ -396,8 +404,7 @@ namespace entry {
 #	elif BX_PLATFORM_LINUX || BX_PLATFORM_BSD
 #		if ENTRY_CONFIG_USE_WAYLAND
 		wl_egl_window* win_impl = (wl_egl_window*)SDL_GetWindowData(_window, "wl_egl_window");
-		if (!win_impl)
-		{
+		if (!win_impl) {
 			int width, height;
 			SDL_GetWindowSize(_window, &width, &height);
 			struct wl_surface* surface = wmi.info.wl.surface;
@@ -428,8 +435,7 @@ namespace entry {
 		SDL_SysWMinfo wmi;
 		SDL_VERSION(&wmi.version);
 #ifndef __EMSCRIPTEN__
-		if (!SDL_GetWindowWMInfo(_window, &wmi))
-		{
+		if (!SDL_GetWindowWMInfo(_window, &wmi)) {
 			return false;
 		}
 #endif // __EMSCRIPTEN__
@@ -469,8 +475,7 @@ namespace entry {
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
 #		if ENTRY_CONFIG_USE_WAYLAND
 		wl_egl_window* win_impl = (wl_egl_window*)SDL_GetWindowData(_window, "wl_egl_window");
-		if (win_impl)
-		{
+		if (win_impl) {
 			SDL_SetWindowData(_window, "wl_egl_window", nullptr);
 			wl_egl_window_destroy(win_impl);
 		}
@@ -507,6 +512,8 @@ void cherrysoda::Window::CreateWindow()
 	m_mainWindow = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, windowFlag);
 #endif
 
+	InitializeCursor();
+
 	bool showCursor = Engine::Instance()->m_showCursor;
 	ShowCursor(showCursor);
 
@@ -515,6 +522,8 @@ void cherrysoda::Window::CreateWindow()
 
 void cherrysoda::Window::DestroyWindow()
 {
+	TerminateCursor();
+
 	entry::sdlDestroyWindow(m_mainWindow);
 }
 
@@ -558,9 +567,86 @@ void cherrysoda::Window::Show()
 	SDL_ShowWindow(m_mainWindow);
 }
 
+#define CHERRYSODA_SWITCH_WEB_CURSOR(CURSOR_X) EM_ASM(document.getElementById("canvas").style.cursor=CURSOR_X);
+
 void cherrysoda::Window::ShowCursor(bool show)
 {
 	SDL_ShowCursor(show ? SDL_ENABLE : SDL_DISABLE);
+#ifdef __EMSCRIPTEN__
+	if (show) {
+		CHERRYSODA_SWITCH_WEB_CURSOR('auto');
+	}
+	else {
+		CHERRYSODA_SWITCH_WEB_CURSOR('none');
+	}
+#endif // __EMSCRIPTEN__
+}
+
+void cherrysoda::Window::SetCursor(CursorTypes cursor)
+{
+	SDL_SetCursor(s_mouseCursors[(int)cursor] ? s_mouseCursors[(int)cursor] : s_mouseCursors[(int)CursorTypes::Arrow]);
+#ifdef __EMSCRIPTEN__
+	switch (cursor) {
+	case CursorTypes::Arrow:
+		CHERRYSODA_SWITCH_WEB_CURSOR('auto');
+		break;
+	case CursorTypes::TextInput:
+		CHERRYSODA_SWITCH_WEB_CURSOR('text');
+		break;
+	case CursorTypes::ResizeAll:
+		CHERRYSODA_SWITCH_WEB_CURSOR('move');
+		break;
+	case CursorTypes::ResizeNS:
+		CHERRYSODA_SWITCH_WEB_CURSOR('ns-resize');
+		break;
+	case CursorTypes::ResizeEW:
+		CHERRYSODA_SWITCH_WEB_CURSOR('ew-resize');
+		break;
+	case CursorTypes::ResizeNESW:
+		CHERRYSODA_SWITCH_WEB_CURSOR('nesw-resize');
+		break;
+	case CursorTypes::ResizeNWSE:
+		CHERRYSODA_SWITCH_WEB_CURSOR('nwse-resize');
+		break;
+	case CursorTypes::Hand:
+		CHERRYSODA_SWITCH_WEB_CURSOR('pointer');
+		break;
+	case CursorTypes::NotAllowed:
+		CHERRYSODA_SWITCH_WEB_CURSOR('not-allowed');
+		break;
+	default:
+		CHERRYSODA_SWITCH_WEB_CURSOR('auto');
+		break;
+	}
+#endif // __EMSCRIPTEN__
+}
+
+#undef CHERRYSODA_SWITCH_WEB_CURSOR
+
+void cherrysoda::Window::InitializeCursor()
+{
+	s_mouseCursors[(int)CursorTypes::Arrow] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+	s_mouseCursors[(int)CursorTypes::TextInput] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
+	s_mouseCursors[(int)CursorTypes::ResizeAll] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEALL);
+	s_mouseCursors[(int)CursorTypes::ResizeNS] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENS);
+	s_mouseCursors[(int)CursorTypes::ResizeEW] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
+	s_mouseCursors[(int)CursorTypes::ResizeNESW] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENESW);
+	s_mouseCursors[(int)CursorTypes::ResizeNWSE] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENWSE);
+	s_mouseCursors[(int)CursorTypes::Hand] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
+	s_mouseCursors[(int)CursorTypes::NotAllowed] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_NO);
+}
+
+void cherrysoda::Window::TerminateCursor()
+{
+	SDL_FreeCursor(s_mouseCursors[(int)CursorTypes::Arrow]);
+	SDL_FreeCursor(s_mouseCursors[(int)CursorTypes::TextInput]);
+	SDL_FreeCursor(s_mouseCursors[(int)CursorTypes::ResizeAll]);
+	SDL_FreeCursor(s_mouseCursors[(int)CursorTypes::ResizeNS]);
+	SDL_FreeCursor(s_mouseCursors[(int)CursorTypes::ResizeEW]);
+	SDL_FreeCursor(s_mouseCursors[(int)CursorTypes::ResizeNESW]);
+	SDL_FreeCursor(s_mouseCursors[(int)CursorTypes::ResizeNWSE]);
+	SDL_FreeCursor(s_mouseCursors[(int)CursorTypes::Hand]);
+	SDL_FreeCursor(s_mouseCursors[(int)CursorTypes::NotAllowed]);
 }
 
 void cherrysoda::Window::Resizable(bool resizable)
@@ -577,7 +663,7 @@ void cherrysoda::Window::PollEvents()
 	Keys key;
 #ifdef CHERRYSODA_ENABLE_DEBUG
 	bool first = true;
-#endif
+#endif // CHERRYSODA_ENABLE_DEBUG
 	while (SDL_PollEvent(&event)) {
 #ifdef CHERRYSODA_ENABLE_DEBUG
 		if (first) {
@@ -598,7 +684,9 @@ void cherrysoda::Window::PollEvents()
 		{
 			SDL_Scancode scancode = event.key.keysym.scancode;
 			if (scancode == SDL_SCANCODE_GRAVE) {
-				Engine::Instance()->ToggleConsole();
+				if (GUI::Enabled()) {
+					Engine::Instance()->ToggleConsole();
+				}
 			}
 			if (STL::TryGetValue(s_scancodeToKeys, (int)scancode, key)) {
 				if (!STL::Contains(s_keyboardKeys, key)) {

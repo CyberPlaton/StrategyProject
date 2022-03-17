@@ -15,6 +15,7 @@ using cherrysoda::Draw;
 using cherrysoda::Math;
 using cherrysoda::SpriteEffects;
 using cherrysoda::String;
+using cherrysoda::StringID;
 using cherrysoda::Texture2D;
 
 namespace type = cherrysoda::type;
@@ -53,13 +54,13 @@ MTexture::MTexture(const MTexture& parent, const Math::IRectangle& clipRect)
 {
 }
 
-MTexture::MTexture(const MTexture& parent, const String& atlasPath, const Math::IRectangle& clipRect)
+MTexture::MTexture(const MTexture& parent, const StringID& atlasPath, const Math::IRectangle& clipRect)
 : MTexture(parent, clipRect)
 {
 	m_atlasPath = atlasPath;
 }
 
-MTexture::MTexture(const MTexture& parent, const String& atlasPath, const Math::IRectangle& clipRect, const Math::Vec2& drawOffset, int width, int height)
+MTexture::MTexture(const MTexture& parent, const StringID& atlasPath, const Math::IRectangle& clipRect, const Math::Vec2& drawOffset, int width, int height)
 {
 	m_texture = parent.Texture();
 	m_atlasPath = atlasPath;
@@ -74,9 +75,10 @@ MTexture::MTexture(const MTexture& parent, const String& atlasPath, const Math::
 
 MTexture::MTexture(int width, int height, const Color& color)
 {
-	unsigned char* data = new unsigned char[width * height * 4];
+	const size_t pixelCount = static_cast<size_t>(width) * static_cast<size_t>(height);
+	unsigned char* data = new unsigned char[pixelCount << 2];
 	type::UInt32 colorValue = color.U32ABGR();
-	for (int i = 0; i < width * height; ++i) {
+	for (size_t i = 0; i < pixelCount; ++i) {
 		*((type::UInt32*)(data + (i << 2))) = colorValue;
 	}
 	m_texture = Texture2D::FromRGBA(data, width, height);

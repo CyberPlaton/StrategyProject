@@ -92,7 +92,7 @@ void Scene::AfterUpdate()
 		for (auto func : m_onEndOfFrame) {
 			func();
 		}
-		m_onEndOfFrame.clear();
+		STL::Clear(m_onEndOfFrame);
 	}
 }
 
@@ -119,12 +119,17 @@ void Scene::AfterRender()
 
 Renderer* Scene::FirstRenderer()
 {
-	return Renderers()->First();	
+	return Renderers()->First();
 }
 
 const STL::List<Entity*>& Scene::operator [] (const BitTag& tag) const
 {
-	return m_tagLists->operator[](tag.ID());
+	return (*m_tagLists)[tag.ID()];
+}
+
+const STL::List<Entity*>& Scene::Get(const BitTag& tag) const
+{
+	return (*m_tagLists)[tag.ID()];
 }
 
 void Scene::AddActionOnEndOfFrame(STL::Action<> func)
@@ -163,10 +168,8 @@ void Scene::Remove(Entity* entity)
 const STL::List<Entity*> Scene::GetEntitiesByTagMask(BitTagValueType mask) const
 {
 	STL::List<Entity*> list;
-	for (Entity* entity : *m_entities)
-	{
-		if ((entity->Tag() & mask) != 0)
-		{
+	for (Entity* entity : *m_entities) {
+		if ((entity->Tag() & mask) != 0) {
 			STL::Add(list, entity);
 		}
 	}
@@ -176,10 +179,8 @@ const STL::List<Entity*> Scene::GetEntitiesByTagMask(BitTagValueType mask) const
 const STL::List<Entity*> Scene::GetEntitiesExcludingTagMask(BitTagValueType mask) const
 {
 	STL::List<Entity*> list;
-	for (Entity* entity : *m_entities)
-	{
-		if ((entity->Tag() & mask) == 0)
-		{
+	for (Entity* entity : *m_entities) {
+		if ((entity->Tag() & mask) == 0) {
 			STL::Add(list, entity);
 		}
 	}
@@ -201,39 +202,44 @@ void Scene::INTERNAL_SetActualDepth(Entity* entity)
 	const double theta = 0.000001;
 
 	double add = 0;
-	if (STL::TryGetValue(m_actualDepthLookup, entity->Depth(), add))
-	{
+	if (STL::TryGetValue(m_actualDepthLookup, entity->Depth(), add)) {
 		m_actualDepthLookup[entity->Depth()] += theta;
 	}
-	else
-	{
+	else {
 		STL::Add(m_actualDepthLookup, STL::MakePair(entity->Depth(), (double)theta));
 	}
 	entity->m_actualDepth = (double)entity->Depth() - add;
-	m_entities->MarkUnsorted();	
-	for (int i = 0; i < BitTag::TotalTags(); ++i)
-	{
-		if (entity->TagCheck(1 << i))
-		{
+	m_entities->MarkUnsorted();
+	for (int i = 0; i < BitTag::TotalTags(); ++i) {
+		if (entity->TagCheck(1 << i)) {
 			m_tagLists->MarkUnsorted(i);
 	 	}
 	}
 }
 
-bool Scene::CollideCheck(const Math::Vec2& point, int tag)
+bool Scene::CollideCheck(const Math::Vec2& point, int tag) const
 {
 	auto& list = (*m_tagLists)[tag];
-	for (auto item : list)
-	{
-		if (item->Collidable() && item->CollidePoint(point))
-		{
+	for (auto item : list) {
+		if (item->Collidable() && item->CollidePoint(point)) {
 			return true;
 		}
 	}
 	return false;
 }
 
-Math::Vec2 Scene::LineWalkCheck(const Math::Vec2& from, const Math::Vec2& to, int tag, float precision)
+bool Scene::CollideCheck(const Math::Vec2& from, const Math::Vec2& to, int tag) const
+{
+	auto& list = (*m_tagLists)[tag];
+	for (auto item : list) {
+		if (item->Collidable() && item->CollideLine(from, to)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+Math::Vec2 Scene::LineWalkCheck(const Math::Vec2& from, const Math::Vec2& to, int tag, float precision) const
 {
 	Math::Vec2 add = to - from;
 	add = Math_Normalize(add);
@@ -243,8 +249,7 @@ Math::Vec2 Scene::LineWalkCheck(const Math::Vec2& from, const Math::Vec2& to, in
 	Math::Vec2 prev = from;
 	Math::Vec2 at = from + add;
 
-	for (int i = 0; i <= amount; ++i)
-	{
+	for (int i = 0; i <= amount; ++i) {
 		if (CollideCheck(at, tag))
 			return prev;
 		prev = at;

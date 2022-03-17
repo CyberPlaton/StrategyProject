@@ -3,6 +3,7 @@
 
 #include <CherrySoda/Util/Math.h>
 #include <CherrySoda/Util/NumType.h>
+#include <CherrySoda/Util/Pool.h>
 #include <CherrySoda/Util/String.h>
 
 
@@ -45,7 +46,7 @@ public:
 	virtual void Update();
 	virtual void Render();
 
-	virtual void DebugRender(Camera* camera); 
+	virtual void DebugRender(Camera* camera);
 
 	virtual void HandleGraphicsReset();
 	virtual void HandleGraphicsCreate();
@@ -53,20 +54,31 @@ public:
 	virtual type::Int32 TypeID() const = 0;
 	virtual const char* TypeCStr() const = 0;
 
-	void RemoveSelf();	
+	void RemoveSelf();
+
+	void AutoDeleteWhenRemoved() { if (m_onRemoved == nullptr) m_onRemoved = Component::DeleteComponent; }
+	inline bool AutoDeleteEnabled() const { return m_onRemoved != nullptr; }
+	void CancleAutoDelete() { m_onRemoved = nullptr; }
 
 	template <class T>
-	T* SceneAs() { return static_cast<T*>(GetScene()); }
+	inline T* GetSceneAs() { return static_cast<T*>(GetScene()); }
 
 	template <class T>
-	T* EntityAs() { return static_cast<T*>(GetEntity()); }
+	inline T* GetEntityAs() { return static_cast<T*>(GetEntity()); }
 
-	inline Entity* GetEntity() { return m_entity; };
-	inline const Entity* GetEntity() const { return m_entity; };
+	inline Entity* GetEntity() { return m_entity; }
+	inline const Entity* GetEntity() const { return m_entity; }
 	Scene* GetScene() const;
 
 private:
+	CHERRYSODA_FRIEND_CLASS_POOL;
+
+	void AutoDeleteWhenRemoved(PoolInterface* pool);
+
+	static void DeleteComponent(Component* component, Entity* entity);
+
 	Entity* m_entity = nullptr;
+	STL::Action<Component*, Entity*> m_onRemoved = nullptr;
 
 	bool m_active;
 	bool m_visible;

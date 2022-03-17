@@ -10,8 +10,11 @@
 #include <CherrySoda/Colliders/Circle.h>
 #include <CherrySoda/Colliders/Collide.h>
 #include <CherrySoda/Colliders/Collider.h>
+#include <CherrySoda/Colliders/ColliderList.h>
+#include <CherrySoda/Colliders/Grid.h>
 #include <CherrySoda/Colliders/Hitbox.h>
 
+#include <CherrySoda/Components/CollidableComponent.h>
 #include <CherrySoda/Components/Component.h>
 #include <CherrySoda/Components/Graphics/GraphicsComponent.h>
 #include <CherrySoda/Components/Graphics/Image.h>
@@ -19,7 +22,10 @@
 #include <CherrySoda/Components/Graphics/ParticleEmitter.h>
 #include <CherrySoda/Components/Graphics/PixelText.h>
 #include <CherrySoda/Components/Graphics/Sprite.h>
+#include <CherrySoda/Components/Graphics/SpriteSheet.h>
+#include <CherrySoda/Components/Graphics/TileGrid.h>
 #include <CherrySoda/Components/Logic/Alarm.h>
+#include <CherrySoda/Components/Logic/CounterSet.h>
 #include <CherrySoda/Components/Logic/Shaker.h>
 #include <CherrySoda/Components/Logic/StateMachine.h>
 #include <CherrySoda/Components/Logic/Tween.h>
@@ -36,6 +42,7 @@
 #include <CherrySoda/Graphics/SpriteData.h>
 #include <CherrySoda/Graphics/SpriteEffects.h>
 #include <CherrySoda/Graphics/Texture.h>
+#include <CherrySoda/Graphics/TileSet.h>
 
 #include <CherrySoda/Input/MInput.h>
 
@@ -64,7 +71,6 @@
 #include <CherrySoda/Util/Ease.h>
 #include <CherrySoda/Util/GUI.h>
 #include <CherrySoda/Util/Json.h>
-#include <CherrySoda/Util/XML.h>
 #include <CherrySoda/Util/Literals.h>
 #include <CherrySoda/Util/Log.h>
 #include <CherrySoda/Util/Math.h>
@@ -76,8 +82,9 @@
 #include <CherrySoda/Util/STL.h>
 #include <CherrySoda/Util/String.h>
 #include <CherrySoda/Util/Time.h>
+#include <CherrySoda/Util/VirtualMap.h>
+#include <CherrySoda/Util/XML.h>
 
-#define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 #include <imgui.h>
 
 #endif // _CHERRYSODA_CHERRYSODA_H_

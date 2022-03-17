@@ -6,15 +6,6 @@
 #include <CherrySoda/Util/Math.h>
 #include <CherrySoda/Util/String.h>
 
-#ifdef _MSC_VER
-	#pragma comment(linker, "/NODEFAULTLIB:LIBCMT.lib")
-	#ifdef NDEBUG
-		#pragma comment(linker, "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
-	#else
-		#pragma comment(linker, "/SUBSYSTEM:CONSOLE")
-		#pragma comment(linker, "/NODEFAULTLIB:MSVCRT.lib")
-	#endif
-#endif
 
 namespace cherrysoda {
 
@@ -25,15 +16,18 @@ class Window;
 class Engine
 {
 public:
-#ifdef __EMSCRIPTEN__ 
+#ifdef __EMSCRIPTEN__
 	static void MainLoop();
-#endif // __EMSCRIPTEN__ 
+#endif // __EMSCRIPTEN__
 
 	Engine() : Engine(500, 500, "CherrySoda") {}
 	Engine(int width, int height, const String& title) : Engine(width, height, width, height, title, false) {}
 	Engine(int width, int height, int windowWidth, int windowHeight, const String& title, bool fullscreen);
 
 	virtual ~Engine();
+
+	CHERRYSODA_GETTER_SETTER_OF_TYPE(double, FreezeTimer, m_freezeTimer);
+	CHERRYSODA_GETTER_SETTER_OF_BOOL(ExitOnEscapeKeypress, m_exitOnEscapeKeypress);
 
 	inline int GetWidth() { return m_width; }
 	inline int GetHeight() { return m_height; }
@@ -55,6 +49,8 @@ public:
 	inline void ShowCursor() { ShowCursor(true); }
 	inline void HideCursor() { ShowCursor(false); }
 	void WindowResizable(bool resizable);
+	static const char* GetClipboardText();
+	static void SetClipboardText(const char* text);
 
 	inline float RawGameTime() const { return static_cast<float>(m_rawGameTime); }
 	inline float GameTime() const { return static_cast<float>(m_gameTime); }
@@ -65,7 +61,6 @@ public:
 	inline int FPS() { return m_FPS; }
 	inline bool ConsoleOpened() { return m_consoleOpened; }
 	inline bool DoShowCursor() const { return m_showCursor; }
-	inline bool ShouldExit() const { return m_shouldExit; }
 
 	inline void DisableInternalAudio()
 	{
@@ -96,6 +91,7 @@ protected:
 	virtual void Initialize();
 	virtual void Terminate();
 	virtual void LoadContent();
+	virtual void UnloadContent();
 
 	virtual void Update();
 	virtual void Draw();
@@ -104,7 +100,7 @@ protected:
 
 	virtual void OnSceneTransition(Scene* from, Scene* to);
 
-protected:
+private:
 	friend class Window;
 
 	inline void SetWindowSize(int width, int height) { m_windowWidth = width; m_windowHeight = height; }
@@ -130,10 +126,12 @@ protected:
 	bool m_enableInternalAudio = true;
 	bool m_showCursor = true;
 	bool m_windowResizable = true;
+	bool m_exitOnEscapeKeypress = true;
 
+	double m_deltaTime = 0.0;
 	double m_rawDeltaTime = 0.0;
 	double m_timeRate = 1.0;
-	double m_deltaTime = 0.0;
+	double m_freezeTimer = 0.0;
 	double m_rawGameTime = 0.0;
 	double m_gameTime = 0.0;
 	double m_currentTime = 0.0;

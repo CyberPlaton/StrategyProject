@@ -18,6 +18,8 @@
 #include <emscripten.h>
 #endif // __EMSCRIPTEN__
 
+#include <SDL.h>
+
 using cherrysoda::Engine;
 
 using cherrysoda::Audio;
@@ -142,6 +144,18 @@ void Engine::WindowResizable(bool resizable)
 	}
 }
 
+const char* Engine::GetClipboardText()
+{
+	// TODO: make it work on emscripten build
+	return SDL_GetClipboardText();
+}
+
+void Engine::SetClipboardText(const char* text)
+{
+	// TODO: make it work on emscripten build
+	SDL_SetClipboardText(text);
+}
+
 void Engine::Run(int argc/* = 0*/, char* argv[]/* = {}*/)
 {
 	ParseArgs(argc, argv);
@@ -254,11 +268,7 @@ void Engine::Initialize()
 
 void Engine::Terminate()
 {
-	// TODO: What if the scene is not allocated on heap
-	if (m_scene) {
-		delete m_scene;
-		m_scene = nullptr;
-	}
+	UnloadContent();
 
 	Commands::Terminate();
 	Audio::Terminate();
@@ -277,6 +287,10 @@ void Engine::Terminate()
 }
 
 void Engine::LoadContent()
+{
+}
+
+void Engine::UnloadContent()
 {
 }
 
@@ -325,6 +339,11 @@ void Engine::Update()
 	// Update input
 	MInput::Update();
 
+	if (ExitOnEscapeKeypress() && MInput::Keyboard()->Pressed(Keys::Escape)) {
+		Exit();
+		return;
+	}
+
 	// Update GUI
 	GUI::Update();
 
@@ -332,15 +351,17 @@ void Engine::Update()
 	CommandBatches::Update();
 
 	// Update current scene
-	if (m_scene != nullptr) {
+	if (m_freezeTimer > 0.0) {
+		m_freezeTimer = Math_Max(m_freezeTimer - m_rawDeltaTime, 0.0);
+	}
+	else if (m_scene != nullptr) {
 		m_scene->BeforeUpdate();
 		m_scene->Update();
 		m_scene->AfterUpdate();
 	}
 
 	// Changing scenes
-	if (m_scene != m_nextScene)
-	{
+	if (m_scene != m_nextScene) {
 		auto lastScene = m_scene;
 		if (m_scene != nullptr) {
 			m_scene->End();

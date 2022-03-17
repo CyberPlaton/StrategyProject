@@ -36,7 +36,11 @@ public:
 		return hash & 0x7fffffff;
 	}
 
+#ifdef CHERRYSODA_ENABLE_DEBUG
+	static type::UInt32 HexStrToUInt32(const char* str, int len = -1)
+#else
 	static constexpr type::UInt32 HexStrToUInt32(const char* str, int len = -1)
+#endif // CHERRYSODA_ENABLE_DEBUG
 	{
 		type::UInt32 ans = 0;
 		for (int i = 0; (len == -1 || i < len) && str[i]; ++i) {
@@ -128,7 +132,7 @@ public:
 #else // CHERRYSODA_ENABLE_DEBUG
 public:
 	constexpr StringID(const char* str)
-	: m_id(StringUtil::GetHashBKDR(str))
+		: m_id(StringUtil::GetHashBKDR(str))
 	{}
 
 	inline String GetStr() const { return ""; }

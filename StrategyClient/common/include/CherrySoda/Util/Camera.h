@@ -14,10 +14,10 @@ public:
 	Camera();
 	Camera(int width, int height);
 
-	CHERRYSODA_GETTER_SETTER_EX_OF_VEC3(Position, m_position, CHERRYSODA_NONE_OP, m_changed = true);
+	CHERRYSODA_GETTER_SETTER_EX_OF_VEC3(Position, m_position, CHERRYSODA_NONE_OP, if (m_position == v) return; m_changed = true);
 	CHERRYSODA_GETTER_SETTER_EX_OF_VEC3(Scale, m_zoom, CHERRYSODA_NONE_OP, if (m_zoom == v) return; m_changed = true);
 	CHERRYSODA_GETTER_SETTER_EX_OF_VEC3(Origin, m_origin, CHERRYSODA_NONE_OP, if (m_origin == v) return; m_changed = true);
-	CHERRYSODA_GETTER_SETTER_EX_OF_VEC3(Direction, m_direction, CHERRYSODA_NONE_OP, m_changed = true);
+	CHERRYSODA_GETTER_SETTER_EX_OF_VEC3(Direction, m_direction, CHERRYSODA_NONE_OP, if (m_direction == v) return; m_changed = true);
 
 	CHERRYSODA_GETTER_SETTER_EX_OF_TYPE(float, ZRotation, m_zAngle, CHERRYSODA_NONE_OP, if (m_zAngle == v) return; m_changed = true);
 	CHERRYSODA_GETTER_SETTER_EX_OF_TYPE(float, Width, m_width, CHERRYSODA_NONE_OP, if (m_width == v) return; Ratio(v / Height()); m_changed = true);
@@ -29,13 +29,15 @@ public:
 
 	inline Math::Vec2 GetSize() const { return Math::Vec2(m_width, m_height); }
 	inline void SetSize(const Math::Vec2& size) { Width(size[0]); Height(size[1]); Ratio(Width() / Height()); }
+	inline Math::Vec2 Size() const { return GetSize(); }
+	inline void Size(const Math::Vec2& size) { SetSize(size); }
 
 	void UpdateMatrices();
 
-	inline void SetUpVector(const Math::Vec3& vec) { m_upVector = vec; }
+	inline void SetUpVector(const Math::Vec3& vec) { if (m_upVector != vec) { m_upVector = vec; m_changed = true; } }
 
-	inline Math::Mat4* GetViewMatrix() { UpdateMatrices(); return &m_viewMatrix; }
-	inline Math::Mat4* GetProjectionMatrix() { UpdateMatrices(); return &m_projMatrix; }
+	inline const Math::Mat4* GetViewMatrix() { if (m_changed) { UpdateMatrices(); } return &m_viewMatrix; }
+	inline const Math::Mat4* GetProjectionMatrix() { if (m_changed) { UpdateMatrices(); } return &m_projMatrix; }
 
 	inline const Math::Vec3 GetLeftVector() const { return Math_Normalize(Math_Cross(m_upVector, m_direction)); }
 	inline const Math::Vec3 GetRightVector() const { return Math_Normalize(Math_Cross(m_direction, m_upVector)); }
@@ -45,6 +47,16 @@ public:
 
 	inline const Math::Vec3 GetFrontVector() const { return m_direction; }
 	inline const Math::Vec3 GetBackVector() const { return -m_direction; }
+
+	inline float Left()   const { return (m_inverseMatrix * Math::Vec4(-Vec3_XUp, 1.f)).x; }
+	inline float Right()  const { return (m_inverseMatrix * Math::Vec4( Vec3_XUp, 1.f)).x; }
+	inline float Bottom() const { return (m_inverseMatrix * Math::Vec4(-Vec3_YUp, 1.f)).y; }
+	inline float Top()    const { return (m_inverseMatrix * Math::Vec4( Vec3_YUp, 1.f)).y; }
+
+	inline float Left()   { if (m_changed) { UpdateMatrices(); } return (m_inverseMatrix * Math::Vec4(-Vec3_XUp, 1.f)).x; }
+	inline float Right()  { if (m_changed) { UpdateMatrices(); } return (m_inverseMatrix * Math::Vec4( Vec3_XUp, 1.f)).x; }
+	inline float Bottom() { if (m_changed) { UpdateMatrices(); } return (m_inverseMatrix * Math::Vec4(-Vec3_YUp, 1.f)).y; }
+	inline float Top()    { if (m_changed) { UpdateMatrices(); } return (m_inverseMatrix * Math::Vec4( Vec3_YUp, 1.f)).y; }
 
 	inline void CenterOrigin()
 	{

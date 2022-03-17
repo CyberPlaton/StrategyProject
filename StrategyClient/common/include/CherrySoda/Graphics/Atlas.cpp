@@ -6,13 +6,11 @@
 #include <CherrySoda/Util/Log.h>
 #include <CherrySoda/Util/Math.h>
 #include <CherrySoda/Util/String.h>
-#include <CherrySoda/Util/XML.h>
 
 using cherrysoda::Atlas;
 
 using cherrysoda::Graphics;
 using cherrysoda::JsonUtil;
-using cherrysoda::XML::XMLUtil;
 using cherrysoda::Math;
 using cherrysoda::MTexture;
 using cherrysoda::STL;
@@ -26,19 +24,18 @@ Atlas::~Atlas()
 	}
 }
 
-const MTexture Atlas::GetOrDefault(const StringID& id, const MTexture& defaultTexture)
+const MTexture& Atlas::GetOrDefault(const StringID& id, const MTexture& defaultTexture) const
 {
 	if (id.IsEmpty() || !Has(id)) {
 		return defaultTexture;
 	}
-	return m_textures[id];
+	return m_textures.at(id);
 }
 
-const STL::Vector<MTexture> Atlas::GetAtlasSubtextures(const String& key)
+const STL::Vector<MTexture>& Atlas::GetAtlasSubtextures(const String& key) const
 {
-	STL::Vector<MTexture> list;
-
-	if (!STL::TryGetValue(m_orderedTexturesCache, key, list)) {
+	if (!STL::ContainsKey(m_orderedTexturesCache, key)) {
+		STL::Vector<MTexture> list;
 		for (int index = 0; ; ++index) {
 			MTexture texture = GetAtlasSubtextureFromAtlasAt(key, index);
 			if (texture.IsValid())
@@ -46,14 +43,13 @@ const STL::Vector<MTexture> Atlas::GetAtlasSubtextures(const String& key)
 			else
 				break;
 		}
-
 		m_orderedTexturesCache[key] = list;
 	}
 
-	return list;
+	return m_orderedTexturesCache.at(key);
 }
 
-const MTexture Atlas::GetAtlasSubtextureAt(const String& key, int index)
+const MTexture Atlas::GetAtlasSubtextureAt(const String& key, int index) const
 {
 	STL::Vector<MTexture> list;
 	if (STL::TryGetValue(m_orderedTexturesCache, key, list)) {
@@ -64,15 +60,15 @@ const MTexture Atlas::GetAtlasSubtextureAt(const String& key, int index)
 	}
 }
 
-const MTexture Atlas::GetAtlasSubtextureFromCacheAt(const StringID& key, int index)
+const MTexture& Atlas::GetAtlasSubtextureFromCacheAt(const StringID& key, int index) const
 {
-	return m_orderedTexturesCache[key][index];
+	return m_orderedTexturesCache.at(key)[index];
 }
 
-const MTexture Atlas::GetAtlasSubtextureFromAtlasAt(const String& key, int index)
+const MTexture Atlas::GetAtlasSubtextureFromAtlasAt(const String& key, int index) const
 {
 	if (index == 0 && STL::ContainsKey(m_textures, key)) {
-		return m_textures[key];
+		return m_textures.at(key);
 	}
 
 	char format[] = "%s%00d";
@@ -90,13 +86,10 @@ const MTexture Atlas::GetAtlasSubtextureFromAtlasAt(const String& key, int index
 
 void Atlas::ReadAtlasData(Atlas* atlas, const String& path, AtlasDataFormat format/* = AtlasDataFormat::CrunchJson*/)
 {
-
-	cherrysoda::json::Document doc;
-	cherrysoda::XML::XMLDocument xmlDoc;
-
 	switch (format) {
 	case AtlasDataFormat::CrunchJson:
 	{
+		cherrysoda::json::Document doc;
 		JsonUtil::ReadJsonFile(doc, path);
 		const auto& at = doc["textures"];
 		CHERRYSODA_ASSERT_FORMAT(at.IsArray(), "Atlas json parse failed: \"textures\" scope is not an array in \"%s\"!\n");
@@ -123,42 +116,6 @@ void Atlas::ReadAtlasData(Atlas* atlas, const String& path, AtlasDataFormat form
 		}
 		break;
 	}
-	case AtlasDataFormat::CrunchXML:
-
-		if (XMLUtil::ReadXMLFile(xmlDoc, path))
-		{
-			tinyxml2::XMLNode* root = nullptr;
-			root = xmlDoc.FirstChild();
-			if (root != nullptr)
-			{
-				const char* name = root->FirstChildElement("tex")->Attribute("n");
-				String texturePath = StringUtil::Path_GetDirectoryName(path) + String(name) + ".png";
-
-				auto texture = Texture2D::FromFile(texturePath);
-				auto mTexture = MTexture(texture);
-
-				STL::Add(atlas->m_sources, texture);
-
-				tinyxml2::XMLElement* img = root->FirstChildElement("tex")->FirstChildElement("img");
-				while (img)
-				{
-					const char* sub_name = img->Attribute("n");
-					auto clipRect = Math::IRectangle{
-						Math::IVec2(img->IntAttribute("x"), img->IntAttribute("y")),
-						Math::IVec2(img->IntAttribute("w"), img->IntAttribute("h")),
-					};
-
-					atlas->m_textures[name] = MTexture(mTexture, name, clipRect, Math::Vec2(-img->IntAttribute("fx"), -img->IntAttribute("fy")), img->IntAttribute("fw"), img->IntAttribute("fh"));
-
-					img = img->NextSiblingElement("img");
-				}
-			}
-
-			xmlDoc.Clear();
-			break;
-		}
-
-		break;
 	default:
 		CHERRYSODA_ASSERT(false, "Atlas data format unsupported for now!\n");
 		break;

@@ -3,12 +3,14 @@
 #include <CherrySoda/Scene.h>
 #include <CherrySoda/Colliders/Collide.h>
 #include <CherrySoda/Colliders/Collider.h>
+#include <CherrySoda/Components/CollidableComponent.h>
 #include <CherrySoda/Components/Component.h>
 #include <CherrySoda/InternalUtilities/ComponentList.h>
 #include <CherrySoda/InternalUtilities/EntityList.h>
 #include <CherrySoda/InternalUtilities/TagLists.h>
 #include <CherrySoda/Util/BitTag.h>
 #include <CherrySoda/Util/Math.h>
+#include <CherrySoda/Util/Pool.h>
 #include <CherrySoda/Util/Profile.h>
 #include <CherrySoda/Util/STL.h>
 
@@ -17,11 +19,13 @@ using cherrysoda::Entity;
 using cherrysoda::BitTag;
 using cherrysoda::BitTagValueType;
 using cherrysoda::Camera;
+using cherrysoda::CollidableComponent;
 using cherrysoda::Collide;
 using cherrysoda::Collider;
 using cherrysoda::Component;
 using cherrysoda::ComponentList;
 using cherrysoda::Math;
+using cherrysoda::PoolInterface;
 using cherrysoda::Scene;
 using cherrysoda::STL;
 
@@ -71,31 +75,25 @@ void Entity::Render()
 
 void Entity::Tag(BitTagValueType tag)
 {
-	if (m_tag == tag)
-	{
+	if (m_tag == tag) {
 		return;
 	}
-	if (m_scene != nullptr)
-	{
-		for (int i = 0; i < BitTag::TotalTags(); ++i)
-		{
+	if (m_scene != nullptr) {
+		for (int i = 0; i < BitTag::TotalTags(); ++i) {
 			BitTagValueType check = 1 << i;
 			bool add = (tag & check) != 0;
-			bool has = (m_tag & check) != 0; 
-			if (has != add)
-			{
-				if (add)
-				{
+			bool has = (m_tag & check) != 0;
+			if (has != add) {
+				if (add) {
 					STL::Add(m_scene->Tags()->operator[](i), this);
 				}
-				else
-				{
+				else {
 					STL::Remove(m_scene->Tags()->operator[](i), this);
 				}
 			}
 		}
 	}
-	m_tag = tag;	
+	m_tag = tag;
 }
 
 const STL::List<Entity*> Entity::CollideAll(const BitTag& tag) const
@@ -121,9 +119,29 @@ bool Entity::CollideCheck(const Entity* other) const
 	return Collide::Check(this, other);
 }
 
+bool Entity::CollideCheck(const Entity* other, const Math::Vec2& at)
+{
+	return Collide::Check(this, other, at);
+}
+
+bool Entity::CollideCheck(const CollidableComponent* other) const
+{
+	return Collide::Check(this, other);
+}
+
+bool Entity::CollideCheck(const CollidableComponent* other, const Math::Vec2& at)
+{
+	return Collide::Check(this, other, at);
+}
+
 bool Entity::CollidePoint(const Math::Vec2& point) const
 {
-	return Collide::CheckPoint(this, point);	
+	return Collide::CheckPoint(this, point);
+}
+
+bool Entity::CollideLine(const Math::Vec2& from, const Math::Vec2& to) const
+{
+	return Collide::CheckLine(this, from, to);
 }
 
 int Entity::CollideCount(const BitTag& tag) const
@@ -193,14 +211,37 @@ void Entity::Remove(Component* component)
 	m_components->Remove(component);
 }
 
-void Entity::Add(ComponentList::IterableComponents& components)
+void Entity::Add(const ComponentList::IterableComponents& components)
 {
 	m_components->Add(components);
 }
 
-void Entity::Remove(ComponentList::IterableComponents& components)
+void Entity::Remove(const ComponentList::IterableComponents& components)
 {
 	m_components->Remove(components);
+}
+
+void Entity::RemoveAllComponents()
+{
+	ComponentList::IterableComponents componentsCopy = m_components->m_components;
+	m_components->Remove(componentsCopy);
+}
+
+void Entity::AutoDeleteWhenRemoved(PoolInterface* pool)
+{
+	m_onRemoved =
+		[pool](Entity* entity, Scene* scene)
+		{
+			pool->INTERNAL_Hide(entity);
+			entity->SetCollider(nullptr);
+			entity->RemoveAllComponents();
+			scene->AddActionOnEndOfFrame(
+				[pool, entity]()
+				{
+					pool->INTERNAL_Destroy(entity);
+				}
+			);
+		};
 }
 
 void Entity::Depth(int depth)
@@ -251,10 +292,10 @@ void Entity::Removed(Scene* scene)
 	for (auto component : *m_components) {
 		component->EntityRemoved(scene);
 	}
-	m_scene = nullptr;
 	if (m_onRemoved) {
 		m_onRemoved(this, scene);
 	}
+	m_scene = nullptr;
 }
 
 void Entity::SetCollider(Collider* collider)
@@ -262,13 +303,31 @@ void Entity::SetCollider(Collider* collider)
 	if (m_collider == collider) {
 		return;
 	}
-	CHERRYSODA_ASSERT(collider->GetEntity() == nullptr, "Setting an Entity's Collider to a Collider already in use by another object\n")
+	CHERRYSODA_ASSERT(collider == nullptr || collider->GetEntity() == nullptr, "Setting an Entity's Collider to a Collider already in use by another object\n");
 
 	if (m_collider != nullptr) {
 		m_collider->Removed();
 	}
-	m_collider = collider;	
+	m_collider = collider;
 	if (m_collider) {
 		m_collider->Added(this);
 	}
+}
+
+void Entity::AutoDeleteAllInsideWhenRemoved()
+{
+	AutoDeleteWhenRemoved();
+	if (m_collider != nullptr) {
+		m_collider->AutoDeleteWhenRemoved();
+	}
+	for (auto component : *m_components) {
+		component->AutoDeleteWhenRemoved();
+	}	
+}
+
+void Entity::CleanAndDeleteEntity(Entity* entity, Scene* scene)
+{
+	entity->SetCollider(nullptr);
+	entity->RemoveAllComponents();
+	scene->AddActionOnEndOfFrame([entity](){ delete entity; });
 }

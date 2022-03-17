@@ -1,13 +1,21 @@
 #ifndef _CHERRYSODA_UTIL_POOL_H_
 #define _CHERRYSODA_UTIL_POOL_H_
 
+#include <CherrySoda/Util/Log.h>
 #include <CherrySoda/Util/NumType.h>
 #include <CherrySoda/Util/STL.h>
 
 namespace cherrysoda {
 
+class PoolInterface
+{
+public:
+	virtual void INTERNAL_Hide(void* ptr) = 0;
+	virtual void INTERNAL_Destroy(void* ptr) = 0;
+};
+
 template <typename T, type::UInt16 SIZE>
-class alignas(128) Pool
+class alignas(128) Pool : public PoolInterface
 {
 public:
 	typedef type::UInt16 SizeType;
@@ -21,7 +29,7 @@ public:
 
 	~Pool()
 	{
-		Clear();
+		INTERNAL_Clear();
 	}
 
 	inline bool IsFull() { return STL::IsEmpty(m_available); }
@@ -33,16 +41,23 @@ public:
 		if (IsFull()) return nullptr;
 		SizeType loc = STL::Pop(m_available);
 		STL::Add(m_allocated, loc);
-		return new((T*)m_buffer + loc) T(TTs...);
+		auto t = new((T*)m_buffer + loc) T(TTs...);
+		t->AutoDeleteWhenRemoved(this);
+		return t;
 	}
 
-	void Destroy(void* ptr)
+	void INTERNAL_Hide(void* ptr) override
 	{
 		SizeType loc = (T*)ptr - (T*)m_buffer;
-		CHERRYSODA_ASSERT(STL::Contains(m_allocated, loc), "Element not exist in this pool!\n")
+		CHERRYSODA_ASSERT(STL::Contains(m_allocated, loc), "Element not exist in this pool!\n");
+		STL::Remove(m_allocated, loc);
+	}
+
+	void INTERNAL_Destroy(void* ptr) override
+	{
+		SizeType loc = (T*)ptr - (T*)m_buffer;
 		((T*)ptr)->~T();
 		STL::Push(m_available, loc);
-		STL::Remove(m_allocated, loc);
 	}
 
 	void Traverse(STL::Action<T*> action)
@@ -52,7 +67,7 @@ public:
 		}
 	}
 
-	void Clear()
+	void INTERNAL_Clear()
 	{
 		for (SizeType loc : m_allocated) {
 			((T*)m_buffer + loc)->~T();

@@ -29,12 +29,12 @@ private:
 public:
 	Chooser() = default;
 
-	Chooser(T firstChoice, float weight)
+	Chooser(const T& firstChoice, float weight)
 	{
 		Add(firstChoice, weight);
 	}
 
-	Chooser<T>& Add(T choice, float weight)
+	Chooser<T>& Add(const T& choice, float weight)
 	{
 		weight = Math_Max(weight, 0.f);
 		STL::Add(m_choices, Choice(choice, weight));
@@ -75,7 +75,7 @@ public:
 
 		if (STL::Count(choices) == 1 && StringUtil::IndexOf(choices[0], ':') == -1) {
 			chooser.Add(static_cast<T>(choices[0]), 1.f);
-			return chooser;	
+			return chooser;
 		}
 
 		for (auto& choice : choices) {

@@ -4,13 +4,14 @@
 #include <CherrySoda/Util/Math.h>
 #include <CherrySoda/Util/NumType.h>
 #include <CherrySoda/Util/STL.h>
+#include <CherrySoda/Util/String.h>
 
 namespace cherrysoda {
 
 class Random
 {
 public:
-	Random() {}
+	Random() = default;
 	Random(type::UInt32 seed) { Seed(seed); }
 
 	inline void Seed(type::UInt32 seed) { STL::RandomSeed(m_random, seed); }
@@ -29,7 +30,7 @@ public:
 	inline Math::Vec2 ShakeVector()
 	{
 		constexpr float shakeVectorOffsets[5] = { -1.f, -1.f, 0.f, 1.f, 1.f };
-		return Math::Vec2(shakeVectorOffsets[Next(4)], shakeVectorOffsets[Next(4)]);
+		return Math::Vec2(shakeVectorOffsets[Next(5)], shakeVectorOffsets[Next(5)]);
 	}
 
 	template <typename T>
@@ -47,6 +48,7 @@ private:
 class Calc
 {
 public:
+	// Random
 	static void PushRandom(type::UInt32 seed) { STL::Push(ms_randomStack, Random(seed)); }
 	static void PushRandom() { STL::Push(ms_randomStack, Random()); }
 	static void PopRandom() { STL::Pop(ms_randomStack); }
@@ -60,7 +62,9 @@ public:
 
 	static Math::Vec2 Approach(const Math::Vec2& val, const Math::Vec2& target, float maxMove);
 
+	static Math::Vec2 FourWayNormal(Math::Vec2 vec);
 	static Math::Vec2 EightWayNormal(Math::Vec2 vec);
+	static Math::Vec2 SnapedNormal(Math::Vec2 vec, float slices);
 
 	static inline Math::Vec2 SafeNormalize(const Math::Vec2& vec, const Math::Vec2& ifZero)
 	{
@@ -68,9 +72,14 @@ public:
 	}
 	static inline Math::Vec2 SafeNormalize(const Math::Vec2& vec) { return SafeNormalize(vec, Vec2_Zero); }
 
+	static Math::Vec2 ClosestPointOnLine(const Math::Vec2& lineA, const Math::Vec2& lineB, const Math::Vec2& closestTo);
+
 	static inline Math::Vec2 Perpendicular(const Math::Vec2& vec) { return Math::Vec2(vec.y, -vec.x); }
 
 	static inline bool BetweenInterval(float val, float interval) { return Math_Mod(val, interval * 2.f) >= interval; }
+
+	// Save and Load Data
+	static bool FileExists(const String& filename);
 
 private:
 	static STL::Stack<Random> ms_randomStack;

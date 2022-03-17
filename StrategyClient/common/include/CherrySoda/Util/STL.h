@@ -2,6 +2,7 @@
 #define _CHERRYSODA_UTIL_STL_H_
 
 #include <algorithm>
+#include <array>
 #include <functional>
 #include <list>
 #include <map>
@@ -34,7 +35,7 @@ namespace cherrysoda {
 class STL
 {
 public:
-	// Utils
+	// Util
 	template <typename ...T>
 	using Action = std::function<void(T...)>;
 
@@ -86,6 +87,9 @@ public:
 
 	template <typename T>
 	using Vector = std::vector<T>;
+
+	template <typename T, size_t S>
+	using Array = std::array<T, S>;
 
 	template <typename T>
 	static inline void Resize(T& container, size_t size)

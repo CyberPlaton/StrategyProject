@@ -121,9 +121,11 @@ public:
 	
 	// UTIL
 	void RegisterCommands();
-
+	inline bool IsInitialized() { return m_initialized; }
 
 private:
+
+	bool m_initialized = false;
 
 	// Font
 	cherrysoda::PixelFont* m_font = nullptr;

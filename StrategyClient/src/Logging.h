@@ -125,9 +125,9 @@ namespace cherrysoda
 #if defined RELEASE || DEBUG
 // ImGui ingame console in DEBUG and RELEASE only.
 #define LOG_GAME_INFO(...) cherrysoda::Logger::LogRealtime(__VA_ARGS__); cherrysoda::Logger::LogRealtime("[info]")
-#define LOG_GAME_WARN(...) cherrysoda::Logger::LogRealtime("[warn]"); cherrysoda::Logger::LogRealtime(__VA_ARGS__)
-#define LOG_GAME_ERROR(...) cherrysoda::Logger::LogRealtime("[error]"); cherrysoda::Logger::LogRealtime(__VA_ARGS__)
-#define LOG_GAME_CRITICAL(...) cherrysoda::Logger::LogRealtime("[critical]"); cherrysoda::Logger::LogRealtime(__VA_ARGS__)
+#define LOG_GAME_WARN(...) cherrysoda::Logger::LogRealtime(__VA_ARGS__); cherrysoda::Logger::LogRealtime("[warn]")
+#define LOG_GAME_ERROR(...) cherrysoda::Logger::LogRealtime(__VA_ARGS__); cherrysoda::Logger::LogRealtime("[error]")
+#define LOG_GAME_CRITICAL(...) cherrysoda::Logger::LogRealtime(__VA_ARGS__); cherrysoda::Logger::LogRealtime("[critical]")
 #else
 #define LOG_GAME_INFO(...)
 #define LOG_GAME_WARN(...)

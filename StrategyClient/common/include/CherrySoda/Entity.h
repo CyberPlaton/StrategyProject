@@ -5,11 +5,13 @@
 
 #include <CherrySoda/Util/BitTag.h>
 #include <CherrySoda/Util/Math.h>
+#include <CherrySoda/Util/Pool.h>
 #include <CherrySoda/Util/STL.h>
 
 namespace cherrysoda {
 
 class Camera;
+class CollidableComponent;
 class Collider;
 class Component;
 class Scene;
@@ -18,6 +20,7 @@ class Entity
 {
 public:
 	Entity() : Entity(Math::Vec3(0.f)) {}
+	Entity(const Math::Vec2& position) : Entity(Math::Vec3(position, 0.f)) {}
 	Entity(const Math::Vec3& position);
 	virtual ~Entity();
 
@@ -25,7 +28,7 @@ public:
 	CHERRYSODA_GETTER_SETTER_OF_BOOL(Active, m_active);
 	CHERRYSODA_GETTER_SETTER_OF_BOOL(Visible, m_visible);
 	CHERRYSODA_GETTER_SETTER_OF_BOOL(Collidable, m_collidable);
-	
+
 	virtual void SceneBegin(Scene* scene);
 	virtual void SceneEnd(Scene* scene);
 	virtual void Awake(Scene* scene);
@@ -52,7 +55,11 @@ public:
 	bool CollideCheck(const BitTag& tag) const;
 	bool CollideCheck(const BitTag& tag, const Math::Vec2& at);
 	bool CollideCheck(const Entity* other) const;
+	bool CollideCheck(const Entity* other, const Math::Vec2& at);
+	bool CollideCheck(const CollidableComponent* other) const;
+	bool CollideCheck(const CollidableComponent* other, const Math::Vec2& at);
 	bool CollidePoint(const Math::Vec2& point) const;
+	bool CollideLine(const Math::Vec2& from, const Math::Vec2& to) const;
 	int CollideCount(const BitTag& tag) const;
 	Entity* CollideFirst(const BitTag& tag) const;
 
@@ -65,12 +72,16 @@ public:
 	void Bottom(float bottom);
 	void Top(float top);
 
-	void Add(Component* component); 
+	void Add(Component* component);
 	void Remove(Component* component);
-	void Add(ComponentList::IterableComponents& components); 
-	void Remove(ComponentList::IterableComponents& components);
+	void Add(const ComponentList::IterableComponents& components);
+	void Remove(const ComponentList::IterableComponents& components);
 
-	void OnRemoved(STL::Action<Entity*, Scene*> onRemoved) { m_onRemoved = onRemoved; }
+	void RemoveAllComponents();
+
+	void AutoDeleteWhenRemoved() { if (m_onRemoved == nullptr) m_onRemoved = Entity::CleanAndDeleteEntity; }
+	void AutoDeleteAllInsideWhenRemoved();
+	void CancleAutoDelete() { m_onRemoved = nullptr; }
 
 	void Depth(int depth);
 	inline int Depth() const { return m_depth; }
@@ -88,8 +99,14 @@ public:
 	void SetCollider(Collider* collider);
 
 private:
+	CHERRYSODA_FRIEND_CLASS_POOL;
+
 	friend class EntityList;
 	friend class Scene;
+
+	void AutoDeleteWhenRemoved(PoolInterface* pool);
+
+	static void CleanAndDeleteEntity(Entity* entity, Scene* scene);
 
 	virtual void Added(Scene* scene);
 	virtual void Removed(Scene* scene);
