@@ -547,10 +547,10 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 	auto factory = Factory::get();
 	
 	auto entity = factory->Begin(this)
-		.Add(new  Sprite("assets/King.json"))
+		.Add(new  Sprite("assets/Textures.json"))
 		.End();
 
-	entity->Get< Sprite >()->AddLoop("Idle", "tile", 1/ 60.0f * 15.0f, { 0, 3, 4, 2, 1 });
+	entity->Get< Sprite >()->AddLoop("Idle", "HU_Townhall_III");
 
 	entity->Get< Sprite >()->Play("Idle");
 	entity->Get< Sprite >()->Position2D(Math::Vec2(100.0f, 100.0f));
