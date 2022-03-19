@@ -187,8 +187,10 @@ void App::Initialize()
 	LOG_FILE_INFO("[{:.4f}] SUBSYSTEMS SUCCESSFULLY INITIALIZED!", APP_RUN_TIME());
 
 
+
 	// Everything went OK. Startup the engine!
 	base::Initialize();
+
 
 	// Load Game Scenes!
 	if (!cherrysoda::SceneGraphFactory::LoadSceneGraph("assets/SceneGraph.xml", this))
@@ -517,11 +519,43 @@ void cherrysoda::SplashSceenScene::SceneImpl::End()
 }
 void cherrysoda::DebugGameScene::SceneImpl::Update()
 {
-	LOG_GAME_INFO("[DebugGameScene] Update");
+	//LOG_GAME_INFO("[DebugGameScene] Update");
 
 	// Base update.
 	cherrysoda::Scene::Update();
 
+	auto camera = FirstRenderer()->GetCamera();
+	auto position = camera->Position2D();
+	auto dt = Engine::Instance()->RawDeltaTime();
+
+	if (MInput::Keyboard()->Released(Keys::OemTilde))
+	{
+		Logger::ToggleGamelog();
+	}
+
+
+	if (MInput::Keyboard()->Check(Keys::A))
+	{
+		camera->MovePositionX(-1.0f);
+		LOG_GAME_INFO("Move Left");
+	}
+	if (MInput::Keyboard()->Check(Keys::W))
+	{
+		camera->MovePositionY(1.0f);
+		LOG_GAME_INFO("Move Up");
+	}
+	if (MInput::Keyboard()->Check(Keys::D))
+	{
+		camera->MovePositionX(1.0f);
+		LOG_GAME_INFO("Move Right");
+	}
+	if (MInput::Keyboard()->Check(Keys::S))
+	{
+		camera->MovePositionY(-1.0f);
+		LOG_GAME_INFO("Move Down");
+	}
+
+	camera->UpdateMatrices();
 }
 void cherrysoda::DebugGameScene::SceneImpl::End()
 {
@@ -531,19 +565,21 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 {
 	LOG_GAME_INFO("[DebugGameScene] Begin");
 
+	GUI::DisableInternalConsole();
+
 	// Initialize rendering.
 	cherrysoda::Graphics::SetPointTextureSampling();
 	auto renderer = new cherrysoda::EverythingRenderer();
 	auto camera = renderer->GetCamera();
 	camera->Position(cherrysoda::Math::Vec3(0.0f, 0.0f, 200.0f));
 	renderer->SetEffect(cherrysoda::Graphics::GetEmbeddedEffect("sprite")); // Make a sprite renderer.
-	renderer->KeepCameraCenterOrigin(true);
+	renderer->KeepCameraCenterOrigin(false);
 	camera->UseOrthoProjection(true);
 	camera->CenterOrigin();
 	Add(renderer);
 
 
-
+	
 	auto factory = Factory::get();
 	
 	auto entity = factory->Begin(this)
