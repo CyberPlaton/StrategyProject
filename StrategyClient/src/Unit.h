@@ -1,28 +1,5 @@
-#pragma once
 
-#include <CherrySoda/Components/Component.h>
-#include <CherrySoda/Util/Pool.h>
-#include <CherrySoda/Util/String.h>
-#include <CherrySoda/Util/STL.h>
-
-
-#define CONCAT(a, b) a##b
-#define DECLARE_GET_SET(returntype, name, member) \
-returntype CONCAT(Get, name)() \
-{ \
-	return member; \
-} \
-void CONCAT(Set, name)(returntype value) \
-{ \
-	member = value; \
-} \
-
-#define DECLARE_QUERY(name, member) \
-bool CONCAT(Is, name)()\
-{ \
-	return member; \
-} \
-
+#include "ComponentCommon.h"
 
 namespace cherrysoda
 {

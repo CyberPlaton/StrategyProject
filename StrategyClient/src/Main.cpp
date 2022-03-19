@@ -525,37 +525,7 @@ void cherrysoda::DebugGameScene::SceneImpl::Update()
 	cherrysoda::Scene::Update();
 
 	auto camera = FirstRenderer()->GetCamera();
-	auto position = camera->Position2D();
-	auto dt = Engine::Instance()->RawDeltaTime();
 
-	if (MInput::Keyboard()->Released(Keys::OemTilde))
-	{
-		Logger::ToggleGamelog();
-	}
-
-
-	if (MInput::Keyboard()->Check(Keys::A))
-	{
-		camera->MovePositionX(-1.0f);
-		LOG_GAME_INFO("Move Left");
-	}
-	if (MInput::Keyboard()->Check(Keys::W))
-	{
-		camera->MovePositionY(1.0f);
-		LOG_GAME_INFO("Move Up");
-	}
-	if (MInput::Keyboard()->Check(Keys::D))
-	{
-		camera->MovePositionX(1.0f);
-		LOG_GAME_INFO("Move Right");
-	}
-	if (MInput::Keyboard()->Check(Keys::S))
-	{
-		camera->MovePositionY(-1.0f);
-		LOG_GAME_INFO("Move Down");
-	}
-
-	camera->UpdateMatrices();
 }
 void cherrysoda::DebugGameScene::SceneImpl::End()
 {
@@ -582,15 +552,19 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 	
 	auto factory = Factory::get();
 	
+
 	auto entity = factory->Begin(this)
 		.Add(new  Sprite("assets/Textures.json"))
 		.End();
-
 	entity->Get< Sprite >()->AddLoop("Idle", "HU_Townhall_III");
-
 	entity->Get< Sprite >()->Play("Idle");
 	entity->Get< Sprite >()->Position2D(Math::Vec2(100.0f, 100.0f));
 	entity->Get< Sprite >()->CenterOrigin();
+
+
+	entity = factory->Begin(this)
+		.Add(new CameraController(camera))
+		.End();
 }
 
 

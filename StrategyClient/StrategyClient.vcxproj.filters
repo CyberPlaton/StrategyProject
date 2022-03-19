@@ -41,6 +41,9 @@
     <ClCompile Include="src\DebugGameScene.cpp">
       <Filter>Scenes</Filter>
     </ClCompile>
+    <ClCompile Include="src\CameraController.cpp">
+      <Filter>Components\CameraController</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Main.h" />
@@ -92,6 +95,12 @@
     <ClInclude Include="src\SceneCommon.h">
       <Filter>Scenes</Filter>
     </ClInclude>
+    <ClInclude Include="src\ComponentCommon.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\CameraController.h">
+      <Filter>Components\CameraController</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Scenes">
@@ -114,6 +123,9 @@
     </Filter>
     <Filter Include="Components\Game">
       <UniqueIdentifier>{cd276cc7-d536-4cec-a3e0-e73665ac72b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\CameraController">
+      <UniqueIdentifier>{022a1917-667c-4c65-8d73-b47e850af0e9}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

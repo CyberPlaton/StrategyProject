@@ -140,6 +140,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\AppCommands.h" />
+    <ClInclude Include="src\CameraController.h" />
+    <ClInclude Include="src\ComponentCommon.h" />
     <ClInclude Include="src\DebugGameScene.h" />
     <ClInclude Include="src\EventSystem.h" />
     <ClInclude Include="src\Factory.h" />
@@ -159,6 +161,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AppCommands.cpp" />
+    <ClCompile Include="src\CameraController.cpp" />
     <ClCompile Include="src\DebugGameScene.cpp" />
     <ClCompile Include="src\EventSystem.cpp" />
     <ClCompile Include="src\Factory.cpp" />
