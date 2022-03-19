@@ -517,6 +517,9 @@ void cherrysoda::SplashSceenScene::SceneImpl::End()
 {
 	LOG_GAME_INFO("[SplashSceenScene] End");
 }
+
+
+static cherrysoda::Entity* m_debugTestEntity = nullptr;
 void cherrysoda::DebugGameScene::SceneImpl::Update()
 {
 	//LOG_GAME_INFO("[DebugGameScene] Update");
@@ -537,31 +540,155 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 
 	GUI::DisableInternalConsole();
 
+
 	// Initialize rendering.
 	cherrysoda::Graphics::SetPointTextureSampling();
 	auto renderer = new cherrysoda::EverythingRenderer();
 	auto camera = renderer->GetCamera();
-	camera->Position(cherrysoda::Math::Vec3(0.0f, 0.0f, 200.0f));
+	camera->Position(cherrysoda::Math::Vec3(0.0f, 0.0f, 1.0f));
 	renderer->SetEffect(cherrysoda::Graphics::GetEmbeddedEffect("sprite")); // Make a sprite renderer.
 	renderer->KeepCameraCenterOrigin(false);
 	camera->UseOrthoProjection(true);
 	camera->CenterOrigin();
 	Add(renderer);
-
-
 	
 	auto factory = Factory::get();
 	
-
+	// Maptiles around Town
 	auto entity = factory->Begin(this)
-		.Add(new  Sprite("assets/Textures.json"))
+		.Add(new  Sprite("assets/MaptileAtlas.json"))
 		.End();
-	entity->Get< Sprite >()->AddLoop("Idle", "HU_Townhall_III");
+	entity->Get< Sprite >()->AddLoop("Idle", "snow");
 	entity->Get< Sprite >()->Play("Idle");
-	entity->Get< Sprite >()->Position2D(Math::Vec2(100.0f, 100.0f));
+	entity->Get< Sprite >()->Position2D(Math::Vec2(0.0f, 0.0f));
 	entity->Get< Sprite >()->CenterOrigin();
+	entity->Depth(2);
 
 
+	entity = factory->Begin(this)
+		.Add(new  Sprite("assets/MaptileAtlas.json"))
+		.End();
+	entity->Get< Sprite >()->AddLoop("Idle", "snow");
+	entity->Get< Sprite >()->Play("Idle");
+	entity->Get< Sprite >()->Position2D(Math::Vec2(256.0f, 0.0f));
+	entity->Get< Sprite >()->CenterOrigin();
+	entity->Depth(2);
+
+
+	entity = factory->Begin(this)
+		.Add(new  Sprite("assets/MaptileAtlas.json"))
+		.End();
+	entity->Get< Sprite >()->AddLoop("Idle", "snow");
+	entity->Get< Sprite >()->Play("Idle");
+	entity->Get< Sprite >()->Position2D(Math::Vec2(0.0f, 256.0f));
+	entity->Get< Sprite >()->CenterOrigin();
+	entity->Depth(2);
+
+
+	entity = factory->Begin(this)
+		.Add(new  Sprite("assets/MaptileAtlas.json"))
+		.End();
+	entity->Get< Sprite >()->AddLoop("Idle", "snow");
+	entity->Get< Sprite >()->Play("Idle");
+	entity->Get< Sprite >()->Position2D(Math::Vec2(256.0f, 256.0f));
+	entity->Get< Sprite >()->CenterOrigin();
+	entity->Depth(2);
+
+
+	entity = factory->Begin(this)
+		.Add(new  Sprite("assets/MaptileAtlas.json"))
+		.End();
+	entity->Get< Sprite >()->AddLoop("Idle", "snow");
+	entity->Get< Sprite >()->Play("Idle");
+	entity->Get< Sprite >()->Position2D(Math::Vec2(-256.0f, 0.0f));
+	entity->Get< Sprite >()->CenterOrigin();
+	entity->Depth(2);
+
+
+	entity = factory->Begin(this)
+		.Add(new  Sprite("assets/MaptileAtlas.json"))
+		.End();
+	entity->Get< Sprite >()->AddLoop("Idle", "snow");
+	entity->Get< Sprite >()->Play("Idle");
+	entity->Get< Sprite >()->Position2D(Math::Vec2(0.0f, -256.0f));
+	entity->Get< Sprite >()->CenterOrigin();
+	entity->Depth(2);
+
+
+	entity = factory->Begin(this)
+		.Add(new  Sprite("assets/MaptileAtlas.json"))
+		.End();
+	entity->Get< Sprite >()->AddLoop("Idle", "snow");
+	entity->Get< Sprite >()->Play("Idle");
+	entity->Get< Sprite >()->Position2D(Math::Vec2(-256.0f, -256.0f));
+	entity->Get< Sprite >()->CenterOrigin();
+	entity->Depth(2);
+
+
+	entity = factory->Begin(this)
+		.Add(new  Sprite("assets/MaptileAtlas.json"))
+		.End();
+	entity->Get< Sprite >()->AddLoop("Idle", "snow");
+	entity->Get< Sprite >()->Play("Idle");
+	entity->Get< Sprite >()->Position2D(Math::Vec2(256.0f, -256.0f));
+	entity->Get< Sprite >()->CenterOrigin();
+	entity->Depth(2);
+
+
+	entity = factory->Begin(this)
+		.Add(new  Sprite("assets/MaptileAtlas.json"))
+		.End();
+	entity->Get< Sprite >()->AddLoop("Idle", "snow");
+	entity->Get< Sprite >()->Play("Idle");
+	entity->Get< Sprite >()->Position2D(Math::Vec2(-256.0f, 256.0f));
+	entity->Get< Sprite >()->CenterOrigin();
+	entity->Depth(2);
+
+
+	// Town
+	entity = factory->Begin(this)
+		.Add(new  Sprite("assets/BuildingAtlas.json"))
+		.End();
+	entity->Get< Sprite >()->AddLoop("Idle", "Human_Townhall_III_Winter");
+	entity->Get< Sprite >()->Play("Idle");
+	entity->Get< Sprite >()->Position2D(Math::Vec2(0.0f, 0.0f));
+	entity->Get< Sprite >()->CenterOrigin();
+	entity->Depth(1);
+
+	// Unit
+	entity = factory->Begin(this)
+		.Add(new  Sprite("assets/UnitAtlas.json"))
+		.End();
+	entity->Get< Sprite >()->AddLoop("Idle", "DarkElf_Knight_Ebony");
+	entity->Get< Sprite >()->Play("Idle");
+	entity->Get< Sprite >()->Position2D(Math::Vec2(-256.0f, 0.0f));
+	entity->Get< Sprite >()->CenterOrigin();
+	entity->Get< Sprite >()->Scale2D({ 0.75f, 0.75f });
+	entity->Depth(0);
+
+	// Unit
+	entity = factory->Begin(this)
+		.Add(new  Sprite("assets/UnitAtlas.json"))
+		.End();
+	entity->Get< Sprite >()->AddLoop("Idle", "Human_Spearman_Mithril");
+	entity->Get< Sprite >()->Play("Idle");
+	entity->Get< Sprite >()->Position2D(Math::Vec2(0.0f, 0.0f));
+	entity->Get< Sprite >()->CenterOrigin();
+	entity->Get< Sprite >()->Scale2D({ 0.75f, 0.75f });
+	entity->Depth(0);
+
+	// Unit
+	entity = factory->Begin(this)
+		.Add(new  Sprite("assets/UnitAtlas.json"))
+		.End();
+	entity->Get< Sprite >()->AddLoop("Idle", "Human_Swordman_Steel");
+	entity->Get< Sprite >()->Play("Idle");
+	entity->Get< Sprite >()->Position(Math::Vec3(256.0f, 0.0f, 10.0f));
+	entity->Get< Sprite >()->CenterOrigin();
+	entity->Get< Sprite >()->Scale2D({ 0.75f, 0.75f });
+	entity->Depth(0);
+
+	// Camera controll
 	entity = factory->Begin(this)
 		.Add(new CameraController(camera))
 		.End();
