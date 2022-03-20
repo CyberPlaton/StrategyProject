@@ -19,7 +19,9 @@
 
 // COMPONENTS
 #include "CameraController.h"
-
+#include "SelectableEntity.h"
+#include "SelectableUnit.h"
+#include "SelectableBuilding.h"
 
 // SOUND
 
@@ -82,6 +84,10 @@ bool TEST_EmitEvent()
 	return true;
 }
 
+
+
+// RENDERER
+#include "CustomRenderer.h"
 
 // GAME SCENES
 #include "InitializationScene.h"

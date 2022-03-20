@@ -26,6 +26,7 @@ namespace cherrysoda
 		static bool Initialize(bool gamelog_open = false, bool limit_number_of_retained_messages = false, size_t count = 256);
 		static void Terminate();
 		static void ToggleGamelog() { Logger::g_GamelogOpen = (Logger::g_GamelogOpen == true) ? false : true; }
+		static bool GamelogEnabled() { return Logger::g_GamelogOpen; }
 		static void Update()
 		{
 #ifdef DEBUG || RELEASE

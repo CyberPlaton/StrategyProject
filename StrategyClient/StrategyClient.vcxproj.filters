@@ -44,6 +44,9 @@
     <ClCompile Include="src\CameraController.cpp">
       <Filter>Components\CameraController</Filter>
     </ClCompile>
+    <ClCompile Include="src\SelectableEntity.cpp">
+      <Filter>Components\Game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Main.h" />
@@ -100,6 +103,18 @@
     </ClInclude>
     <ClInclude Include="src\CameraController.h">
       <Filter>Components\CameraController</Filter>
+    </ClInclude>
+    <ClInclude Include="src\CustomRenderer.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SelectableEntity.h">
+      <Filter>Components\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SelectableUnit.h">
+      <Filter>Components\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SelectableBuilding.h">
+      <Filter>Components\Game</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

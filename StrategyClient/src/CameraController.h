@@ -4,6 +4,7 @@
 
 #include <CherrySoda/Input/MInput.h>
 #include <CherrySoda/Util/Camera.h>
+#include <CherrySoda/Util/GUI.h>
 
 #include "Logging.h"
 

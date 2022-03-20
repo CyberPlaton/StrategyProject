@@ -519,16 +519,12 @@ void cherrysoda::SplashSceenScene::SceneImpl::End()
 }
 
 
-static cherrysoda::Entity* m_debugTestEntity = nullptr;
 void cherrysoda::DebugGameScene::SceneImpl::Update()
 {
 	//LOG_GAME_INFO("[DebugGameScene] Update");
 
 	// Base update.
 	cherrysoda::Scene::Update();
-
-	auto camera = FirstRenderer()->GetCamera();
-
 }
 void cherrysoda::DebugGameScene::SceneImpl::End()
 {
@@ -540,18 +536,19 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 
 	GUI::DisableInternalConsole();
 
-
+	
 	// Initialize rendering.
 	cherrysoda::Graphics::SetPointTextureSampling();
-	auto renderer = new cherrysoda::EverythingRenderer();
+	auto renderer = new cherrysoda::CustomRenderer();
 	auto camera = renderer->GetCamera();
-	camera->Position(cherrysoda::Math::Vec3(0.0f, 0.0f, 1.0f));
+	camera->Position(cherrysoda::Math::Vec3(0.0f, 0.0f, 200.0f));
 	renderer->SetEffect(cherrysoda::Graphics::GetEmbeddedEffect("sprite")); // Make a sprite renderer.
 	renderer->KeepCameraCenterOrigin(false);
 	camera->UseOrthoProjection(true);
 	camera->CenterOrigin();
 	Add(renderer);
 	
+
 	auto factory = Factory::get();
 	
 	// Maptiles around Town
@@ -560,7 +557,7 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 		.End();
 	entity->Get< Sprite >()->AddLoop("Idle", "snow");
 	entity->Get< Sprite >()->Play("Idle");
-	entity->Get< Sprite >()->Position2D(Math::Vec2(0.0f, 0.0f));
+	entity->Position2D(Math::Vec2(0.0f, 0.0f));
 	entity->Get< Sprite >()->CenterOrigin();
 	entity->Depth(2);
 
@@ -570,7 +567,7 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 		.End();
 	entity->Get< Sprite >()->AddLoop("Idle", "snow");
 	entity->Get< Sprite >()->Play("Idle");
-	entity->Get< Sprite >()->Position2D(Math::Vec2(256.0f, 0.0f));
+	entity->Position2D(Math::Vec2(256.0f, 0.0f));
 	entity->Get< Sprite >()->CenterOrigin();
 	entity->Depth(2);
 
@@ -580,7 +577,7 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 		.End();
 	entity->Get< Sprite >()->AddLoop("Idle", "snow");
 	entity->Get< Sprite >()->Play("Idle");
-	entity->Get< Sprite >()->Position2D(Math::Vec2(0.0f, 256.0f));
+	entity->Position2D(Math::Vec2(0.0f, 256.0f));
 	entity->Get< Sprite >()->CenterOrigin();
 	entity->Depth(2);
 
@@ -590,7 +587,7 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 		.End();
 	entity->Get< Sprite >()->AddLoop("Idle", "snow");
 	entity->Get< Sprite >()->Play("Idle");
-	entity->Get< Sprite >()->Position2D(Math::Vec2(256.0f, 256.0f));
+	entity->Position2D(Math::Vec2(256.0f, 256.0f));
 	entity->Get< Sprite >()->CenterOrigin();
 	entity->Depth(2);
 
@@ -600,7 +597,7 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 		.End();
 	entity->Get< Sprite >()->AddLoop("Idle", "snow");
 	entity->Get< Sprite >()->Play("Idle");
-	entity->Get< Sprite >()->Position2D(Math::Vec2(-256.0f, 0.0f));
+	entity->Position2D(Math::Vec2(-256.0f, 0.0f));
 	entity->Get< Sprite >()->CenterOrigin();
 	entity->Depth(2);
 
@@ -610,7 +607,7 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 		.End();
 	entity->Get< Sprite >()->AddLoop("Idle", "snow");
 	entity->Get< Sprite >()->Play("Idle");
-	entity->Get< Sprite >()->Position2D(Math::Vec2(0.0f, -256.0f));
+	entity->Position2D(Math::Vec2(0.0f, -256.0f));
 	entity->Get< Sprite >()->CenterOrigin();
 	entity->Depth(2);
 
@@ -620,7 +617,7 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 		.End();
 	entity->Get< Sprite >()->AddLoop("Idle", "snow");
 	entity->Get< Sprite >()->Play("Idle");
-	entity->Get< Sprite >()->Position2D(Math::Vec2(-256.0f, -256.0f));
+	entity->Position2D(Math::Vec2(-256.0f, -256.0f));
 	entity->Get< Sprite >()->CenterOrigin();
 	entity->Depth(2);
 
@@ -630,7 +627,7 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 		.End();
 	entity->Get< Sprite >()->AddLoop("Idle", "snow");
 	entity->Get< Sprite >()->Play("Idle");
-	entity->Get< Sprite >()->Position2D(Math::Vec2(256.0f, -256.0f));
+	entity->Position2D(Math::Vec2(256.0f, -256.0f));
 	entity->Get< Sprite >()->CenterOrigin();
 	entity->Depth(2);
 
@@ -640,7 +637,7 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 		.End();
 	entity->Get< Sprite >()->AddLoop("Idle", "snow");
 	entity->Get< Sprite >()->Play("Idle");
-	entity->Get< Sprite >()->Position2D(Math::Vec2(-256.0f, 256.0f));
+	entity->Position2D(Math::Vec2(-256.0f, 256.0f));
 	entity->Get< Sprite >()->CenterOrigin();
 	entity->Depth(2);
 
@@ -648,10 +645,12 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 	// Town
 	entity = factory->Begin(this)
 		.Add(new  Sprite("assets/BuildingAtlas.json"))
+		.Add(new  SelectableBuilding(1))
+		.Add(new  CollidableComponent(true, false, true))
 		.End();
 	entity->Get< Sprite >()->AddLoop("Idle", "Human_Townhall_III_Winter");
 	entity->Get< Sprite >()->Play("Idle");
-	entity->Get< Sprite >()->Position2D(Math::Vec2(0.0f, 0.0f));
+	entity->Position2D(Math::Vec2(0.0f, 0.0f));
 	entity->Get< Sprite >()->CenterOrigin();
 	entity->Depth(1);
 
@@ -661,9 +660,9 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 		.End();
 	entity->Get< Sprite >()->AddLoop("Idle", "DarkElf_Knight_Ebony");
 	entity->Get< Sprite >()->Play("Idle");
-	entity->Get< Sprite >()->Position2D(Math::Vec2(-256.0f, 0.0f));
+	entity->Position2D(Math::Vec2(-256.0f, 0.0f));
 	entity->Get< Sprite >()->CenterOrigin();
-	entity->Get< Sprite >()->Scale2D({ 0.75f, 0.75f });
+	//entity->Get< Sprite >()->Scale2D({ 0.75f, 0.75f });
 	entity->Depth(0);
 
 	// Unit
@@ -672,23 +671,38 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 		.End();
 	entity->Get< Sprite >()->AddLoop("Idle", "Human_Spearman_Mithril");
 	entity->Get< Sprite >()->Play("Idle");
-	entity->Get< Sprite >()->Position2D(Math::Vec2(0.0f, 0.0f));
+	entity->Position2D(Math::Vec2(0.0f, 0.0f));
 	entity->Get< Sprite >()->CenterOrigin();
-	entity->Get< Sprite >()->Scale2D({ 0.75f, 0.75f });
+	//entity->Get< Sprite >()->Scale2D({ 0.75f, 0.75f });
 	entity->Depth(0);
 
 	// Unit
 	entity = factory->Begin(this)
 		.Add(new  Sprite("assets/UnitAtlas.json"))
+		.Add(new Unit("Steel Swordman", 1, 50, 200, 25, 50, 0, 0, 0, 0))
 		.End();
 	entity->Get< Sprite >()->AddLoop("Idle", "Human_Swordman_Steel");
 	entity->Get< Sprite >()->Play("Idle");
-	entity->Get< Sprite >()->Position(Math::Vec3(256.0f, 0.0f, 10.0f));
+	entity->Position2D(Math::Vec2(256.0f, 0.0f));
+	entity->Get< Sprite >()->Position2D(Math::Vec2(0.0f, 0.0f));
 	entity->Get< Sprite >()->CenterOrigin();
-	entity->Get< Sprite >()->Scale2D({ 0.75f, 0.75f });
+	//entity->Get< Sprite >()->Scale2D({ 0.75f, 0.75f });
 	entity->Depth(0);
 
-	// Camera controll
+
+	entity = factory->Begin(this)
+		.Add(new  SelectableUnit(1))
+		.Add(new  Sprite("assets/UnitAtlas.json"))
+		.Add(new  CollidableComponent(true, false, true))
+		.Add(new  Unit("Peasant", 1, 20, 1, 1, 5, 0, 0, 0, 0))
+		.End();
+	entity->Get< Sprite >()->AddLoop("Idle", "Human_Peasant");
+	entity->Get< Sprite >()->Play("Idle");
+	entity->Position2D(Math::Vec2(256.0f, -256.0f));
+	entity->Get< Sprite >()->CenterOrigin();
+	entity->Depth(0);
+
+	// Camera control
 	entity = factory->Begin(this)
 		.Add(new CameraController(camera))
 		.End();
