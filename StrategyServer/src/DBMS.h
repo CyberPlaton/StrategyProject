@@ -1,23 +1,17 @@
 #pragma once
 
-// USER DESC
-#include "NetCommon.h"
-// NETWORKING
-#include <olcPGEX_Network.h>
-// XML
+#include <NetLib/NetLib.h>
 #include <tinyxml2.h>
-// STEAM
 #include <steam_api.h>
 
 #define STATIC_GET_DEL_WITH_INIT_AND_SHUTDOWN(CLASS, STATIC_MEMBER) \
 static CLASS* get() \
-{ if(!STATIC_MEMBER){STATIC_MEMBER = new CLASS(); if(!STATIC_MEMBER->_init()){delete STATIC_MEMBER; STATIC_MEMBER = nullptr;}} return STATIC_MEMBER;} \
+{ if(!STATIC_MEMBER){STATIC_MEMBER = new CLASS(); if(!STATIC_MEMBER->Initialize()){delete STATIC_MEMBER; STATIC_MEMBER = nullptr;}} return STATIC_MEMBER;} \
 static void del() \
-{if(STATIC_MEMBER){STATIC_MEMBER->_shutdown(); delete STATIC_MEMBER; STATIC_MEMBER = nullptr;}}
+{if(STATIC_MEMBER){STATIC_MEMBER->Terminate(); delete STATIC_MEMBER; STATIC_MEMBER = nullptr;}}
 
 
-
-// MONGODBO INCLUDES
+// MONGODB INCLUDES
 #include <iomanip>
 #include <fstream>
 #include <stdio.h>
@@ -41,6 +35,7 @@ static void del() \
 #include <bsoncxx/exception/error_code.hpp>
 
 #include <memory>
+#include <sstream>
 
 namespace dbms
 {
@@ -64,15 +59,12 @@ namespace dbms
 		// Retrieve all Gameobjects in a Game from Database.
 		// Objects are pushed into given vector.
 		// Returns true on success.
-		static bool GetNetGameobjects(const std::string& gamename, std::vector< std::shared_ptr< net::NetGameobject > >& backv);
+		static bool GetNetGameobjects(const std::string& gamename, std::vector< net::SGameobject* >& backv);
 
 		// Add a Gameobject to Game storage in Database
 		// If it already exists, override it.
 		// Returns true on success.
-		static bool TryEmplaceNetGameobject(net::NetGameobject& object, const std::string& gamename);
-
-
-
+		static bool TryEmplaceNetGameobject(net::SGameobject* object, const std::string& gamename);
 
 
 		
@@ -85,11 +77,11 @@ namespace dbms
 
 		// Update Data of a user in the DB from given description.
 		// Returns true if everything went OK.
-		static bool UpdateUser(net::UserDesc& desc);
+		static bool UpdateUser(net::SClientDescription& desc);
 		
 		// Fill description object with information from the DB.
 		// Returns true if everything went OK.
-		static bool GetUserDesc(net::UserDesc& desc);
+		static bool GetUserDesc(net::SClientDescription& desc);
 		
 		// Delete a user entry from the Database.
 		// Returns true on success.
@@ -115,8 +107,8 @@ namespace dbms
 		DBMS() = default;
 		~DBMS() = default;
 
-		bool _init();
-		void _shutdown() noexcept;
+		bool Initialize();
+		void Terminate() noexcept;
 
 		template < typename Q , typename P>
 		static bool _findOneByKeyValuePair(mongocxx::collection& c, boost::optional<bsoncxx::v_noabi::document::value>& doc, Q&& key, P&& value)
@@ -132,5 +124,13 @@ namespace dbms
 
 			return doc.has_value();
 		}
+
+
+
+
+		static bool TryEmplaceNetGameobjectUnit(net::SUnitGameobject* object, mongocxx::collection& game, bool update);
+		static bool TryEmplaceNetGameobjectBuilding(net::SBuildingGameobject* object, mongocxx::collection& game, bool update);
+		static bool TryEmplaceNetGameobjectMapobject(net::SMapobjectGameobject* object, mongocxx::collection& game, bool update);
+		static bool TryEmplaceNetGameobjectMaptile(net::SMaptileGameobject* object, mongocxx::collection& game, bool update);
 	};
 }

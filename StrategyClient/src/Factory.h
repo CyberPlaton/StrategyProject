@@ -1,12 +1,12 @@
 #pragma once
 
-#include "NetCommon.h"
-
 #include <CherrySoda/Util/Json.h>
 #include <CherrySoda/Util/XML.h>
 #include <CherrySoda/Util/String.h>
 #include <CherrySoda/Entity.h>
 #include <CherrySoda/Scene.h>
+
+#include "CommonDefines.h"
 
 class App;
 

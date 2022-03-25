@@ -116,6 +116,9 @@
     <ClInclude Include="src\SelectableBuilding.h">
       <Filter>Components\Game</Filter>
     </ClInclude>
+    <ClInclude Include="src\CommonDefines.h">
+      <Filter>Util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Scenes">

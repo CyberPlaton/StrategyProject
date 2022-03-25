@@ -9,15 +9,15 @@ namespace cherrysoda
 {
 	struct NetGameobjectUpdateEvent : public Event
 	{
-		NetGameobjectUpdateEvent(net::NetGameobject& object) : Event("NetGameobjectUpdate")
+		NetGameobjectUpdateEvent(net::SGameobject* object) : Event("NetGameobjectUpdate"), m_object(object)
 		{
-			memmove(&m_object, &object, sizeof(net::NetGameobject));
 		}
 		~NetGameobjectUpdateEvent()
 		{
+			m_object = nullptr;
 		}
 
-		net::NetGameobject m_object;
+		net::SGameobject* m_object;
 	};
 
 
@@ -28,12 +28,12 @@ namespace cherrysoda
 
 		Observable(size_t event_system_id) : EventEmitter(event_system_id)
 		{
-			m_networkId = net::CreateNetworkUUID();
+			m_networkId = net::CreateGameobjectNetworkUUID();
 			m_timer.StartTimer();
 		}
 
 
-		size_t GetNetId() { return m_networkId; }
+		uint32_t GetNetId() { return m_networkId; }
 
 		bool EmitCheck() override final
 		{
@@ -57,6 +57,7 @@ namespace cherrysoda
 			// Get Data from Entity.
 			auto unit = GetEntity()->Get< Unit >();
 
+			/*
 			// Put Data into net::NetGameobject and emit
 			// an event with the Data.
 			net::NetGameobject object;
@@ -77,11 +78,12 @@ namespace cherrysoda
 
 			auto evnt = new NetGameobjectUpdateEvent(object);
 			GetEventSystem()->Add(evnt);
+			*/
 		}
 
 
 	private:
-		size_t m_networkId = 0;
+		uint32_t m_networkId = 0;
 		Timer m_timer;
 	};
 }

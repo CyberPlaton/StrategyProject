@@ -51,9 +51,9 @@ struct PlatformClient::Impl
 	{
 		return m_localUserName;
 	}
-	net::EUserPlatform PlatformClient::Impl::GetClientPlatform()
+	net::EClientPlatform PlatformClient::Impl::GetClientPlatform()
 	{
-		return net::EUserPlatform::UP_STEAM;
+		return net::EClientPlatform::UP_STEAM;
 	}
 
 };
@@ -86,7 +86,7 @@ cherrysoda::String PlatformClient::GetClientPlatformName()
 {
 	return m_impl->GetClientPlatformName();
 }
-net::EUserPlatform PlatformClient::GetClientPlatform()
+net::EClientPlatform PlatformClient::GetClientPlatform()
 {
 	return m_impl->GetClientPlatform();
 }

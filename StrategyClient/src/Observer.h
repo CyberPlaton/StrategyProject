@@ -48,7 +48,7 @@ namespace cherrysoda
 			{
 				auto net_event = reinterpret_cast<NetGameobjectUpdateEvent*>(evnt);
 
-				if (net_event->m_object.m_netId == m_netIdToListenTo)
+				if (net_event->m_object->m_networkId == m_netIdToListenTo)
 				{
 					printf("\tUpdate net gameobject\n");
 

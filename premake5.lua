@@ -19,6 +19,111 @@ workspace "Strategy"
 	{
 		"Win64", --"XboxOne", "Switch"
 	}
+	-- ##################################################################################################################################
+	-- Networking Library  - Crossplatform (Windows, Linux, Switch, Xbox...)
+	-- ##################################################################################################################################
+	project "NetLib"
+		-- specify location of Project rel. to root directory
+		location "NetLib"
+		-- what the application actually is
+		kind "StaticLib"
+		-- the programming language of the project
+		language "C++"
+		-- where the output binaries go
+		targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+		-- same for intermediate output files
+		objdir ("intermediate/" .. outputdir .. "/%{prj.name}")
+		-- use C++17 for the projects language
+		cppdialect "C++17"	
+		-- use latest available system version (e.g. latest Windows SDK)
+		systemversion "latest"
+		-- set working directory for debuging
+		debugdir ("bin/" .. outputdir .. "/%{prj.name}")
+		-- Specify which source files to include
+		files
+		{
+			-- all files in the CarSteering directory with endings of .h or .cpp
+			"%{prj.name}/src/**.h",
+			"%{prj.name}/src/**.cpp",
+		}
+		-- Include thirdparty files
+		includedirs
+		{
+			"%{prj.name}/common/include",
+			"%{prj.name}/common/include/RakNet",	-- RakNet
+		}	
+		-- Link thirdparty libraries for each configuration
+		filter "configurations:Debug"
+			libdirs{"libs", "%{prj.name}/common/lib/Debug"}
+			links
+			{
+				"ws2_32",
+				"RakNetLibStatic",
+			}
+		filter "configurations:Release"
+			libdirs{"libs", "%{prj.name}/common/lib/Release"}
+			links
+			{
+				"ws2_32",
+				"RakNetLibStatic",
+			}
+		filter "configurations:Distr"
+			libdirs{"libs", "%{prj.name}/common/lib/Distr"}
+			links
+			{
+				"ws2_32",
+				"RakNetLibStatic",
+			}
+		-- Everything defined below is only if we building on windows
+		filter "system:Windows"
+			system "Windows"
+			-- Specify macro definitions for project in the windows system
+			defines
+			{
+				"PLATFORM_WINDOWS"
+			}
+			undefines
+			{
+			}
+			-- Enable Multithreaded Debug library only in Debug mode.
+		filter {"system:Windows", "configurations:Debug"}
+			staticruntime "Off"
+		filter {"system:Windows", "configurations:Release"}
+			staticruntime "Off"
+		filter {"system:Windows", "configurations:Distr"}
+			staticruntime "Off"
+		-- Specify extra stuff for Debug config and each other configuration we have
+		filter "configurations:Debug"
+			defines 
+			{
+				"DEBUG",
+				"_ITERATOR_DEBUG_LEVEL=0",
+				"_CRT_SECURE_NO_WARNINGS",
+				"_CRT_SECURE_NO_DEPRECATE",
+			}
+			symbols "On"
+		filter "configurations:Release"
+			defines 
+			{
+				"RELEASE",
+				"NDEBUG",
+			}
+			undefines
+			{
+			}
+			optimize "On"
+		filter "configurations:Distr"
+			defines
+			{
+				"DISTR",
+				"NDEBUG",
+			} 
+			undefines
+			{
+			}
+			optimize "On"
+
+
 
 
 	-- ##################################################################################################################################
@@ -64,18 +169,18 @@ workspace "Strategy"
 			"%{prj.name}/common/include/stb",			-- Engine
 			"%{prj.name}/common/include/steam",			-- Release Platform
 			"%{prj.name}/common/include/tinyxml2",		-- Engine
-			"%{prj.name}/common/include/asio",			-- Networking
-			"%{prj.name}/common/include/olc",			-- Networking
 			"%{prj.name}/common/include/LuaBridge",		-- Scripting
 			"%{prj.name}/common/include/spdlog",		-- Logging
 		
-			"StrategyServer/src"						-- For NetCommon.h include common for all projects
+			"%{prj.name}/common/include/NetLib",		-- Networking
 		}	
 		-- Link thirdparty libraries for each configuration
 		filter "configurations:Debug"
 			libdirs{"libs", "%{prj.name}/common/lib/Debug"}
 			links
 			{
+				"ws2_32",
+				"NetLib",
 				"CherrySoda",
 				"imgui",
 				"bgfx",
@@ -95,6 +200,8 @@ workspace "Strategy"
 			libdirs{"libs", "%{prj.name}/common/lib/Release"}
 			links
 			{
+				"ws2_32",
+				"NetLib",
 				"CherrySoda",
 				"imgui",
 				"bgfx",
@@ -114,6 +221,8 @@ workspace "Strategy"
 			libdirs{"libs", "%{prj.name}/common/lib/Distr"}
 			links
 			{
+				"ws2_32",
+				"NetLib",
 				"CherrySoda",
 				"imgui",
 				"bgfx",
@@ -229,14 +338,13 @@ workspace "Strategy"
 		{
 			"%{prj.name}/common/include",
 			"%{prj.name}/common/include/steam", 			-- querying Steam User data
-			"%{prj.name}/common/include/tinyxml2", 			-- ...
-			"%{prj.name}/common/include/asio", 				-- olcPGEX_Network
-			"%{prj.name}/common/include/olc", 				-- server implementation
+			"%{prj.name}/common/include/tinyxml2", 			-- Serializing Mapdata
 			"%{prj.name}/common/include/mongocxx", 			-- MongoDB intergration
 			"%{prj.name}/common/include/bsoncxx", 			-- MongoDB intergration
 			"C://boost_1_78_0",								-- MongoDB requires Boost
 			"%{prj.name}/common/include/spdlog",			-- Logging
 
+			"%{prj.name}/common/include/NetLib"				-- Networking
 		}
 		filter "configurations:Debug"
 			-- Set working directory for debugging
@@ -252,6 +360,8 @@ workspace "Strategy"
 			libdirs{"libs", "%{prj.name}/common/lib/Distr"}
 			links
 			{
+				"ws2_32",
+				"NetLib",
 				"steam_api64",
 				"tinyxml2",
 				"bsoncxx",
@@ -262,6 +372,8 @@ workspace "Strategy"
 			libdirs{"libs", "%{prj.name}/common/lib/Debug"}
 			links
 			{
+				"ws2_32",
+				"NetLib",
 				"steam_api64",
 				"tinyxml2",
 				"bsoncxx",
@@ -272,6 +384,8 @@ workspace "Strategy"
 			libdirs{"libs", "%{prj.name}/common/lib/Release"}
 			links
 			{
+				"ws2_32",
+				"NetLib",
 				"steam_api64",
 				"tinyxml2",
 				"bsoncxx",

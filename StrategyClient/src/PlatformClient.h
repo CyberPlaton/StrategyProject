@@ -9,6 +9,7 @@
 
 #include "NetCommon.h"
 
+
 #define STATIC_GET_DEL(CLASS, STATIC_MEMBER) \
 static CLASS* get() \
 { if(!STATIC_MEMBER){STATIC_MEMBER = new CLASS();} return STATIC_MEMBER;} \
@@ -34,7 +35,7 @@ public:
 	void Terminate();
 
 	// Get the current Platform the client is running on.
-	net::EUserPlatform GetClientPlatform();
+	net::EClientPlatform GetClientPlatform();
 
 	// Get the local user id based on current platform like Steam or Switch.
 	size_t GetClientPlatformID();

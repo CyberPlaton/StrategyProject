@@ -46,7 +46,7 @@ namespace dbms
 		return false;
 	}
 
-	bool DBMS::UpdateUser(net::UserDesc& desc)
+	bool DBMS::UpdateUser(net::SClientDescription& desc)
 	{
 		using namespace std;
 
@@ -59,14 +59,14 @@ namespace dbms
 
 		// Create Achievements Array.
 		auto achiev_array = bsoncxx::builder::basic::array{};
-		for (auto e : desc.m_achievementsVec)
+		for (auto e : desc.m_achievements)
 		{
 			achiev_array.append(e);
 		}
 
 		// Create Service Items Array.
 		auto item_array = bsoncxx::builder::basic::array{};
-		for (auto e : desc.m_serviceItemsVec)
+		for (auto e : desc.m_serviceItems)
 		{
 			item_array.append(e);
 		}
@@ -75,7 +75,7 @@ namespace dbms
 																   kvp("SteamName", desc.m_steamName),
 																   kvp("NintendoId", (int64_t)desc.m_nintendoId),
 																   kvp("NintendoName", desc.m_nintendoName),
-																   kvp("Currency", (int64_t)desc.m_currency),
+																   kvp("Currency", (int64_t)desc.m_currencyAmount),
 																   kvp("Achievements", achiev_array),
 																   kvp("ServiceItems", item_array)))
 		);
@@ -97,7 +97,7 @@ namespace dbms
 		return false;
 	}
 
-	bool DBMS::GetUserDesc(net::UserDesc& desc)
+	bool DBMS::GetUserDesc(net::SClientDescription& desc)
 	{
 		if (!m_initialized) return false;
 
@@ -108,38 +108,38 @@ namespace dbms
 		boost::optional<bsoncxx::v_noabi::document::value> found_doc;
 		if (!_findOneByKeyValuePair(user_data, found_doc, "_id", (int64_t)desc.m_uuid))
 		{
-			switch (desc.m_userPlatform)
+			switch (desc.m_platform)
 			{
-			case net::EUserPlatform::UP_STEAM:
+			case net::EClientPlatform::UP_STEAM:
 			{
 				if (!_findOneByKeyValuePair(user_data, found_doc, "SteamId", (int64_t)desc.m_steamId))
 				{
-					_findOneByKeyValuePair(user_data, found_doc, "SteamName", desc.m_steamName.c_str());
+					_findOneByKeyValuePair(user_data, found_doc, "SteamName", desc.m_steamName.C_String());
 				}
 			}
 			break;
-			case net::EUserPlatform::UP_SWITCH:
+			case net::EClientPlatform::UP_SWITCH:
 			{
 				if (!_findOneByKeyValuePair(user_data, found_doc, "NintendoId", (int64_t)desc.m_nintendoId))
 				{
-					_findOneByKeyValuePair(user_data, found_doc, "NintendoName", desc.m_nintendoName.c_str());
+					_findOneByKeyValuePair(user_data, found_doc, "NintendoName", desc.m_nintendoName.C_String());
 				}
 			}
 			break;
-			case net::EUserPlatform::UP_XBOX:
+			case net::EClientPlatform::UP_XBOX:
 			{
-				//if (!_findOneByKeyValuePair(user_data, found_doc, "XboxId", (int64_t)desc.m_xboxId))
-				//{
-				//	_findOneByKeyValuePair(user_data, found_doc, "XboxName", desc.m_xboxName.c_str());
-				//}
+				if (!_findOneByKeyValuePair(user_data, found_doc, "XboxLiveId", (int64_t)desc.m_xboxLiveId))
+				{
+					_findOneByKeyValuePair(user_data, found_doc, "XboxLiveName", desc.m_xboxLiveName.C_String());
+				}
 			}
 			break;
-			case net::EUserPlatform::UP_PS:
+			case net::EClientPlatform::UP_PS:
 			{
-				//if (!_findOneByKeyValuePair(user_data, found_doc, "PSId", (int64_t)desc.m_psId))
-				//{
-				//	_findOneByKeyValuePair(user_data, found_doc, "PSName", desc.m_psName.c_str());
-				//}
+				if (!_findOneByKeyValuePair(user_data, found_doc, "PSNId", (int64_t)desc.m_psnId))
+				{
+					_findOneByKeyValuePair(user_data, found_doc, "PSNName", desc.m_psnName.C_String());
+				}
 			}
 			break;
 
@@ -159,17 +159,22 @@ namespace dbms
 		// Insert Data into UserDesc.
 		desc.m_steamId = doc["SteamId"].get_int64();
 		desc.m_nintendoId = doc["NintendoId"].get_int64();
-		desc.m_steamName = doc["SteamName"].get_utf8().value.to_string();
-		desc.m_nintendoName = doc["NintendoName"].get_utf8().value.to_string();
+		desc.m_xboxLiveId = doc["XboxLiveId"].get_int64();
+		desc.m_psnId = doc["PSNId"].get_int64();
 
-		desc.m_currency = doc["Currency"].get_int64();
+		desc.m_steamName = doc["SteamName"].get_utf8().value.to_string().c_str();
+		desc.m_nintendoName = doc["NintendoName"].get_utf8().value.to_string().c_str();
+		desc.m_xboxLiveName = doc["XboxLiveName"].get_utf8().value.to_string().c_str();
+		desc.m_psnName = doc["PSNName"].get_utf8().value.to_string().c_str();
+
+		desc.m_currencyAmount = doc["Currency"].get_int64();
 
 
 		// Get the achievements and service items.
 		if (!doc["Achievements"].get_array().value.empty())
 		{
 			
-			for (int i = 0; i < net::EAchievement::ACHIEV_ACHIEVEMENTS_COUNT; i++)
+			for (int i = 0; i < net::EAchievement::ACHIEV_COUNT; i++)
 			{
 				// Access to an invalid index yields an invalid element, not an expection.
 				auto elem = doc["Achievements"][i];
@@ -182,7 +187,7 @@ namespace dbms
 					{
 						// Store valid Achievement Elements.
 						auto e = (int64_t)elem.get_int32();
-						desc.m_achievementsVec.push_back((net::EAchievement)e);
+						desc.m_achievements.push_back((net::EAchievement)e);
 					}
 					catch (const bsoncxx::v_noabi::exception& e)
 					{
@@ -194,7 +199,7 @@ namespace dbms
 		}
 		if (!doc["ServiceItems"].get_array().value.empty())
 		{
-			for (int i = 0; i < net::EServiceItem::ITEM_ITEMS_COUNT; i++)
+			for (int i = 0; i < net::EServiceItem::ITEM_COUNT; i++)
 			{
 				// Access to an invalid index yields an invalid element, not an expection.
 				auto elem = doc["ServiceItems"][i];
@@ -207,7 +212,7 @@ namespace dbms
 					{
 						// Store valid Achievement Elements.
 						auto e = (int64_t)elem.get_int32();
-						desc.m_serviceItemsVec.push_back((net::EServiceItem)e);
+						desc.m_serviceItems.push_back((net::EServiceItem)e);
 					}
 					catch (const bsoncxx::v_noabi::exception& e)
 					{
@@ -274,7 +279,7 @@ namespace dbms
 	}
 
 
-	bool DBMS::_init()
+	bool DBMS::Initialize()
 	{
 		// Try connecting to Database.
 		// Exception is catched in case it is not running.
@@ -345,7 +350,11 @@ namespace dbms
 		}
 	}
 
-	bool DBMS::GetNetGameobjects(const std::string& gamename, std::vector< std::shared_ptr< net::NetGameobject > >& backv)
+#define AS_BUILDING(OBJ) reinterpret_cast<net::SBuildingGameobject*>(OBJ)
+#define AS_UNIT(OBJ) reinterpret_cast<net::SUnitGameobject*>(OBJ)
+#define AS_MAPOBJECT(OBJ) reinterpret_cast<net::SMapobjectGameobject*>(OBJ)
+#define AS_MAPTILE(OBJ) reinterpret_cast<net::SMaptileGameobject*>(OBJ)
+	bool DBMS::GetNetGameobjects(const std::string& gamename, std::vector< net::SGameobject*  >& backv)
 	{
 		std::string name = "game_" + gamename;
 		mongocxx::database db = DBMS::get()->m_mongoClient[m_database];
@@ -361,31 +370,52 @@ namespace dbms
 
 				for (auto&& doc : cursor)
 				{
-					auto obj = std::make_shared< net::NetGameobject >();
+					net::SGameobject* obj = nullptr;
+					auto type = (net::EGameobjectType)doc["gameobjectType"].get_int64().value;
+					switch (type)
+					{
+						case net::EGameobjectType::NET_GO_MAPTILE:
+						{
+							obj = new net::SMaptileGameobject();
+							AS_MAPTILE(obj)->m_maptileType = doc["maptileType"].get_utf8().value.to_string().c_str();
+							AS_MAPTILE(obj)->m_maptileBiome = doc["maptileBiome"].get_utf8().value.to_string().c_str();
+							break;
+						}
+						case net::EGameobjectType::NET_GO_MAPOBJECT:
+						{
+							obj = new net::SMapobjectGameobject();
+							AS_MAPOBJECT(obj)->m_maptileObjectType = doc["maptileObjectType"].get_utf8().value.to_string().c_str();
+							AS_MAPOBJECT(obj)->m_maptileObjectBiome = doc["maptileObjectBiome"].get_utf8().value.to_string().c_str();
+							break;
+						}
+						case net::EGameobjectType::NET_GO_UNIT:
+						{
+							obj = new net::SUnitGameobject();
+							AS_UNIT(obj)->m_unitHealth = doc["unitHealth"].get_int64();
+							AS_UNIT(obj)->m_unitArmor = doc["unitArmor"].get_int64();
+							AS_UNIT(obj)->m_unitAttack = doc["unitAttack"].get_int64();
+							AS_UNIT(obj)->m_unitDefense = doc["unitDefense"].get_int64();
+							AS_UNIT(obj)->m_unitLevel = doc["unitLevel"].get_int64();
+							AS_UNIT(obj)->m_unitExperience = doc["unitExperience"].get_int64();
+							AS_UNIT(obj)->m_unitName = doc["unitName"].get_utf8().value.to_string().c_str();
+							break;
+						}
+						case net::EGameobjectType::NET_GO_BUILDING:
+						{
+							obj = new net::SBuildingGameobject();
+							AS_BUILDING(obj)->m_buildingHealth = doc["buildingHealth"].get_int64();
+							AS_BUILDING(obj)->m_buildingLevel = doc["playerId"].get_int64();
+							AS_BUILDING(obj)->m_buildingName = doc["unitName"].get_utf8().value.to_string().c_str();
+							break;
+						}
+					}
+					// Get basic data common to all.
 					obj->m_name = "NetGameobject";
-					obj->m_unitName = doc["unitName"].get_utf8().value.to_string();
-					obj->m_unitHealth = doc["unitHealth"].get_int64();
-					obj->m_unitArmor = doc["unitArmor"].get_int64();
-					obj->m_unitAttack = doc["unitAttack"].get_int64();
-					obj->m_unitDefense = doc["unitDefense"].get_int64();
-
+					obj->m_networkId = doc["networkId"].get_int64();
+					obj->m_playerId = doc["playerId"].get_int64();
+					obj->m_gameobjectType = (net::EGameobjectType)doc["gameobjectType"].get_int64().value;
 					obj->m_positionX = doc["positionX"].get_double();
 					obj->m_positionY = doc["positionY"].get_double();
-					obj->m_tilePositionX = doc["tilePositionX"].get_int64();
-					obj->m_tilePositionY = doc["tilePositionY"].get_int64();
-
-					obj->m_netId = (size_t)doc["netId"].get_int64().value;
-					obj->m_objectType = (net::ENetGameobject)doc["objectType"].get_int64().value;
-
-					obj->m_buildingHealth = doc["buildingHealth"].get_int64();
-					obj->m_buildingName = doc["buildingName"].get_utf8().value.to_string();
-
-					obj->m_MaptileType = doc["mapTileType"].get_utf8().value.to_string();
-					obj->m_MaptileBiome = doc["mapTileBiome"].get_utf8().value.to_string();
-
-					obj->m_mapObjectType = doc["mapObjectType"].get_utf8().value.to_string();
-					obj->m_mapObjectBiome = doc["mapObjectBiome"].get_utf8().value.to_string();
-
 
 					backv.push_back(obj);
 				}
@@ -403,7 +433,7 @@ namespace dbms
 
 
 
-	bool DBMS::TryEmplaceNetGameobject(net::NetGameobject& object, const std::string& gamename)
+	bool DBMS::TryEmplaceNetGameobject(net::SGameobject* object, const std::string& gamename)
 	{
 		std::string name = "game_" + gamename;
 
@@ -414,7 +444,7 @@ namespace dbms
 		// If it exists, update it.
 		bool found = false;
 		auto cursor = game.find(
-			make_document(kvp("netId", (int64_t)object.m_netId))
+			make_document(kvp("networkId", (int64_t)object->m_networkId))
 		);
 
 		for (auto& it : cursor)
@@ -424,42 +454,85 @@ namespace dbms
 			break;
 		}
 
+		switch (object->m_gameobjectType)
+		{
+			case net::EGameobjectType::NET_GO_MAPOBJECT:
+			{
+				if (found)
+				{
+					return TryEmplaceNetGameobjectMapobject(AS_MAPOBJECT(object), game, true);
+				}
+				else
+				{
+					return TryEmplaceNetGameobjectMapobject(AS_MAPOBJECT(object), game, false);
+				}
+			}
+			case net::EGameobjectType::NET_GO_MAPTILE:
+			{
+				if (found)
+				{
+					return TryEmplaceNetGameobjectMaptile(AS_MAPTILE(object), game, true);
+				}
+				else
+				{
+					return TryEmplaceNetGameobjectMaptile(AS_MAPTILE(object), game, false);
+				}
+			}
+			case net::EGameobjectType::NET_GO_BUILDING:
+			{
+				if (found)
+				{
+					return TryEmplaceNetGameobjectBuilding(AS_BUILDING(object), game, true);
+				}
+				else
+				{
+					return TryEmplaceNetGameobjectBuilding(AS_BUILDING(object), game, false);
+				}
+			}
+			case net::EGameobjectType::NET_GO_UNIT:
+			{
+				if (found)
+				{
+					return TryEmplaceNetGameobjectUnit(AS_UNIT(object), game, true);
+				}
+				else
+				{
+					return TryEmplaceNetGameobjectUnit(AS_UNIT(object), game, false);
+				}
+			}
+		}
+	}
 
-		auto update_or_create_doc = make_document(
-			kvp("netId", (int64_t)object.m_netId),
-			kvp("name", object.m_name.c_str()),
-			kvp("playerId", (int64_t)object.m_playerId),
-			kvp("objectType", (int64_t)object.m_objectType),
-			kvp("positionX", (double)object.m_positionX),
-			kvp("positionY", (double)object.m_positionY),
-			kvp("tilePositionX", (int64_t)object.m_tilePositionX),
-			kvp("tilePositionY", (int64_t)object.m_tilePositionY),
-			kvp("unitName", object.m_unitName.c_str()),
-			kvp("unitHealth", (int64_t)object.m_unitHealth),
-			kvp("unitArmor", (int64_t)object.m_unitArmor),
-			kvp("unitAttack", (int64_t)object.m_unitAttack),
-			kvp("unitDefense", (int64_t)object.m_unitDefense),
-			kvp("buildingName", object.m_buildingName.c_str()),
-			kvp("buildingHealth", (int64_t)object.m_buildingHealth),
-			kvp("mapTileType", object.m_MaptileType.c_str()),
-			kvp("mapTileBiome", object.m_MaptileBiome.c_str()),
-			kvp("mapObjectType", object.m_mapObjectType.c_str()),
-			kvp("mapObjectBiome", object.m_mapObjectBiome.c_str())
-		);
-
-
+	bool DBMS::TryEmplaceNetGameobjectUnit(net::SUnitGameobject* object, mongocxx::collection& game, bool update)
+	{
 		try
 		{
-			if (found)
-			{
-				bsoncxx::stdx::optional<mongocxx::result::update> result;
+			// Create the Document.
+			auto update_or_create_doc = make_document(
+				kvp("networkId", (int64_t)object->m_networkId),
+				kvp("name", object->m_name.C_String()),
+				kvp("playerId", (int64_t)object->m_playerId),
+				kvp("gameobjectType", (int64_t)object->m_gameobjectType),
+				kvp("positionX", (double)object->m_positionX),
+				kvp("positionY", (double)object->m_positionY),
 
-				// Create an Update command.
-				result = game.update_one(
-					make_document(kvp("netId", (int64_t)object.m_netId)),
+				kvp("unitName", object->m_unitName.C_String()),
+				kvp("unitHealth", (int64_t)object->m_unitHealth),
+				kvp("unitArmor", (int64_t)object->m_unitArmor),
+				kvp("unitAttack", (int64_t)object->m_unitAttack),
+				kvp("unitDefense", (int64_t)object->m_unitDefense),
+				kvp("unitLevel", (int64_t)object->m_unitLevel),
+				kvp("unitExperience", (int64_t)object->m_unitExperience)
+			);
+
+
+			if (update)
+			{
+				bsoncxx::stdx::optional<mongocxx::result::update> result = game.update_one(
+					make_document(kvp("networkId", (int64_t)object->m_networkId)),
 					make_document(kvp("$set", update_or_create_doc.view()))
 				);
-				
+
 				if (result.value().result().modified_count() > 0)
 				{
 					return true;
@@ -467,10 +540,7 @@ namespace dbms
 			}
 			else
 			{
-				bsoncxx::stdx::optional<mongocxx::result::insert_one> result;
-
-				// Create an Insert command.
-				result = game.insert_one(
+				bsoncxx::stdx::optional<mongocxx::result::insert_one> result = game.insert_one(
 					std::move(update_or_create_doc)
 				);
 
@@ -482,15 +552,155 @@ namespace dbms
 		}
 		catch (const mongocxx::v_noabi::logic_error& e)
 		{
-			printf("DBMS::TryEmplaceNetGameobject - mongocxx::v_noabi::logic_error - Message: \n\t\t \"%s\"\n", e.what());
+			printf("DBMS::TryEmplaceNetGameobjectUnit - mongocxx::v_noabi::logic_error - Message: \n\t\t \"%s\"\n", e.what());
 		}
+	}
+	bool DBMS::TryEmplaceNetGameobjectBuilding(net::SBuildingGameobject* object, mongocxx::collection& game, bool update)
+	{
+		try
+		{
+			// Create the Document.
+			auto update_or_create_doc = make_document(
+				kvp("networkId", (int64_t)object->m_networkId),
+				kvp("name", object->m_name.C_String()),
+				kvp("playerId", (int64_t)object->m_playerId),
+				kvp("gameobjectType", (int64_t)object->m_gameobjectType),
+				kvp("positionX", (double)object->m_positionX),
+				kvp("positionY", (double)object->m_positionY),
 
+				kvp("buildingName", object->m_buildingName.C_String()),
+				kvp("buildingHealth", (int64_t)object->m_buildingHealth),
+				kvp("buildingLevel", (int64_t)object->m_buildingLevel)
+			);
 
-		return false;
+			if (update)
+			{
+				bsoncxx::stdx::optional<mongocxx::result::update> result = game.update_one(
+					make_document(kvp("networkId", (int64_t)object->m_networkId)),
+					make_document(kvp("$set", update_or_create_doc.view()))
+				);
+
+				if (result.value().result().modified_count() > 0)
+				{
+					return true;
+				}
+			}
+			else
+			{
+				bsoncxx::stdx::optional<mongocxx::result::insert_one> result = game.insert_one(
+					std::move(update_or_create_doc)
+				);
+
+				if (result.value().result().inserted_count() > 0)
+				{
+					return true;
+				}
+			}
+		}
+		catch (const mongocxx::v_noabi::logic_error& e)
+		{
+			printf("DBMS::TryEmplaceNetGameobjectBuilding - mongocxx::v_noabi::logic_error - Message: \n\t\t \"%s\"\n", e.what());
+		}
+	}
+	bool DBMS::TryEmplaceNetGameobjectMapobject(net::SMapobjectGameobject* object, mongocxx::collection& game, bool update)
+	{
+		try
+		{
+			// Create the Document.
+			auto update_or_create_doc = make_document(
+				kvp("networkId", (int64_t)object->m_networkId),
+				kvp("name", object->m_name.C_String()),
+				kvp("playerId", (int64_t)object->m_playerId),
+				kvp("gameobjectType", (int64_t)object->m_gameobjectType),
+				kvp("positionX", (double)object->m_positionX),
+				kvp("positionY", (double)object->m_positionY),
+
+				kvp("maptileObjectType", object->m_maptileObjectType.C_String()),
+				kvp("maptileObjectBiome", object->m_maptileObjectBiome.C_String())
+			);
+
+			if (update)
+			{
+				bsoncxx::stdx::optional<mongocxx::result::update> result = game.update_one(
+					make_document(kvp("networkId", (int64_t)object->m_networkId)),
+					make_document(kvp("$set", update_or_create_doc.view()))
+				);
+
+				if (result.value().result().modified_count() > 0)
+				{
+					return true;
+				}
+			}
+			else
+			{
+				bsoncxx::stdx::optional<mongocxx::result::insert_one> result = game.insert_one(
+					std::move(update_or_create_doc)
+				);
+
+				if (result.value().result().inserted_count() > 0)
+				{
+					return true;
+				}
+			}
+		}
+		catch (const mongocxx::v_noabi::logic_error& e)
+		{
+			printf("DBMS::TryEmplaceNetGameobjectMapobject - mongocxx::v_noabi::logic_error - Message: \n\t\t \"%s\"\n", e.what());
+		}
+	}
+	bool DBMS::TryEmplaceNetGameobjectMaptile(net::SMaptileGameobject* object, mongocxx::collection& game, bool update)
+	{
+		try
+		{
+			// Create the Document.
+			auto update_or_create_doc = make_document(
+				kvp("networkId", (int64_t)object->m_networkId),
+				kvp("name", object->m_name.C_String()),
+				kvp("playerId", (int64_t)object->m_playerId),
+				kvp("gameobjectType", (int64_t)object->m_gameobjectType),
+				kvp("positionX", (double)object->m_positionX),
+				kvp("positionY", (double)object->m_positionY),
+
+				kvp("maptileType", object->m_maptileType.C_String()),
+				kvp("maptileBiome", object->m_maptileBiome.C_String())
+			);
+
+			if (update)
+			{
+				bsoncxx::stdx::optional<mongocxx::result::update> result = game.update_one(
+					make_document(kvp("networkId", (int64_t)object->m_networkId)),
+					make_document(kvp("$set", update_or_create_doc.view()))
+				);
+
+				if (result.value().result().modified_count() > 0)
+				{
+					return true;
+				}
+			}
+			else
+			{
+				bsoncxx::stdx::optional<mongocxx::result::insert_one> result = game.insert_one(
+					std::move(update_or_create_doc)
+				);
+
+				if (result.value().result().inserted_count() > 0)
+				{
+					return true;
+				}
+			}
+		}
+		catch (const mongocxx::v_noabi::logic_error& e)
+		{
+			printf("DBMS::TryEmplaceNetGameobjectMaptile - mongocxx::v_noabi::logic_error - Message: \n\t\t \"%s\"\n", e.what());
+		}
 	}
 
+#undef AS_BUILDING
+#undef AS_UNIT
+#undef AS_MAPOBJECT
+#undef AS_MAPTILE
 
-	void DBMS::_shutdown() noexcept
+	void DBMS::Terminate() noexcept
 	{
 		// Write current UUID in the File.
 		std::ofstream outfile("UserUUID.ini", std::ofstream::out | std::ofstream::trunc);

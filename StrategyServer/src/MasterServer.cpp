@@ -1,11 +1,31 @@
 #include "MasterServer.h"
 
+
+void MasterServer::OnMessage(RakNet::Packet* packet)
+{
+
+}
+void MasterServer::OnClientConnect(RakNet::Packet* packet)
+{
+
+}
+void MasterServer::OnClientDisconnect(RakNet::Packet* packet)
+{
+
+}
+bool MasterServer::OnClientValidated(RakNet::Packet* packet)
+{
+	return false;
+}
+
+
 bool MasterServer::CheckClientVersion(uint16_t maj, uint16_t min, uint16_t rev)
 {
 	return (maj >= MASTER_SERVER_MAJOR_VERSION &&
 			min >= MASTER_SERVER_MINOR_VERSION &&
 			rev >= MASTER_SERVER_REVIEW_VERSION);
 }
+/*
 bool MasterServer::OnClientConnect(std::shared_ptr<olc::net::connection<net::Message>> client)
 {
 	return true;
@@ -14,6 +34,7 @@ void MasterServer::OnClientDisconnect(std::shared_ptr<olc::net::connection<net::
 {
 
 }
+*/
 void MasterServer::BackupUserNumber()
 {
 	int elapsed = m_timer.SecondsElapsed();
@@ -24,6 +45,7 @@ void MasterServer::BackupUserNumber()
 		m_timer.StartTimer();
 	}
 }
+/*
 void MasterServer::OnClientValidated(std::shared_ptr<olc::net::connection<net::Message>> client)
 {
 	using namespace olc::net;
@@ -219,6 +241,7 @@ void MasterServer::OnMessage(std::shared_ptr<olc::net::connection<net::Message>>
 		return;
 	}
 }
+*/
 
 std::string MasterServer::MapdataToText(tinyxml2::XMLDocument& doc)
 {
@@ -230,9 +253,7 @@ std::string MasterServer::MapdataToText(tinyxml2::XMLDocument& doc)
 }
 tinyxml2::XMLDocument& MasterServer::MapdataFromText(std::string& maptext)
 {
-	using namespace tinyxml2;
-
-	XMLDocument doc;
+	tinyxml2::XMLDocument doc;
 	doc.Parse(maptext.c_str());
 	return doc;
 }

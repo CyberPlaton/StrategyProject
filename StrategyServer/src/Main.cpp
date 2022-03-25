@@ -12,17 +12,12 @@ int main()
 	}
 
 	// Startup the Main Server.
-	auto server = new MasterServer(60777);
-	if (server->Start())
-	{
-		printf("[MasterServer] Listening on \"%s:%d\"", server->GetIPv4Address().c_str(), server->GetPort());
-
-		while (!server->ShouldExit())
-		{
-			server->BackupUserNumber();
-			server->Update(-1, false);
-		}
-	}
+	uint32_t port = 60777;
+	uint32_t max = 1;
+	MasterServer server;
+	server.Initialize(port, max);
+	server.Start();
+	server.Terminate();
 
 	dbms::DBMS::del();
 	return 0;

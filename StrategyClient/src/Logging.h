@@ -8,12 +8,11 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 #include "AppCommands.h"
-#include "NetCommon.h"
+#include "CommonDefines.h"
 
 
 #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 #include <imgui.h>
-
 
 
 namespace cherrysoda

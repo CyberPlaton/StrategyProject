@@ -1,12 +1,22 @@
 ﻿#include "Main.h"
 
+void App::OnConnected(RakNet::Packet* packet)
+{
+}
+void App::OnDisconnected(RakNet::Packet* packet)
+{
+}
+void App::OnMessage(RakNet::Packet* packet)
+{
+}
+
+
 bool cherrysoda::SceneGraphFactory::LoadSceneGraph(const cherrysoda::String& filename, App* app)
 {
 	using namespace cherrysoda;
-	using namespace cherrysoda::xml;
-
+	
 	XMLUtil xml;
-	XMLDocument doc;
+	cherrysoda::xml::XMLDocument doc;
 	if (xml.ReadXMLFile(doc, filename))
 	{
 		app->m_stateMachine = new CStateMachine(app);
@@ -79,15 +89,16 @@ bool cherrysoda::SceneGraphFactory::LoadSceneGraph(const cherrysoda::String& fil
 	return false;
 }
 
-void NetCommMngr::UpdateNetGameobject(net::NetGameobject& object)
+void NetCommMngr::UpdateNetGameobject(net::SGameobject* object)
 {
 	printf("NetCommMngr::UpdateNetGameobject\n");
-
+	/*
 	olc::net::message< net::Message > out;
 	out.header.id = net::Message::NET_MSG_GAMEOBJECT_UPDATE;
 	out << object;
 
 	g_App->Send(out);
+	*/
 }
 App::App() : base(), 
 m_DefaultTexture(nullptr), m_Image(nullptr)
@@ -122,7 +133,7 @@ void App::Initialize()
 	{
 		LOG_DBG_CRITICAL("[{:.4f}] Logger not initialized!", APP_RUN_TIME());
 		LOG_FILE_CRITICAL("[{:.4f}] Logger not initialized!", APP_RUN_TIME());
-		App::Exit(); 
+		base::Exit(); 
 		return;
 	}
 	LOG_DBG_INFO("[{:.4f}] Logger initialized...", APP_RUN_TIME());
@@ -133,7 +144,7 @@ void App::Initialize()
 	{
 		LOG_DBG_CRITICAL("[{:.4f}] Localization not initialized!", APP_RUN_TIME());
 		LOG_FILE_CRITICAL("[{:.4f}] Localization not initialized!", APP_RUN_TIME());
-		App::Exit();
+		base::Exit();
 		return;
 	}
 	LOG_DBG_INFO("[{:.4f}] Localization initialized...", APP_RUN_TIME());
@@ -145,7 +156,7 @@ void App::Initialize()
 	{
 		LOG_DBG_CRITICAL("[{:.4f}] Platform client not initialized!", APP_RUN_TIME());
 		LOG_FILE_CRITICAL("[{:.4f}] Platform client not initialized!", APP_RUN_TIME());
-		App::Exit();
+		base::Exit();
 		return;
 	}
 	LOG_DBG_INFO("[{:.4f}] Platform client initialized...", APP_RUN_TIME());
@@ -157,7 +168,7 @@ void App::Initialize()
 	{
 		LOG_DBG_CRITICAL("[{:.4f}] Gamer service not initialized!", APP_RUN_TIME());
 		LOG_FILE_CRITICAL("[{:.4f}] Gamer service not initialized!", APP_RUN_TIME());
-		App::Exit();
+		base::Exit();
 		return;
 	}
 	LOG_DBG_INFO("[{:.4f}] Gamer service initialized...", APP_RUN_TIME());
@@ -167,7 +178,7 @@ void App::Initialize()
 	{
 		LOG_DBG_CRITICAL("[{:.4f}] Master connection not initialized!", APP_RUN_TIME());
 		LOG_FILE_CRITICAL("[{:.4f}] Master connection not initialized!", APP_RUN_TIME());
-		App::Exit();
+		base::Exit();
 		return;
 	}
 	LOG_DBG_INFO("[{:.4f}] Master connection initialized...", APP_RUN_TIME());
@@ -178,7 +189,7 @@ void App::Initialize()
 	{
 		LOG_DBG_CRITICAL("[{:.4f}] Net communication manager not initialized!", APP_RUN_TIME());
 		LOG_FILE_CRITICAL("[{:.4f}] Net communication manager not initialized!", APP_RUN_TIME());
-		App::Exit();
+		base::Exit();
 		return;
 	}
 	LOG_DBG_INFO("[{:.4f}] Net communication manager initialized...", APP_RUN_TIME());
@@ -197,7 +208,7 @@ void App::Initialize()
 	{
 		LOG_DBG_CRITICAL("[{:.4f}] Failed loading SceneGraph!", APP_RUN_TIME());
 		LOG_FILE_CRITICAL("[{:.4f}] Failed loading SceneGraph!", APP_RUN_TIME());
-		App::Exit();
+		base::Exit();
 		return;
 	}
 
@@ -304,18 +315,20 @@ bool App::InitializeMasterConnection()
 	{
 		LOG_GAME_INFO("[App::InitializeMasterConnection] Try connect to Master server");
 
+		/*
 		// Establish connection with MasterServer.
 		if (Connect(MASTER_SERVER_IP, MASTER_SERVER_PORT))
 		{
 			// Whether we are truly connected still needs to be proofed.
 			return true;
 		}
+		*/
 	}
 	return false;
 }
 void App::TerminateMasterConnection()
 {
-	Disconnect();
+	//Disconnect();
 }
 
 
@@ -385,6 +398,7 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 	m_stateMachine->Transit("DebugGame");
 #endif
 
+	/*
 	if (m_application->IsConnected() && m_initializationComplete == false)
 	{
 		if (!m_application->Incoming().empty())
@@ -475,7 +489,7 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 	{
 		m_application->Exit();
 	}
-
+	*/
 
 	if (m_initializationComplete)
 	{

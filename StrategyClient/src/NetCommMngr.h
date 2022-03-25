@@ -1,7 +1,7 @@
 #pragma once
 
 #include "NetCommon.h"
-
+#include "CommonDefines.h"
 
 extern class App;
 class NetCommMngr
@@ -12,7 +12,7 @@ public:
 
 	static bool Initialize(App* app);
 	static void Terminate();
-	static void UpdateNetGameobject(net::NetGameobject& object);
+	static void UpdateNetGameobject(net::SGameobject* object);
 
 private:
 	

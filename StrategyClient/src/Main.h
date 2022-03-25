@@ -32,7 +32,9 @@
 
 
 // NETWORKING
-#include "NetCommon.h"
+#include "NetLib.h"
+#include "ClientInterface.h"
+#include "ServerInterface.h"
 #include "Observer.h"
 #include "GamerService.h"
 #include "PlatformClient.h"
@@ -95,7 +97,7 @@ bool TEST_EmitEvent()
 #include "DebugGameScene.h"
 
 
-class App : public olc::net::client_interface< net::Message >,	// Networking Client.
+class App : public net::ClientInterface,						// Networking Client.
 			public cherrysoda::Engine							// Engine Client.
 {
 	friend class cherrysoda::SceneGraphFactory;
@@ -123,6 +125,10 @@ public:
 	bool InitializeMasterConnection();
 	void TerminateMasterConnection();
 
+	void OnConnected(RakNet::Packet* packet) override final;
+	void OnDisconnected(RakNet::Packet* packet) override final;
+	void OnMessage(RakNet::Packet* packet) override final;
+
 	// SUBSYSTEMS
 	bool InitializeLocalization();
 	void TerminateLocalization();
@@ -142,7 +148,7 @@ private:
 
 
 	// Networking and Multiplayer related Classes.
-	net::UserDesc* m_localUserDesc = nullptr;
+	net::SClientDescription * m_localUserDesc = nullptr;
 
 
 	cherrysoda::CStateMachine* m_stateMachine = nullptr;
