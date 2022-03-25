@@ -25,7 +25,6 @@ namespace cherrysoda
 		DECLARE_GET_SET(size_t, PlayerId, m_playerId);
 		DECLARE_GET_SET(size_t, Health, m_health);
 		DECLARE_GET_SET(size_t, Level, m_level);
-		DECLARE_GET_SET(size_t, Experience, m_experience);
 		DECLARE_GET_SET(size_t, SightRadius, m_sightRadius);
 		DECLARE_GET_SET(size_t, TilePositionX, m_tilePositionX);
 		DECLARE_GET_SET(size_t, TilePositionY, m_tilePositionY);

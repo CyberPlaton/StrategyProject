@@ -6,6 +6,16 @@ namespace cherrysoda
 	class Unit : public Component
 	{
 	public:
+
+		enum EMovementType
+		{
+			MT_WALK,
+			MT_FLY,
+			MT_SWIM,
+			MT_RIDE
+		};
+
+	public:
 		CHERRYSODA_DECLARE_COMPONENT(Unit, Component);
 
 		Unit() : Unit(true, false)
@@ -56,6 +66,8 @@ namespace cherrysoda
 		size_t m_tilePositionY = 0;
 		float  m_positionX = 0.0f;
 		float  m_positionY = 0.0f;
+		EMovementType m_movementType;
+		size_t m_movementPoints;
 
 		bool m_isDirty = false;
 

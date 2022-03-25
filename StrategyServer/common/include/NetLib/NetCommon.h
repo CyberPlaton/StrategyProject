@@ -328,6 +328,8 @@ namespace net
 			stream.Write(m_unitLevel);
 			stream.Write(m_unitExperience);
 			stream.Write(m_unitSightRadius);
+			stream.Write(m_unitMovementType);
+			stream.Write(m_unitMovementPoints);
 		}
 		void Deserialize(RakNet::BitStream& stream)  override final
 		{
@@ -348,6 +350,8 @@ namespace net
 			stream.Read(m_unitLevel);
 			stream.Read(m_unitExperience);
 			stream.Read(m_unitSightRadius);
+			stream.Read(m_unitMovementType);
+			stream.Read(m_unitMovementPoints);
 		}
 
 		RakNet::RakString m_unitName;
@@ -358,6 +362,8 @@ namespace net
 		uint32_t m_unitLevel;
 		uint32_t m_unitExperience;
 		uint32_t m_unitSightRadius;
+		uint32_t m_unitMovementType;
+		uint32_t m_unitMovementPoints;
 	};
 	struct SMaptileGameobject : public SGameobject, public SSerializable
 	{

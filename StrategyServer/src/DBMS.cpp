@@ -397,6 +397,8 @@ namespace dbms
 							AS_UNIT(obj)->m_unitDefense = doc["unitDefense"].get_int64();
 							AS_UNIT(obj)->m_unitLevel = doc["unitLevel"].get_int64();
 							AS_UNIT(obj)->m_unitSightRadius = doc["unitSightRadius"].get_int64();
+							AS_UNIT(obj)->m_unitMovementType = doc["unitMovementType"].get_int64();
+							AS_UNIT(obj)->m_unitMovementPoints = doc["unitMovementPoints"].get_int64();
 							AS_UNIT(obj)->m_unitExperience = doc["unitExperience"].get_int64();
 							AS_UNIT(obj)->m_unitName = doc["unitName"].get_utf8().value.to_string().c_str();
 							break;
@@ -524,7 +526,9 @@ namespace dbms
 				kvp("unitDefense", (int64_t)object->m_unitDefense),
 				kvp("unitLevel", (int64_t)object->m_unitLevel),
 				kvp("unitExperience", (int64_t)object->m_unitExperience),
-				kvp("unitSightRadius", (int64_t)object->m_unitSightRadius)
+				kvp("unitSightRadius", (int64_t)object->m_unitSightRadius),
+				kvp("unitMovementType", (int64_t)object->m_unitMovementType),
+				kvp("unitMovementPoints", (int64_t)object->m_unitMovementPoints)
 			);
 
 
