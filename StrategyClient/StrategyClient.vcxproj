@@ -143,6 +143,7 @@
     <ClInclude Include="src\AppCommands.h" />
     <ClInclude Include="src\AttackAbility.h" />
     <ClInclude Include="src\BuildAbility.h" />
+    <ClInclude Include="src\Building.h" />
     <ClInclude Include="src\CameraController.h" />
     <ClInclude Include="src\ChopForestAbility.h" />
     <ClInclude Include="src\CommonDefines.h" />
@@ -175,6 +176,7 @@
   <ItemGroup>
     <ClCompile Include="src\Ability.cpp" />
     <ClCompile Include="src\AppCommands.cpp" />
+    <ClCompile Include="src\Building.cpp" />
     <ClCompile Include="src\CameraController.cpp" />
     <ClCompile Include="src\DebugGameScene.cpp" />
     <ClCompile Include="src\EventSystem.cpp" />

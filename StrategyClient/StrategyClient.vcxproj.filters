@@ -50,6 +50,9 @@
     <ClCompile Include="src\Ability.cpp">
       <Filter>Components\Game\Ability</Filter>
     </ClCompile>
+    <ClCompile Include="src\Building.cpp">
+      <Filter>Components\Game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Main.h" />
@@ -122,29 +125,32 @@
     <ClInclude Include="src\SelectableBuilding.h">
       <Filter>Components\Game\Selectable</Filter>
     </ClInclude>
+    <ClInclude Include="src\TrainAbility.h">
+      <Filter>Components\Game\Ability\ActiveAbility</Filter>
+    </ClInclude>
+    <ClInclude Include="src\RestAbility.h">
+      <Filter>Components\Game\Ability\ActiveAbility</Filter>
+    </ClInclude>
+    <ClInclude Include="src\RaiseForestAbility.h">
+      <Filter>Components\Game\Ability\ActiveAbility</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DefendAbility.h">
+      <Filter>Components\Game\Ability\ActiveAbility</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ChopForestAbility.h">
+      <Filter>Components\Game\Ability\ActiveAbility</Filter>
+    </ClInclude>
+    <ClInclude Include="src\BuildAbility.h">
+      <Filter>Components\Game\Ability\ActiveAbility</Filter>
+    </ClInclude>
+    <ClInclude Include="src\AttackAbility.h">
+      <Filter>Components\Game\Ability\ActiveAbility</Filter>
+    </ClInclude>
     <ClInclude Include="src\Ability.h">
       <Filter>Components\Game\Ability</Filter>
     </ClInclude>
-    <ClInclude Include="src\AttackAbility.h">
-      <Filter>Components\Game\Ability</Filter>
-    </ClInclude>
-    <ClInclude Include="src\TrainAbility.h">
-      <Filter>Components\Game\Ability</Filter>
-    </ClInclude>
-    <ClInclude Include="src\DefendAbility.h">
-      <Filter>Components\Game\Ability</Filter>
-    </ClInclude>
-    <ClInclude Include="src\RestAbility.h">
-      <Filter>Components\Game\Ability</Filter>
-    </ClInclude>
-    <ClInclude Include="src\BuildAbility.h">
-      <Filter>Components\Game\Ability</Filter>
-    </ClInclude>
-    <ClInclude Include="src\RaiseForestAbility.h">
-      <Filter>Components\Game\Ability</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ChopForestAbility.h">
-      <Filter>Components\Game\Ability</Filter>
+    <ClInclude Include="src\Building.h">
+      <Filter>Components\Game</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -177,6 +183,9 @@
     </Filter>
     <Filter Include="Components\Game\Ability">
       <UniqueIdentifier>{4fe85d52-7356-4f1b-9f63-ca9d66fb9b5c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Game\Ability\ActiveAbility">
+      <UniqueIdentifier>{5ec64003-e9b4-4f20-bf99-3ef37b9b7a21}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

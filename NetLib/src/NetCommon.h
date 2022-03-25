@@ -299,9 +299,9 @@ namespace net
 			stream.Read(m_positionY);
 			stream.Read(m_playerId);
 
-			stream.Read(m_buildingLevel);
-			stream.Read(m_buildingHealth);
 			stream.Read(m_buildingName);
+			stream.Read(m_buildingHealth);
+			stream.Read(m_buildingLevel);
 		}
 
 		RakNet::RakString m_buildingName;
@@ -327,6 +327,7 @@ namespace net
 			stream.Write(m_unitDefense);
 			stream.Write(m_unitLevel);
 			stream.Write(m_unitExperience);
+			stream.Write(m_unitSightRadius);
 		}
 		void Deserialize(RakNet::BitStream& stream)  override final
 		{
@@ -339,14 +340,14 @@ namespace net
 			stream.Read(m_positionY);
 			stream.Read(m_playerId);
 
-			stream.Read(m_unitExperience);
-			stream.Read(m_unitLevel);
+			stream.Read(m_unitName);
+			stream.Read(m_unitHealth);
+			stream.Read(m_unitArmor);
+			stream.Read(m_unitAttack);
 			stream.Read(m_unitDefense);
 			stream.Read(m_unitLevel);
-			stream.Read(m_unitAttack);
-			stream.Read(m_unitArmor);
-			stream.Read(m_unitHealth);
-			stream.Read(m_unitName);
+			stream.Read(m_unitExperience);
+			stream.Read(m_unitSightRadius);
 		}
 
 		RakNet::RakString m_unitName;
@@ -356,6 +357,7 @@ namespace net
 		uint32_t m_unitDefense;
 		uint32_t m_unitLevel;
 		uint32_t m_unitExperience;
+		uint32_t m_unitSightRadius;
 	};
 	struct SMaptileGameobject : public SGameobject, public SSerializable
 	{
@@ -370,8 +372,8 @@ namespace net
 			stream.Write(m_positionY);
 			stream.Write(m_playerId);
 
-			stream.Write(m_maptileType);
 			stream.Write(m_maptileBiome);
+			stream.Write(m_maptileType);
 		}
 		void Deserialize(RakNet::BitStream& stream)  override final
 		{
@@ -416,6 +418,7 @@ namespace net
 			stream.Read(m_positionX);
 			stream.Read(m_positionY);
 			stream.Read(m_playerId);
+
 			stream.Read(m_maptileObjectType);
 			stream.Read(m_maptileObjectBiome);
 		}

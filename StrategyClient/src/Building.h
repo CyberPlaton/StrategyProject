@@ -1,34 +1,29 @@
+#pragma once
 
 #include "ComponentCommon.h"
 
 namespace cherrysoda
 {
-	class Unit : public Component
+	class Building : public Component
 	{
 	public:
-		CHERRYSODA_DECLARE_COMPONENT(Unit, Component);
+		CHERRYSODA_DECLARE_COMPONENT(Building, Component);
 
-		Unit() : Unit(true, false)
+		Building() : Building(true, false)
 		{
 		}
-		Unit::Unit(const String& unit_name,
-						  size_t player_id,
-						  size_t health,
-						  size_t armor,
-						  size_t defense,
-						  size_t attack,
-						  size_t tile_position_x,
-						  size_t tile_position_y,
-						  float position_x,
-						  float position_y);
+		Building::Building(const String& building_name,
+			size_t player_id,
+			size_t health,
+			size_t tile_position_x,
+			size_t tile_position_y,
+			float position_x,
+			float position_y);
 
 		// GETTER/SETTER
-		DECLARE_GET_SET(const String&, UnitName, m_unitName);
+		DECLARE_GET_SET(const String&, BuildingName, m_buildingName);
 		DECLARE_GET_SET(size_t, PlayerId, m_playerId);
 		DECLARE_GET_SET(size_t, Health, m_health);
-		DECLARE_GET_SET(size_t, Armor, m_armor);
-		DECLARE_GET_SET(size_t, Defense, m_defense);
-		DECLARE_GET_SET(size_t, Attack, m_attack);
 		DECLARE_GET_SET(size_t, Level, m_level);
 		DECLARE_GET_SET(size_t, Experience, m_experience);
 		DECLARE_GET_SET(size_t, SightRadius, m_sightRadius);
@@ -41,16 +36,12 @@ namespace cherrysoda
 		DECLARE_QUERY(Dirty, m_isDirty);
 
 		// COMMON FUNCTIONALITY
-		
+
 	private:
-		String m_unitName;
+		String m_buildingName;
 		size_t m_playerId = 0;
 		size_t m_health = 0;
-		size_t m_armor = 0;
-		size_t m_defense = 0;
-		size_t m_attack = 0;
 		size_t m_level = 1;
-		size_t m_experience = 0;
 		size_t m_sightRadius = 1;
 		size_t m_tilePositionX = 0;
 		size_t m_tilePositionY = 0;
@@ -62,8 +53,6 @@ namespace cherrysoda
 	private:
 		CHERRYSODA_FRIEND_CLASS_POOL;
 
-		Unit(bool active, bool visible) : base(active, visible) {};
+		Building(bool active, bool visible) : base(active, visible) {};
 	};
 }
-
-

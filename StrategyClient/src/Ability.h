@@ -25,6 +25,7 @@ namespace cherrysoda
 		void Removed(const cherrysoda::String& name, cherrysoda::Entity* entity);
 	};
 
+
 	/*
 	* Storage for all abilities available to an Entity.
 	* Central access point to abilities queries and usage.
