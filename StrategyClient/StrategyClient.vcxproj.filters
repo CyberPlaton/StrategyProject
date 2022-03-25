@@ -45,7 +45,10 @@
       <Filter>Components\CameraController</Filter>
     </ClCompile>
     <ClCompile Include="src\SelectableEntity.cpp">
-      <Filter>Components\Game</Filter>
+      <Filter>Components\Game\Selectable</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Ability.cpp">
+      <Filter>Components\Game\Ability</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -107,17 +110,41 @@
     <ClInclude Include="src\CustomRenderer.h">
       <Filter>Util</Filter>
     </ClInclude>
-    <ClInclude Include="src\SelectableEntity.h">
-      <Filter>Components\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="src\SelectableUnit.h">
-      <Filter>Components\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="src\SelectableBuilding.h">
-      <Filter>Components\Game</Filter>
-    </ClInclude>
     <ClInclude Include="src\CommonDefines.h">
       <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SelectableUnit.h">
+      <Filter>Components\Game\Selectable</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SelectableEntity.h">
+      <Filter>Components\Game\Selectable</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SelectableBuilding.h">
+      <Filter>Components\Game\Selectable</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Ability.h">
+      <Filter>Components\Game\Ability</Filter>
+    </ClInclude>
+    <ClInclude Include="src\AttackAbility.h">
+      <Filter>Components\Game\Ability</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TrainAbility.h">
+      <Filter>Components\Game\Ability</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DefendAbility.h">
+      <Filter>Components\Game\Ability</Filter>
+    </ClInclude>
+    <ClInclude Include="src\RestAbility.h">
+      <Filter>Components\Game\Ability</Filter>
+    </ClInclude>
+    <ClInclude Include="src\BuildAbility.h">
+      <Filter>Components\Game\Ability</Filter>
+    </ClInclude>
+    <ClInclude Include="src\RaiseForestAbility.h">
+      <Filter>Components\Game\Ability</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ChopForestAbility.h">
+      <Filter>Components\Game\Ability</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -144,6 +171,12 @@
     </Filter>
     <Filter Include="Components\CameraController">
       <UniqueIdentifier>{022a1917-667c-4c65-8d73-b47e850af0e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Game\Selectable">
+      <UniqueIdentifier>{228b4141-a259-4417-8e8a-6e6df4dfc502}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Game\Ability">
+      <UniqueIdentifier>{4fe85d52-7356-4f1b-9f63-ca9d66fb9b5c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
