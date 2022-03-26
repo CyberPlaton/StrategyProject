@@ -31,6 +31,7 @@ namespace net
 	}
 	void ClientInterface::Terminate()
 	{
+		m_running = false;
 		RakNet::RakPeerInterface::DestroyInstance(m_instance);
 	}
 	void ClientInterface::Update()
@@ -62,6 +63,14 @@ namespace net
 			}
 		}
 	}
+	RakNet::Packet* ClientInterface::PopNextMessage()
+	{
+		return m_instance->Receive();
+	}
+	void ClientInterface::DeallocateMessage(RakNet::Packet* p)
+	{
+		m_instance->DeallocatePacket(p);
+	}
 	void ClientInterface::Update(double milliseconds)
 	{
 		Timer timer;
@@ -74,10 +83,6 @@ namespace net
 	bool ClientInterface::Running()
 	{
 		return m_running;
-	}
-	void ClientInterface::Exit()
-	{
-		m_running = false;
 	}
 	bool ClientInterface::Connected()
 	{

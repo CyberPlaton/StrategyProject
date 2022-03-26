@@ -39,6 +39,7 @@
 #include "GamerService.h"
 #include "PlatformClient.h"
 
+#define CONNECTION_TIMEOUT_TIMER_SECONDS 5
 #define MASTER_SERVER_PORT 60777
 #define MASTER_SERVER_IP "100.81.190.242"
 #define CLIENT_MAJOR_VERSION 0

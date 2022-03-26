@@ -25,8 +25,9 @@ namespace net
 		void Update();
 		void Update(double milliseconds);
 		void Send(RakNet::BitStream& stream, RakNet::SystemAddress& server);
-		void Exit();
 		bool Connected();
+		RakNet::Packet* PopNextMessage();
+		void DeallocateMessage(RakNet::Packet* p);
 
 	protected:
 		RakNet::RakPeerInterface* m_instance;

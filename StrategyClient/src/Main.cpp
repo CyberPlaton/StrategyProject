@@ -2,12 +2,18 @@
 
 void App::OnConnected(RakNet::Packet* packet)
 {
+	// Do nothing for Application.
+	// Scenes handle the networking traffic.
 }
 void App::OnDisconnected(RakNet::Packet* packet)
 {
+	// Do nothing for Application.
+	// Scenes handle the networking traffic.
 }
 void App::OnMessage(RakNet::Packet* packet)
 {
+	// Do nothing for Application.
+	// Scenes handle the networking traffic.
 }
 
 
@@ -122,6 +128,9 @@ void App::Update()
 	
 	// STEAM UPDATE
 	SteamAPI_RunCallbacks();
+
+	// CLIENT UPDATE
+	ClientInterface::Update(1 / 240);
 
 	// LOGGER UPDATE
 	cherrysoda::Logger::Update();
@@ -313,22 +322,32 @@ bool App::InitializeMasterConnection()
 {
 	if (!App::IsInitialized())
 	{
-		LOG_GAME_INFO("[App::InitializeMasterConnection] Try connect to Master server");
+		LOG_GAME_INFO("[App::InitializeMasterConnection] Connecting...");
 
-		/*
-		// Establish connection with MasterServer.
-		if (Connect(MASTER_SERVER_IP, MASTER_SERVER_PORT))
+		if (!ClientInterface::Initialize(MASTER_SERVER_PORT, MASTER_SERVER_IP))
 		{
-			// Whether we are truly connected still needs to be proofed.
-			return true;
+			LOG_GAME_CRITICAL("[InitializationScene::InitializeMasterConnection] Could not initialize ClientInterface!");
+			LOG_DBG_CRITICAL("[InitializationScene::InitializeMasterConnection] Could not initialize ClientInterface!");
 		}
-		*/
+
+		LOG_GAME_INFO("[App::InitializeMasterConnection] ClientInterface initialized!"); 
+
+		Timer timeout_timer;
+		timeout_timer.StartTimer();
+
+		while (!ClientInterface::Connected() && timeout_timer.SecondsElapsed() < CONNECTION_TIMEOUT_TIMER_SECONDS)
+		{
+			ClientInterface::Update();
+		}
+
+		return ClientInterface::Connected();
 	}
+
 	return false;
 }
 void App::TerminateMasterConnection()
 {
-	//Disconnect();
+	ClientInterface::Terminate();
 }
 
 
@@ -393,11 +412,96 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 	ImGui::ShowDemoWindow(&show_demo);
 
 #ifdef DEBUG
-	LOG_GAME_WARN("[InitializationScene] Debug: Transit to DebugGameScene");
-	LOG_DBG_WARN("[InitializationScene] Debug: Transit to DebugGameScene");
+	LOG_GAME_WARN("[InitializationScene::Update] Debug: Transit to DebugGameScene");
+	LOG_DBG_WARN("[InitializationScene::Update] Debug: Transit to DebugGameScene");
 	m_stateMachine->Transit("DebugGame");
 #endif
 
+	if (m_application->Connected() && m_initializationComplete == false)
+	{
+		auto packet = m_application->PopNextMessage();
+		if (packet)
+		{
+			RakNet::MessageID id = (RakNet::MessageID)packet->data[0];
+
+			switch (id)
+			{
+			case net::EMessageId::NET_MSG_REQUEST_USER_VALIDATION_DATA:
+			{
+				LOG_GAME_WARN("[InitializationScene::Update] Validation Data requested!");
+				LOG_DBG_WARN("[InitializationScene::Update] Validation Data requested!");
+
+				net::SClientDescription clientDesc;
+				net::SClientAppDescription appDesc;
+
+				appDesc.m_majorVersion = CLIENT_MAJOR_VERSION;
+				appDesc.m_minorVersion = CLIENT_MINOR_VERSION;
+				appDesc.m_patchVersion = CLIENT_REVIEW_VERSION;
+
+				auto platform = PlatformClient::get();
+				clientDesc.m_platform = platform->GetClientPlatform();
+				switch (clientDesc.m_platform)
+				{
+					case net::EClientPlatform::UP_STEAM:
+					{
+						clientDesc.m_steamName = platform->GetClientPlatformName().c_str();
+						clientDesc.m_steamId = platform->GetClientPlatformID();
+						break;
+					}
+					case net::EClientPlatform::UP_XBOX:
+					{
+						clientDesc.m_xboxLiveName = platform->GetClientPlatformName().c_str();
+						clientDesc.m_xboxLiveId = platform->GetClientPlatformID();
+						break;
+					}
+					case net::EClientPlatform::UP_SWITCH:
+					{
+						clientDesc.m_nintendoName = platform->GetClientPlatformName().c_str();
+						clientDesc.m_nintendoId = platform->GetClientPlatformID();
+						break;
+					}
+					case net::EClientPlatform::UP_PS:
+					{
+						clientDesc.m_psnName = platform->GetClientPlatformName().c_str();
+						clientDesc.m_psnId = platform->GetClientPlatformID();
+						break;
+					}
+				}
+
+				RakNet::BitStream stream;
+				clientDesc.Serialize(stream);
+				appDesc.Serialize(stream);
+				m_application->Send(stream, packet->systemAddress);
+				break;
+			}
+			
+			case net::EMessageId::NET_MSG_CLIENT_REJECT:
+			{
+				LOG_GAME_WARN("[InitializationScene::Update] Server rejected our client!");
+				LOG_DBG_WARN("[InitializationScene::Update] Server rejected our client!");
+
+			break;
+			}
+
+			case net::EMessageId::NET_MSG_USER_DATA:
+			{
+				LOG_GAME_WARN("[InitializationScene::Update] User Data received!");
+				LOG_DBG_WARN("[InitializationScene::Update] User Data received!");
+			break;
+			}
+
+
+			default:
+			{
+				LOG_GAME_WARN("[InitializationScene::Update] Unrecognised Message! Id: {%d}", (int)id);
+				LOG_DBG_WARN("[InitializationScene::Update] Unrecognised Message! Id: {}", id);
+				m_application->Exit();
+			break;
+			}
+			}
+		}
+		m_application->DeallocateMessage(packet);
+	}
 	/*
 	if (m_application->IsConnected() && m_initializationComplete == false)
 	{
