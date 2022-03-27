@@ -6,7 +6,8 @@
 
 #include <NetLib/NetLib.h>
 #include <NetLib/ServerInterface.h>
-#include <NetLib/Timer.h>
+
+#include "Logging.h"
 #include "DBMS.h"
 
 
@@ -33,9 +34,7 @@ public:
 	// COMMON SERVER FUNCTIONS
 	bool ShouldExit() { return m_shouldExit; }
 	void Exit() { m_shouldExit = true; }
-	void BackupUserNumber();
 	bool CheckClientVersion(uint16_t maj, uint16_t min, uint16_t rev);
-
 
 	// UTIL
 	std::string MapdataToText(tinyxml2::XMLDocument& doc);
@@ -44,11 +43,12 @@ public:
 private:
 
 	Timer m_timer;
-
 	bool m_shouldExit = false;
-
-	std::map< size_t, size_t > m_clientIdMap;
-
+	uint32_t m_nextClientId = 10000;
+	std::map< uint32_t, RakNet::SystemAddress* > m_clientIdMap;
 
 private:
+
+	uint32_t _assignClientId();
+	void _backupUserNumber(uint32_t seconds);
 };

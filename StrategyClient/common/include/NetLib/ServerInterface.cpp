@@ -8,18 +8,17 @@ namespace net
 
 		m_instance = RakPeerInterface::GetInstance();
 
-		SocketDescriptor desc(port, 0);
+		SocketDescriptor desc(port, "100.81.162.37");
 		desc.socketFamily = AF_INET;
 
 		auto result = m_instance->Startup(max_connections, &desc, 1);
 		if (result != StartupResult::RAKNET_STARTED)
 		{
-			Terminate();
 			return false;
 		}
 
 		m_instance->SetMaximumIncomingConnections(max_connections);
-
+		ServerInterface::SystemAdress(desc);
 		m_running = true;
 		return true;
 	}
@@ -43,21 +42,30 @@ namespace net
 			{
 				case DefaultMessageIDTypes::ID_CONNECTION_REQUEST:
 				{
-					if (Validate(packet))
-					{
-						OnClientValidated(packet);
-					}
+					printf("[ServerInterface] Message: ID_CONNECTION_REQUEST\n");
 					break;
 				}
 
 				case DefaultMessageIDTypes::ID_NEW_INCOMING_CONNECTION:
 				{
-					OnClientConnect(packet);
+					printf("[ServerInterface] Message: ID_NEW_INCOMING_CONNECTION\n");
+					// Raknet security passed. Our Turn...
+					if (Validate(packet))
+					{
+						if (!OnClientValidated(packet))
+						{
+							// Dont accept.
+							// Drop connection.
+						}
+
+						OnClientConnect(packet);
+					}
 					break;
 				}
 
 				case DefaultMessageIDTypes::ID_DISCONNECTION_NOTIFICATION:
 				{
+					printf("[ServerInterface] Message: ID_DISCONNECTION_NOTIFICATION\n");
 					OnClientDisconnect(packet);
 					break;
 				}
@@ -65,6 +73,7 @@ namespace net
 
 				default:
 				{
+					printf("[ServerInterface] Message: %d\n", (int)packet->data[0]);
 					OnMessage(packet);
 					break;
 				}
@@ -92,5 +101,19 @@ namespace net
 	{
 		m_instance->Send(&stream, HIGH_PRIORITY, UNRELIABLE_SEQUENCED, 0, exception, true);
 	}
+	RakNet::RakString ServerInterface::SystemAdress()
+	{
+		return m_systemAdress;
+	}
+	void ServerInterface::SystemAdress(RakNet::SocketDescriptor& socket)
+	{
+		for (int i = 0; i < 32; i++)
+		{
+			const char* c = &socket.hostAddress[i];
+			m_systemAdress.AppendBytes(c, 1);
+		}
 
+		const char* port = std::to_string(socket.port).c_str();
+		m_systemAdress.AppendBytes(port, strlen(port));
+	}
 }

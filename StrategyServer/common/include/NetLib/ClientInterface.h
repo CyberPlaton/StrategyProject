@@ -18,7 +18,6 @@ namespace net
 		ClientInterface() = default;
 		~ClientInterface()
 		{
-			Terminate();
 		}
 		bool Initialize(uint32_t port, const char* host);
 		void Terminate();

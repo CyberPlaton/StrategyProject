@@ -39,9 +39,10 @@
 #include "GamerService.h"
 #include "PlatformClient.h"
 
+#define OFFLINE_GAME_CLIENT_TEST false
 #define CONNECTION_TIMEOUT_TIMER_SECONDS 5
 #define MASTER_SERVER_PORT 60777
-#define MASTER_SERVER_IP "100.81.190.242"
+#define MASTER_SERVER_IP "192.168.178.43"
 #define CLIENT_MAJOR_VERSION 0
 #define CLIENT_MINOR_VERSION 1
 #define CLIENT_REVIEW_VERSION 0
@@ -149,7 +150,7 @@ private:
 
 
 	// Networking and Multiplayer related Classes.
-	net::SClientDescription * m_localUserDesc = nullptr;
+	net::SClientDescription * m_localClientDesc = nullptr;
 
 
 	cherrysoda::CStateMachine* m_stateMachine = nullptr;

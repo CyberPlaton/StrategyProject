@@ -44,6 +44,8 @@ namespace net
 		return stream;
 	}
 
+	FORCE_INLINE static RakNet::RakString MessageIDTypeToString(RakNet::MessageID id);
+
 	enum EMessageId
 	{
 		NET_MSG_REQUEST_USER_VALIDATION_DATA = DefaultMessageIDTypes::ID_USER_PACKET_ENUM + 1,
@@ -432,4 +434,40 @@ namespace net
 		RakNet::RakString m_maptileObjectType;
 		RakNet::RakString m_maptileObjectBiome;
 	};
+
+
+
+
+	FORCE_INLINE static RakNet::RakString MessageIDTypeToString(RakNet::MessageID id)
+	{
+		switch (id)
+		{
+		case DefaultMessageIDTypes::ID_CONNECTION_REQUEST_ACCEPTED:
+			return "id_connection_request_accepted";
+		case DefaultMessageIDTypes::ID_DISCONNECTION_NOTIFICATION:
+			return "id_disconnection_notification";
+		case DefaultMessageIDTypes::ID_CONNECTION_ATTEMPT_FAILED:
+			return "id_connection_attempt_failed";
+		case DefaultMessageIDTypes::ID_NO_FREE_INCOMING_CONNECTIONS:
+			return "id_no_free_incoming_connections";
+		case DefaultMessageIDTypes::ID_CONNECTION_BANNED:
+			return "id_connection_banned";
+		case DefaultMessageIDTypes::ID_ALREADY_CONNECTED:
+			return "id_already_connected";
+		case EMessageId::NET_MSG_REQUEST_USER_VALIDATION_DATA:
+			return "id_request_user_validation_data";
+		case EMessageId::NET_MSG_USER_VALIDATION_DATA:
+			return "id_user_validation_data";
+		case EMessageId::NET_MSG_USER_DATA:
+			return "id_user_data";
+		case EMessageId::NET_MSG_REQUEST_USER_DATA_UPDATE:
+			return "id_request_user_data_update";
+		case EMessageId::NET_MSG_CLIENT_ACCEPT:
+			return "id_client_accept";
+		case EMessageId::NET_MSG_CLIENT_REJECT:
+			return "id_client_reject";
+		default:
+			return "";
+		}
+	}
 }

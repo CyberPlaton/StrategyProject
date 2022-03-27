@@ -16,14 +16,12 @@ namespace net
 		auto startup = m_instance->Startup(1, &desc, 1);
 		if(startup != RakNet::StartupResult::RAKNET_STARTED)
 		{
-			Terminate();
 			return false;
 		}
 
 		auto connect = m_instance->Connect(host, port, 0, 0);
 		if (connect != RakNet::ConnectionAttemptResult::CONNECTION_ATTEMPT_STARTED)
 		{
-			Terminate();
 			return false;
 		}
 
@@ -43,6 +41,7 @@ namespace net
 			{
 				case DefaultMessageIDTypes::ID_CONNECTION_REQUEST_ACCEPTED:
 				{
+					printf("[ClientInterface] Message: ID_CONNECTION_REQUEST_ACCEPTED\n");
 					m_connected = true;
 					OnConnected(packet);
 					break;
@@ -50,8 +49,21 @@ namespace net
 
 				case DefaultMessageIDTypes::ID_DISCONNECTION_NOTIFICATION:
 				{
+					printf("[ClientInterface] Message: ID_DISCONNECTION_NOTIFICATION\n");
 					m_connected = false;
 					OnDisconnected(packet);
+					break;
+				}
+
+				case DefaultMessageIDTypes::ID_CONNECTION_ATTEMPT_FAILED:
+				{
+					printf("[ClientInterface] Message: ID_CONNECTION_ATTEMPT_FAILED\n");
+					break;
+				}
+
+				case DefaultMessageIDTypes::ID_NO_FREE_INCOMING_CONNECTIONS:
+				{
+					printf("[ClientInterface] Message: ID_NO_FREE_INCOMING_CONNECTIONS\n");
 					break;
 				}
 

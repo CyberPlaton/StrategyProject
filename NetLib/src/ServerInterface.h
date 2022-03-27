@@ -9,6 +9,8 @@
 #include <RakNetTime.h>
 #include <GetTime.h>
 
+#include <sstream>
+#include <string>
 
 namespace net
 {
@@ -18,7 +20,6 @@ namespace net
 		ServerInterface() = default;
 		~ServerInterface()
 		{
-			Terminate();
 		}
 		bool Initialize(uint32_t port, uint32_t max_connections);
 		void Terminate();
@@ -26,11 +27,15 @@ namespace net
 		void Send(RakNet::BitStream& stream, RakNet::SystemAddress& client);
 		void Broadcast(RakNet::BitStream& stream, RakNet::SystemAddress& exception);
 		void Exit();
+		RakNet::RakString SystemAdress();
+		void SystemAdress(RakNet::SocketDescriptor& socket);
+
 
 
 	protected:
 		RakNet::RakPeerInterface* m_instance;
 
+		RakNet::RakString m_systemAdress;
 
 	protected:
 		virtual void OnMessage(RakNet::Packet* packet) = 0;

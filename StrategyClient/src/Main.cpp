@@ -328,6 +328,7 @@ bool App::InitializeMasterConnection()
 		{
 			LOG_GAME_CRITICAL("[InitializationScene::InitializeMasterConnection] Could not initialize ClientInterface!");
 			LOG_DBG_CRITICAL("[InitializationScene::InitializeMasterConnection] Could not initialize ClientInterface!");
+			return false;
 		}
 
 		LOG_GAME_INFO("[App::InitializeMasterConnection] ClientInterface initialized!"); 
@@ -347,7 +348,7 @@ bool App::InitializeMasterConnection()
 }
 void App::TerminateMasterConnection()
 {
-	ClientInterface::Terminate();
+	// Explicitly do nothing for Raknet!
 }
 
 
@@ -411,7 +412,7 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 	static bool show_demo;
 	ImGui::ShowDemoWindow(&show_demo);
 
-#ifdef DEBUG
+#if OFFLINE_GAME_CLIENT_TEST
 	LOG_GAME_WARN("[InitializationScene::Update] Debug: Transit to DebugGameScene");
 	LOG_DBG_WARN("[InitializationScene::Update] Debug: Transit to DebugGameScene");
 	m_stateMachine->Transit("DebugGame");
@@ -479,7 +480,7 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 			{
 				LOG_GAME_WARN("[InitializationScene::Update] Server rejected our client!");
 				LOG_DBG_WARN("[InitializationScene::Update] Server rejected our client!");
-
+				m_application->Exit();
 			break;
 			}
 
@@ -487,20 +488,32 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 			{
 				LOG_GAME_WARN("[InitializationScene::Update] User Data received!");
 				LOG_DBG_WARN("[InitializationScene::Update] User Data received!");
+
+				RakNet::BitStream stream(packet->data, packet->length, false);
+
+				m_application->m_localClientDesc->Deserialize(stream);
+
 			break;
 			}
 
+			case DefaultMessageIDTypes::ID_CONNECTION_ATTEMPT_FAILED:
+			{
+				m_application->Exit();
+			}
 
 			default:
 			{
-				LOG_GAME_WARN("[InitializationScene::Update] Unrecognised Message! Id: {%d}", (int)id);
-				LOG_DBG_WARN("[InitializationScene::Update] Unrecognised Message! Id: {}", id);
-				m_application->Exit();
+				LOG_GAME_WARN("[%.4f][InitializationScene::Update] Unrecognized Message! Id: %s", APP_RUN_TIME(), net::MessageIDTypeToString((RakNet::MessageID)packet->data[0]).C_String());
+				LOG_DBG_WARN("[{:.4f}][InitializationScene::Update] Unrecognized Message! Id: {}", APP_RUN_TIME(), net::MessageIDTypeToString((RakNet::MessageID)packet->data[0]).C_String());
 			break;
 			}
 			}
+
+
+			LOG_GAME_WARN("[%.4f][InitializationScene::Update] Deallocate Package! Id: %s", APP_RUN_TIME(),  net::MessageIDTypeToString((RakNet::MessageID)packet->data[0]).C_String());
+			LOG_DBG_WARN("[{:.4f}][InitializationScene::Update] Deallocate Package! Id: {}", APP_RUN_TIME(), net::MessageIDTypeToString((RakNet::MessageID)packet->data[0]).C_String());
+			m_application->DeallocateMessage(packet);
 		}
-		m_application->DeallocateMessage(packet);
 	}
 	/*
 	if (m_application->IsConnected() && m_initializationComplete == false)

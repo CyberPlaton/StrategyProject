@@ -305,8 +305,6 @@ namespace dbms
 
 			iss >> m_nextUUID;
 
-
-			printf("[DBMS] Initialized DBMS!\n");
 			m_initialized = true;
 			return true;
 		}

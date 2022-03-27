@@ -122,6 +122,16 @@ workspace "Strategy"
 			{
 			}
 			optimize "On"
+		postbuildcommands
+		{
+			-- Copy source and headers to client and server projects
+			"{COPY} %{prj.name}/src/**.h %{StrategyClient/common/include/NetLib/}",
+			"{COPY} %{prj.name}/src/**.h %{StrategyClient/common/include/NetLib/}",
+			-- Copy library to client and server projects
+			"{COPY} bin/".. outputdir .."/NetLib/NetLib.lib %{StrategyClient/common/lib/%{cfg.buildcfg}/}",
+			"{COPY} bin/".. outputdir .."/NetLib/NetLib.lib %{StrategyServer/common/lib/%{cfg.buildcfg}/}",
+
+		}
 
 
 

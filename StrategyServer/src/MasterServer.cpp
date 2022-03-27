@@ -3,19 +3,43 @@
 
 void MasterServer::OnMessage(RakNet::Packet* packet)
 {
-
+	auto addr = packet->systemAddress;
+	auto id = (RakNet::MessageID)packet->data[0];
+	LOG_DBG_INFO("[{:.4f}][OnClientConnect] Message Received {} from client {}", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(), addr.ToString());
 }
 void MasterServer::OnClientConnect(RakNet::Packet* packet)
 {
+	auto addr = packet->systemAddress;
+	LOG_DBG_INFO("[{:.4f}][OnClientConnect] Client connected: {}", APP_RUN_TIME(), addr.ToString());
+	// All Validation steps successfully passed.
+	// Remote system has successfully connected and 
+	// can be stored.
+	uint32_t id = _assignClientId();
+	m_clientIdMap.try_emplace(id, &packet->systemAddress);
+
+	// Inform client of successful connection.
 
 }
 void MasterServer::OnClientDisconnect(RakNet::Packet* packet)
 {
-
+	// Remote system was disconnected.
+	// Remove from storage.
+	for (auto e : m_clientIdMap)
+	{
+		if (e.second->systemIndex == packet->systemAddress.systemIndex)
+		{
+			m_clientIdMap.erase(e.first);
+			break;
+		}
+	}
 }
 bool MasterServer::OnClientValidated(RakNet::Packet* packet)
 {
-	return false;
+	// Raknet validation was successful. ServerInterface validation 
+	// was successful too, this is our turn.
+	auto addr = packet->systemAddress;
+	LOG_DBG_INFO("[{:.4f}][OnClientConnect] Client validated: {}", APP_RUN_TIME(), addr.ToString());
+	return true;
 }
 
 
@@ -35,15 +59,17 @@ void MasterServer::OnClientDisconnect(std::shared_ptr<olc::net::connection<net::
 
 }
 */
-void MasterServer::BackupUserNumber()
+void MasterServer::_backupUserNumber(uint32_t seconds)
 {
-	int elapsed = m_timer.SecondsElapsed();
-	if (elapsed > 10)
+	if (m_timer.SecondsElapsed() > seconds)
 	{
-		printf("[MasterServer] Back up user count\n");
 		dbms::DBMS::BackupUserNumber();
 		m_timer.StartTimer();
 	}
+}
+uint32_t MasterServer::_assignClientId()
+{
+	return m_nextClientId++;
 }
 /*
 void MasterServer::OnClientValidated(std::shared_ptr<olc::net::connection<net::Message>> client)
