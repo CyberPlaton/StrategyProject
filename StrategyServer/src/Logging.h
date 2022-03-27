@@ -4,7 +4,7 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
-#include <NetLib/NetLib.h>
+#include "NetLib.h"
 #include <Timer.h>
 
 #include "CommonDefines.h"

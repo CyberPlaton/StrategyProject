@@ -122,17 +122,6 @@ workspace "Strategy"
 			{
 			}
 			optimize "On"
-		postbuildcommands
-		{
-			-- Copy source and headers to client and server projects
-			"{COPY} %{prj.name}/src/**.h %{StrategyClient/common/include/NetLib/}",
-			"{COPY} %{prj.name}/src/**.h %{StrategyClient/common/include/NetLib/}",
-			-- Copy library to client and server projects
-			"{COPY} bin/".. outputdir .."/NetLib/NetLib.lib %{StrategyClient/common/lib/%{cfg.buildcfg}/}",
-			"{COPY} bin/".. outputdir .."/NetLib/NetLib.lib %{StrategyServer/common/lib/%{cfg.buildcfg}/}",
-
-		}
-
 
 
 
@@ -182,15 +171,18 @@ workspace "Strategy"
 			"%{prj.name}/common/include/LuaBridge",		-- Scripting
 			"%{prj.name}/common/include/spdlog",		-- Logging
 		
-			"%{prj.name}/common/include/NetLib",		-- Networking
+
+			"NetLib/common/include/RakNet",				-- Networking
+			"NetLib/src",								-- Networking
 		}	
 		-- Link thirdparty libraries for each configuration
 		filter "configurations:Debug"
+			libdirs{"libs", "bin/" .. outputdir .. "/NetLib"}
+			links{"ws2_32", "NetLib"}
+
 			libdirs{"libs", "%{prj.name}/common/lib/Debug"}
 			links
 			{
-				"ws2_32",
-				"NetLib",
 				"CherrySoda",
 				"imgui",
 				"bgfx",
@@ -354,7 +346,9 @@ workspace "Strategy"
 			"C://boost_1_78_0",								-- MongoDB requires Boost
 			"%{prj.name}/common/include/spdlog",			-- Logging
 
-			"%{prj.name}/common/include/NetLib"				-- Networking
+
+			"NetLib/common/include/RakNet",					-- Networking
+			"NetLib/src",									-- Networking
 		}
 		filter "configurations:Debug"
 			-- Set working directory for debugging
@@ -370,8 +364,6 @@ workspace "Strategy"
 			libdirs{"libs", "%{prj.name}/common/lib/Distr"}
 			links
 			{
-				"ws2_32",
-				"NetLib",
 				"steam_api64",
 				"tinyxml2",
 				"bsoncxx",
@@ -379,11 +371,12 @@ workspace "Strategy"
 				"spdlog",
 			}
 		filter "configurations:Debug"
+			libdirs{"libs", "bin/" .. outputdir .. "/NetLib"}
+			links{"ws2_32", "NetLib"}
+
 			libdirs{"libs", "%{prj.name}/common/lib/Debug"}
 			links
 			{
-				"ws2_32",
-				"NetLib",
 				"steam_api64",
 				"tinyxml2",
 				"bsoncxx",
@@ -394,8 +387,6 @@ workspace "Strategy"
 			libdirs{"libs", "%{prj.name}/common/lib/Release"}
 			links
 			{
-				"ws2_32",
-				"NetLib",
 				"steam_api64",
 				"tinyxml2",
 				"bsoncxx",

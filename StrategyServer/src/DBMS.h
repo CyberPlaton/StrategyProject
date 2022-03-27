@@ -1,8 +1,14 @@
 #pragma once
 
-#include <NetLib/NetLib.h>
+#include <memory>
+#include <sstream>
+
+
+#include "NetLib.h"
 #include <tinyxml2.h>
 #include <steam_api.h>
+#include "Logging.h"
+
 
 #define STATIC_GET_DEL_WITH_INIT_AND_SHUTDOWN(CLASS, STATIC_MEMBER) \
 static CLASS* get() \
@@ -34,8 +40,6 @@ static void del() \
 #include <bsoncxx/exception/exception.hpp>
 #include <bsoncxx/exception/error_code.hpp>
 
-#include <memory>
-#include <sstream>
 
 namespace dbms
 {

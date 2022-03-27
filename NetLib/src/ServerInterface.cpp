@@ -40,16 +40,9 @@ namespace net
 		{
 			switch (packet->data[0])
 			{
-				case DefaultMessageIDTypes::ID_CONNECTION_REQUEST:
-				{
-					printf("[ServerInterface] Message: ID_CONNECTION_REQUEST\n");
-					break;
-				}
-
 				case DefaultMessageIDTypes::ID_NEW_INCOMING_CONNECTION:
 				{
-					printf("[ServerInterface] Message: ID_NEW_INCOMING_CONNECTION\n");
-					// Raknet security passed. Our Turn...
+					// Raknets security passed. Our Turn...
 					if (Validate(packet))
 					{
 						if (!OnClientValidated(packet))
@@ -63,9 +56,9 @@ namespace net
 					break;
 				}
 
+				case DefaultMessageIDTypes::ID_CONNECTION_LOST:
 				case DefaultMessageIDTypes::ID_DISCONNECTION_NOTIFICATION:
 				{
-					printf("[ServerInterface] Message: ID_DISCONNECTION_NOTIFICATION\n");
 					OnClientDisconnect(packet);
 					break;
 				}
@@ -73,7 +66,6 @@ namespace net
 
 				default:
 				{
-					printf("[ServerInterface] Message: %d\n", (int)packet->data[0]);
 					OnMessage(packet);
 					break;
 				}

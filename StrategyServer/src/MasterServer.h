@@ -2,10 +2,9 @@
 
 #include <algorithm>
 #include <vector>
-#include <map>
 
-#include <NetLib/NetLib.h>
-#include <NetLib/ServerInterface.h>
+#include "NetLib.h"
+#include "ServerInterface.h"
 
 #include "Logging.h"
 #include "DBMS.h"
@@ -44,11 +43,11 @@ private:
 
 	Timer m_timer;
 	bool m_shouldExit = false;
-	uint32_t m_nextClientId = 10000;
-	std::map< uint32_t, RakNet::SystemAddress* > m_clientIdMap;
+
+	std::map< uint32_t, RakNet::SystemAddress* > m_clients;
+	uint32_t m_nextId = 10000;
 
 private:
-
-	uint32_t _assignClientId();
-	void _backupUserNumber(uint32_t seconds);
+	uint32_t AssignClientId();
+	void BackupClientCount(uint32_t seconds);
 };

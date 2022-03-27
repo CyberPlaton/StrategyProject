@@ -484,6 +484,13 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 			break;
 			}
 
+			case net::EMessageId::NET_MSG_CLIENT_ACCEPT:
+			{
+				LOG_GAME_WARN("[InitializationScene::Update] Server accepted our client!");
+				LOG_DBG_WARN("[InitializationScene::Update] Server accepted our client!");
+				break;
+			}
+
 			case net::EMessageId::NET_MSG_USER_DATA:
 			{
 				LOG_GAME_WARN("[InitializationScene::Update] User Data received!");

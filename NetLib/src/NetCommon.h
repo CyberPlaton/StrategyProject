@@ -37,25 +37,22 @@ namespace net
 		return rand.Int();
 	}
 
-	FORCE_INLINE static RakNet::BitStream& CreateMessage(EMessageId id)
-	{
-		RakNet::BitStream stream;
-		stream.Write((RakNet::MessageID)id);
-		return stream;
-	}
-
 	FORCE_INLINE static RakNet::RakString MessageIDTypeToString(RakNet::MessageID id);
+
+#define CREATE_MESSAGE(id)\
+RakNet::BitStream stream;\
+stream.Write((RakNet::MessageID)id) \
 
 	enum EMessageId
 	{
-		NET_MSG_REQUEST_USER_VALIDATION_DATA = DefaultMessageIDTypes::ID_USER_PACKET_ENUM + 1,
-		NET_MSG_USER_VALIDATION_DATA,
+		NET_MSG_REQUEST_USER_VALIDATION_DATA = DefaultMessageIDTypes::ID_USER_PACKET_ENUM + 1,  // MasterServer requests data for validation.
+		NET_MSG_USER_VALIDATION_DATA,															// Message containing validation data.
 
-		NET_MSG_USER_DATA,
-		NET_MSG_REQUEST_USER_DATA_UPDATE,
+		NET_MSG_USER_DATA,																		// Message containing full client and user data.
+		NET_MSG_REQUEST_USER_DATA_UPDATE,														// Client requests an update of his data in the DB. This message contains full client data.
 
-		NET_MSG_CLIENT_ACCEPT,
-		NET_MSG_CLIENT_REJECT,
+		NET_MSG_CLIENT_ACCEPT,																	// Client was accepted.
+		NET_MSG_CLIENT_REJECT,																	// Client was rejected.
 
 		NET_MSG_DELETE_GAME,
 		NET_MSG_CREATE_GAME,

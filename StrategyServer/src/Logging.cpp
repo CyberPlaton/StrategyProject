@@ -8,7 +8,7 @@ std::shared_ptr< spdlog::logger > Logger::g_FileLog;
 bool Logger::Initialize()
 {
 	Logger::get();
-	g_AppTimer.StartTimer();
+	Logger::g_AppTimer.StartTimer();
 
 #ifdef DEBUG
 	// Complete tracing.

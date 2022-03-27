@@ -5,30 +5,41 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 {
 	auto addr = packet->systemAddress;
 	auto id = (RakNet::MessageID)packet->data[0];
-	LOG_DBG_INFO("[{:.4f}][OnClientConnect] Message Received {} from client {}", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(), addr.ToString());
+	LOG_DBG_INFO("[{:.4f}][OnMessage] Message Received: {} from client {}", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(), addr.ToString());
+
+
+	switch (id)
+	{
+	}
+
 }
 void MasterServer::OnClientConnect(RakNet::Packet* packet)
 {
 	auto addr = packet->systemAddress;
 	LOG_DBG_INFO("[{:.4f}][OnClientConnect] Client connected: {}", APP_RUN_TIME(), addr.ToString());
-	// All Validation steps successfully passed.
-	// Remote system has successfully connected and 
-	// can be stored.
-	uint32_t id = _assignClientId();
-	m_clientIdMap.try_emplace(id, &packet->systemAddress);
+	
+	// RakNet and ServerInterface Validation steps successfully passed.
+	// Remote system has successfully connected...
+	uint32_t id = AssignClientId();
+	m_clients.try_emplace(id, &packet->systemAddress);
 
-	// Inform client of successful connection.
 
+	// Request client and platform data for last validation step.
+	CREATE_MESSAGE(net::EMessageId::NET_MSG_REQUEST_USER_VALIDATION_DATA);
+	Send(stream, packet->systemAddress);
 }
 void MasterServer::OnClientDisconnect(RakNet::Packet* packet)
 {
+	auto addr = packet->systemAddress;
+	LOG_DBG_INFO("[{:.4f}][OnClientDisconnect] Client disconnected: {}", APP_RUN_TIME(), addr.ToString());
+
 	// Remote system was disconnected.
 	// Remove from storage.
-	for (auto e : m_clientIdMap)
+	for (auto e : m_clients)
 	{
 		if (e.second->systemIndex == packet->systemAddress.systemIndex)
 		{
-			m_clientIdMap.erase(e.first);
+			m_clients.erase(e.first);
 			break;
 		}
 	}
@@ -38,7 +49,7 @@ bool MasterServer::OnClientValidated(RakNet::Packet* packet)
 	// Raknet validation was successful. ServerInterface validation 
 	// was successful too, this is our turn.
 	auto addr = packet->systemAddress;
-	LOG_DBG_INFO("[{:.4f}][OnClientConnect] Client validated: {}", APP_RUN_TIME(), addr.ToString());
+	LOG_DBG_INFO("[{:.4f}][OnClientValidated] Client validated: {}", APP_RUN_TIME(), addr.ToString());
 	return true;
 }
 
@@ -59,7 +70,7 @@ void MasterServer::OnClientDisconnect(std::shared_ptr<olc::net::connection<net::
 
 }
 */
-void MasterServer::_backupUserNumber(uint32_t seconds)
+void MasterServer::BackupClientCount(uint32_t seconds)
 {
 	if (m_timer.SecondsElapsed() > seconds)
 	{
@@ -67,9 +78,9 @@ void MasterServer::_backupUserNumber(uint32_t seconds)
 		m_timer.StartTimer();
 	}
 }
-uint32_t MasterServer::_assignClientId()
+uint32_t MasterServer::AssignClientId()
 {
-	return m_nextClientId++;
+	return m_nextId++;
 }
 /*
 void MasterServer::OnClientValidated(std::shared_ptr<olc::net::connection<net::Message>> client)
