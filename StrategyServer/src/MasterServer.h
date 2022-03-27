@@ -10,11 +10,6 @@
 #include "DBMS.h"
 
 
-#define MASTER_SERVER_MAJOR_VERSION 0
-#define MASTER_SERVER_MINOR_VERSION 1
-#define MASTER_SERVER_REVIEW_VERSION 0
-
-
 class MasterServer : public net::ServerInterface
 {
 public:
@@ -33,18 +28,21 @@ public:
 	// COMMON SERVER FUNCTIONS
 	bool ShouldExit() { return m_shouldExit; }
 	void Exit() { m_shouldExit = true; }
-	bool CheckClientVersion(uint16_t maj, uint16_t min, uint16_t rev);
+	bool CheckClientVersion(uint64_t v);
+	bool CheckClientVersion(net::SClientDescription& desc);
+
 
 	// UTIL
 	std::string MapdataToText(tinyxml2::XMLDocument& doc);
 	tinyxml2::XMLDocument& MapdataFromText(std::string& maptext);
+	uint64_t GetVersion();
 
 private:
 
 	Timer m_timer;
 	bool m_shouldExit = false;
 
-	std::map< uint32_t, RakNet::SystemAddress* > m_clients;
+	std::map< RakNet::RakString, uint32_t > m_clients;
 	uint32_t m_nextId = 10000;
 
 private:

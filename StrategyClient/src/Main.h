@@ -43,9 +43,6 @@
 #define CONNECTION_TIMEOUT_TIMER_SECONDS 5
 #define MASTER_SERVER_PORT 60777
 #define MASTER_SERVER_IP "192.168.178.43"
-#define CLIENT_MAJOR_VERSION 0
-#define CLIENT_MINOR_VERSION 1
-#define CLIENT_REVIEW_VERSION 0
 
 
 // SCRIPTING
@@ -140,6 +137,7 @@ public:
 	// UTIL
 	void RegisterCommands();
 	inline bool IsInitialized() { return m_initialized; }
+	uint64_t GetVersion();
 
 private:
 

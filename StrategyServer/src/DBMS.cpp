@@ -72,10 +72,15 @@ namespace dbms
 		}
 
 		auto update_doc = make_document( kvp("$set", make_document(kvp("SteamId", (int64_t)desc.m_steamId),
-																   kvp("SteamName", desc.m_steamName),
+																   kvp("SteamName", desc.m_steamName.C_String()),
 																   kvp("NintendoId", (int64_t)desc.m_nintendoId),
-																   kvp("NintendoName", desc.m_nintendoName),
+																   kvp("NintendoName", desc.m_nintendoName.C_String()),
+																   kvp("XboxLiveId", (int64_t)desc.m_xboxLiveId),
+																   kvp("XboxLiveName", desc.m_xboxLiveName.C_String()),
+																   kvp("PSNId", (int64_t)desc.m_psnId),
+																   kvp("PSNName", desc.m_psnName.C_String()),
 																   kvp("Currency", (int64_t)desc.m_currencyAmount),
+																   kvp("Version", (int64_t)desc.m_version),
 																   kvp("Achievements", achiev_array),
 																   kvp("ServiceItems", item_array)))
 		);
@@ -116,32 +121,33 @@ namespace dbms
 				{
 					_findOneByKeyValuePair(user_data, found_doc, "SteamName", desc.m_steamName.C_String());
 				}
+				break;
 			}
-			break;
 			case net::EClientPlatform::UP_SWITCH:
 			{
 				if (!_findOneByKeyValuePair(user_data, found_doc, "NintendoId", (int64_t)desc.m_nintendoId))
 				{
 					_findOneByKeyValuePair(user_data, found_doc, "NintendoName", desc.m_nintendoName.C_String());
 				}
+				break;
 			}
-			break;
 			case net::EClientPlatform::UP_XBOX:
 			{
 				if (!_findOneByKeyValuePair(user_data, found_doc, "XboxLiveId", (int64_t)desc.m_xboxLiveId))
 				{
 					_findOneByKeyValuePair(user_data, found_doc, "XboxLiveName", desc.m_xboxLiveName.C_String());
 				}
+				break;
 			}
-			break;
 			case net::EClientPlatform::UP_PS:
 			{
 				if (!_findOneByKeyValuePair(user_data, found_doc, "PSNId", (int64_t)desc.m_psnId))
 				{
 					_findOneByKeyValuePair(user_data, found_doc, "PSNName", desc.m_psnName.C_String());
 				}
+				break;
 			}
-			break;
+
 
 			default:
 				printf("DBMS::GetUserDesc - Undefined User Platform!\n");
@@ -226,7 +232,7 @@ namespace dbms
 	}
 
 
-	size_t DBMS::CreateUser()
+	uint32_t DBMS::CreateUser()
 	{
 		if (!m_initialized) return -1;
 
@@ -235,28 +241,25 @@ namespace dbms
 		mongocxx::collection user_data = db[m_userDataCollection];
 
 		// Get the next uuid for a user.
-		int64_t uuid = m_nextUUID;
+		int64_t uuid = m_nextUUID++;
 
 		// Create a Document/UserEntry with default values.
-		auto builder = bsoncxx::builder::stream::document{};
-		bsoncxx::document::value doc = builder
-			// Custom id
-			<< "_id" << uuid
-
-			// Platform Information
-			<< "ClientPlatform" << 0
-			<< "SteamId" << 0
-			<< "SteamName" << ""
-			<< "NintendoId" << 0
-			<< "NintendoName" << ""
-
-			// Gamerelated Information
-			<< "Currency" << 0
-			<< "Achievements" << open_array << close_array
-			<< "ServiceItems" << open_array << close_array
-
-
-			<< bsoncxx::builder::stream::finalize;
+		auto doc = make_document(
+			kvp("_id",					uuid),
+			kvp("ClientPlatform",		0),
+			kvp("SteamId",				0),
+			kvp("SteamName",			""),
+			kvp("NintendoId",			0),
+			kvp("NintendoName",			""),
+			kvp("XboxLiveId",			0),
+			kvp("XboxLiveName",			""),
+			kvp("PSNId",				0),
+			kvp("PSNName",				""),
+			kvp("Currency",				0),
+			kvp("Version",				0),
+			kvp("Achievements",			make_array()),
+			kvp("ServiceItems",			make_array())
+		);
 
 		try
 		{

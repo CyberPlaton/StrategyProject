@@ -18,7 +18,7 @@ namespace net
 		}
 
 		m_instance->SetMaximumIncomingConnections(max_connections);
-		ServerInterface::SystemAdress(desc);
+		ServerInterface::SystemAddress(desc);
 		m_running = true;
 		return true;
 	}
@@ -87,26 +87,30 @@ namespace net
 	}
 	void ServerInterface::Send(RakNet::BitStream& stream, RakNet::SystemAddress& client)
 	{
-		m_instance->Send(&stream, HIGH_PRIORITY, UNRELIABLE_SEQUENCED, 0, client, false);
+		m_instance->Send(&stream, HIGH_PRIORITY, RELIABLE_ORDERED, 0, client, false);
 	}
 	void ServerInterface::Broadcast(RakNet::BitStream& stream, RakNet::SystemAddress& exception)
 	{
-		m_instance->Send(&stream, HIGH_PRIORITY, UNRELIABLE_SEQUENCED, 0, exception, true);
+		m_instance->Send(&stream, HIGH_PRIORITY, RELIABLE_ORDERED, 0, exception, true);
 	}
-	RakNet::RakString ServerInterface::SystemAdress()
+	RakNet::RakString ServerInterface::SystemAddress()
 	{
-		return m_systemAdress;
+		return m_systemAddress;
 	}
-	void ServerInterface::SystemAdress(RakNet::SocketDescriptor& socket)
+	void ServerInterface::SystemAddress(RakNet::SocketDescriptor& socket)
 	{
 		const char* host = &socket.hostAddress[0];
-		m_systemAdress.AppendBytes(host, strlen(host));
+		m_systemAddress.AppendBytes(host, strlen(host));
 
-		m_systemAdress.AppendBytes("|", strlen("|"));
+		m_systemAddress.AppendBytes("|", strlen("|"));
 
 		std::stringstream ss;
 		ss << socket.port;
 		std::string port = ss.str();
-		m_systemAdress.AppendBytes(port.c_str(), port.size());
+		m_systemAddress.AppendBytes(port.c_str(), port.size());
+	}
+	RakNet::RakString ServerInterface::SystemAddress(RakNet::SystemAddress& addr)
+	{
+		return addr.ToString();
 	}
 }

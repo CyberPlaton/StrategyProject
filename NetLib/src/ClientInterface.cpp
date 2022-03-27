@@ -4,7 +4,7 @@ namespace net
 {
 	void ClientInterface::Send(RakNet::BitStream& stream, RakNet::SystemAddress& server)
 	{
-		m_instance->Send(&stream, HIGH_PRIORITY, UNRELIABLE_SEQUENCED, 0, server, false);
+		m_instance->Send(&stream, HIGH_PRIORITY, RELIABLE_ORDERED, 0, server, false);
 	}
 	bool ClientInterface::Initialize(uint32_t port, const char* host)
 	{

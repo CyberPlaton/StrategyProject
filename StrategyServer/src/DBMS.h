@@ -77,7 +77,7 @@ namespace dbms
 		*/
 		// Create an empty entry for a new user in the DB.
 		// Returns the uuid of the new User.
-		static size_t CreateUser();
+		static uint32_t CreateUser();
 
 		// Update Data of a user in the DB from given description.
 		// Returns true if everything went OK.

@@ -7,9 +7,53 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 	auto id = (RakNet::MessageID)packet->data[0];
 	LOG_DBG_INFO("[{:.4f}][OnMessage] Message Received: {} from client {}", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(), addr.ToString());
 
-
 	switch (id)
 	{
+	case net::EMessageId::NET_MSG_USER_VALIDATION_DATA:
+	{
+		LOG_DBG_INFO("[{:.4f}][OnMessage] Received User Data", APP_RUN_TIME());
+
+		net::SClientDescription clientDesc;
+
+		READ_MESSAGE(packet);
+		clientDesc.Deserialize(stream, true);
+
+		// Verify Client Version.
+		if (!CheckClientVersion(clientDesc))
+		{
+			LOG_DBG_ERROR("[{:.4f}][OnMessage] ... client {} out of date!", APP_RUN_TIME(), addr.ToString());
+			// Disconnect client.
+			CREATE_MESSAGE(net::EMessageId::NET_MSG_CLIENT_REJECT);
+			Send(stream, packet->systemAddress);
+		}
+
+		if (!dbms::DBMS::GetUserDesc(clientDesc))
+		{
+			LOG_DBG_WARN("[{:.4f}][OnMessage] ... client {} without DB entry! Attempt to create one...", APP_RUN_TIME(), addr.ToString());
+			clientDesc.m_uuid = dbms::DBMS::CreateUser();
+			if (!dbms::DBMS::UpdateUser(clientDesc))
+			{
+				LOG_DBG_CRITICAL("[{:.4f}][OnMessage] ... Failed to update DB user entry! UUID: {}", APP_RUN_TIME(), addr.ToString(), clientDesc.m_uuid);
+				// Disconnect client.
+				CREATE_MESSAGE(net::EMessageId::NET_MSG_CLIENT_REJECT);
+				Send(stream, packet->systemAddress);
+			}
+		}
+
+		{
+			CREATE_MESSAGE(net::EMessageId::NET_MSG_CLIENT_ACCEPT);
+			Send(stream, packet->systemAddress);
+		}
+		{
+			CREATE_MESSAGE(net::EMessageId::NET_MSG_USER_DATA);
+			clientDesc.Serialize(stream);
+			Send(stream, packet->systemAddress);
+		}
+
+
+
+		break;
+	}
 	}
 
 }
@@ -20,9 +64,9 @@ void MasterServer::OnClientConnect(RakNet::Packet* packet)
 	
 	// RakNet and ServerInterface Validation steps successfully passed.
 	// Remote system has successfully connected...
-	uint32_t id = AssignClientId();
-	m_clients.try_emplace(id, &packet->systemAddress);
-
+	auto client_id = AssignClientId();
+	auto client_addr = SystemAddress(packet->systemAddress);
+	m_clients.try_emplace(client_addr, client_id);
 
 	// Request client and platform data for last validation step.
 	CREATE_MESSAGE(net::EMessageId::NET_MSG_REQUEST_USER_VALIDATION_DATA);
@@ -35,14 +79,7 @@ void MasterServer::OnClientDisconnect(RakNet::Packet* packet)
 
 	// Remote system was disconnected.
 	// Remove from storage.
-	for (auto e : m_clients)
-	{
-		if (e.second->systemIndex == packet->systemAddress.systemIndex)
-		{
-			m_clients.erase(e.first);
-			break;
-		}
-	}
+	m_clients.erase(SystemAddress(packet->systemAddress));
 }
 bool MasterServer::OnClientValidated(RakNet::Packet* packet)
 {
@@ -52,13 +89,17 @@ bool MasterServer::OnClientValidated(RakNet::Packet* packet)
 	LOG_DBG_INFO("[{:.4f}][OnClientValidated] Client validated: {}", APP_RUN_TIME(), addr.ToString());
 	return true;
 }
-
-
-bool MasterServer::CheckClientVersion(uint16_t maj, uint16_t min, uint16_t rev)
+bool MasterServer::CheckClientVersion(net::SClientDescription& desc)
 {
-	return (maj >= MASTER_SERVER_MAJOR_VERSION &&
-			min >= MASTER_SERVER_MINOR_VERSION &&
-			rev >= MASTER_SERVER_REVIEW_VERSION);
+	return CheckClientVersion(desc.m_version);
+}
+bool MasterServer::CheckClientVersion(uint64_t v)
+{
+	return (GetVersion() == v);
+}
+uint64_t MasterServer::GetVersion()
+{
+	return 1000;
 }
 /*
 bool MasterServer::OnClientConnect(std::shared_ptr<olc::net::connection<net::Message>> client)

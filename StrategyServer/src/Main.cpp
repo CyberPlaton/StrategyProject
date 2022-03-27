@@ -29,7 +29,7 @@ int main()
 	if (server.Initialize(port, max))
 	{
 		LOG_DBG_INFO("[{:.4f}] ... start MS ...", APP_RUN_TIME());
-		LOG_DBG_INFO("[{:.4f}] ... listening on {} ...", APP_RUN_TIME(), server.SystemAdress().C_String());
+		LOG_DBG_INFO("[{:.4f}] ... listening on {} ...", APP_RUN_TIME(), server.SystemAddress().C_String());
 		server.Start();
 	}
 

@@ -22,7 +22,6 @@ namespace net
 	enum EGameobjectType;
 	enum EMessageId;
 	struct SClientDescription;
-	struct SClientAppDescription;
 	struct SGameServerDescription;
 	struct SSerializable;
 	struct SGameobject;
@@ -31,7 +30,7 @@ namespace net
 	struct SMaptileGameobject;
 	struct SMapobjectGameobject;
 
-	FORCE_INLINE static uint32_t CreateGameobjectNetworkUUID()
+	FORCE_INLINE static uint64_t CreateGameobjectNetworkUUID()
 	{
 		Random rand;
 		return rand.Int();
@@ -39,9 +38,12 @@ namespace net
 
 	FORCE_INLINE static RakNet::RakString MessageIDTypeToString(RakNet::MessageID id);
 
-#define CREATE_MESSAGE(id)\
-RakNet::BitStream stream;\
+#define CREATE_MESSAGE(id) \
+RakNet::BitStream stream; \
 stream.Write((RakNet::MessageID)id) \
+
+#define READ_MESSAGE(packet) \
+RakNet::BitStream stream(packet->data, packet->length, false) \
 
 	enum EMessageId
 	{
@@ -100,7 +102,7 @@ stream.Write((RakNet::MessageID)id) \
 	struct SSerializable
 	{
 		virtual void Serialize(RakNet::BitStream&) = 0;
-		virtual void Deserialize(RakNet::BitStream&) = 0;
+		virtual void Deserialize(RakNet::BitStream&, bool) = 0;
 	};
 
 
@@ -114,7 +116,7 @@ stream.Write((RakNet::MessageID)id) \
 		void Serialize(RakNet::BitStream& stream) override final
 		{
 			stream.Write(m_networkId);
-			stream.Write((uint32_t)m_platform);
+			stream.Write((EClientPlatform)m_platform);
 			stream.Write(m_uuid);
 			stream.Write(m_steamName);
 			stream.Write(m_steamId);
@@ -125,20 +127,22 @@ stream.Write((RakNet::MessageID)id) \
 			stream.Write(m_psnName);
 			stream.Write(m_psnId);
 			stream.Write(m_currencyAmount);
+			stream.Write(m_version);
 			stream.Write(m_achievements.size());
 			for (auto e : m_achievements)
 			{
-				stream.Write((uint32_t)e);
+				stream.Write((uint64_t)e);
 			}
 			stream.Write(m_serviceItems.size());
 			for (auto e : m_serviceItems)
 			{
-				stream.Write((uint32_t)e);
+				stream.Write((uint64_t)e);
 			}
 		}
-		void Deserialize(RakNet::BitStream& stream)  override final
+		void Deserialize(RakNet::BitStream& stream, bool ignore_id = false)  override final
 		{
-			stream.IgnoreBytes(sizeof(RakNet::MessageID));
+			if(ignore_id) stream.IgnoreBytes(sizeof(RakNet::MessageID));
+
 			stream.Read(m_networkId);
 			stream.Read((EClientPlatform)m_platform);
 			stream.Read(m_uuid);
@@ -151,19 +155,20 @@ stream.Write((RakNet::MessageID)id) \
 			stream.Read(m_psnName);
 			stream.Read(m_psnId);
 			stream.Read(m_currencyAmount);
+			stream.Read(m_version);
 
 			int vector_size = 0;
 			stream.Read(vector_size);
 			for (int i = 0; i < vector_size; i++)
 			{
-				uint32_t achivement;
+				uint64_t achivement;
 				stream.Read(achivement);
 				m_achievements.push_back((EAchievement)achivement);
 			}
 			stream.Read(vector_size);
 			for (int i = 0; i < vector_size; i++)
 			{
-				uint32_t item;
+				uint64_t item;
 				stream.Read(item);
 				m_serviceItems.push_back((EServiceItem)item);
 			}
@@ -171,48 +176,27 @@ stream.Write((RakNet::MessageID)id) \
 
 
 		// GENERAL INFORMATION
-		uint32_t m_networkId;
-		EClientPlatform m_platform;
+		uint64_t m_networkId = 0;
+		EClientPlatform m_platform = EClientPlatform::UP_INVALID;
 
 		// DATABASE INFORMATION
-		uint32_t m_uuid;
-		RakNet::RakString m_steamName;
-		uint32_t m_steamId;
-		RakNet::RakString m_nintendoName;
-		uint32_t m_nintendoId;
-		RakNet::RakString m_xboxLiveName;
-		uint32_t m_xboxLiveId;
-		RakNet::RakString m_psnName;
-		uint32_t m_psnId;
+		uint64_t m_uuid = 0;
+		RakNet::RakString m_steamName = "";
+		uint64_t m_steamId = 0;
+		RakNet::RakString m_nintendoName = "";
+		uint64_t m_nintendoId = 0;
+		RakNet::RakString m_xboxLiveName = "";
+		uint64_t m_xboxLiveId = 0;
+		RakNet::RakString m_psnName = "";
+		uint64_t m_psnId = 0;
 
-		uint32_t m_currencyAmount;
+		uint64_t m_currencyAmount = 0;
 		std::vector< EAchievement > m_achievements;
 		std::vector< EServiceItem > m_serviceItems;
+
+		// APP INFORMATION
+		uint64_t m_version = 0;
 	};
-
-
-	struct SClientAppDescription : public SSerializable
-	{
-		void Serialize(RakNet::BitStream& stream) override final
-		{
-			stream.Write(m_majorVersion);
-			stream.Write(m_minorVersion);
-			stream.Write(m_patchVersion);
-		}
-		void Deserialize(RakNet::BitStream& stream)  override final
-		{
-			stream.IgnoreBytes(sizeof(RakNet::MessageID));
-
-			stream.Read(m_majorVersion);
-			stream.Read(m_minorVersion);
-			stream.Read(m_patchVersion);
-		}
-
-		uint32_t m_majorVersion;
-		uint32_t m_minorVersion;
-		uint32_t m_patchVersion;
-	};
-
 
 	struct SGameServerDescription : public SSerializable
 	{
@@ -231,9 +215,10 @@ stream.Write((RakNet::MessageID)id) \
 				stream.Write((uint32_t)e);
 			}
 		}
-		void Deserialize(RakNet::BitStream& stream)  override final
+		void Deserialize(RakNet::BitStream& stream, bool ignore_id = false)  override final
 		{
-			stream.IgnoreBytes(sizeof(RakNet::MessageID));
+			if (ignore_id) stream.IgnoreBytes(sizeof(RakNet::MessageID));
+
 			stream.Read(m_gameId);
 			stream.Read(m_gameData);
 
@@ -241,7 +226,7 @@ stream.Write((RakNet::MessageID)id) \
 			stream.Read(vector_size);
 			for (int i = 0; i < vector_size; i++)
 			{
-				uint32_t player;
+				uint64_t player;
 				stream.Read(player);
 				m_players.push_back(player);
 			}
@@ -249,7 +234,7 @@ stream.Write((RakNet::MessageID)id) \
 
 		RakNet::RakString m_gameId;
 		RakNet::RakString m_gameData;
-		std::vector< uint32_t > m_players;
+		std::vector< uint64_t > m_players;
 	};
 
 
@@ -262,8 +247,8 @@ stream.Write((RakNet::MessageID)id) \
 
 
 		RakNet::RakString m_name;
-		uint32_t m_networkId;
-		uint32_t m_playerId;
+		uint64_t m_networkId;
+		uint64_t m_playerId;
 		EGameobjectType m_gameobjectType;
 
 		// GENERAL INFORMATION
@@ -279,7 +264,7 @@ stream.Write((RakNet::MessageID)id) \
 			stream.Write(m_name);
 			stream.Write(m_networkId);
 			stream.Write(m_playerId);
-			stream.Write((uint32_t)m_gameobjectType);
+			stream.Write((EGameobjectType)m_gameobjectType);
 			stream.Write(m_positionX);
 			stream.Write(m_positionY);
 
@@ -287,9 +272,10 @@ stream.Write((RakNet::MessageID)id) \
 			stream.Write(m_buildingHealth);
 			stream.Write(m_buildingLevel);
 		}
-		void Deserialize(RakNet::BitStream& stream)  override final
+		void Deserialize(RakNet::BitStream& stream, bool ignore_id = false)  override final
 		{
-			stream.IgnoreBytes(sizeof(RakNet::MessageID));
+			if (ignore_id) stream.IgnoreBytes(sizeof(RakNet::MessageID));
+
 			stream.Read(m_name);
 			stream.Read(m_networkId);
 			stream.Read(m_playerId);
@@ -304,8 +290,8 @@ stream.Write((RakNet::MessageID)id) \
 		}
 
 		RakNet::RakString m_buildingName;
-		uint32_t m_buildingHealth;
-		uint32_t m_buildingLevel;
+		uint64_t m_buildingHealth;
+		uint64_t m_buildingLevel;
 	};
 	struct SUnitGameobject : public SGameobject, public SSerializable
 	{
@@ -314,7 +300,7 @@ stream.Write((RakNet::MessageID)id) \
 			stream.Write(m_name);
 			stream.Write(m_networkId);
 			stream.Write(m_playerId);
-			stream.Write((uint32_t)m_gameobjectType);
+			stream.Write((EGameobjectType)m_gameobjectType);
 			stream.Write(m_positionX);
 			stream.Write(m_positionY);
 			stream.Write(m_playerId);
@@ -330,9 +316,10 @@ stream.Write((RakNet::MessageID)id) \
 			stream.Write(m_unitMovementType);
 			stream.Write(m_unitMovementPoints);
 		}
-		void Deserialize(RakNet::BitStream& stream)  override final
+		void Deserialize(RakNet::BitStream& stream, bool ignore_id = false)  override final
 		{
-			stream.IgnoreBytes(sizeof(RakNet::MessageID));
+			if (ignore_id) stream.IgnoreBytes(sizeof(RakNet::MessageID));
+
 			stream.Read(m_name);
 			stream.Read(m_networkId);
 			stream.Read(m_playerId);
@@ -354,15 +341,15 @@ stream.Write((RakNet::MessageID)id) \
 		}
 
 		RakNet::RakString m_unitName;
-		uint32_t m_unitHealth;
-		uint32_t m_unitArmor;
-		uint32_t m_unitAttack;
-		uint32_t m_unitDefense;
-		uint32_t m_unitLevel;
-		uint32_t m_unitExperience;
-		uint32_t m_unitSightRadius;
-		uint32_t m_unitMovementType;
-		uint32_t m_unitMovementPoints;
+		uint64_t m_unitHealth;
+		uint64_t m_unitArmor;
+		uint64_t m_unitAttack;
+		uint64_t m_unitDefense;
+		uint64_t m_unitLevel;
+		uint64_t m_unitExperience;
+		uint64_t m_unitSightRadius;
+		uint64_t m_unitMovementType;
+		uint64_t m_unitMovementPoints;
 	};
 	struct SMaptileGameobject : public SGameobject, public SSerializable
 	{
@@ -372,7 +359,7 @@ stream.Write((RakNet::MessageID)id) \
 			stream.Write(m_name);
 			stream.Write(m_networkId);
 			stream.Write(m_playerId);
-			stream.Write((uint32_t)m_gameobjectType);
+			stream.Write((EGameobjectType)m_gameobjectType);
 			stream.Write(m_positionX);
 			stream.Write(m_positionY);
 			stream.Write(m_playerId);
@@ -380,9 +367,10 @@ stream.Write((RakNet::MessageID)id) \
 			stream.Write(m_maptileBiome);
 			stream.Write(m_maptileType);
 		}
-		void Deserialize(RakNet::BitStream& stream)  override final
+		void Deserialize(RakNet::BitStream& stream, bool ignore_id = false)  override final
 		{
-			stream.IgnoreBytes(sizeof(RakNet::MessageID));
+			if (ignore_id) stream.IgnoreBytes(sizeof(RakNet::MessageID));
+
 			stream.Read(m_name);
 			stream.Read(m_networkId);
 			stream.Read(m_playerId);
@@ -405,7 +393,7 @@ stream.Write((RakNet::MessageID)id) \
 			stream.Write(m_name);
 			stream.Write(m_networkId);
 			stream.Write(m_playerId);
-			stream.Write((uint32_t)m_gameobjectType);
+			stream.Write((EGameobjectType)m_gameobjectType);
 			stream.Write(m_positionX);
 			stream.Write(m_positionY);
 			stream.Write(m_playerId);
@@ -413,9 +401,10 @@ stream.Write((RakNet::MessageID)id) \
 			stream.Write(m_maptileObjectType);
 			stream.Write(m_maptileObjectBiome);
 		}
-		void Deserialize(RakNet::BitStream& stream)  override final
+		void Deserialize(RakNet::BitStream& stream, bool ignore_id = false)  override final
 		{
-			stream.IgnoreBytes(sizeof(RakNet::MessageID));
+			if (ignore_id) stream.IgnoreBytes(sizeof(RakNet::MessageID));
+
 			stream.Read(m_name);
 			stream.Read(m_networkId);
 			stream.Read(m_playerId);

@@ -28,15 +28,16 @@ namespace net
 		void Send(RakNet::BitStream& stream, RakNet::SystemAddress& client);
 		void Broadcast(RakNet::BitStream& stream, RakNet::SystemAddress& exception);
 		void Exit();
-		RakNet::RakString SystemAdress();
-		void SystemAdress(RakNet::SocketDescriptor& socket);
+		RakNet::RakString SystemAddress();
+		void SystemAddress(RakNet::SocketDescriptor& socket);
+		RakNet::RakString SystemAddress(RakNet::SystemAddress& addr);
 
 
 
 	protected:
 		RakNet::RakPeerInterface* m_instance;
 
-		RakNet::RakString m_systemAdress;
+		RakNet::RakString m_systemAddress;
 
 	protected:
 		virtual void OnMessage(RakNet::Packet* packet) = 0;

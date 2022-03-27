@@ -15,6 +15,10 @@ void App::OnMessage(RakNet::Packet* packet)
 	// Do nothing for Application.
 	// Scenes handle the networking traffic.
 }
+uint64_t App::GetVersion()
+{
+	return 1000;
+}
 
 
 bool cherrysoda::SceneGraphFactory::LoadSceneGraph(const cherrysoda::String& filename, App* app)
@@ -433,11 +437,6 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 				LOG_DBG_WARN("[InitializationScene::Update] Validation Data requested!");
 
 				net::SClientDescription clientDesc;
-				net::SClientAppDescription appDesc;
-
-				appDesc.m_majorVersion = CLIENT_MAJOR_VERSION;
-				appDesc.m_minorVersion = CLIENT_MINOR_VERSION;
-				appDesc.m_patchVersion = CLIENT_REVIEW_VERSION;
 
 				auto platform = PlatformClient::get();
 				clientDesc.m_platform = platform->GetClientPlatform();
@@ -469,9 +468,10 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 					}
 				}
 
-				RakNet::BitStream stream;
+				clientDesc.m_version = m_application->GetVersion();
+
+				CREATE_MESSAGE(net::EMessageId::NET_MSG_USER_VALIDATION_DATA);
 				clientDesc.Serialize(stream);
-				appDesc.Serialize(stream);
 				m_application->Send(stream, packet->systemAddress);
 				break;
 			}
@@ -496,9 +496,9 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 				LOG_GAME_WARN("[InitializationScene::Update] User Data received!");
 				LOG_DBG_WARN("[InitializationScene::Update] User Data received!");
 
-				RakNet::BitStream stream(packet->data, packet->length, false);
-
-				m_application->m_localClientDesc->Deserialize(stream);
+				READ_MESSAGE(packet);
+				m_application->m_localClientDesc = new net::SClientDescription();
+				m_application->m_localClientDesc->Deserialize(stream, true);
 
 			break;
 			}
