@@ -113,7 +113,7 @@ void NetCommMngr::UpdateNetGameobject(net::SGameobject* object)
 App::App() : base(), 
 m_DefaultTexture(nullptr), m_Image(nullptr)
 {
-	SetTitle(TITLE(CLIENT_TITLE_STRING, CLIENT_MAJOR_VERSION, CLIENT_MINOR_VERSION, CLIENT_REVIEW_VERSION));
+	SetTitle(TITLE(CLIENT_TITLE_STRING, 0, 1, 0));
 	SetClearColor(cherrysoda::Color::Gray);
 
 	// Hide Windows Console for Release.
@@ -211,10 +211,9 @@ void App::Initialize()
 	LOG_FILE_INFO("[{:.4f}] SUBSYSTEMS SUCCESSFULLY INITIALIZED!", APP_RUN_TIME());
 
 
-
 	// Everything went OK. Startup the engine!
+	base::ExitOnEscapeKeypress(false);
 	base::Initialize();
-
 
 	// Load Game Scenes!
 	if (!cherrysoda::SceneGraphFactory::LoadSceneGraph("assets/SceneGraph.xml", this))
@@ -352,7 +351,7 @@ bool App::InitializeMasterConnection()
 }
 void App::TerminateMasterConnection()
 {
-	// Explicitly do nothing for Raknet!
+	ClientInterface::Terminate();
 }
 
 
@@ -538,6 +537,9 @@ void cherrysoda::SplashSceenScene::SceneImpl::Update()
 	cherrysoda::Scene::Update();
 
 	LOG_DBG_WARN("[{:.4f}] SplashScreenScene transitions directly to GameScene...", APP_RUN_TIME());
+	LOG_DBG_ERROR("[{:.4f}] GameScene not implemented!", APP_RUN_TIME());
+	LOG_GAME_WARN("[%.4f] SplashScreenScene transitions directly to GameScene...", APP_RUN_TIME());
+	LOG_GAME_ERROR("[%.4f] GameScene not implemented!", APP_RUN_TIME());
 
 	m_stateMachine->Transit("GameScene");
 }
