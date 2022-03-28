@@ -30,6 +30,7 @@ namespace net
 	{
 		while (Running())
 		{
+			OnUpdate();
 			Update(RakNet::GetTime());
 		}
 	}

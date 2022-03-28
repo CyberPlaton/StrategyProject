@@ -23,7 +23,7 @@ public:
 	void OnClientConnect(RakNet::Packet* packet) override final;
 	void OnClientDisconnect(RakNet::Packet* packet) override final;
 	bool OnClientValidated(RakNet::Packet* packet) override final;
-	
+	void OnUpdate() override final;
 
 	// COMMON SERVER FUNCTIONS
 	bool ShouldExit() { return m_shouldExit; }

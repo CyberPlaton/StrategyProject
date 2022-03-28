@@ -500,6 +500,7 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 				m_application->m_localClientDesc = new net::SClientDescription();
 				m_application->m_localClientDesc->Deserialize(stream, true);
 
+				m_initializationComplete = true;
 			break;
 			}
 
@@ -522,102 +523,10 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 			m_application->DeallocateMessage(packet);
 		}
 	}
-	/*
-	if (m_application->IsConnected() && m_initializationComplete == false)
-	{
-		if (!m_application->Incoming().empty())
-		{
-			// Get the Message.
-			auto msg = m_application->Incoming().pop_front().msg;
-
-
-			// Read the Message and react to it.
-			// In the Init Scene we only expect a few kinds of Messages.
-			switch (msg.header.id)
-			{
-			case net::NET_MSG_REQUEST_USER_VALIDATION_DATA:
-			{
-				LOG_GAME_INFO("[InitializationScene] User Data for validation requested");
-
-				net::UserDesc user_desc;
-				net::ClientAppDesc app_desc;
-
-				// App Desc.
-				app_desc.m_majorVersion = CLIENT_MAJOR_VERSION;
-				app_desc.m_minorVersion = CLIENT_MINOR_VERSION;
-				app_desc.m_reviewVersion = CLIENT_REVIEW_VERSION;
-
-				// User Desc.
-				user_desc.m_steamName = PlatformClient::get()->GetClientPlatformName();
-				user_desc.m_steamId = PlatformClient::get()->GetClientPlatformID();
-				switch (PlatformClient::get()->GetClientPlatform())
-				{
-				case net::EUserPlatform::UP_STEAM:
-					user_desc.m_userPlatform = net::EUserPlatform::UP_STEAM;
-					break;
-				case net::EUserPlatform::UP_SWITCH:
-					user_desc.m_userPlatform = net::EUserPlatform::UP_SWITCH;
-					break;
-				default:
-					m_application->Exit();
-					break;
-				}
-
-				EncryptMessage(app_desc);
-				EncryptMessage(user_desc);
-
-				olc::net::message< net::Message > message;
-				message.header.id = net::Message::NET_MSG_USER_VALIDATION_DATA;
-				message << app_desc;
-				message << user_desc;
-
-				m_application->Send(message);
-			}
-			break;
-
-
-
-			// We were rejected.
-			case net::NET_MSG_CLIENT_REJECT:
-				LOG_GAME_INFO("[InitializationScene] Rejected by Master server");
-				m_application->Exit();
-				break;
-
-
-			// We were accepted and received our user data from Database.
-			case net::NET_MSG_USER_DATA:
-			{
-				LOG_GAME_INFO("[InitializationScene] Received user data");
-
-				net::UserDesc desc;
-				msg >> desc;
-
-				DecryptMessage(desc);
-
-				// Store user data in the client for usage.
-				// Take ownership over the Object.
-				m_application->m_localUserDesc = new net::UserDesc(desc);
-
-				m_initializationComplete = true;
-			}
-			break;
-
-
-
-			default:
-				m_application->Exit();
-			}
-		}
-	}
-	else
-	{
-		m_application->Exit();
-	}
-	*/
-
 	if (m_initializationComplete)
 	{
-		LOG_GAME_INFO("[InitializationScene] Initialization complete");
+		LOG_GAME_INFO("[%.4f][InitializationScene] Initialization complete", APP_RUN_TIME());
+		LOG_DBG_WARN("[{:.4f}][InitializationScene] Initialization complete", APP_RUN_TIME());
 		m_stateMachine->Transit("SplashScreen");
 	}
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "NetCommon.h"
+#include "Timer.h"
 
 #include <RakPeerInterface.h>
 #include <MessageIdentifiers.h>
@@ -8,6 +9,7 @@
 #include <RakNetTypes.h>
 #include <RakNetTime.h>
 #include <GetTime.h>
+
 
 #include <sstream>
 #include <string>
@@ -39,7 +41,10 @@ namespace net
 
 		RakNet::RakString m_systemAddress;
 
+		Timer timer;
+
 	protected:
+		virtual void OnUpdate() = 0;
 		virtual void OnMessage(RakNet::Packet* packet) = 0;
 		virtual void OnClientConnect(RakNet::Packet* packet) = 0;
 		virtual void OnClientDisconnect(RakNet::Packet* packet) = 0;

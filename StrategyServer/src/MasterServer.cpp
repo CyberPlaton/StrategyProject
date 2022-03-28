@@ -101,16 +101,10 @@ uint64_t MasterServer::GetVersion()
 {
 	return 1000;
 }
-/*
-bool MasterServer::OnClientConnect(std::shared_ptr<olc::net::connection<net::Message>> client)
+void MasterServer::OnUpdate()
 {
-	return true;
+	BackupClientCount(10);
 }
-void MasterServer::OnClientDisconnect(std::shared_ptr<olc::net::connection<net::Message>> client)
-{
-
-}
-*/
 void MasterServer::BackupClientCount(uint32_t seconds)
 {
 	if (m_timer.SecondsElapsed() > seconds)
