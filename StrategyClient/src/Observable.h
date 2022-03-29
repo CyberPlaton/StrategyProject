@@ -3,6 +3,7 @@
 #include "EventSystem.h"
 #include "NetCommon.h"
 #include "Unit.h"
+#include "Building.h"
 #include "Timer.h"
 
 namespace cherrysoda

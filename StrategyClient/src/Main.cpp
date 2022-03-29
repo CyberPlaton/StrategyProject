@@ -327,6 +327,7 @@ bool App::InitializeMasterConnection()
 	{
 		LOG_GAME_INFO("[App::InitializeMasterConnection] Connecting...");
 
+#ifndef OFFLINE_GAME_CLIENT_TEST
 		if (!ClientInterface::Initialize(MASTER_SERVER_PORT, MASTER_SERVER_IP))
 		{
 			LOG_GAME_CRITICAL("[InitializationScene::InitializeMasterConnection] Could not initialize ClientInterface!");
@@ -345,13 +346,20 @@ bool App::InitializeMasterConnection()
 		}
 
 		return ClientInterface::Connected();
+#else
+		LOG_GAME_WARN("[%.4f][InitializeMasterConnection] Connection skipped due to offline test!", APP_RUN_TIME());
+		LOG_DBG_WARN("[{:.4f}][InitializeMasterConnection] Connection skipped due to offline test!", APP_RUN_TIME());
+		return true;
+#endif
 	}
 
 	return false;
 }
 void App::TerminateMasterConnection()
 {
+#ifndef OFFLINE_GAME_CLIENT_TEST
 	ClientInterface::Terminate();
+#endif
 }
 
 
@@ -419,6 +427,7 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 	LOG_GAME_WARN("[InitializationScene::Update] Debug: Transit to DebugGameScene");
 	LOG_DBG_WARN("[InitializationScene::Update] Debug: Transit to DebugGameScene");
 	m_stateMachine->Transit("DebugGame");
+	return;
 #endif
 
 	if (m_application->Connected() && m_initializationComplete == false)
@@ -696,6 +705,7 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 		.Add(new  Sprite("assets/BuildingAtlas.json"))
 		.Add(new  SelectableBuilding(1))
 		.Add(new  CollidableComponent(true, false, true))
+		.Add(new  Building("Townhall", 1, 500, 1, 1, 250.0f, 250.0f))
 		.End();
 	entity->Get< Sprite >()->AddLoop("Idle", "Human_Townhall_III_Winter");
 	entity->Get< Sprite >()->Play("Idle");

@@ -6,6 +6,8 @@
 #include <CherrySoda/Util/STL.h>
 
 #define CONCAT_STRING(a, b) a##b
+
+
 #define DECLARE_GET_SET(returntype, name, member) \
 returntype CONCAT_STRING(Get, name)() \
 { \
@@ -16,8 +18,14 @@ void CONCAT_STRING(Set, name)(returntype value) \
 	member = value; \
 } \
 
+
 #define DECLARE_QUERY(name, member) \
 bool CONCAT_STRING(Is, name)()\
 { \
 	return member; \
 } \
+
+
+#define DECLARE_VIRTUAL_GET_SET(returntype, name) \
+virtual returntype CONCAT_STRING(Get, name)()  = 0; \
+virtual void CONCAT_STRING(Set, name)(returntype value) = 0 \

@@ -1,5 +1,6 @@
 
 #include "ComponentCommon.h"
+#include "SelectableUnit.h"
 
 namespace cherrysoda
 {
@@ -18,7 +19,7 @@ namespace cherrysoda
 	public:
 		CHERRYSODA_DECLARE_COMPONENT(Unit, Component);
 
-		Unit() : Unit(true, false)
+		Unit() : Unit(true, true)
 		{
 		}
 		Unit::Unit(const String& unit_name,
@@ -33,19 +34,19 @@ namespace cherrysoda
 						  float position_y);
 
 		// GETTER/SETTER
-		DECLARE_GET_SET(const String&, UnitName, m_unitName);
-		DECLARE_GET_SET(size_t, PlayerId, m_playerId);
-		DECLARE_GET_SET(size_t, Health, m_health);
-		DECLARE_GET_SET(size_t, Armor, m_armor);
-		DECLARE_GET_SET(size_t, Defense, m_defense);
-		DECLARE_GET_SET(size_t, Attack, m_attack);
-		DECLARE_GET_SET(size_t, Level, m_level);
-		DECLARE_GET_SET(size_t, Experience, m_experience);
-		DECLARE_GET_SET(size_t, SightRadius, m_sightRadius);
-		DECLARE_GET_SET(size_t, TilePositionX, m_tilePositionX);
-		DECLARE_GET_SET(size_t, TilePositionY, m_tilePositionY);
-		DECLARE_GET_SET(float, PositionX, m_positionX);
-		DECLARE_GET_SET(float, PositionY, m_positionY);
+		DECLARE_GET_SET(const String&,  UnitName,		m_unitName);
+		DECLARE_GET_SET(size_t,			PlayerId,			m_playerId);
+		DECLARE_GET_SET(size_t,			Health,				m_health);
+		DECLARE_GET_SET(size_t,			Armor,				m_armor);
+		DECLARE_GET_SET(size_t,			Defense,			m_defense);
+		DECLARE_GET_SET(size_t,			Attack,				m_attack);
+		DECLARE_GET_SET(size_t,			Level,				m_level);
+		DECLARE_GET_SET(size_t,			Experience,			m_experience);
+		DECLARE_GET_SET(size_t,			SightRadius,		m_sightRadius);
+		DECLARE_GET_SET(size_t,			TilePositionX,		m_tilePositionX);
+		DECLARE_GET_SET(size_t,			TilePositionY,		m_tilePositionY);
+		DECLARE_GET_SET(float,			PositionX,			m_positionX);
+		DECLARE_GET_SET(float,			PositionY,			m_positionY);
 
 		// QUERYING
 		DECLARE_QUERY(Dirty, m_isDirty);

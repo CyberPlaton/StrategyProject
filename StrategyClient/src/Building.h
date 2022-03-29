@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ComponentCommon.h"
+#include "SelectableBuilding.h"
 
 namespace cherrysoda
 {
