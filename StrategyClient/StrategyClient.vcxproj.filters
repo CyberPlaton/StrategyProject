@@ -53,6 +53,12 @@
     <ClCompile Include="src\Building.cpp">
       <Filter>Components\Game</Filter>
     </ClCompile>
+    <ClCompile Include="src\Lua.cpp">
+      <Filter>Scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ScriptComponent.cpp">
+      <Filter>Components\Scriptable</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Main.h" />
@@ -152,6 +158,15 @@
     <ClInclude Include="src\Building.h">
       <Filter>Components\Game</Filter>
     </ClInclude>
+    <ClInclude Include="src\Lua.h">
+      <Filter>Scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ScriptComponent.h">
+      <Filter>Components\Scriptable</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ScriptInterface.h">
+      <Filter>Scripting</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Scenes">
@@ -186,6 +201,12 @@
     </Filter>
     <Filter Include="Components\Game\Ability\ActiveAbility">
       <UniqueIdentifier>{5ec64003-e9b4-4f20-bf99-3ef37b9b7a21}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Scriptable">
+      <UniqueIdentifier>{6c983751-f1df-43bb-b37f-59f27bf566d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scripting">
+      <UniqueIdentifier>{1f545368-9ef8-4bb4-b7a0-5005991c7ce0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

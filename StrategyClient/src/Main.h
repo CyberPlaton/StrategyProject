@@ -24,6 +24,7 @@
 #include "SelectableUnit.h"
 #include "Observable.h"
 #include "Observer.h"
+#include "ScriptComponent.h"
 
 // SOUND
 
@@ -45,11 +46,6 @@
 #define CONNECTION_TIMEOUT_TIMER_SECONDS 5
 #define MASTER_SERVER_PORT 60777
 #define MASTER_SERVER_IP "192.168.178.43"
-
-
-// SCRIPTING
-#include "LuaLibrary.h"
-#include "LuaBridge.h"
 
 
 

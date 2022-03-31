@@ -706,6 +706,7 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 		.Add(new  SelectableBuilding(1))
 		.Add(new  CollidableComponent(true, false, true))
 		.Add(new  Building("Townhall", 1, 500, 1, 1, 250.0f, 250.0f))
+		.Add(new ScriptComponent("assets/testing_script.lua"))
 		.End();
 	entity->Get< Sprite >()->AddLoop("Idle", "Human_Townhall_III_Winter");
 	entity->Get< Sprite >()->Play("Idle");
@@ -749,6 +750,7 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 	entity->Depth(0);
 
 
+
 	entity = factory->Begin(this)
 		.Add(new  SelectableUnit(1))
 		.Add(new  Sprite("assets/UnitAtlas.json"))
@@ -765,6 +767,7 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 	entity = factory->Begin(this)
 		.Add(new CameraController(camera))
 		.End();
+
 }
 
 
