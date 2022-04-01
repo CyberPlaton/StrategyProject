@@ -434,3 +434,129 @@ workspace "Strategy"
 				"NDEBUG"
 			} 
 			optimize "On"
+
+
+
+
+
+
+
+	-- ##################################################################################################################################
+	-- Gameeditor - Windows
+	-- ##################################################################################################################################
+	filter "system:Windows"
+		project "StrategyEditor"
+		-- specify location of Project rel. to root directory
+		location "StrategyEditor"
+		-- what the application actually is
+		kind "ConsoleApp"
+		-- the programming language of the project
+		language "C++"
+		-- where the output binaries go
+		targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+		-- same for intermediate output files
+		objdir ("intermediate/" .. outputdir .. "/%{prj.name}")
+		-- use C++17 for the projects language
+		cppdialect "C++17"	
+		-- use latest available system version (e.g. latest Windows SDK)
+		systemversion "latest"
+		-- set working directory for debuging
+		debugdir ("bin/" .. outputdir .. "/%{prj.name}")
+		-- Specify which source files to include
+		files
+		{
+			-- all files in the CarSteering directory with endings of .h or .cpp
+			"%{prj.name}/src/**.h",
+			"%{prj.name}/src/**.cpp",
+		}
+		-- Include thirdparty files
+		includedirs
+		{
+			"%{prj.name}/common/include",
+			"%{prj.name}/common/include/olc", 				-- Graphics etc. the base of the Editor
+			"%{prj.name}/common/include/tinyxml2", 			-- Serializing Mapdata
+			"%{prj.name}/common/include/imgui",				-- Editor GUI
+			"%{prj.name}/common/include/GL",				-- ImGui
+			"%{prj.name}/common/include/GLFW",				-- ImGui
+		}
+		filter "configurations:Debug"
+			-- Set working directory for debugging
+			debugdir ("bin/" .. outputdir .. "/%{prj.name}")
+		filter "configurations:Distr"
+			-- Set working directory for distr
+			debugdir ("bin/" .. outputdir .. "/%{prj.name}")
+		filter "configurations:Release"
+			-- Set working directory for release
+			debugdir ("bin/" .. outputdir .. "/%{prj.name}")
+		-- Linking libraries
+		filter "configurations:Distr"
+			libdirs{"libs", "%{prj.name}/common/lib/Distr"}
+			links
+			{
+				"glew32",
+				"glfw3",
+				"opengl32",
+				"tinyxml2",
+				"imgui",
+			}
+		filter "configurations:Debug"
+			libdirs{"libs", "%{prj.name}/common/lib/Debug"}
+			links
+			{
+				"glew32",
+				"glfw3",
+				"opengl32",
+				"tinyxml2",
+				"imgui",
+			}
+		filter "configurations:Release"
+			libdirs{"libs", "%{prj.name}/common/lib/Release"}
+			links
+			{
+				"glew32",
+				"glfw3",
+				"opengl32",
+				"tinyxml2",
+				"imgui",
+			}
+		-- Everything defined below is only if we building on windows
+		filter "system:Windows"
+			-- Specify macro definitions for project in the windows system
+			defines
+			{
+				"PLATFORM_WINDOWS"
+			}
+			undefines
+			{
+			}
+		-- Enable Multithreaded Debug library only in Debug mode.
+		filter {"system:Windows", "configurations:Debug"}
+			staticruntime "Off"
+		filter {"system:Windows", "configurations:Release"}
+			staticruntime "Off"
+		filter {"system:Windows", "configurations:Distr"}
+			staticruntime "Off"
+		-- Specify extra stuff for Debug config and each other configuration we have
+		filter "configurations:Debug"
+			defines 
+			{
+				"DEBUG",
+				"_ITERATOR_DEBUG_LEVEL=0",
+				"_CRT_SECURE_NO_WARNINGS",
+				"_CRT_SECURE_NO_DEPRECATE",
+			}
+			symbols "On"
+		filter "configurations:Release"
+			defines 
+			{
+				"RELEASE",
+				"NDEBUG"
+			} 
+			optimize "On"
+		filter "configurations:Distr"
+			defines
+			{
+				"DISTR",
+				"NDEBUG"
+			} 
+			optimize "On"

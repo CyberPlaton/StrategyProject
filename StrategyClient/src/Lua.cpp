@@ -24,10 +24,6 @@ namespace cherrysoda
 			delete lua; lua = nullptr;
 		}
 	}
-	void LuaFactory::InitializeBinding(Lua* lua)
-	{
-
-	}
 	bool LuaFactory::LoadScript(ScriptInterface* script, Lua* lua)
 	{
 		return lua->TryLoad(script, lua);

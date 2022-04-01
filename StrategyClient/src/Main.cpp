@@ -771,6 +771,36 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 }
 
 
+struct Test
+{
+	int h;
+	int w;
+	std::string name;
+};
+
+Test oTest;
+bool bTest = false;
+
+
+// SCRIPTING
+// BIND ANY SCRIPTRING RELEVANT FUNCTIONS AND DATASTRUCTURES TO LUA
+void cherrysoda::LuaFactory::InitializeBinding(cherrysoda::Lua* lua)
+{
+	using namespace cherrysoda;
+	using namespace luabridge;
+
+	auto state = lua->m_luaState;
+
+	REGISTER_CLASS_FUNCTION_TO_LUA(state, "Engine", App, SetTitle);
+	REGISTER_CLASS_FUNCTION_TO_LUA(state, "Engine", App, GetWindowHeight);
+	REGISTER_CLASS_FUNCTION_TO_LUA(state, "Engine", App, GetWindowWidth);
+	REGISTER_CLASS_FUNCTION_TO_LUA(state, "Engine", App, SetFullscreen);
+	REGISTER_CLASS_FUNCTION_TO_LUA(state, "Engine", App, SetWindowed);
+	REGISTER_CLASS_FUNCTION_TO_LUA(state, "Engine", App, FPS);
+	REGISTER_CLASS_FUNCTION_TO_LUA(state, "Engine", App, DeltaTime);
+
+}
+
 
 
 
