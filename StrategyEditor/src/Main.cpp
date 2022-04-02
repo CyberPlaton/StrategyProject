@@ -104,7 +104,6 @@ void GameEditor::RenderMainFrame()
 	}
 
 	// Draw selected Decal.
-	printf("Decal: %s\n", g_sSelectedMapobject.c_str());
 	if (g_sSelectedMapobject.compare("none") == 0)
 	{
 		return;
@@ -144,10 +143,11 @@ bool GameEditor::LoadTilesetData(const std::string& tilesetpath, const std::stri
 
 			// Here we only need the Name and the path in order to load the image
 			// as an OLC sprite and create a decal...
-			olc::Sprite sprite(tilesetpath + "/" + name + ".png");
-			auto decal = new olc::Decal(&sprite);
+			auto sprite = new olc::Sprite(tilesetpath + "/" + name + ".png");
+			auto decal = new olc::Decal(sprite);
 
 			m_decalDatabase.try_emplace(name, decal);
+			m_spriteDatabase.push_back(sprite);
 		}
 	}
 	return true;

@@ -3,6 +3,7 @@
 #define GLEW_STATIC
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
+#define OLC_GFX_OPENGL33
 #define OLC_PGE_APPLICATION
 #include "olc/olcPixelGameEngine.h"
 #define OLC_PGEX_TRANSFORMEDVIEW
@@ -85,11 +86,6 @@ public:
 		EnableLayer(m_GUILayer, true);
 		SetLayerCustomRenderFunction(0, std::bind(&GameEditor::DrawUI, this));
 
-		m_GameLayer = CreateLayer();
-		EnableLayer(m_GameLayer, true);
-		SetLayerCustomRenderFunction(1, std::bind(&MainRender, this));
-
-
 		tv = olc::TileTransformedView({ ScreenWidth(), ScreenHeight() }, { DEFAULT_DECAL_SIZE_X, DEFAULT_DECAL_SIZE_Y });
 
 		return LoadTilesetData("assets/Tileset", "assets/TilesetData/TilesetOverworld.json");
@@ -97,8 +93,8 @@ public:
 
 	bool OnUserUpdate(float fElapsedTime) override
 	{
-		SetDrawTarget((uint8_t)m_GameLayer);
 		Clear(olc::BLANK);
+		SetDrawTarget((uint8_t)m_GUILayer);
 
 		HandleInput();
 		UpdateVisibleRect();
@@ -111,10 +107,7 @@ public:
 	}
 
 	void DrawUI(void)
-	{
-		SetDrawTarget((uint8_t)m_GUILayer);
-		Clear(olc::BLANK);
-
+	{		
 		RenderGUI();
 
 		pge_imgui.ImGui_ImplPGE_Render();
@@ -124,7 +117,6 @@ private:
 	olc::TileTransformedView tv;
 	olc::imgui::PGE_ImGUI pge_imgui;
 	int m_GUILayer;
-	int m_GameLayer;
 	
 	float m_camerax = 0;
 	float m_cameray = 0;
@@ -135,8 +127,9 @@ private:
 	// Gameworld
 	std::vector< std::vector< Mapobject* > > m_gameworld;
 
-	// Gameeditor is responsible to cleanup the decal data.
+	// Gameeditor is responsible to cleanup the decal and sprite data.
 	std::map< std::string, olc::Decal* > m_decalDatabase;
+	std::vector< olc::Sprite* > m_spriteDatabase;
 
 private:
 

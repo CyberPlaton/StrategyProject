@@ -534,7 +534,7 @@ namespace olc
 		bool PGE_ImGUI::OnBeforeUserUpdate(float& fElapsedTime) {
 			ImGui_ImplPGE_NewFrame();
 			ImGui::NewFrame();
-			return true;
+			return false;
 		}
 
 		//There is currently no "after update" logic to run for ImGui
