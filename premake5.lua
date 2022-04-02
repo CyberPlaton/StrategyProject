@@ -475,6 +475,7 @@ workspace "Strategy"
 			"%{prj.name}/common/include",
 			"%{prj.name}/common/include/olc", 				-- Graphics etc. the base of the Editor
 			"%{prj.name}/common/include/tinyxml2", 			-- Serializing Mapdata
+			"%{prj.name}/common/include/rapidjson", 		-- Reading TilesetData
 			"%{prj.name}/common/include/imgui",				-- Editor GUI
 			"%{prj.name}/common/include/GL",				-- ImGui
 			"%{prj.name}/common/include/GLFW",				-- ImGui

@@ -1,20 +1,23 @@
+
+// OLC INLCUDE
 #define GLEW_STATIC
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
-
 #define OLC_PGE_APPLICATION
 #include "olc/olcPixelGameEngine.h"
 #define OLC_PGEX_TRANSFORMEDVIEW
 #include "olc/olcPGEX_TransformedView.h"
-
 #define OLC_GFX_OPENGL33
 #define OLC_PGEX_DEAR_IMGUI_IMPLEMENTATION
 #include "olc/imgui_impl_pge.h"
 
 
+
+
 #define EDITOR_MAJOR_VERSION 0
 #define EDITOR_MINOR_VERSION 1
 #define EDITOR_PATCH_VERSION 0
+
 
 #define STRING(text) #text
 #define EDITOR_TITLE_STRING StrategyEditor v
@@ -42,6 +45,18 @@ STRING(major) \
 "." STRING(review)
 #endif
 
+
+// XML
+#include "tinyxml2/tinyxml2.h"
+// JSON
+#include "rapidjson/rapidjson.h"
+#include "rapidjson/document.h"
+#include "rapidjson/istreamwrapper.h"
+
+// STL
+#include <map>
+
+
 // Utility. Create a hook function to actually call the GameEditors OnUserUpdate function.
 class GameEditor;
 void MainRender(GameEditor* editor);
@@ -61,13 +76,14 @@ public:
 		EnableLayer(m_GUILayer, true);
 		SetLayerCustomRenderFunction(0, std::bind(&GameEditor::DrawUI, this));
 
-
 		m_GameLayer = CreateLayer();
 		EnableLayer(m_GameLayer, true);
 		SetLayerCustomRenderFunction(1, std::bind(&MainRender, this));
 
-		// Called once at the start, so create things here
-		return true;
+
+
+
+		return LoadTilesetData("assets/Tileset", "assets/TilesetData/TilesetOverworld.json");
 	}
 
 	bool OnUserUpdate(float fElapsedTime) override
@@ -75,14 +91,9 @@ public:
 		SetDrawTarget((uint8_t)m_GameLayer);
 		Clear(olc::BLANK);
 
-		// called once per frame
-		for (int x = 0; x < ScreenWidth(); x++)
-			for (int y = 0; y < ScreenHeight(); y++)
-				Draw(x, y, olc::Pixel(rand() % 256, rand() % 256, rand() % 256));
+		RenderMainFrame();
 
-
-		DrawStringDecal(olc::vf2d(1200, 50), "FPS: " + std::to_string(GetFPS()));
-
+		DrawStringDecal(olc::vf2d(20, 20), "FPS: " + std::to_string(GetFPS()));
 
 		return true;
 	}
@@ -92,12 +103,8 @@ public:
 		SetDrawTarget((uint8_t)m_GUILayer);
 		Clear(olc::BLANK);
 
+		RenderGUI();
 
-		static bool open = true;
-		ImGui::ShowDemoWindow(&open);
-
-
-		//This finishes the Dear ImGui and renders it to the screen
 		pge_imgui.ImGui_ImplPGE_Render();
 	}
 
@@ -106,4 +113,16 @@ private:
 	olc::imgui::PGE_ImGUI pge_imgui;
 	int m_GUILayer;
 	int m_GameLayer;
+
+
+	// Gameeditor is responsible to cleanup the decal data.
+	std::map< std::string, olc::Decal* > m_decalDatabase;
+
+private:
+
+	void RenderGUI();
+	void RenderMainFrame();
+
+
+	bool LoadTilesetData(const std::string& tilesetpath, const std::string& datapath);
 };
