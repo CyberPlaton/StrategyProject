@@ -353,6 +353,8 @@ void GameEditor::InitializeMatrix(std::vector< std::vector< Mapobject* > >& matr
 }
 void GameEditor::RenderLayerUI()
 {
+	bool layers_dirty = false;
+
 	ImGui::Begin("Rendering Layers", &g_bRenderingLayersOpen);
 
 	static char layer_name_buf[64] = ""; ImGui::InputText("|", layer_name_buf, 64);
@@ -362,7 +364,7 @@ void GameEditor::RenderLayerUI()
 	{
 		CreateRenderingLayer(std::string(layer_name_buf), m_sortedLayers.size());
 		memset(&layer_name_buf, 0, sizeof(layer_name_buf));
-		UpdateLayerSorting();
+		layers_dirty = true;
 	}
 	for (auto& layer : m_sortedLayers)
 	{
@@ -393,6 +395,7 @@ void GameEditor::RenderLayerUI()
 		if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Delete"]->id, { 16, 16 }))
 		{
 			DeleteRenderingLayer(layer.second);
+			layers_dirty = true;
 		}
 		ImGui::PopID();
 	}
@@ -411,7 +414,7 @@ void GameEditor::RenderLayerUI()
 			memset(&layer_name_change_buf, 0, sizeof(layer_name_change_buf));
 			g_bChangeLayerNameOpen = false;
 			g_sAlteredLayer = "none";
-			UpdateLayerSorting();
+			layers_dirty = true;
 		}
 		ImGui::End();
 	}
@@ -428,9 +431,15 @@ void GameEditor::RenderLayerUI()
 			memset(&layer_order_change_buf, 0, sizeof(layer_order_change_buf));
 			g_bChangeLayerOrderOpen = false;
 			g_sAlteredLayer = "none";
-			UpdateLayerSorting();
+			layers_dirty = true;
 		}
 		ImGui::End();
+	}
+
+
+	if (layers_dirty)
+	{
+		UpdateLayerSorting();
 	}
 }
 
