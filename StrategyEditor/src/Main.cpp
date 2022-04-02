@@ -12,6 +12,7 @@ static std::string g_sSelectedMapobject = "none";
 static bool g_bChangeLayerNameOpen = false;
 static bool g_bChangeLayerOrderOpen = false;
 static std::string g_sAlteredLayer = "none";
+static uint64_t g_iImguiImageButtonID = 10000;
 
 
 GameEditor editor;
@@ -321,7 +322,25 @@ void GameEditor::ChangeLayerOrder(std::string layer_name, int order)
 	// If a layer does not exist, dont do anything.
 	if (m_layerOrder.find(layer_name) == m_layerOrder.end()) return;
 
-	// Get layer and change his order.
+	// If another layer has the order, swap them.
+	// Else just change order.
+	std::string sTemp;
+	int iTemp;
+	for (auto& pair : m_layerOrder)
+	{
+		if (pair.second == order)
+		{
+			// Other layers name.
+			sTemp = pair.first;
+			// Get former layers order.
+			iTemp = m_layerOrder[layer_name];
+			m_layerOrder[layer_name] = order;
+			m_layerOrder[sTemp] = iTemp;
+			return;
+		}
+	}
+
+
 	m_layerOrder[layer_name] = order;
 }
 void GameEditor::InitializeMatrix(std::vector< std::vector< Mapobject* > >& matrix)
@@ -334,7 +353,6 @@ void GameEditor::InitializeMatrix(std::vector< std::vector< Mapobject* > >& matr
 }
 void GameEditor::RenderLayerUI()
 {
-	auto layers = SortDescending(m_layerOrder);
 	ImGui::Begin("Rendering Layers", &g_bRenderingLayersOpen);
 
 	static char layer_name_buf[64] = ""; ImGui::InputText("|", layer_name_buf, 64);
@@ -342,29 +360,41 @@ void GameEditor::RenderLayerUI()
 	
 	if (ImGui::Button("Add Layer"))
 	{
-		CreateRenderingLayer(std::string(layer_name_buf), layers.size());
+		CreateRenderingLayer(std::string(layer_name_buf), m_sortedLayers.size());
 		memset(&layer_name_buf, 0, sizeof(layer_name_buf));
+		UpdateLayerSorting();
 	}
-	for (auto& layer : layers)
+	for (auto& layer : m_sortedLayers)
 	{
 		ImGui::Text("\"%s\" [%d]", layer.second.c_str(), layer.first);
 		ImGui::SameLine();
+
+		ImGuiID pencil_id = g_iImguiImageButtonID + layer.first + (intptr_t)"Pencil";
+		ImGuiID slider_id = g_iImguiImageButtonID + layer.first + (intptr_t)"Slider";
+		ImGuiID delete_id = g_iImguiImageButtonID + layer.first + (intptr_t)"Delete";
+
+		ImGui::PushID(pencil_id);
 		if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Pencil"]->id, {16, 16}))
 		{
 			g_bChangeLayerNameOpen = true;
 			g_sAlteredLayer = layer.second;
 		}
+		ImGui::PopID();
 		ImGui::SameLine();
+		ImGui::PushID(slider_id);
 		if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Slider"]->id, { 16, 16 }))
 		{
 			g_bChangeLayerOrderOpen = true;
 			g_sAlteredLayer = layer.second;
 		}
+		ImGui::PopID();
 		ImGui::SameLine();
+		ImGui::PushID(delete_id);
 		if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Delete"]->id, { 16, 16 }))
 		{
 			DeleteRenderingLayer(layer.second);
 		}
+		ImGui::PopID();
 	}
 	ImGui::End();
 
@@ -380,6 +410,8 @@ void GameEditor::RenderLayerUI()
 			ChangeLayerName(g_sAlteredLayer, std::string(layer_name_change_buf));
 			memset(&layer_name_change_buf, 0, sizeof(layer_name_change_buf));
 			g_bChangeLayerNameOpen = false;
+			g_sAlteredLayer = "none";
+			UpdateLayerSorting();
 		}
 		ImGui::End();
 	}
@@ -395,6 +427,8 @@ void GameEditor::RenderLayerUI()
 			ChangeLayerOrder(g_sAlteredLayer, atoi(layer_order_change_buf));
 			memset(&layer_order_change_buf, 0, sizeof(layer_order_change_buf));
 			g_bChangeLayerOrderOpen = false;
+			g_sAlteredLayer = "none";
+			UpdateLayerSorting();
 		}
 		ImGui::End();
 	}
@@ -456,7 +490,10 @@ void GameEditor::ChangeLayerName(std::string layer_name, std::string new_name)
 	}
 
 }
-
+void GameEditor::UpdateLayerSorting()
+{
+	m_sortedLayers = SortDescending(m_layerOrder);
+}
 
 int main()
 {

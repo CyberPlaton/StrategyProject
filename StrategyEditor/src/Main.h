@@ -93,6 +93,7 @@ public:
 
 
 		CreateRenderingLayer("Default", 0);
+		UpdateLayerSorting();
 
 		return LoadTilesetData("assets/Tileset", "assets/TilesetData/TilesetOverworld.json") && LoadEditorGraphicalData();
 	}
@@ -133,7 +134,7 @@ private:
 	// Gameworld
 	LayeredGameworld m_gameworld;
 	std::map< std::string, int > m_layerOrder;
-	std::multimap< int, std::string > m_sortedLayers;
+	std::multimap< int, std::string, std::greater< int > > m_sortedLayers;
 
 	uint64_t m_mapobjectCount = 0;
 	std::string m_currentLayer = "Default";
@@ -173,6 +174,7 @@ private:
 	void ChangeLayerName(std::string layer_name, std::string new_name);
 	void DeleteRenderingLayer(std::string layer_name);
 	void InitializeMatrix(std::vector< std::vector< Mapobject* > >& matrix);
+	void UpdateLayerSorting();
 
 	// UTIL ALGORITHM
 	std::multimap< int, std::string, std::greater<int> > SortDescending(std::map< std::string, int >& map);
