@@ -55,6 +55,15 @@ STRING(major) \
 
 // STL
 #include <map>
+#include <vector>
+
+#define MAX_MAPSIZE_X 1024
+#define MAX_MAPSIZE_Y 1024
+#define DEFAULT_DECAL_SIZE_X 128
+#define DEFAULT_DECAL_SIZE_Y 128
+
+// COMMON
+#include "Mapobject.h"
 
 
 // Utility. Create a hook function to actually call the GameEditors OnUserUpdate function.
@@ -81,7 +90,7 @@ public:
 		SetLayerCustomRenderFunction(1, std::bind(&MainRender, this));
 
 
-
+		tv = olc::TileTransformedView({ ScreenWidth(), ScreenHeight() }, { DEFAULT_DECAL_SIZE_X, DEFAULT_DECAL_SIZE_Y });
 
 		return LoadTilesetData("assets/Tileset", "assets/TilesetData/TilesetOverworld.json");
 	}
@@ -91,9 +100,12 @@ public:
 		SetDrawTarget((uint8_t)m_GameLayer);
 		Clear(olc::BLANK);
 
+		HandleInput();
+		UpdateVisibleRect();
+
 		RenderMainFrame();
 
-		DrawStringDecal(olc::vf2d(20, 20), "FPS: " + std::to_string(GetFPS()));
+		DrawStringDecal(olc::vf2d(5, 25), "FPS: " + std::to_string(GetFPS()));
 
 		return true;
 	}
@@ -114,15 +126,32 @@ private:
 	int m_GUILayer;
 	int m_GameLayer;
 
+	float m_camerax = 0;
+	float m_cameray = 0;
+
+	olc::vi2d m_visiblePointLeftUp;
+	olc::vi2d m_visiblePointDownRight;
+
+	// Gameworld
+	std::vector< std::vector< Mapobject* > > m_gameworld;
 
 	// Gameeditor is responsible to cleanup the decal data.
 	std::map< std::string, olc::Decal* > m_decalDatabase;
 
 private:
 
+	// GUI
 	void RenderGUI();
+	void RenderDecalDatabase(bool open);
+	void RenderMainMenu();
+	
+	// GAMEWORLD
 	void RenderMainFrame();
 
-
+	// UTIL
 	bool LoadTilesetData(const std::string& tilesetpath, const std::string& datapath);
+	void ToggleMenuItem(bool& item);
+	void HandleInput();
+	void UpdateVisibleRect();
+	void RenderMapobject(Mapobject* object);
 };
