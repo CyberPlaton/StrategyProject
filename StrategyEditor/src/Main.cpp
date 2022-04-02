@@ -6,6 +6,7 @@ static bool g_bImguiDemoOpen = true;
 static bool g_bImguiHasFocus = false;
 static bool g_bIsPanning = false;
 static uint64_t g_iCameraSpeed = 1;
+static std::string g_sSelectedMapobject = "none";;
 
 GameEditor editor;
 void MainRender(GameEditor* editor)
@@ -15,7 +16,7 @@ void MainRender(GameEditor* editor)
 void GameEditor::RenderGUI()
 {
 	// Update imgui focus.
-	if (ImGui::IsAnyItemHovered() || 
+	if (ImGui::IsAnyItemHovered() ||
 		ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow) ||
 		ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow))
 	{
@@ -25,7 +26,7 @@ void GameEditor::RenderGUI()
 	{
 		g_bImguiHasFocus = false;
 	}
-	
+
 	// Menu Bar.
 	RenderMainMenu();
 
@@ -57,7 +58,11 @@ void GameEditor::RenderDecalDatabase(bool open)
 		ImGui::Begin("DecalDatabase", &g_bDecalDatabaseOpen);
 		for (auto& pair : m_decalDatabase)
 		{
-			ImGui::ImageButton((ImTextureID)pair.second->id, { 128, 128 });
+			if (ImGui::ImageButton((ImTextureID)pair.second->id, { 128, 128 }))
+			{
+				g_sSelectedMapobject = pair.first;
+				ImGui::SetWindowFocus(nullptr);
+			}
 		}
 		ImGui::End();
 	}
@@ -97,6 +102,17 @@ void GameEditor::RenderMainFrame()
 			}
 		}
 	}
+
+	// Draw selected Decal.
+	printf("Decal: %s\n", g_sSelectedMapobject.c_str());
+	if (g_sSelectedMapobject.compare("none") == 0)
+	{
+		return;
+	}
+	else
+	{
+		tv.DrawDecal({ 0, 0 }, m_decalDatabase[g_sSelectedMapobject]);
+	}
 }
 void GameEditor::RenderMapobject(Mapobject* object)
 {
@@ -130,7 +146,7 @@ bool GameEditor::LoadTilesetData(const std::string& tilesetpath, const std::stri
 			// as an OLC sprite and create a decal...
 			olc::Sprite sprite(tilesetpath + "/" + name + ".png");
 			auto decal = new olc::Decal(&sprite);
-			
+
 			m_decalDatabase.try_emplace(name, decal);
 		}
 	}
@@ -148,6 +164,11 @@ void GameEditor::HandleInput()
 
 	if (!g_bImguiHasFocus)
 	{
+		if (GetMouse(1).bReleased)
+		{
+			g_sSelectedMapobject = "none";
+		}
+
 		if (GetMouse(2).bPressed)
 		{
 			g_bIsPanning = true;
@@ -221,6 +242,7 @@ void GameEditor::UpdateVisibleRect()
 	if (m_visiblePointLeftUp.x > MAX_MAPSIZE_X) m_visiblePointLeftUp.x = MAX_MAPSIZE_X;
 	if (m_visiblePointLeftUp.y > MAX_MAPSIZE_Y) m_visiblePointLeftUp.y = MAX_MAPSIZE_Y;
 }
+
 
 int main()
 {

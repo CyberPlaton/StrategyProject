@@ -538,7 +538,9 @@ namespace olc
 		}
 
 		//There is currently no "after update" logic to run for ImGui
-		void PGE_ImGUI::OnAfterUserUpdate(float fElapsedTime) {}
+		void PGE_ImGUI::OnAfterUserUpdate(float fElapsedTime)
+		{
+		}
 	}
 }
 #endif //OLC_PGEX_DEAR_IMGUI_IMPLEMENTATION

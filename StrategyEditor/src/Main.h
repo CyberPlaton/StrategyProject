@@ -125,7 +125,7 @@ private:
 	olc::imgui::PGE_ImGUI pge_imgui;
 	int m_GUILayer;
 	int m_GameLayer;
-
+	
 	float m_camerax = 0;
 	float m_cameray = 0;
 
