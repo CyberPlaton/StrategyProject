@@ -58,6 +58,7 @@ STRING(major) \
 #include <map>
 #include <vector>
 
+
 #define MAX_MAPSIZE_X 1024
 #define MAX_MAPSIZE_Y 1024
 #define DEFAULT_DECAL_SIZE_X 128
@@ -65,6 +66,8 @@ STRING(major) \
 
 // COMMON
 #include "Mapobject.h"
+
+using LayeredGameworld = std::map< std::string, std::vector< std::vector< Mapobject* > > >;
 
 
 // Utility. Create a hook function to actually call the GameEditors OnUserUpdate function.
@@ -88,7 +91,10 @@ public:
 
 		tv = olc::TileTransformedView({ ScreenWidth(), ScreenHeight() }, { DEFAULT_DECAL_SIZE_X, DEFAULT_DECAL_SIZE_Y });
 
-		return LoadTilesetData("assets/Tileset", "assets/TilesetData/TilesetOverworld.json");
+
+		CreateRenderingLayer("Default", 0);
+
+		return LoadTilesetData("assets/Tileset", "assets/TilesetData/TilesetOverworld.json") && LoadEditorGraphicalData();
 	}
 
 	bool OnUserUpdate(float fElapsedTime) override
@@ -125,26 +131,50 @@ private:
 	olc::vi2d m_visiblePointDownRight;
 
 	// Gameworld
-	std::vector< std::vector< Mapobject* > > m_gameworld;
+	LayeredGameworld m_gameworld;
+	std::map< std::string, int > m_layerOrder;
+	std::multimap< int, std::string > m_sortedLayers;
+
+	uint64_t m_mapobjectCount = 0;
+	std::string m_currentLayer = "Default";
 
 	// Gameeditor is responsible to cleanup the decal and sprite data.
 	std::map< std::string, olc::Decal* > m_decalDatabase;
 	std::vector< olc::Sprite* > m_spriteDatabase;
 
+	// Editor specific decal datatabase.
+	std::map< std::string, olc::Decal* > m_editorDecalDatabase;
+	std::vector< olc::Sprite* > m_editorSpriteDatabase;
 private:
 
 	// GUI
 	void RenderGUI();
-	void RenderDecalDatabase(bool open);
+	void RenderDecalDatabase();
 	void RenderMainMenu();
+	void RenderLayerUI();
 	
 	// GAMEWORLD
 	void RenderMainFrame();
 
 	// UTIL
 	bool LoadTilesetData(const std::string& tilesetpath, const std::string& datapath);
+	bool LoadEditorGraphicalData();
 	void ToggleMenuItem(bool& item);
 	void HandleInput();
 	void UpdateVisibleRect();
 	void RenderMapobject(Mapobject* object);
+	void CreateMapobject(uint64_t x, uint64_t y, std::string decal, std::string name = "none");
+	std::string CreateMapobjectName();
+
+	// Note: Layer 0 is by Default the first created.
+	// Layers are drawn from 0 to n.
+	void CreateRenderingLayer(std::string layer_name, int order);
+	void ChangeLayerOrder(std::string layer_name, int order);
+	void ChangeLayerName(std::string layer_name, std::string new_name);
+	void DeleteRenderingLayer(std::string layer_name);
+	void InitializeMatrix(std::vector< std::vector< Mapobject* > >& matrix);
+
+	// UTIL ALGORITHM
+	std::multimap< int, std::string, std::greater<int> > SortDescending(std::map< std::string, int >& map);
+	std::multimap< int, std::string > SortAscending(std::map< std::string, int >& map);
 };
