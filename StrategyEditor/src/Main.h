@@ -1,3 +1,10 @@
+/*
+* Change Log:
+* 03.04.2022 - Version 0.1 complete:
+*			 o Rendering Decal Database loaded from JSON in Gameengine format.
+*			 o Layer menu. Add, Remove, Toggle visibility and Edit layers you place objects on.
+*			 o Coloring Layer names in a intuitive way to hint at their current status (active, visible etc.)
+*/
 
 // OLC INLCUDE
 #define GLEW_STATIC
@@ -11,8 +18,6 @@
 #define OLC_GFX_OPENGL33
 #define OLC_PGEX_DEAR_IMGUI_IMPLEMENTATION
 #include "olc/imgui_impl_pge.h"
-
-
 
 
 #define EDITOR_MAJOR_VERSION 0
@@ -53,7 +58,6 @@ STRING(major) \
 #include "rapidjson/rapidjson.h"
 #include "rapidjson/document.h"
 #include "rapidjson/istreamwrapper.h"
-
 // STL
 #include <map>
 #include <vector>
@@ -64,12 +68,13 @@ STRING(major) \
 #define DEFAULT_DECAL_SIZE_X 128
 #define DEFAULT_DECAL_SIZE_Y 128
 
+
 #define DEFAULT_WIDGET_IMAGE_SIZE_X 16
 #define DEFAULT_WIDGET_IMAGE_SIZE_Y 16
 
+
 // COMMON
 #include "Mapobject.h"
-
 using LayeredGameworld = std::map< std::string, std::vector< std::vector< Mapobject* > > >;
 
 

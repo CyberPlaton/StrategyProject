@@ -101,7 +101,6 @@ void GameEditor::RenderMainMenu()
 			if (ImGui::MenuItem("Grid")) ToggleMenuItem(g_bRenderGrid);
 			if (ImGui::MenuItem("Imgui Demo")) ToggleMenuItem(g_bImguiDemoOpen);
 
-
 			ImGui::EndMenu();
 		}
 	}
@@ -433,17 +432,26 @@ void GameEditor::RenderLayerUI()
 		// Highlight visible or normal layer with green text.
 		if (layer.second.compare(m_currentLayer.c_str()) == 0)
 		{
-			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+			if (LayerVisible(layer.first))
+			{
+				// Active and Visible
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.1f, 1.0f));
+			}
+			else
+			{
+				// Active but invisible
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.2f, 0.0f, 1.0f));
+			}
 			is_layer_normal = false;
 		}
 		else if (LayerVisible(layer.first) == false)
 		{
-			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.9f, 0.9f, 1.0f));
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
 			is_layer_normal = false;
 		}
 		if (is_layer_normal)
 		{
-			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.45f, 0.95f, 0.45f, 1.0f));
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
 		}
 		ImGui::Text("\"%s\" [%d]", layer.second.c_str(), layer.first);
 		ImGui::SameLine();
