@@ -14,6 +14,8 @@ static bool g_bChangeLayerOrderOpen = false;
 static std::string g_sAlteredLayer = "none";
 static uint64_t g_iImguiImageButtonID = 10000;
 static uint64_t g_iCreatedLayerCount = 1; // Used as next layer order number.
+static bool g_bRenderGrid = true;
+
 
 
 GameEditor editor;
@@ -96,6 +98,7 @@ void GameEditor::RenderMainMenu()
 		{
 			if (ImGui::MenuItem("Decal Database")) ToggleMenuItem(g_bDecalDatabaseOpen);
 			if (ImGui::MenuItem("Rendering Layers")) ToggleMenuItem(g_bRenderingLayersOpen);
+			if (ImGui::MenuItem("Grid")) ToggleMenuItem(g_bRenderGrid);
 			if (ImGui::MenuItem("Imgui Demo")) ToggleMenuItem(g_bImguiDemoOpen);
 
 
@@ -141,21 +144,8 @@ void GameEditor::RenderMainFrame()
 	olc::vi2d upLeft = m_visiblePointLeftUp;
 	olc::vi2d downRight = m_visiblePointDownRight;
 
-
-	// Draw Grid.
-	olc::Pixel color = { 255, 255, 255, 50 };
-	for (tile.y = topleft.y; tile.y < bottomright.y; tile.y++)
-	{
-		for (tile.x = topleft.x; tile.x < bottomright.x; tile.x++)
-		{
-			tv.DrawLineDecal(tile, tile + olc::vf2d(0.0f, 1.0f), color);
-			tv.DrawLineDecal(tile, tile + olc::vf2d(1.0f, 0.0f), color);
-		}
-	}
 	
-
 	// Draw Mapobjects in reverse order to have accurate layering.
-	
 	for (auto& layer : m_sortedLayersAscending)
 	{
 		if (LayerVisible(layer.first) == false) continue;
@@ -174,22 +164,20 @@ void GameEditor::RenderMainFrame()
 			}
 		}
 	}
-	/*
-	for (auto& layer : m_layerOrder)
-	{
 
-		for (int x = upLeft.x; x < downRight.x; x++)
+	if (g_bRenderGrid)
+	{
+		// Draw Grid.
+		olc::Pixel color = { 255, 255, 255, 50 };
+		for (tile.y = topleft.y; tile.y < bottomright.y; tile.y++)
 		{
-			for (int y = upLeft.y; y < downRight.y; y++)
+			for (tile.x = topleft.x; tile.x < bottomright.x; tile.x++)
 			{
-				if (layer_world[x][y])
-				{
-					RenderMapobject(layer_world[x][y]);
-				}
+				tv.DrawLineDecal(tile, tile + olc::vf2d(0.0f, 1.0f), color);
+				tv.DrawLineDecal(tile, tile + olc::vf2d(1.0f, 0.0f), color);
 			}
 		}
 	}
-	*/
 
 	// Draw selected Decal.
 	if (g_sSelectedMapobject.compare("none") == 0)
