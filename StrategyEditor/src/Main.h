@@ -59,10 +59,13 @@ STRING(major) \
 #include <vector>
 
 
-#define MAX_MAPSIZE_X 1024
-#define MAX_MAPSIZE_Y 1024
+#define MAX_MAPSIZE_X 256
+#define MAX_MAPSIZE_Y 256
 #define DEFAULT_DECAL_SIZE_X 128
 #define DEFAULT_DECAL_SIZE_Y 128
+
+#define DEFAULT_WIDGET_IMAGE_SIZE_X 16
+#define DEFAULT_WIDGET_IMAGE_SIZE_Y 16
 
 // COMMON
 #include "Mapobject.h"
@@ -91,8 +94,10 @@ public:
 
 		tv = olc::TileTransformedView({ ScreenWidth(), ScreenHeight() }, { DEFAULT_DECAL_SIZE_X, DEFAULT_DECAL_SIZE_Y });
 
-
+		m_visibleLayers.resize(256);
 		CreateRenderingLayer("Default", 0);
+		m_currentLayer = "Default";
+		m_visibleLayers[0] = 1;
 		UpdateLayerSorting();
 
 		return LoadTilesetData("assets/Tileset", "assets/TilesetData/TilesetOverworld.json") && LoadEditorGraphicalData();
@@ -135,7 +140,8 @@ private:
 	LayeredGameworld m_gameworld;
 	std::map< std::string, int > m_layerOrder;
 	std::multimap< int, std::string, std::greater< int > > m_sortedLayers;
-
+	std::map< int, std::string > m_sortedLayersAscending;
+	std::vector< uint32_t > m_visibleLayers;
 	uint64_t m_mapobjectCount = 0;
 	std::string m_currentLayer = "Default";
 
@@ -175,8 +181,14 @@ private:
 	void DeleteRenderingLayer(std::string layer_name);
 	void InitializeMatrix(std::vector< std::vector< Mapobject* > >& matrix);
 	void UpdateLayerSorting();
+	void ToggleLayerVisibility(int layer);
+	bool LayerVisible(int layer);
 
 	// UTIL ALGORITHM
 	std::multimap< int, std::string, std::greater<int> > SortDescending(std::map< std::string, int >& map);
-	std::multimap< int, std::string > SortAscending(std::map< std::string, int >& map);
+	std::map< int, std::string > SortAscending(std::map< std::string, int >& map);
+
+
+	// UTIL IMGUI
+	void BeginTooltip(const char* help_text);
 };

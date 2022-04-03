@@ -13,6 +13,7 @@ static bool g_bChangeLayerNameOpen = false;
 static bool g_bChangeLayerOrderOpen = false;
 static std::string g_sAlteredLayer = "none";
 static uint64_t g_iImguiImageButtonID = 10000;
+static uint64_t g_iCreatedLayerCount = 1; // Used as next layer order number.
 
 
 GameEditor editor;
@@ -38,11 +39,12 @@ void GameEditor::RenderGUI()
 	RenderMainMenu();
 
 	// Imgui Demo
-	ImGui::ShowDemoWindow(&g_bImguiDemoOpen);
+	if (g_bImguiDemoOpen) ImGui::ShowDemoWindow(&g_bImguiDemoOpen);
 
 	// Decal Database
-	RenderDecalDatabase();
-	RenderLayerUI();
+	if(g_bDecalDatabaseOpen) RenderDecalDatabase();
+	// Rendering Layers
+	if(g_bRenderingLayersOpen) RenderLayerUI();
 }
 bool GameEditor::LoadEditorGraphicalData()
 {
@@ -69,6 +71,20 @@ bool GameEditor::LoadEditorGraphicalData()
 	m_editorDecalDatabase.try_emplace("OK", decal);
 	m_editorSpriteDatabase.push_back(sprite);
 
+	sprite = new olc::Sprite("assets/Editor/add_layer_layers.png");
+	decal = new olc::Decal(sprite);
+	m_editorDecalDatabase.try_emplace("AddLayer", decal);
+	m_editorSpriteDatabase.push_back(sprite);
+
+	sprite = new olc::Sprite("assets/Editor/target_dartboard_aim.png");
+	decal = new olc::Decal(sprite);
+	m_editorDecalDatabase.try_emplace("TargetLayer", decal);
+	m_editorSpriteDatabase.push_back(sprite);
+
+	sprite = new olc::Sprite("assets/Editor/view_eye.png");
+	decal = new olc::Decal(sprite);
+	m_editorDecalDatabase.try_emplace("Visible", decal);
+	m_editorSpriteDatabase.push_back(sprite);
 
 	return true;
 }
@@ -79,6 +95,7 @@ void GameEditor::RenderMainMenu()
 		if (ImGui::BeginMenu("Menu"))
 		{
 			if (ImGui::MenuItem("Decal Database")) ToggleMenuItem(g_bDecalDatabaseOpen);
+			if (ImGui::MenuItem("Rendering Layers")) ToggleMenuItem(g_bRenderingLayersOpen);
 			if (ImGui::MenuItem("Imgui Demo")) ToggleMenuItem(g_bImguiDemoOpen);
 
 
@@ -89,14 +106,24 @@ void GameEditor::RenderMainMenu()
 }
 void GameEditor::RenderDecalDatabase()
 {
+	int i = 0;
 	ImGui::Begin("DecalDatabase", &g_bDecalDatabaseOpen);
 	for (auto& pair : m_decalDatabase)
 	{
-		if (ImGui::ImageButton((ImTextureID)pair.second->id, { 128, 128 }))
+		if (i == 4)
+		{
+			i = 0;
+		}
+		else
+		{
+			ImGui::SameLine();
+		}
+		if (ImGui::ImageButton((ImTextureID)pair.second->id, { 64, 64 }))
 		{
 			g_sSelectedMapobject = pair.first;
 			ImGui::SetWindowFocus(nullptr);
 		}
+		i++;
 	}
 	ImGui::End();
 }
@@ -111,6 +138,10 @@ void GameEditor::RenderMainFrame()
 	olc::vi2d bottomright = tv.GetBottomRightTile().min({ MAX_MAPSIZE_X, MAX_MAPSIZE_Y });
 	olc::vi2d tile;
 
+	olc::vi2d upLeft = m_visiblePointLeftUp;
+	olc::vi2d downRight = m_visiblePointDownRight;
+
+
 	// Draw Grid.
 	olc::Pixel color = { 255, 255, 255, 50 };
 	for (tile.y = topleft.y; tile.y < bottomright.y; tile.y++)
@@ -121,15 +152,31 @@ void GameEditor::RenderMainFrame()
 			tv.DrawLineDecal(tile, tile + olc::vf2d(1.0f, 0.0f), color);
 		}
 	}
+	
 
-	// Draw Mapobjects
-	olc::vi2d upLeft = m_visiblePointLeftUp;
-	olc::vi2d downRight = m_visiblePointDownRight;
+	// Draw Mapobjects in reverse order to have accurate layering.
+	
+	for (auto& layer : m_sortedLayersAscending)
+	{
+		if (LayerVisible(layer.first) == false) continue;
 
+		// We draw Layers from 0 in ascending order.
+		const auto& layer_name = layer.second;
+		const auto& layer_world = m_gameworld[layer_name];
+		for (int x = upLeft.x; x < downRight.x; x++)
+		{
+			for (int y = upLeft.y; y < downRight.y; y++)
+			{
+				if (layer_world[x][y])
+				{
+					RenderMapobject(layer_world[x][y]);
+				}
+			}
+		}
+	}
+	/*
 	for (auto& layer : m_layerOrder)
 	{
-		auto layer_name = layer.first;
-		auto layer_world = m_gameworld[layer_name];
 
 		for (int x = upLeft.x; x < downRight.x; x++)
 		{
@@ -142,6 +189,7 @@ void GameEditor::RenderMainFrame()
 			}
 		}
 	}
+	*/
 
 	// Draw selected Decal.
 	if (g_sSelectedMapobject.compare("none") == 0)
@@ -150,7 +198,9 @@ void GameEditor::RenderMainFrame()
 	}
 	else
 	{
-		tv.DrawDecal({ 0, 0 }, m_decalDatabase[g_sSelectedMapobject]);
+		olc::vi2d mouse = GetMousePos();
+		olc::vi2d p = tv.ScreenToWorld(mouse);
+		tv.DrawDecal({ (float)p.x, (float)p.y }, m_decalDatabase[g_sSelectedMapobject]);
 	}
 }
 void GameEditor::RenderMapobject(Mapobject* object)
@@ -208,7 +258,13 @@ void GameEditor::HandleInput()
 		{
 			g_sSelectedMapobject = "none";
 		}
-
+		if (GetMouse(0).bReleased)
+		{
+			if (g_sSelectedMapobject.compare("none") != 0)
+			{
+				CreateMapobject(point.x, point.y, g_sSelectedMapobject);
+			}
+		}
 		if (GetMouse(2).bPressed)
 		{
 			g_bIsPanning = true;
@@ -278,9 +334,9 @@ void GameEditor::UpdateVisibleRect()
 	m_visiblePointLeftUp = tv.GetTileUnderScreenPos({ 0, 0 });
 	if (m_visiblePointLeftUp.x < 0) m_visiblePointLeftUp.x = 0;
 	if (m_visiblePointLeftUp.y < 0) m_visiblePointLeftUp.y = 0;
-	m_visiblePointLeftUp = tv.GetBottomRightTile();
-	if (m_visiblePointLeftUp.x > MAX_MAPSIZE_X) m_visiblePointLeftUp.x = MAX_MAPSIZE_X;
-	if (m_visiblePointLeftUp.y > MAX_MAPSIZE_Y) m_visiblePointLeftUp.y = MAX_MAPSIZE_Y;
+	m_visiblePointDownRight = tv.GetBottomRightTile();
+	if (m_visiblePointDownRight.x > MAX_MAPSIZE_X) m_visiblePointDownRight.x = MAX_MAPSIZE_X;
+	if (m_visiblePointDownRight.y > MAX_MAPSIZE_Y) m_visiblePointDownRight.y = MAX_MAPSIZE_Y;
 }
 std::string GameEditor::CreateMapobjectName()
 {
@@ -305,6 +361,13 @@ void GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string decal, std:
 	object->m_positionx = x;
 	object->m_positiony = y;
 
+	// If there is another Object already, delete it first.
+	if (m_gameworld[m_currentLayer][x][y])
+	{
+		delete m_gameworld[m_currentLayer][x][y];
+		m_gameworld[m_currentLayer][x][y] = nullptr;
+	}
+
 	// Add Object to layer Gameworld.
 	m_gameworld[m_currentLayer][x][y] = object;
 }
@@ -316,6 +379,7 @@ void GameEditor::CreateRenderingLayer(std::string layer_name, int order)
 	// Create a layer and initialize the Matrix.
 	m_layerOrder[layer_name] = order;
 	InitializeMatrix(m_gameworld[layer_name]);
+	g_iCreatedLayerCount++;
 }
 void GameEditor::ChangeLayerOrder(std::string layer_name, int order)
 {
@@ -359,45 +423,95 @@ void GameEditor::RenderLayerUI()
 
 	static char layer_name_buf[64] = ""; ImGui::InputText("|", layer_name_buf, 64);
 	ImGui::SameLine();
-	
-	if (ImGui::Button("Add Layer"))
+
+	ImGuiID add_layer_id = g_iImguiImageButtonID + (intptr_t)"AddLayer";
+	ImGui::PushID(add_layer_id);
+	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["AddLayer"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
 	{
-		CreateRenderingLayer(std::string(layer_name_buf), m_sortedLayers.size());
+		CreateRenderingLayer(std::string(layer_name_buf), g_iCreatedLayerCount);
 		memset(&layer_name_buf, 0, sizeof(layer_name_buf));
 		layers_dirty = true;
 	}
+	ImGui::PopID();
+	BeginTooltip("Create rendering layer");
+
+
+	bool is_layer_normal;
 	for (auto& layer : m_sortedLayers)
 	{
+		is_layer_normal = true;
+		// Highlight active layer with red text.
+		// Highlight unvisible layer with greyish text.
+		// Highlight visible or normal layer with green text.
+		if (layer.second.compare(m_currentLayer.c_str()) == 0)
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+			is_layer_normal = false;
+		}
+		else if (LayerVisible(layer.first) == false)
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.9f, 0.9f, 1.0f));
+			is_layer_normal = false;
+		}
+		if (is_layer_normal)
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.45f, 0.95f, 0.45f, 1.0f));
+		}
 		ImGui::Text("\"%s\" [%d]", layer.second.c_str(), layer.first);
 		ImGui::SameLine();
+		ImGui::PopStyleColor();
 
 		ImGuiID pencil_id = g_iImguiImageButtonID + layer.first + (intptr_t)"Pencil";
 		ImGuiID slider_id = g_iImguiImageButtonID + layer.first + (intptr_t)"Slider";
 		ImGuiID delete_id = g_iImguiImageButtonID + layer.first + (intptr_t)"Delete";
+		ImGuiID target_id = g_iImguiImageButtonID + layer.first + (intptr_t)"Target";
+		ImGuiID visible_id = g_iImguiImageButtonID + layer.first + (intptr_t)"Visible";
 
+		// Create all the buttons with functionality for each layer.
 		ImGui::PushID(pencil_id);
-		if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Pencil"]->id, {16, 16}))
+		if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Pencil"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
 		{
 			g_bChangeLayerNameOpen = true;
 			g_sAlteredLayer = layer.second;
 		}
 		ImGui::PopID();
+		BeginTooltip("Edit layer name");
 		ImGui::SameLine();
 		ImGui::PushID(slider_id);
-		if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Slider"]->id, { 16, 16 }))
+		if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Slider"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
 		{
 			g_bChangeLayerOrderOpen = true;
 			g_sAlteredLayer = layer.second;
 		}
 		ImGui::PopID();
+		BeginTooltip("Edit layer order");
 		ImGui::SameLine();
 		ImGui::PushID(delete_id);
-		if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Delete"]->id, { 16, 16 }))
+		if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Delete"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
 		{
 			DeleteRenderingLayer(layer.second);
 			layers_dirty = true;
 		}
 		ImGui::PopID();
+		BeginTooltip("Delete layer");
+
+		ImGui::SameLine();
+		ImGui::PushID(target_id);
+		if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["TargetLayer"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
+		{
+			m_currentLayer = layer.second;
+		}
+		ImGui::PopID();
+		BeginTooltip("Select target layer");
+
+		ImGui::SameLine();
+		ImGui::PushID(visible_id);
+		if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Visible"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
+		{
+			ToggleLayerVisibility(layer.first);
+		}
+		ImGui::PopID();
+		BeginTooltip("Toggle visibility");
 	}
 	ImGui::End();
 
@@ -405,10 +519,10 @@ void GameEditor::RenderLayerUI()
 	{
 		ImGui::SetNextWindowSize({ 250, 100 }, ImGuiCond_Appearing);
 		ImGui::SetNextWindowPos({ (float)GetMousePos().x, (float)GetMousePos().y}, ImGuiCond_Appearing);
-		ImGui::Begin("Layer Name Editor", &g_bChangeLayerNameOpen);
-		static char layer_name_change_buf[64] = ""; ImGui::InputText("Name", layer_name_change_buf, 64);
+		ImGui::Begin("Name Edit", &g_bChangeLayerNameOpen);
+		static char layer_name_change_buf[64] = ""; ImGui::InputText(".", layer_name_change_buf, 64);
 		ImGui::SameLine();
-		if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["OK"]->id, { 16, 16 }))
+		if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["OK"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
 		{
 			ChangeLayerName(g_sAlteredLayer, std::string(layer_name_change_buf));
 			memset(&layer_name_change_buf, 0, sizeof(layer_name_change_buf));
@@ -422,10 +536,10 @@ void GameEditor::RenderLayerUI()
 	{
 		ImGui::SetNextWindowSize({ 250, 100 }, ImGuiCond_Appearing);
 		ImGui::SetNextWindowPos({ (float)GetMousePos().x, (float)GetMousePos().y }, ImGuiCond_Appearing);
-		ImGui::Begin("Layer Order Editor", &g_bChangeLayerOrderOpen);
-		static char layer_order_change_buf[64] = ""; ImGui::InputText("Order", layer_order_change_buf, 64, ImGuiInputTextFlags_CharsDecimal);
+		ImGui::Begin("Order Edit", &g_bChangeLayerOrderOpen);
+		static char layer_order_change_buf[64] = ""; ImGui::InputText(".", layer_order_change_buf, 64, ImGuiInputTextFlags_CharsDecimal);
 		ImGui::SameLine();
-		if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["OK"]->id, { 16, 16 }))
+		if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["OK"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
 		{
 			ChangeLayerOrder(g_sAlteredLayer, atoi(layer_order_change_buf));
 			memset(&layer_order_change_buf, 0, sizeof(layer_order_change_buf));
@@ -442,7 +556,25 @@ void GameEditor::RenderLayerUI()
 		UpdateLayerSorting();
 	}
 }
-
+void GameEditor::ToggleLayerVisibility(int layer)
+{
+	m_visibleLayers[layer] = (m_visibleLayers[layer] == 1) ? 0 : 1;
+}
+bool GameEditor::LayerVisible(int layer)
+{
+	return m_visibleLayers[layer] == 1;
+}
+void GameEditor::BeginTooltip(const char* help_text)
+{
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+		ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+		ImGui::TextUnformatted(help_text);
+		ImGui::PopTextWrapPos();
+		ImGui::EndTooltip();
+	}
+}
 std::multimap< int, std::string, std::greater<int> > GameEditor::SortDescending(std::map< std::string, int >& map)
 {
 	std::multimap< int, std::string, std::greater<int> > m;
@@ -455,9 +587,9 @@ std::multimap< int, std::string, std::greater<int> > GameEditor::SortDescending(
 
 	return m;
 }
-std::multimap< int, std::string > GameEditor::SortAscending(std::map< std::string, int >& map)
+std::map< int, std::string > GameEditor::SortAscending(std::map< std::string, int >& map)
 {
-	std::multimap< int, std::string > m;
+	std::map< int, std::string > m;
 
 	// Copy everything.
 	for (auto& p : map)
@@ -502,6 +634,7 @@ void GameEditor::ChangeLayerName(std::string layer_name, std::string new_name)
 void GameEditor::UpdateLayerSorting()
 {
 	m_sortedLayers = SortDescending(m_layerOrder);
+	m_sortedLayersAscending = SortAscending(m_layerOrder);
 }
 
 int main()
