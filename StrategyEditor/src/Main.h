@@ -105,7 +105,15 @@ public:
 		m_visibleLayers[0] = 1;
 		UpdateLayerSorting();
 
-		return LoadTilesetData("assets/Tileset", "assets/TilesetData/TilesetOverworld.json") && LoadEditorGraphicalData();
+		//return LoadTilesetData("assets/Tileset", "assets/TilesetData/TilesetOverworld.json") && LoadEditorGraphicalData();
+		bool loaded = LoadTilesetData("Forest", "assets/Tileset/Forest", "assets/TilesetData/Forest.json");
+		loaded &= LoadTilesetData("Ground","assets/Tileset/Ground", "assets/TilesetData/Ground.json");
+		loaded &= LoadTilesetData("Mountain","assets/Tileset/Mountain", "assets/TilesetData/Mountain.json");
+		loaded &= LoadTilesetData("Road","assets/Tileset/Road", "assets/TilesetData/Road.json");
+		loaded &= LoadTilesetData("Water","assets/Tileset/Water", "assets/TilesetData/Water.json");
+		loaded &= LoadTilesetData("Structure","assets/Tileset/Structure", "assets/TilesetData/Structure.json");
+		loaded &= LoadEditorGraphicalData();
+		return loaded;
 	}
 
 	bool OnUserUpdate(float fElapsedTime) override
@@ -151,6 +159,12 @@ private:
 	std::string m_currentLayer = "Default";
 
 	// Gameeditor is responsible to cleanup the decal and sprite data.
+	std::map< std::string, olc::Decal* > m_forestDecalDatabase;
+	std::map< std::string, olc::Decal* > m_roadDecalDatabase;
+	std::map< std::string, olc::Decal* > m_groundDecalDatabase;
+	std::map< std::string, olc::Decal* > m_waterDecalDatabase;
+	std::map< std::string, olc::Decal* > m_mountainDecalDatabase;
+	std::map< std::string, olc::Decal* > m_structureDecalDatabase;
 	std::map< std::string, olc::Decal* > m_decalDatabase;
 	std::vector< olc::Sprite* > m_spriteDatabase;
 
@@ -164,12 +178,13 @@ private:
 	void RenderDecalDatabase();
 	void RenderMainMenu();
 	void RenderLayerUI();
+	void RenderDecalDatabase(const std::map< std::string, olc::Decal* >& db);
 	
 	// GAMEWORLD
 	void RenderMainFrame();
 
 	// UTIL
-	bool LoadTilesetData(const std::string& tilesetpath, const std::string& datapath);
+	bool LoadTilesetData(const std::string& database, const std::string& tilesetpath, const std::string& datapath);
 	bool LoadEditorGraphicalData();
 	void ToggleMenuItem(bool& item);
 	void HandleInput();
@@ -177,6 +192,7 @@ private:
 	void RenderMapobject(Mapobject* object);
 	void CreateMapobject(uint64_t x, uint64_t y, std::string decal, std::string name = "none");
 	std::string CreateMapobjectName();
+
 
 	// Note: Layer 0 is by Default the first created.
 	// Layers are drawn from 0 to n.

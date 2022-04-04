@@ -110,6 +110,48 @@ void GameEditor::RenderDecalDatabase()
 {
 	int i = 0;
 	ImGui::Begin("DecalDatabase", &g_bDecalDatabaseOpen);
+	if (ImGui::BeginTabBar("DecalDatabaseTab", ImGuiTabBarFlags_None))
+	{
+		if (ImGui::BeginTabItem("Forest"))
+		{
+			ImGui::Separator();
+			RenderDecalDatabase(m_forestDecalDatabase);
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Ground"))
+		{
+			ImGui::Separator();
+			RenderDecalDatabase(m_groundDecalDatabase);
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Water"))
+		{
+			ImGui::Separator();
+			RenderDecalDatabase(m_waterDecalDatabase);
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Road"))
+		{
+			ImGui::Separator();
+			RenderDecalDatabase(m_roadDecalDatabase);
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Mountain"))
+		{
+			ImGui::Separator();
+			RenderDecalDatabase(m_mountainDecalDatabase);
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Structure"))
+		{
+			ImGui::Separator();
+			RenderDecalDatabase(m_structureDecalDatabase);
+			ImGui::EndTabItem();
+		}
+		ImGui::EndTabBar();
+	}
+
+	/*
 	for (auto& pair : m_decalDatabase)
 	{
 		if (i == 4)
@@ -127,7 +169,30 @@ void GameEditor::RenderDecalDatabase()
 		}
 		i++;
 	}
+	*/
 	ImGui::End();
+}
+void GameEditor::RenderDecalDatabase(const std::map< std::string, olc::Decal* >& db)
+{
+	int i = 0;
+	for (auto& pair : db)
+	{
+		if (i == 4)
+		{
+			i = 0;
+		}
+		else
+		{
+			ImGui::SameLine();
+		}
+
+		if (ImGui::ImageButton((ImTextureID)pair.second->id, { 64, 64 }))
+		{
+			g_sSelectedMapobject = pair.first;
+			ImGui::SetWindowFocus(nullptr);
+		}
+		i++;
+	}
 }
 void GameEditor::ToggleMenuItem(bool& item)
 {
@@ -201,7 +266,7 @@ void GameEditor::RenderMapobject(Mapobject* object)
 		tv.DrawStringDecal({ object->m_positionx, object->m_positiony }, object->m_name);
 	}
 }
-bool GameEditor::LoadTilesetData(const std::string& tilesetpath, const std::string& datapath)
+bool GameEditor::LoadTilesetData(const std::string& database, const std::string& tilesetpath, const std::string& datapath)
 {
 	rapidjson::Document doc;
 	std::ifstream ifs(datapath.c_str());
@@ -221,7 +286,33 @@ bool GameEditor::LoadTilesetData(const std::string& tilesetpath, const std::stri
 			// Here we only need the Name and the path in order to load the image
 			// as an OLC sprite and create a decal...
 			auto sprite = new olc::Sprite(tilesetpath + "/" + name + ".png");
+			if (sprite->width == 0 && sprite->height == 0) continue;
 			auto decal = new olc::Decal(sprite);
+
+			if (database.compare("Forest") == 0)
+			{
+				m_forestDecalDatabase.try_emplace(name, decal);
+			}
+			else if (database.compare("Road") == 0)
+			{
+				m_roadDecalDatabase.try_emplace(name, decal);
+			}
+			else if (database.compare("Ground") == 0)
+			{
+				m_groundDecalDatabase.try_emplace(name, decal);
+			}
+			else if (database.compare("Water") == 0)
+			{
+				m_waterDecalDatabase.try_emplace(name, decal);
+			}
+			else if (database.compare("Mountain") == 0)
+			{
+				m_mountainDecalDatabase.try_emplace(name, decal);
+			}
+			else if (database.compare("Structure") == 0)
+			{
+				m_structureDecalDatabase.try_emplace(name, decal);
+			}
 
 			m_decalDatabase.try_emplace(name, decal);
 			m_spriteDatabase.push_back(sprite);
