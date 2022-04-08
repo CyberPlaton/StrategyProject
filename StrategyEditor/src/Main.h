@@ -114,6 +114,27 @@ public:
 		loaded &= LoadTilesetData("Water","assets/Tileset/Water", "assets/TilesetData/Water.json");
 		loaded &= LoadTilesetData("Structure","assets/Tileset/Structure", "assets/TilesetData/Structure.json");
 		loaded &= LoadEditorGraphicalData();
+
+
+		auto sprite = new olc::Sprite("assets/Townhall_I.png");
+		auto decal = new olc::Decal(sprite);
+		m_structureDecalDatabase.emplace("Townhall", decal);
+		m_decalDatabase.emplace("Townhall", decal);
+		m_spriteDatabase.push_back(sprite);
+
+		sprite = new olc::Sprite("assets/Castle_I.png");
+		decal = new olc::Decal(sprite);
+		m_structureDecalDatabase.emplace("Castle", decal);
+		m_decalDatabase.emplace("Castle", decal);
+		m_spriteDatabase.push_back(sprite);
+
+		sprite = new olc::Sprite("assets/Watchtower.png");
+		decal = new olc::Decal(sprite);
+		m_structureDecalDatabase.emplace("Watchtower", decal);
+		m_decalDatabase.emplace("Watchtower", decal);
+		m_spriteDatabase.push_back(sprite);
+
+
 		return loaded;
 	}
 
