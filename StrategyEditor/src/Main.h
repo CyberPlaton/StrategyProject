@@ -4,6 +4,7 @@
 *			 o Rendering Decal Database loaded from JSON in Gameengine format.
 *			 o Layer menu. Add, Remove, Toggle visibility and Edit layers you place objects on.
 *			 o Coloring Layer names in a intuitive way to hint at their current status (active, visible etc.)
+*			 o Render Decals in Tabs according to their type (e.g. Forest, Water etc)
 */
 
 // OLC INLCUDE
@@ -75,7 +76,7 @@ STRING(major) \
 
 // COMMON
 #include "Mapobject.h"
-using LayeredGameworld = std::map< std::string, std::vector< std::vector< Mapobject* > > >;
+using LayeredGameworld = std::map< std::string, std::vector< std::vector< Entity* > > >;
 
 
 // Utility. Create a hook function to actually call the GameEditors OnUserUpdate function.
@@ -124,6 +125,8 @@ public:
 		HandleInput();
 		UpdateVisibleRect();
 
+		UpdateEntities();
+
 		RenderMainFrame();
 
 		DrawStringDecal(olc::vf2d(5, 25), "FPS: " + std::to_string(GetFPS()));
@@ -157,6 +160,7 @@ private:
 	std::vector< uint32_t > m_visibleLayers;
 	uint64_t m_mapobjectCount = 0;
 	std::string m_currentLayer = "Default";
+	std::vector< Entity* > m_entities;
 
 	// Gameeditor is responsible to cleanup the decal and sprite data.
 	std::map< std::string, olc::Decal* > m_forestDecalDatabase;
@@ -179,9 +183,12 @@ private:
 	void RenderMainMenu();
 	void RenderLayerUI();
 	void RenderDecalDatabase(const std::map< std::string, olc::Decal* >& db);
-	
+	void RenderEntityDatabase();
+	void DisplayEntityEditor(Entity* e);
+
 	// GAMEWORLD
 	void RenderMainFrame();
+	void UpdateEntities();
 
 	// UTIL
 	bool LoadTilesetData(const std::string& database, const std::string& tilesetpath, const std::string& datapath);
@@ -189,10 +196,12 @@ private:
 	void ToggleMenuItem(bool& item);
 	void HandleInput();
 	void UpdateVisibleRect();
-	void RenderMapobject(Mapobject* object);
+	void RenderMapobject(Entity* object);
 	void CreateMapobject(uint64_t x, uint64_t y, std::string decal, std::string name = "none");
 	std::string CreateMapobjectName();
-
+	bool IsMapobjectNameUsed(const std::string& name);
+	void DeleteMapobject(Entity* object);
+	
 
 	// Note: Layer 0 is by Default the first created.
 	// Layers are drawn from 0 to n.
@@ -200,7 +209,7 @@ private:
 	void ChangeLayerOrder(std::string layer_name, int order);
 	void ChangeLayerName(std::string layer_name, std::string new_name);
 	void DeleteRenderingLayer(std::string layer_name);
-	void InitializeMatrix(std::vector< std::vector< Mapobject* > >& matrix);
+	void InitializeMatrix(std::vector< std::vector< Entity* > >& matrix);
 	void UpdateLayerSorting();
 	void ToggleLayerVisibility(int layer);
 	bool LayerVisible(int layer);

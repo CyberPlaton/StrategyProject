@@ -1100,7 +1100,7 @@ namespace olc
 	public: // Branding
 		std::string sAppName;
 
-	private: // Inner mysterious workings
+	protected: // Inner mysterious workings
 		olc::Sprite*     pDrawTarget = nullptr;
 		Pixel::Mode	nPixelMode = Pixel::NORMAL;
 		float		fBlendFactor = 1.0f;

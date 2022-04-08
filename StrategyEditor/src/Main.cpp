@@ -2,6 +2,10 @@
 
 // STATIC DATA
 static bool g_bDecalDatabaseOpen = true;
+static bool g_bEntityDatabaseOpen = true;
+static bool g_bEntityEditorOpen = false;
+static Entity* g_pEditedEntity = nullptr;
+static std::vector< Entity* > g_vecEditedEntities;
 static bool g_bImguiDemoOpen = true;
 static bool g_bImguiHasFocus = false;
 static bool g_bIsPanning = false;
@@ -45,6 +49,8 @@ void GameEditor::RenderGUI()
 
 	// Decal Database
 	if(g_bDecalDatabaseOpen) RenderDecalDatabase();
+	// Entity Database
+	if (g_bEntityDatabaseOpen) RenderEntityDatabase();
 	// Rendering Layers
 	if(g_bRenderingLayersOpen) RenderLayerUI();
 }
@@ -88,6 +94,16 @@ bool GameEditor::LoadEditorGraphicalData()
 	m_editorDecalDatabase.try_emplace("Visible", decal);
 	m_editorSpriteDatabase.push_back(sprite);
 
+	sprite = new olc::Sprite("assets/Editor/button_circle_round_add.png");
+	decal = new olc::Decal(sprite);
+	m_editorDecalDatabase.try_emplace("Add", decal);
+	m_editorSpriteDatabase.push_back(sprite);
+
+	sprite = new olc::Sprite("assets/Editor/button_circle_round_remove.png");
+	decal = new olc::Decal(sprite);
+	m_editorDecalDatabase.try_emplace("Remove", decal);
+	m_editorSpriteDatabase.push_back(sprite);
+
 	return true;
 }
 void GameEditor::RenderMainMenu()
@@ -97,6 +113,7 @@ void GameEditor::RenderMainMenu()
 		if (ImGui::BeginMenu("Menu"))
 		{
 			if (ImGui::MenuItem("Decal Database")) ToggleMenuItem(g_bDecalDatabaseOpen);
+			if (ImGui::MenuItem("Entity Database")) ToggleMenuItem(g_bEntityDatabaseOpen);
 			if (ImGui::MenuItem("Rendering Layers")) ToggleMenuItem(g_bRenderingLayersOpen);
 			if (ImGui::MenuItem("Grid")) ToggleMenuItem(g_bRenderGrid);
 			if (ImGui::MenuItem("Imgui Demo")) ToggleMenuItem(g_bImguiDemoOpen);
@@ -150,26 +167,6 @@ void GameEditor::RenderDecalDatabase()
 		}
 		ImGui::EndTabBar();
 	}
-
-	/*
-	for (auto& pair : m_decalDatabase)
-	{
-		if (i == 4)
-		{
-			i = 0;
-		}
-		else
-		{
-			ImGui::SameLine();
-		}
-		if (ImGui::ImageButton((ImTextureID)pair.second->id, { 64, 64 }))
-		{
-			g_sSelectedMapobject = pair.first;
-			ImGui::SetWindowFocus(nullptr);
-		}
-		i++;
-	}
-	*/
 	ImGui::End();
 }
 void GameEditor::RenderDecalDatabase(const std::map< std::string, olc::Decal* >& db)
@@ -255,11 +252,11 @@ void GameEditor::RenderMainFrame()
 		tv.DrawDecal({ (float)p.x, (float)p.y }, m_decalDatabase[g_sSelectedMapobject]);
 	}
 }
-void GameEditor::RenderMapobject(Mapobject* object)
+void GameEditor::RenderMapobject(Entity* object)
 {
-	if (object->m_hasDecal)
+	if (auto c = object->Get< ComponentSprite >("Sprite"); c)
 	{
-		tv.DrawDecal({ object->m_positionx, object->m_positiony }, m_decalDatabase[object->m_decal]);
+		tv.DrawDecal({ object->m_positionx, object->m_positiony }, m_decalDatabase[c->m_decal]);
 	}
 	else
 	{
@@ -340,7 +337,7 @@ void GameEditor::HandleInput()
 		{
 			if (g_sSelectedMapobject.compare("none") != 0)
 			{
-				CreateMapobject(point.x, point.y, g_sSelectedMapobject);
+				CreateMapobject(point.x, point.y, g_sSelectedMapobject, g_sSelectedMapobject);
 			}
 		}
 		if (GetMouse(2).bPressed)
@@ -422,9 +419,14 @@ std::string GameEditor::CreateMapobjectName()
 }
 void GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string decal, std::string name)
 {
-	if (name.compare("none") == 0)
+	if (x < 0 || 
+		y < 0 ||
+		x > MAX_MAPSIZE_X - 1 ||
+		y > MAX_MAPSIZE_Y - 1) return;
+
+	if (name.compare("none") == 0 || IsMapobjectNameUsed(name))
 	{
-		name = CreateMapobjectName();
+		name += "_" + CreateMapobjectName();
 	}
 	else
 	{
@@ -432,9 +434,9 @@ void GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string decal, std:
 	}
 
 	// Create object.
-	auto object = new Mapobject();
-	object->m_decal = decal;
-	object->m_hasDecal = true;
+	auto object = new Entity();
+	m_entities.push_back(object);
+	object->Add(new ComponentSprite(decal, m_currentLayer), "Sprite");
 	object->m_name = name;
 	object->m_positionx = x;
 	object->m_positiony = y;
@@ -442,12 +444,117 @@ void GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string decal, std:
 	// If there is another Object already, delete it first.
 	if (m_gameworld[m_currentLayer][x][y])
 	{
-		delete m_gameworld[m_currentLayer][x][y];
-		m_gameworld[m_currentLayer][x][y] = nullptr;
+		DeleteMapobject(m_gameworld[m_currentLayer][x][y]);
 	}
 
 	// Add Object to layer Gameworld.
 	m_gameworld[m_currentLayer][x][y] = object;
+}
+bool GameEditor::IsMapobjectNameUsed(const std::string& name)
+{
+	for (auto& e : m_entities)
+	{
+		if (e->m_name.compare(name.c_str()) == 0) return true;
+	}
+	return false;
+}
+void GameEditor::DeleteMapobject(Entity* object)
+{
+	int x, y;
+	Entity* entity = nullptr;
+	std::string layer = object->Get< ComponentSprite >("Sprite")->m_layer;
+	for (auto it = m_entities.begin(); it != m_entities.end(); it++)
+	{
+		auto e = *it;
+		if (e->m_name.compare(object->m_name.c_str()) == 0)
+		{
+			x = e->m_positionx;
+			y = e->m_positiony;
+			m_entities.erase(it);
+			entity = e;
+			break;
+		}
+	}
+
+	for (auto it = g_vecEditedEntities.begin(); it != g_vecEditedEntities.end(); it++)
+	{
+		auto e = *it;
+		if (e->m_name.compare(object->m_name.c_str()) == 0)
+		{
+			x = e->m_positionx;
+			y = e->m_positiony;
+			g_vecEditedEntities.erase(it);
+			break;
+		}
+	}
+
+	delete entity;
+	m_gameworld[layer][x][y] = nullptr;
+}
+void GameEditor::UpdateEntities()
+{
+	for (const auto& e : m_entities)
+	{
+		e->Update();
+	}
+}
+void GameEditor::RenderEntityDatabase()
+{
+	ImGui::Begin("EntityDatabase", &g_bEntityDatabaseOpen);
+	for (const auto& e : m_entities)
+	{
+		// Will Entity be edited?
+		bool open = false;
+		if (ImGui::Button(e->m_name.c_str()))
+		{
+			open = true;
+		}
+
+		// Display Entity Icon for quick changes.
+		ImGuiID delete_id = g_iImguiImageButtonID + (intptr_t)e + (intptr_t)"Delete";
+		ImGuiID edit_id = g_iImguiImageButtonID + (intptr_t)e + (intptr_t)"Pencil";
+		
+		ImGui::SameLine();
+		ImGui::PushID(edit_id);
+		if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Pencil"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
+		{
+			g_bEntityEditorOpen = true;
+			g_vecEditedEntities.push_back(e);
+		}
+		ImGui::PopID();
+		
+		if (!g_bEntityEditorOpen)
+		{
+			ImGui::SameLine();
+			ImGui::PushID(delete_id);
+			if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Delete"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
+			{
+				DeleteMapobject(e);
+				ImGui::PopID();
+				ImGui::End();
+				return;
+			}
+			ImGui::PopID();
+		}
+	}
+	ImGui::End();
+
+
+	if (g_bEntityEditorOpen)
+	{
+		for (auto& e : g_vecEditedEntities)
+		{
+			DisplayEntityEditor(e);
+		}
+	}
+}
+void GameEditor::DisplayEntityEditor(Entity* e)
+{
+	std::string name = "Entity Edit: " + e->m_name;
+	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
+	ImGui::Begin(name.c_str(), &g_bEntityEditorOpen);
+	ImGui::End();
 }
 void GameEditor::CreateRenderingLayer(std::string layer_name, int order)
 {
@@ -485,7 +592,7 @@ void GameEditor::ChangeLayerOrder(std::string layer_name, int order)
 
 	m_layerOrder[layer_name] = order;
 }
-void GameEditor::InitializeMatrix(std::vector< std::vector< Mapobject* > >& matrix)
+void GameEditor::InitializeMatrix(std::vector< std::vector< Entity* > >& matrix)
 {
 	matrix.resize(MAX_MAPSIZE_X);
 	for (int i = 0; i < matrix.size(); i++)
