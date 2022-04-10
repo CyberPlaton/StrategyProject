@@ -249,7 +249,9 @@ private:
 	std::string CreateMapobjectName();
 	bool IsMapobjectNameUsed(const std::string& name);
 	void DeleteMapobject(Entity* object);
-	
+	std::string GetMapobjectNameAt(int x, int y, std::string layer);
+	Entity* GetMapobjectAt(int x, int y, std::string layer);
+
 
 	// Note: Layer 0 is by Default the first created.
 	// Layers are drawn from 0 to n.

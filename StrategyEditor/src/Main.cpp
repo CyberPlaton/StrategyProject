@@ -104,6 +104,12 @@ bool GameEditor::LoadEditorGraphicalData()
 	m_editorDecalDatabase.try_emplace("Remove", decal);
 	m_editorSpriteDatabase.push_back(sprite);
 
+	sprite = new olc::Sprite("assets/Editor/Rect.png");
+	decal = new olc::Decal(sprite);
+	m_editorDecalDatabase.try_emplace("Rect", decal);
+	m_editorSpriteDatabase.push_back(sprite);
+
+
 	return true;
 }
 void GameEditor::RenderMainMenu()
@@ -243,17 +249,17 @@ void GameEditor::RenderMainFrame()
 		}
 	}
 
+	
+	olc::vi2d mouse = GetMousePos();
+	olc::vi2d point = tv.ScreenToWorld(mouse);
+
 	// Draw selected Decal.
-	if (g_sSelectedMapobject.compare("none") == 0)
+	if (g_sSelectedMapobject.compare("none") != 0)
 	{
-		return;
+		tv.DrawDecal({ (float)point.x, (float)point.y }, m_decalDatabase[g_sSelectedMapobject]);
 	}
-	else
-	{
-		olc::vi2d mouse = GetMousePos();
-		olc::vi2d p = tv.ScreenToWorld(mouse);
-		tv.DrawDecal({ (float)p.x, (float)p.y }, m_decalDatabase[g_sSelectedMapobject]);
-	}
+
+	tv.DrawDecal(point, m_editorDecalDatabase["Rect"], { 1.0f, 1.0f }, olc::YELLOW);
 }
 void GameEditor::RenderMapobject(Entity* object)
 {
@@ -334,6 +340,10 @@ void GameEditor::HandleInput()
 	{
 		if (GetMouse(1).bReleased)
 		{
+			if (auto entity = GetMapobjectAt(mousex, mousey, m_currentLayer); entity != nullptr)
+			{
+				DeleteMapobject(entity);
+			}
 			g_sSelectedMapobject = "none";
 		}
 		if (GetMouse(0).bReleased)
@@ -341,6 +351,11 @@ void GameEditor::HandleInput()
 			if (g_sSelectedMapobject.compare("none") != 0)
 			{
 				CreateMapobject(point.x, point.y, g_sSelectedMapobject, g_sSelectedMapobject);
+			}
+			else
+			{
+				// Make the Selected Mapobject the one on the Tile in the current Layer.
+				g_sSelectedMapobject = GetMapobjectNameAt(mousex, mousey, m_currentLayer);
 			}
 		}
 		if (GetMouse(2).bPressed)
@@ -415,6 +430,37 @@ void GameEditor::UpdateVisibleRect()
 	m_visiblePointDownRight = tv.GetBottomRightTile();
 	if (m_visiblePointDownRight.x > MAX_MAPSIZE_X) m_visiblePointDownRight.x = MAX_MAPSIZE_X;
 	if (m_visiblePointDownRight.y > MAX_MAPSIZE_Y) m_visiblePointDownRight.y = MAX_MAPSIZE_Y;
+}
+std::string GameEditor::GetMapobjectNameAt(int x, int y, std::string layer)
+{
+	if (x < 0 ||
+		y < 0 ||
+		x > MAX_MAPSIZE_X - 1 ||
+		y > MAX_MAPSIZE_Y - 1) return "none";
+
+	if (m_gameworld.find(layer) != m_gameworld.end() &&
+		m_gameworld[layer][x][y] != nullptr)
+	{
+		return m_gameworld[layer][x][y]->Get< ComponentSprite >("Sprite")->m_decal;
+	}
+
+	return "none";
+}
+Entity* GameEditor::GetMapobjectAt(int x, int y, std::string layer)
+{
+	if (x < 0 ||
+		y < 0 ||
+		x > MAX_MAPSIZE_X - 1 ||
+		y > MAX_MAPSIZE_Y - 1) return nullptr;
+
+
+	if (m_gameworld.find(layer) != m_gameworld.end() &&
+		m_gameworld[layer][x][y] != nullptr)
+	{
+		return m_gameworld[layer][x][y];
+	}
+
+	return nullptr;
 }
 std::string GameEditor::CreateMapobjectName()
 {
