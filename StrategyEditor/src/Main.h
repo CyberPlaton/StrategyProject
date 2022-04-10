@@ -134,6 +134,32 @@ public:
 		m_decalDatabase.emplace("Watchtower", decal);
 		m_spriteDatabase.push_back(sprite);
 
+		sprite = new olc::Sprite("assets/Bridge_1x2.png");
+		decal = new olc::Decal(sprite);
+		m_structureDecalDatabase.emplace("Bridge_1", decal);
+		m_decalDatabase.emplace("Bridge_1", decal);
+		m_spriteDatabase.push_back(sprite);
+
+		sprite = new olc::Sprite("assets/Bridge_1x2_2.png");
+		decal = new olc::Decal(sprite);
+		m_structureDecalDatabase.emplace("Bridge_2", decal);
+		m_decalDatabase.emplace("Bridge_2", decal);
+		m_spriteDatabase.push_back(sprite);
+
+		sprite = new olc::Sprite("assets/Bridge_1x2_3.png");
+		decal = new olc::Decal(sprite);
+		m_structureDecalDatabase.emplace("Bridge_3", decal);
+		m_decalDatabase.emplace("Bridge_3", decal);
+		m_spriteDatabase.push_back(sprite);
+
+		sprite = new olc::Sprite("assets/Bridge_1x2_4.png");
+		decal = new olc::Decal(sprite);
+		m_structureDecalDatabase.emplace("Bridge_4", decal);
+		m_decalDatabase.emplace("Bridge_4", decal);
+		m_spriteDatabase.push_back(sprite);
+
+
+
 
 		return loaded;
 	}
@@ -218,7 +244,8 @@ private:
 	void HandleInput();
 	void UpdateVisibleRect();
 	void RenderMapobject(Entity* object);
-	void CreateMapobject(uint64_t x, uint64_t y, std::string decal, std::string name = "none");
+	Entity* CreateMapobject(uint64_t x, uint64_t y, std::string decal, std::string name = "none");
+	void CreateMapobject(uint64_t x, uint64_t y, std::string layer, std::string decal, uint64_t w, uint64_t h);
 	std::string CreateMapobjectName();
 	bool IsMapobjectNameUsed(const std::string& name);
 	void DeleteMapobject(Entity* object);
@@ -239,6 +266,8 @@ private:
 	std::multimap< int, std::string, std::greater<int> > SortDescending(std::map< std::string, int >& map);
 	std::map< int, std::string > SortAscending(std::map< std::string, int >& map);
 
+	bool ExportMapData(const std::string& filepath);
+	bool ImportMapData(const std::string& filepath);
 
 	// UTIL IMGUI
 	void BeginTooltip(const char* help_text);

@@ -18,12 +18,15 @@ struct ComponentSprite : public Component
 	{
 		m_decal = decal;
 		m_layer = layer;
+		m_width = 1;
+		m_height = 1;
 	}
 
 	void Update() override{}
 
 	std::string m_decal;
 	std::string m_layer;
+	int m_width, m_height;
 };
 
 

@@ -117,6 +117,9 @@ void GameEditor::RenderMainMenu()
 			if (ImGui::MenuItem("Rendering Layers")) ToggleMenuItem(g_bRenderingLayersOpen);
 			if (ImGui::MenuItem("Grid")) ToggleMenuItem(g_bRenderGrid);
 			if (ImGui::MenuItem("Imgui Demo")) ToggleMenuItem(g_bImguiDemoOpen);
+			if (ImGui::MenuItem("Save")) ExportMapData("assets/Map.xml");
+			if (ImGui::MenuItem("Load")) ImportMapData("assets/Map.xml");
+
 
 			ImGui::EndMenu();
 		}
@@ -417,12 +420,23 @@ std::string GameEditor::CreateMapobjectName()
 {
 	return "Mapobject_" + std::to_string(m_mapobjectCount++);
 }
-void GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string decal, std::string name)
+void GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string layer, std::string decal, uint64_t w, uint64_t h)
+{
+	auto current_layer = m_currentLayer;
+	m_currentLayer = layer;
+
+	auto entity = CreateMapobject(x, y, decal, decal);
+	entity->Get< ComponentSprite >("Sprite")->m_width = w;
+	entity->Get< ComponentSprite >("Sprite")->m_height = h;
+
+	m_currentLayer = current_layer;
+}
+Entity* GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string decal, std::string name)
 {
 	if (x < 0 || 
 		y < 0 ||
 		x > MAX_MAPSIZE_X - 1 ||
-		y > MAX_MAPSIZE_Y - 1) return;
+		y > MAX_MAPSIZE_Y - 1) return nullptr;
 
 	if (name.compare("none") == 0 || IsMapobjectNameUsed(name))
 	{
@@ -449,6 +463,7 @@ void GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string decal, std:
 
 	// Add Object to layer Gameworld.
 	m_gameworld[m_currentLayer][x][y] = object;
+	return object;
 }
 bool GameEditor::IsMapobjectNameUsed(const std::string& name)
 {
@@ -830,6 +845,95 @@ void GameEditor::UpdateLayerSorting()
 	m_sortedLayers = SortDescending(m_layerOrder);
 	m_sortedLayersAscending = SortAscending(m_layerOrder);
 }
+bool GameEditor::ExportMapData(const std::string& filepath)
+{
+	tinyxml2::XMLDocument doc;
+	auto root = doc.NewElement("Map");
+	doc.InsertEndChild(root);
+
+	auto layers = root->InsertNewChildElement("Layers");
+	for (auto& l : m_sortedLayers)
+	{
+		auto layer = m_gameworld[l.second];
+
+		auto xmlLayer = layers->InsertNewChildElement("Layer");
+		xmlLayer->SetAttribute("n", l.first);
+		xmlLayer->SetAttribute("name", l.second.c_str());
+
+		for (int x = 0; x < layer.size(); x++)
+		{
+			for (int y = 0; y < layer[x].size(); y++)
+			{
+				if (layer[x][y])
+				{
+					auto object = xmlLayer->InsertNewChildElement("Object");
+
+					// Insert relevant Data for each Object.
+					// Position
+					object->SetAttribute("x", layer[x][y]->m_positionx);
+					object->SetAttribute("y", layer[x][y]->m_positiony);
+
+					// Sprite
+					object->SetAttribute("sprite", layer[x][y]->Get< ComponentSprite >("Sprite")->m_decal.c_str());
+
+					// Width/Height
+					object->SetAttribute("w", layer[x][y]->Get< ComponentSprite >("Sprite")->m_width);
+					object->SetAttribute("h", layer[x][y]->Get< ComponentSprite >("Sprite")->m_height);
+				}
+			}
+		}
+	}
+
+
+
+	doc.SaveFile(filepath.c_str());
+	return true;
+}
+bool GameEditor::ImportMapData(const std::string& filepath)
+{
+	tinyxml2::XMLDocument doc;
+	if (doc.LoadFile(filepath.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		doc.Clear();
+		return false;
+	}
+
+
+	auto root = doc.RootElement();
+	auto layers = root->FirstChildElement("Layers");
+	auto layer = layers->FirstChildElement("Layer");
+	while (layer)
+	{
+		// Get layer data and create Layer in Project.
+		int layer_number = layer->IntAttribute("n");
+		const char* layer_name = layer->Attribute("name");
+
+		CreateRenderingLayer(std::string(layer_name), layer_number);
+
+		auto entity = layer->FirstChildElement("Object");
+		while (entity)
+		{
+			// Get object data and create it in Project.
+			int x, y, w, h;
+			x = entity->IntAttribute("x");
+			y = entity->IntAttribute("y");
+			w = entity->IntAttribute("w");
+			h = entity->IntAttribute("h");
+			const char* sprite = entity->Attribute("sprite");
+
+			CreateMapobject(x, y, std::string(layer_name), std::string(sprite), w, h);
+
+			entity = entity->NextSiblingElement("Object");
+		}
+
+		layer = layer->NextSiblingElement("Layer");
+	}
+
+
+	UpdateLayerSorting();
+	return true;
+}
+
 
 int main()
 {
