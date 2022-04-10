@@ -111,55 +111,14 @@ public:
 		loaded &= LoadTilesetData("Ground","assets/Tileset/Ground", "assets/TilesetData/Ground.json");
 		loaded &= LoadTilesetData("Mountain","assets/Tileset/Mountain", "assets/TilesetData/Mountain.json");
 		loaded &= LoadTilesetData("Road","assets/Tileset/Road", "assets/TilesetData/Road.json");
-		loaded &= LoadTilesetData("Water","assets/Tileset/Water", "assets/TilesetData/Water.json");
-		loaded &= LoadTilesetData("Structure","assets/Tileset/Structure", "assets/TilesetData/Structure.json");
+		loaded &= LoadTilesetData("Sea","assets/Tileset/Sea", "assets/TilesetData/Sea.json");
+		loaded &= LoadTilesetData("Bridge","assets/Tileset/Bridge", "assets/TilesetData/Bridge.json");
+		loaded &= LoadTilesetData("River", "assets/Tileset/River", "assets/TilesetData/River.json");
+		loaded &= LoadTilesetData("Structure", "assets/Tileset/Structure", "assets/TilesetData/Structure.json");
+		loaded &= LoadTilesetData("Wall", "assets/Tileset/Wall", "assets/TilesetData/Wall.json");
+		loaded &= LoadTilesetData("Hill", "assets/Tileset/Hill", "assets/TilesetData/Hill.json");
+
 		loaded &= LoadEditorGraphicalData();
-
-
-		auto sprite = new olc::Sprite("assets/Townhall_I.png");
-		auto decal = new olc::Decal(sprite);
-		m_structureDecalDatabase.emplace("Townhall", decal);
-		m_decalDatabase.emplace("Townhall", decal);
-		m_spriteDatabase.push_back(sprite);
-
-		sprite = new olc::Sprite("assets/Castle_I.png");
-		decal = new olc::Decal(sprite);
-		m_structureDecalDatabase.emplace("Castle", decal);
-		m_decalDatabase.emplace("Castle", decal);
-		m_spriteDatabase.push_back(sprite);
-
-		sprite = new olc::Sprite("assets/Watchtower.png");
-		decal = new olc::Decal(sprite);
-		m_structureDecalDatabase.emplace("Watchtower", decal);
-		m_decalDatabase.emplace("Watchtower", decal);
-		m_spriteDatabase.push_back(sprite);
-
-		sprite = new olc::Sprite("assets/Bridge_1x2.png");
-		decal = new olc::Decal(sprite);
-		m_structureDecalDatabase.emplace("Bridge_1", decal);
-		m_decalDatabase.emplace("Bridge_1", decal);
-		m_spriteDatabase.push_back(sprite);
-
-		sprite = new olc::Sprite("assets/Bridge_1x2_2.png");
-		decal = new olc::Decal(sprite);
-		m_structureDecalDatabase.emplace("Bridge_2", decal);
-		m_decalDatabase.emplace("Bridge_2", decal);
-		m_spriteDatabase.push_back(sprite);
-
-		sprite = new olc::Sprite("assets/Bridge_1x2_3.png");
-		decal = new olc::Decal(sprite);
-		m_structureDecalDatabase.emplace("Bridge_3", decal);
-		m_decalDatabase.emplace("Bridge_3", decal);
-		m_spriteDatabase.push_back(sprite);
-
-		sprite = new olc::Sprite("assets/Bridge_1x2_4.png");
-		decal = new olc::Decal(sprite);
-		m_structureDecalDatabase.emplace("Bridge_4", decal);
-		m_decalDatabase.emplace("Bridge_4", decal);
-		m_spriteDatabase.push_back(sprite);
-
-
-
 
 		return loaded;
 	}
@@ -216,6 +175,10 @@ private:
 	std::map< std::string, olc::Decal* > m_waterDecalDatabase;
 	std::map< std::string, olc::Decal* > m_mountainDecalDatabase;
 	std::map< std::string, olc::Decal* > m_structureDecalDatabase;
+	std::map< std::string, olc::Decal* > m_wallDecalDatabase;
+	std::map< std::string, olc::Decal* > m_bridgeDecalDatabase;
+	std::map< std::string, olc::Decal* > m_riverDecalDatabase;
+	std::map< std::string, olc::Decal* > m_hillDecalDatabase;
 	std::map< std::string, olc::Decal* > m_decalDatabase;
 	std::vector< olc::Sprite* > m_spriteDatabase;
 

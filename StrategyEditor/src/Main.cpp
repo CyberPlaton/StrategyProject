@@ -125,6 +125,10 @@ void GameEditor::RenderMainMenu()
 			if (ImGui::MenuItem("Imgui Demo")) ToggleMenuItem(g_bImguiDemoOpen);
 			if (ImGui::MenuItem("Save")) ExportMapData("assets/Map.xml");
 			if (ImGui::MenuItem("Load")) ImportMapData("assets/Map.xml");
+			if (ImGui::MenuItem("Exit"))
+			{
+				olc_Terminate();
+			}
 
 
 			ImGui::EndMenu();
@@ -150,16 +154,40 @@ void GameEditor::RenderDecalDatabase()
 			RenderDecalDatabase(m_groundDecalDatabase);
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem("Water"))
+		if (ImGui::BeginTabItem("Sea"))
 		{
 			ImGui::Separator();
 			RenderDecalDatabase(m_waterDecalDatabase);
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Bridge"))
+		{
+			ImGui::Separator();
+			RenderDecalDatabase(m_bridgeDecalDatabase);
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("River"))
+		{
+			ImGui::Separator();
+			RenderDecalDatabase(m_riverDecalDatabase);
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Wall"))
+		{
+			ImGui::Separator();
+			RenderDecalDatabase(m_wallDecalDatabase);
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Road"))
 		{
 			ImGui::Separator();
 			RenderDecalDatabase(m_roadDecalDatabase);
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Hill"))
+		{
+			ImGui::Separator();
+			RenderDecalDatabase(m_hillDecalDatabase);
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Mountain"))
@@ -307,7 +335,7 @@ bool GameEditor::LoadTilesetData(const std::string& database, const std::string&
 			{
 				m_groundDecalDatabase.try_emplace(name, decal);
 			}
-			else if (database.compare("Water") == 0)
+			else if (database.compare("Sea") == 0)
 			{
 				m_waterDecalDatabase.try_emplace(name, decal);
 			}
@@ -318,6 +346,22 @@ bool GameEditor::LoadTilesetData(const std::string& database, const std::string&
 			else if (database.compare("Structure") == 0)
 			{
 				m_structureDecalDatabase.try_emplace(name, decal);
+			}
+			else if (database.compare("Bridge") == 0)
+			{
+				m_bridgeDecalDatabase.try_emplace(name, decal);
+			}
+			else if (database.compare("Wall") == 0)
+			{
+				m_wallDecalDatabase.try_emplace(name, decal);
+			}
+			else if (database.compare("River") == 0)
+			{
+				m_riverDecalDatabase.try_emplace(name, decal);
+			}
+			else if (database.compare("Hill") == 0)
+			{
+				m_hillDecalDatabase.try_emplace(name, decal);
 			}
 
 			m_decalDatabase.try_emplace(name, decal);
@@ -983,7 +1027,7 @@ bool GameEditor::ImportMapData(const std::string& filepath)
 
 int main()
 {
-	if (editor.Construct(1360, 768, 1, 1))
+	if (editor.Construct(1600, 900, 1, 1, true, true, false))
 		editor.Start();
 
 	return 0;
