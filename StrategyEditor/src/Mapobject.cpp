@@ -46,3 +46,53 @@ bool Entity::Has(std::string component)
 	if (m_components.find(component) != m_components.end()) return true;
 	return false;
 }
+
+void ComponentCity::RemoveBuildingSlot(int x, int y)
+{
+	for (auto it = m_buildingSlots.begin(); it != m_buildingSlots.end(); it++)
+	{
+		auto pair = *it;
+		if (pair.first == x && pair.second == y)
+		{
+			m_buildingSlots.erase(it);
+			return;
+		}
+	}
+}
+void ComponentCity::RemoveTerritory(int x, int y)
+{
+	for (auto it = m_territory.begin(); it != m_territory.end(); it++)
+	{
+		auto pair = *it;
+		if (pair.first == x && pair.second == y)
+		{
+			m_territory.erase(it);
+			return;
+		}
+	}
+}
+
+bool ComponentCity::HasBuildingSlot(int x, int y)
+{
+	for (auto it = m_territory.begin(); it != m_territory.end(); it++)
+	{
+		auto pair = *it;
+		if (pair.first == x && pair.second == y)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+bool ComponentCity::HasTerritory(int x, int y)
+{
+	for (auto it = m_territory.begin(); it != m_territory.end(); it++)
+	{
+		auto pair = *it;
+		if (pair.first == x && pair.second == y)
+		{
+			return true;
+		}
+	}
+	return false;
+}

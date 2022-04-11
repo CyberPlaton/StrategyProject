@@ -35,10 +35,18 @@ struct ComponentCity : public Component
 
 	// Where Buildings belonging to this city can be build by a player
 	// owning this city.
-	void AddBuildingSlot(int x, int y) { m_buildingSlots.push_back({ x, y }); }
+	void AddBuildingSlot(int x, int y)
+	{ 
+		if (HasBuildingSlot(x, y)) return;
+		m_buildingSlots.push_back({ x, y }); 
+	}
 	
 	// Territory belonging to this city.
-	void AddTerritory(int x, int y) { m_territory.push_back({ x, y }); }
+	void AddTerritory(int x, int y)
+	{ 
+		if (HasTerritory(x, y)) return;
+		m_territory.push_back({ x, y }); 
+	}
 
 	void RemoveBuildingSlot(int x, int y);
 	void RemoveTerritory(int x, int y);
@@ -48,6 +56,12 @@ struct ComponentCity : public Component
 
 	std::vector< std::pair< int, int > > m_buildingSlots;
 	std::vector< std::pair< int, int > > m_territory;
+
+
+private:
+
+	bool HasBuildingSlot(int x, int y);
+	bool HasTerritory(int x, int y);
 };
 
 struct ComponentTownhall : public ComponentCity

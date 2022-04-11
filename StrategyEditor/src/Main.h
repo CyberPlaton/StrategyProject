@@ -233,10 +233,10 @@ private:
 
 	void MakeMapobjectTownhall(int x, int y, std::string layer);
 	void MakeMapobjectFort(int x, int y, std::string layer);
-	void AddTerritoryToCity(int x, int y, std::string layer);
-	void AddTerritoryToCity(Entity* e);
-	void AddBuildingSlotCity(int x, int y, std::string layer);
-	void AddBuildingSlotCity(Entity* e);
+	void AddTerritoryToCity(Entity* e, int slotx, int sloty);
+	void AddBuildingSlotToCity(Entity* e, int slotx, int sloty);
+	void RemoveTerritoryFromCity(Entity* e, int slotx, int sloty);
+	void RemoveBuildingSlotFromCity(Entity* e, int slotx, int sloty);
 
 
 	// Note: Layer 0 is by Default the first created.

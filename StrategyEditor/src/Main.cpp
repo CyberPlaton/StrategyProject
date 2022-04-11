@@ -8,6 +8,10 @@ static Entity* g_pEditedEntity = nullptr;
 static Entity* g_pEditedCity = nullptr;
 static bool g_bAddingTownhall = false;
 static bool g_bAddingFort = false;
+static bool g_bAddingBuildingSlot = false;
+static bool g_bAddingTerritory = false;
+static bool g_bRenderCityTerritory = true;
+static bool g_bRenderCityBuildingSlots = true;
 static std::string g_sDefaultCityLayer = "Building";
 static std::vector< Entity* > g_vecEditedEntities;
 static bool g_bImguiDemoOpen = true;
@@ -113,6 +117,11 @@ bool GameEditor::LoadEditorGraphicalData()
 	m_editorDecalDatabase.try_emplace("Rect", decal);
 	m_editorSpriteDatabase.push_back(sprite);
 
+	sprite = new olc::Sprite("assets/Editor/FilledRect.png");
+	decal = new olc::Decal(sprite);
+	m_editorDecalDatabase.try_emplace("FilledRect", decal);
+	m_editorSpriteDatabase.push_back(sprite);
+
 
 	return true;
 }
@@ -122,10 +131,6 @@ void GameEditor::RenderMainMenu()
 	{
 		if (ImGui::BeginMenu("Menu"))
 		{
-			if (ImGui::MenuItem("Decal Database")) ToggleMenuItem(g_bDecalDatabaseOpen);
-			if (ImGui::MenuItem("Entity Database")) ToggleMenuItem(g_bEntityDatabaseOpen);
-			if (ImGui::MenuItem("Rendering Layers")) ToggleMenuItem(g_bRenderingLayersOpen);
-			if (ImGui::MenuItem("Grid")) ToggleMenuItem(g_bRenderGrid);
 			if (ImGui::MenuItem("Imgui Demo")) ToggleMenuItem(g_bImguiDemoOpen);
 			if (ImGui::MenuItem("Save")) ExportMapData("assets/Map.xml");
 			if (ImGui::MenuItem("Load")) ImportMapData("assets/Map.xml");
@@ -133,6 +138,17 @@ void GameEditor::RenderMainMenu()
 			{
 				olc_Terminate();
 			}
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Project"))
+		{
+			if (ImGui::MenuItem("Decal Database")) ToggleMenuItem(g_bDecalDatabaseOpen);
+			if (ImGui::MenuItem("Entity Database")) ToggleMenuItem(g_bEntityDatabaseOpen);
+			if (ImGui::MenuItem("Rendering Layers")) ToggleMenuItem(g_bRenderingLayersOpen);
+			if (ImGui::MenuItem("Grid")) ToggleMenuItem(g_bRenderGrid);
+			if (ImGui::MenuItem("Rendering City Territory")) ToggleMenuItem(g_bRenderCityTerritory);
+			if (ImGui::MenuItem("Rendering City Building Slots")) ToggleMenuItem(g_bRenderCityBuildingSlots);
+
 			ImGui::EndMenu();
 		}
 		if (ImGui::BeginMenu("Map"))
@@ -147,6 +163,16 @@ void GameEditor::RenderMainMenu()
 				{
 					g_bAddingFort = true;
 				}
+				if (ImGui::MenuItem("Building Slot"))
+				{
+					g_bAddingBuildingSlot = true;
+				}
+				if (ImGui::MenuItem("Territory"))
+				{
+					g_bAddingTerritory = true;
+				}
+
+
 				ImGui::EndMenu();
 			}
 			ImGui::EndMenu();
@@ -277,15 +303,48 @@ void GameEditor::RenderMainFrame()
 				if (layer_world[x][y])
 				{
 					RenderMapobject(layer_world[x][y]);
+
+					olc::Pixel slot_color = { 255, 0, 0, 50 };
+					olc::Pixel terr_color = { 0, 255, 0, 50 };
 					if (layer_world[x][y]->Has("Townhall"))
 					{
 						tv.DrawDecal(olc::vf2d(x, y), m_editorDecalDatabase["Rect"], olc::vf2d(3.0f, 2.0f), olc::RED);
 						tv.DrawStringDecal(olc::vf2d(x + 0.5f, y + 0.5f), "Townhall", olc::RED, { 2.0f, 2.0f });
+
+						if (g_bRenderCityTerritory)
+						{
+							for (auto& slot : layer_world[x][y]->Get< ComponentTownhall >("Townhall")->m_territory)
+							{
+								tv.DrawDecal(olc::vf2d(slot.first, slot.second), m_editorDecalDatabase["FilledRect"], olc::vf2d(1.0f, 1.0f), slot_color);
+							}
+						}
+						if (g_bRenderCityBuildingSlots) 
+						{
+							for (auto& slot : layer_world[x][y]->Get< ComponentTownhall >("Townhall")->m_buildingSlots)
+							{
+								tv.DrawDecal(olc::vf2d(slot.first, slot.second), m_editorDecalDatabase["FilledRect"], olc::vf2d(1.0f, 1.0f), terr_color);
+							}
+						}
 					}
 					if (layer_world[x][y]->Has("Fort"))
 					{
 						tv.DrawDecal(olc::vf2d(x, y), m_editorDecalDatabase["Rect"], olc::vf2d(2.0f, 2.0f), olc::RED);
 						tv.DrawStringDecal(olc::vf2d(x + 0.5f, y + 0.5f), "Fort", olc::RED, { 2.0f, 2.0f });
+
+						if (g_bRenderCityTerritory)
+						{
+							for (auto& slot : layer_world[x][y]->Get< ComponentFort >("Fort")->m_territory)
+							{
+								tv.DrawDecal(olc::vf2d(slot.first, slot.second), m_editorDecalDatabase["FilledRect"], olc::vf2d(1.0f, 1.0f), slot_color);
+							}
+						}
+						if (g_bRenderCityBuildingSlots)
+						{
+							for (auto& slot : layer_world[x][y]->Get< ComponentFort >("Fort")->m_buildingSlots)
+							{
+								tv.DrawDecal(olc::vf2d(slot.first, slot.second), m_editorDecalDatabase["FilledRect"], olc::vf2d(1.0f, 1.0f), terr_color);
+							}
+						}
 					}
 
 				}
@@ -412,6 +471,51 @@ void GameEditor::HandleInput()
 
 	if (!g_bImguiHasFocus)
 	{
+		if (g_pEditedCity)
+		{
+			if (GetKey(olc::ESCAPE).bReleased)
+			{
+				g_pEditedCity = nullptr;
+				g_bAddingBuildingSlot = false;
+				g_bAddingTerritory = false;
+			}
+			if (GetMouse(0).bReleased)
+			{
+				if (g_bAddingBuildingSlot)
+				{
+					AddBuildingSlotToCity(g_pEditedCity, mousex, mousey);
+				}
+				else if (g_bAddingTerritory)
+				{
+					AddTerritoryToCity(g_pEditedCity, mousex, mousey);
+				}
+			}
+			if (GetMouse(1).bReleased)
+			{
+				if (g_bAddingBuildingSlot)
+				{
+					RemoveBuildingSlotFromCity(g_pEditedCity, mousex, mousey);
+				}
+				else if (g_bAddingTerritory)
+				{
+					RemoveTerritoryFromCity(g_pEditedCity, mousex, mousey);
+				}
+			}
+		}
+		if (g_bAddingBuildingSlot || g_bAddingTerritory)
+		{
+			if (g_pEditedCity == nullptr)
+			{
+				if (GetMouse(0).bReleased)
+				{
+					auto e = GetMapobjectAt(mousex, mousey, g_sDefaultCityLayer);
+					if (e)
+					{
+						g_pEditedCity = e;
+					}
+				}
+			}
+		}
 		if (g_bAddingTownhall)
 		{
 			if (GetMouse(0).bReleased)
@@ -428,7 +532,6 @@ void GameEditor::HandleInput()
 				g_bAddingFort = false;
 			}
 		}
-
 
 		if (GetMouse(1).bReleased)
 		{
@@ -1113,21 +1216,49 @@ void GameEditor::MakeMapobjectFort(int x, int y, std::string layer)
 
 	m_gameworld[layer][x][y]->Add(new ComponentFort(x, y), "Fort");
 }
-void GameEditor::AddTerritoryToCity(int x, int y, std::string layer)
+void GameEditor::AddTerritoryToCity(Entity* e, int slotx, int sloty)
 {
-
+	if (e->Has("Townhall"))
+	{
+		e->Get< ComponentTownhall >("Townhall")->AddTerritory(slotx, sloty);
+	}
+	else if (e->Has("Fort"))
+	{
+		e->Get< ComponentFort >("Fort")->AddTerritory(slotx, sloty);
+	}
 }
-void GameEditor::AddTerritoryToCity(Entity* e)
+void GameEditor::AddBuildingSlotToCity(Entity* e, int slotx, int sloty)
 {
-
+	if (e->Has("Townhall"))
+	{
+		e->Get< ComponentTownhall >("Townhall")->AddBuildingSlot(slotx, sloty);
+	}
+	else if (e->Has("Fort"))
+	{
+		e->Get< ComponentFort >("Fort")->AddBuildingSlot(slotx, sloty);
+	}
 }
-void GameEditor::AddBuildingSlotCity(int x, int y, std::string layer)
+void GameEditor::RemoveTerritoryFromCity(Entity* e, int slotx, int sloty)
 {
-
+	if (e->Has("Townhall"))
+	{
+		e->Get< ComponentTownhall >("Townhall")->RemoveTerritory(slotx, sloty);
+	}
+	else if (e->Has("Fort"))
+	{
+		e->Get< ComponentFort >("Fort")->RemoveTerritory(slotx, sloty);
+	}
 }
-void GameEditor::AddBuildingSlotCity(Entity* e)
+void GameEditor::RemoveBuildingSlotFromCity(Entity* e, int slotx, int sloty)
 {
-
+	if (e->Has("Townhall"))
+	{
+		e->Get< ComponentTownhall >("Townhall")->RemoveBuildingSlot(slotx, sloty);
+	}
+	else if (e->Has("Fort"))
+	{
+		e->Get< ComponentFort >("Fort")->RemoveBuildingSlot(slotx, sloty);
+	}
 }
 
 
