@@ -5,6 +5,10 @@ static bool g_bDecalDatabaseOpen = true;
 static bool g_bEntityDatabaseOpen = true;
 static bool g_bEntityEditorOpen = false;
 static Entity* g_pEditedEntity = nullptr;
+static Entity* g_pEditedCity = nullptr;
+static bool g_bAddingTownhall = false;
+static bool g_bAddingFort = false;
+static std::string g_sDefaultCityLayer = "Building";
 static std::vector< Entity* > g_vecEditedEntities;
 static bool g_bImguiDemoOpen = true;
 static bool g_bImguiHasFocus = false;
@@ -129,10 +133,25 @@ void GameEditor::RenderMainMenu()
 			{
 				olc_Terminate();
 			}
-
-
 			ImGui::EndMenu();
 		}
+		if (ImGui::BeginMenu("Map"))
+		{
+			if (ImGui::BeginMenu("Add"))
+			{
+				if (ImGui::MenuItem("Townhall"))
+				{
+					g_bAddingTownhall = true;
+				}
+				if (ImGui::MenuItem("Fort"))
+				{
+					g_bAddingFort = true;
+				}
+				ImGui::EndMenu();
+			}
+			ImGui::EndMenu();
+		}
+
 	}
 	ImGui::EndMainMenuBar();
 }
@@ -258,6 +277,17 @@ void GameEditor::RenderMainFrame()
 				if (layer_world[x][y])
 				{
 					RenderMapobject(layer_world[x][y]);
+					if (layer_world[x][y]->Has("Townhall"))
+					{
+						tv.DrawDecal(olc::vf2d(x, y), m_editorDecalDatabase["Rect"], olc::vf2d(3.0f, 2.0f), olc::RED);
+						tv.DrawStringDecal(olc::vf2d(x + 0.5f, y + 0.5f), "Townhall", olc::RED, { 2.0f, 2.0f });
+					}
+					if (layer_world[x][y]->Has("Fort"))
+					{
+						tv.DrawDecal(olc::vf2d(x, y), m_editorDecalDatabase["Rect"], olc::vf2d(2.0f, 2.0f), olc::RED);
+						tv.DrawStringDecal(olc::vf2d(x + 0.5f, y + 0.5f), "Fort", olc::RED, { 2.0f, 2.0f });
+					}
+
 				}
 			}
 		}
@@ -382,6 +412,24 @@ void GameEditor::HandleInput()
 
 	if (!g_bImguiHasFocus)
 	{
+		if (g_bAddingTownhall)
+		{
+			if (GetMouse(0).bReleased)
+			{
+				MakeMapobjectTownhall(mousex, mousey, g_sDefaultCityLayer);
+				g_bAddingTownhall = false;
+			}
+		}
+		if (g_bAddingFort)
+		{
+			if (GetMouse(0).bReleased)
+			{
+				MakeMapobjectFort(mousex, mousey, g_sDefaultCityLayer);
+				g_bAddingFort = false;
+			}
+		}
+
+
 		if (GetMouse(1).bReleased)
 		{
 			if (auto entity = GetMapobjectAt(mousex, mousey, m_currentLayer); entity != nullptr)
@@ -510,7 +558,7 @@ std::string GameEditor::CreateMapobjectName()
 {
 	return "Mapobject_" + std::to_string(m_mapobjectCount++);
 }
-void GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string layer, std::string decal, uint64_t w, uint64_t h)
+Entity* GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string layer, std::string decal, uint64_t w, uint64_t h)
 {
 	auto current_layer = m_currentLayer;
 	m_currentLayer = layer;
@@ -520,6 +568,7 @@ void GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string layer, std:
 	entity->Get< ComponentSprite >("Sprite")->m_height = h;
 
 	m_currentLayer = current_layer;
+	return entity;
 }
 Entity* GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string decal, std::string name)
 {
@@ -959,6 +1008,17 @@ bool GameEditor::ExportMapData(const std::string& filepath)
 					auto object = xmlLayer->InsertNewChildElement("Object");
 
 					// Insert relevant Data for each Object.
+					if (layer[x][y]->Has("Townhall"))
+					{
+						auto townhall = object->InsertNewChildElement("Townhall");
+						
+					}
+					if (layer[x][y]->Has("Fort"))
+					{
+						auto fort = object->InsertNewChildElement("Fort");
+					}
+
+
 					// Position
 					object->SetAttribute("x", layer[x][y]->m_positionx);
 					object->SetAttribute("y", layer[x][y]->m_positiony);
@@ -1011,7 +1071,19 @@ bool GameEditor::ImportMapData(const std::string& filepath)
 			h = entity->IntAttribute("h");
 			const char* sprite = entity->Attribute("sprite");
 
-			CreateMapobject(x, y, std::string(layer_name), std::string(sprite), w, h);
+			auto object = CreateMapobject(x, y, std::string(layer_name), std::string(sprite), w, h);
+
+			auto townhall = entity->FirstChildElement("Townhall");
+			auto fort = entity->FirstChildElement("Fort");
+			if (townhall)
+			{
+				object->Add(new ComponentTownhall(x, y), "Townhall");
+			}
+			if (fort)
+			{
+				object->Add(new ComponentFort(x, y), "Fort");
+			}
+
 
 			entity = entity->NextSiblingElement("Object");
 		}
@@ -1023,11 +1095,45 @@ bool GameEditor::ImportMapData(const std::string& filepath)
 	UpdateLayerSorting();
 	return true;
 }
+void GameEditor::MakeMapobjectTownhall(int x, int y, std::string layer)
+{
+	if (x < 0 ||
+		y < 0 ||
+		x > MAX_MAPSIZE_X - 1 ||
+		y > MAX_MAPSIZE_Y - 1) return;
+
+	m_gameworld[layer][x][y]->Add(new ComponentTownhall(x, y), "Townhall");
+}
+void GameEditor::MakeMapobjectFort(int x, int y, std::string layer)
+{
+	if (x < 0 ||
+		y < 0 ||
+		x > MAX_MAPSIZE_X - 1 ||
+		y > MAX_MAPSIZE_Y - 1) return;
+
+	m_gameworld[layer][x][y]->Add(new ComponentFort(x, y), "Fort");
+}
+void GameEditor::AddTerritoryToCity(int x, int y, std::string layer)
+{
+
+}
+void GameEditor::AddTerritoryToCity(Entity* e)
+{
+
+}
+void GameEditor::AddBuildingSlotCity(int x, int y, std::string layer)
+{
+
+}
+void GameEditor::AddBuildingSlotCity(Entity* e)
+{
+
+}
 
 
 int main()
 {
-	if (editor.Construct(1600, 900, 1, 1, true, true, false))
+	if (editor.Construct(1600, 900, 1, 1, false, true, false))
 		editor.Start();
 
 	return 0;

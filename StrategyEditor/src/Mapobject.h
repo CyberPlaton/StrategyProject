@@ -29,6 +29,37 @@ struct ComponentSprite : public Component
 	int m_width, m_height;
 };
 
+struct ComponentCity : public Component
+{
+	ComponentCity(const std::string& name, int x, int y) : Component(name), m_centerx(x), m_centery(y) {}
+
+	// Where Buildings belonging to this city can be build by a player
+	// owning this city.
+	void AddBuildingSlot(int x, int y) { m_buildingSlots.push_back({ x, y }); }
+	
+	// Territory belonging to this city.
+	void AddTerritory(int x, int y) { m_territory.push_back({ x, y }); }
+
+	void RemoveBuildingSlot(int x, int y);
+	void RemoveTerritory(int x, int y);
+
+	int m_centerx;
+	int m_centery;
+
+	std::vector< std::pair< int, int > > m_buildingSlots;
+	std::vector< std::pair< int, int > > m_territory;
+};
+
+struct ComponentTownhall : public ComponentCity
+{
+	ComponentTownhall(int x, int y) : ComponentCity("Townhall", x, y){}
+};
+struct ComponentFort : public ComponentCity
+{
+	ComponentFort(int x, int y) : ComponentCity("Fort", x, y){}
+};
+
+
 
 struct Entity
 {

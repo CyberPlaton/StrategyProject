@@ -120,6 +120,21 @@ public:
 
 		loaded &= LoadEditorGraphicalData();
 
+
+		auto sprite = new olc::Sprite("assets/Tileset/Structure/Fort.png");
+		auto decal = new olc::Decal(sprite);
+		m_structureDecalDatabase.emplace("Fort", decal);
+		m_decalDatabase.emplace("Fort", decal);
+		m_spriteDatabase.push_back(sprite);
+
+		sprite = new olc::Sprite("assets/Tileset/Structure/Fort_2.png");
+		decal = new olc::Decal(sprite);
+		m_structureDecalDatabase.emplace("Fort_2", decal);
+		m_decalDatabase.emplace("Fort_2", decal);
+		m_spriteDatabase.push_back(sprite);
+
+
+
 		return loaded;
 	}
 
@@ -208,12 +223,20 @@ private:
 	void UpdateVisibleRect();
 	void RenderMapobject(Entity* object);
 	Entity* CreateMapobject(uint64_t x, uint64_t y, std::string decal, std::string name = "none");
-	void CreateMapobject(uint64_t x, uint64_t y, std::string layer, std::string decal, uint64_t w, uint64_t h);
+	Entity* CreateMapobject(uint64_t x, uint64_t y, std::string layer, std::string decal, uint64_t w, uint64_t h);
 	std::string CreateMapobjectName();
 	bool IsMapobjectNameUsed(const std::string& name);
 	void DeleteMapobject(Entity* object);
 	std::string GetMapobjectNameAt(int x, int y, std::string layer);
 	Entity* GetMapobjectAt(int x, int y, std::string layer);
+
+
+	void MakeMapobjectTownhall(int x, int y, std::string layer);
+	void MakeMapobjectFort(int x, int y, std::string layer);
+	void AddTerritoryToCity(int x, int y, std::string layer);
+	void AddTerritoryToCity(Entity* e);
+	void AddBuildingSlotCity(int x, int y, std::string layer);
+	void AddBuildingSlotCity(Entity* e);
 
 
 	// Note: Layer 0 is by Default the first created.
