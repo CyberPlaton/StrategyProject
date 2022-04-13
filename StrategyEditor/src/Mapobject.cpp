@@ -74,7 +74,7 @@ void ComponentCity::RemoveTerritory(int x, int y)
 
 bool ComponentCity::HasBuildingSlot(int x, int y)
 {
-	for (auto it = m_territory.begin(); it != m_territory.end(); it++)
+	for (auto it = m_buildingSlots.begin(); it != m_buildingSlots.end(); it++)
 	{
 		auto pair = *it;
 		if (pair.first == x && pair.second == y)
