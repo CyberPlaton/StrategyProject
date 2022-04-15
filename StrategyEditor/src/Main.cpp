@@ -1168,11 +1168,43 @@ bool GameEditor::ExportMapData(const std::string& filepath)
 					if (layer[x][y]->Has("Townhall"))
 					{
 						auto townhall = object->InsertNewChildElement("Townhall");
-						
+						auto building_slots = townhall->InsertNewChildElement("BuildingSlots");
+						auto territory = townhall->InsertNewChildElement("Territory");
+
+						auto component = layer[x][y]->Get< ComponentTownhall >("Townhall");
+						for (auto bs : component->m_buildingSlots)
+						{
+							auto slot = building_slots->InsertNewChildElement("Slot");
+							slot->SetAttribute("x", bs.first);
+							slot->SetAttribute("y", bs.second);
+						}
+						for (auto tr : component->m_territory)
+						{
+							auto terr = territory->InsertNewChildElement("Slot");
+							terr->SetAttribute("x", tr.first);
+							terr->SetAttribute("y", tr.second);
+						}
 					}
 					if (layer[x][y]->Has("Fort"))
 					{
 						auto fort = object->InsertNewChildElement("Fort");
+
+						auto building_slots = fort->InsertNewChildElement("BuildingSlots");
+						auto territory = fort->InsertNewChildElement("Territory");
+
+						auto component = layer[x][y]->Get< ComponentTownhall >("Fort");
+						for (auto bs : component->m_buildingSlots)
+						{
+							auto slot = building_slots->InsertNewChildElement("Slot");
+							slot->SetAttribute("x", bs.first);
+							slot->SetAttribute("y", bs.second);
+						}
+						for (auto tr : component->m_territory)
+						{
+							auto terr = territory->InsertNewChildElement("Slot");
+							terr->SetAttribute("x", tr.first);
+							terr->SetAttribute("y", tr.second);
+						}
 					}
 
 
@@ -1240,6 +1272,39 @@ bool GameEditor::ImportMapData(const std::string& filepath)
 			{
 				object->Add(new ComponentFort(x, y), "Fort");
 			}
+			if (townhall || fort)
+			{
+				ComponentCity* city_comp = nullptr;
+				auto city = townhall;
+				// Get Territory and Buildingslots if any.
+				if (!city)
+				{
+					city = fort;
+					city_comp = object->Get< ComponentFort >("Fort");
+				}
+				else
+				{
+					city_comp = object->Get< ComponentTownhall >("Townhall");
+				}
+				
+				auto bs = city->FirstChildElement("BuildingSlots");
+				auto bslot = bs->FirstChildElement("Slot");
+				while (bslot)
+				{
+					city_comp->AddBuildingSlot(bslot->IntAttribute("x"), bslot->IntAttribute("y"));
+
+					bslot = bslot->NextSiblingElement("Slot");
+				}
+				auto ts = city->FirstChildElement("Territory");
+				auto tslot = ts->FirstChildElement("Slot");
+				while (tslot)
+				{
+					city_comp->AddTerritory(tslot->IntAttribute("x"), tslot->IntAttribute("y"));
+
+					tslot = tslot->NextSiblingElement("Slot");
+				}
+			}
+
 
 
 			entity = entity->NextSiblingElement("Object");

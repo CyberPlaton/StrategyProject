@@ -231,6 +231,7 @@ private:
 	Entity* GetMapobjectAt(int x, int y, std::string layer);
 
 
+
 	void MakeMapobjectTownhall(int x, int y, std::string layer);
 	void MakeMapobjectFort(int x, int y, std::string layer);
 	void AddTerritoryToCity(Entity* e, int slotx, int sloty);
