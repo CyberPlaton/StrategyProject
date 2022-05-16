@@ -1392,7 +1392,7 @@ void GameEditor::RemoveBuildingSlotFromCity(Entity* e, int slotx, int sloty)
 
 int main()
 {
-	if (editor.Construct(1600, 900, 1, 1, false, true, false))
+	if (editor.Construct(1600, 900, 1, 1, true, true, false))
 		editor.Start();
 
 	return 0;
