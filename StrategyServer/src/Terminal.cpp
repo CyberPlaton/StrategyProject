@@ -129,17 +129,80 @@ void Terminal::MainMenuBar()
 {
 	if (ImGui::BeginMainMenuBar())
 	{
-		if (ImGui::BeginMenu("Menu"))
+		if (ImGui::BeginMenu("Terminal"))
 		{
 			if (ImGui::MenuItem("Exit"))
 			{
 				glfwSetWindowShouldClose(m_window, GLFW_TRUE);
 			}
+			ImGui::EndMenu();
+		}
 
 
+		if (ImGui::BeginMenu("MasterServer"))
+		{
+			if (ImGui::MenuItem("Startup"))
+			{
+				if (!m_masterServer)
+				{
+					uint32_t port = 60777;
+					uint32_t max = 1;
+
+					m_masterServer = new MasterServer();
+					std::string error;
+					if (m_masterServer->Initialize(port, max, &error))
+					{
+						LOG_TERMINAL_INFO("[MASTERSERVER] Successfully start up Masterserver!");
+					}
+					else
+					{
+						LOG_TERMINAL_ERROR("[MASTERSERVER] Failed to start up Masterserver!\n\t >> \"%s\"", error.c_str());
+						delete m_masterServer;
+						m_masterServer = nullptr;
+					}
+				}
+				else
+				{
+					LOG_TERMINAL_WARN("[MASTERSERVER] Masterserver already running!");
+				}
+			}
+			if (ImGui::MenuItem("Shutdown"))
+			{
+				m_masterServer->Exit();
+				m_masterServer->Terminate();
+				delete m_masterServer;
+				m_masterServer = nullptr;
+				LOG_TERMINAL_INFO("[MASTERSERVER] Successfully shut down Masterserver!");
+			}
 
 			ImGui::EndMenu();
 		}
+
+		if (ImGui::BeginMenu("DBMS"))
+		{
+			using namespace dbms;
+
+			if (ImGui::MenuItem("Startup"))
+			{
+				if (DBMS::get()->Initialized())
+				{
+					LOG_TERMINAL_INFO("[DBMS] Successfully start up DBMS!");
+				}
+				else
+				{
+					LOG_TERMINAL_ERROR("[DBMS] Failed to start up DBMS!");
+					DBMS::del();
+				}
+			}
+			if (ImGui::MenuItem("Shutdown"))
+			{
+				DBMS::del();
+				LOG_TERMINAL_INFO("[DBMS] Successfully shut down DBMS!");
+			}
+
+			ImGui::EndMenu();
+		}
+
 	}
 	ImGui::EndMainMenuBar();
 }
@@ -211,11 +274,23 @@ bool Terminal::Initialize(TerminalDescription* desc)
 
 void Terminal::Terminate()
 {
+	// Terminate Terminal
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
 	glfwDestroyWindow(m_window);
 	glfwTerminate();
+
+	// Terminate DBMS and MS
+	if (m_masterServer)
+	{
+		m_masterServer->Exit();
+		m_masterServer->Terminate();
+		delete m_masterServer;
+		m_masterServer = nullptr;
+	}
+
+	dbms::DBMS::del();
 }
 
 void Terminal::OnFrameBegin()
@@ -281,7 +356,7 @@ void Terminal::LogMasterServer(const char* fmt, ...) IM_FMTARGS(2)
 Terminal* Terminal::g_Terminal = nullptr;
 
 
-Terminal::Terminal()
+Terminal::Terminal() : m_masterServer(nullptr)
 {
 }
 

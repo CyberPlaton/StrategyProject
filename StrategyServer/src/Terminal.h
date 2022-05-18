@@ -14,6 +14,9 @@
 
 #include <iostream>
 
+// MASTERSERVER AND DBMS
+#include "DBMS.h"
+#include "MasterServer.h"
 
 class Terminal
 {
@@ -56,6 +59,9 @@ private:
 	ImVec4 m_MSColor;
 	bool m_MSAutoScroll;
 
+
+	// MS
+	MasterServer* m_masterServer;
 
 private:
 	Terminal();

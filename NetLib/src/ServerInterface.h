@@ -24,7 +24,7 @@ namespace net
 		~ServerInterface()
 		{
 		}
-		bool Initialize(uint32_t port, uint32_t max_connections);
+		bool Initialize(uint32_t port, uint32_t max_connections, std::string* error_message);
 		void Terminate();
 		void Start();
 		void Send(RakNet::BitStream& stream, RakNet::SystemAddress& client);
@@ -59,6 +59,7 @@ namespace net
 		void Update(RakNet::Time&& currentTime);
 		bool Running();
 		bool Validate(RakNet::Packet* packet);
+		std::string GetErrorString(RakNet::StartupResult result);
 	};
 
 

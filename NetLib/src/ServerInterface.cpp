@@ -2,7 +2,38 @@
 
 namespace net
 {
-	bool ServerInterface::Initialize(uint32_t port, uint32_t max_connections)
+	std::string ServerInterface::GetErrorString(RakNet::StartupResult result)
+	{
+		switch (result)
+		{
+		case RakNet::RAKNET_ALREADY_STARTED:
+			return "RakNet Already Started";
+		case RakNet::INVALID_SOCKET_DESCRIPTORS:
+			return "Invalid Socket Descriptors";
+		case RakNet::INVALID_MAX_CONNECTIONS:
+			return "Invalid Max Connections";
+		case RakNet::SOCKET_FAMILY_NOT_SUPPORTED:
+			return "Socket Family Not Supported";
+		case RakNet::SOCKET_PORT_ALREADY_IN_USE:
+			return "Socket Port Already In Use";
+		case RakNet::SOCKET_FAILED_TO_BIND:
+			return "Socket Failed To Bind";
+		case RakNet::SOCKET_FAILED_TEST_SEND:
+			return "Socket Failed Test Send";
+		case RakNet::PORT_CANNOT_BE_ZERO:
+			return "Port Cannot Be Zero";
+		case RakNet::FAILED_TO_CREATE_NETWORK_THREAD:
+			return "Failed To Create Network Thread";
+		case RakNet::COULD_NOT_GENERATE_GUID:
+			return "Could Not Generate GUID";
+		case RakNet::STARTUP_OTHER_FAILURE:
+			return "Startup Other Failure";
+		default:
+			return "Unknown Startup Error";
+		}
+	}
+
+	bool ServerInterface::Initialize(uint32_t port, uint32_t max_connections, std::string* error_message)
 	{
 		using namespace RakNet;
 
@@ -14,6 +45,7 @@ namespace net
 		auto result = m_instance->Startup(max_connections, &desc, 1);
 		if (result != StartupResult::RAKNET_STARTED)
 		{
+			error_message->append(GetErrorString(result));
 			return false;
 		}
 
