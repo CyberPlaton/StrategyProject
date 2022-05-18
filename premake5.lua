@@ -331,9 +331,13 @@ workspace "Strategy"
 		-- Specify which source files to include
 		files
 		{
-			-- all files in the CarSteering directory with endings of .h or .cpp
+			-- all files in the Project src directory with endings of .h or .cpp
 			"%{prj.name}/src/**.h",
 			"%{prj.name}/src/**.cpp",
+
+			-- all imgui files also need to be included in order to build correctly
+			"%{prj.name}/common/include/imgui/**.h",
+			"%{prj.name}/common/include/imgui/**.cpp",
 		}
 		-- Include thirdparty files
 		includedirs
@@ -346,6 +350,10 @@ workspace "Strategy"
 			"C://boost_1_78_0",								-- MongoDB requires Boost
 			"%{prj.name}/common/include/spdlog",			-- Logging
 
+
+			"%{prj.name}/common/include/imgui",				-- MasterServer GUI
+			"%{prj.name}/common/include/GL",				-- ImGui
+			"%{prj.name}/common/include/GLFW",				-- ImGui
 
 			"NetLib/common/include/RakNet",					-- Networking
 			"NetLib/src",									-- Networking
@@ -382,6 +390,9 @@ workspace "Strategy"
 				"bsoncxx",
 				"mongocxx",
 				"spdlogd",
+				"glew32",
+				"glfw3",
+				"opengl32",
 			}
 		filter "configurations:Release"
 			libdirs{"libs", "%{prj.name}/common/lib/Release"}
@@ -465,9 +476,14 @@ workspace "Strategy"
 		-- Specify which source files to include
 		files
 		{
-			-- all files in the CarSteering directory with endings of .h or .cpp
+			-- all files in the project src directory with endings of .h or .cpp
 			"%{prj.name}/src/**.h",
 			"%{prj.name}/src/**.cpp",
+
+			-- all imgui files also need to be included in order to build correctly
+			"%{prj.name}/common/include/imgui/**.h",
+			"%{prj.name}/common/include/imgui/**.cpp",
+
 		}
 		-- Include thirdparty files
 		includedirs
