@@ -9,6 +9,9 @@
 #include "Logging.h"
 #include "DBMS.h"
 
+#include "ICommand.h"
+#include "IMenu.h"
+
 
 class MasterServer : public net::ServerInterface
 {
