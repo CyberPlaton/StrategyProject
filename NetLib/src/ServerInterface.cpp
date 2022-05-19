@@ -58,6 +58,7 @@ namespace net
 	{
 		RakNet::RakPeerInterface::DestroyInstance(m_instance);
 	}
+
 	void ServerInterface::Start()
 	{
 		while (Running())

@@ -28,8 +28,7 @@ public:
 	void OnUpdate() override final;
 
 	// COMMON SERVER FUNCTIONS
-	bool ShouldExit() { return m_shouldExit; }
-	void Exit() { m_shouldExit = true; }
+	bool ShouldExit() { return !Running(); }
 	bool CheckClientVersion(uint64_t v);
 	bool CheckClientVersion(net::SClientDescription& desc);
 
@@ -42,7 +41,6 @@ public:
 private:
 
 	Timer m_timer;
-	bool m_shouldExit = false;
 
 	std::map< RakNet::RakString, uint32_t > m_clients;
 	uint32_t m_nextId = 10000;

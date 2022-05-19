@@ -2,6 +2,10 @@
 
 #include "CommonDefines.h"
 
+#include <iostream>
+#include <thread>
+#include <chrono>
+
 // GLEW AND GLFW
 #define GLEW_STATIC
 #include "GL/glew.h"
@@ -12,7 +16,6 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
-#include <iostream>
 
 // MASTERSERVER AND DBMS
 #include "DBMS.h"
@@ -62,6 +65,7 @@ private:
 
 	// MS
 	MasterServer* m_masterServer;
+	std::thread m_masterServerThread;
 
 private:
 	Terminal();

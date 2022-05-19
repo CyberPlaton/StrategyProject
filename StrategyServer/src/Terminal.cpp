@@ -3,9 +3,6 @@
 
 bool Terminal::OnUpdate()
 {
-	static bool show_demo_window = true;
-	ImGui::ShowDemoWindow(&show_demo_window);
-
 	if (glfwWindowShouldClose(m_window))
 	{
 		return false;
@@ -32,7 +29,7 @@ void Terminal::RenderMasterServerLog()
 	ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.1f);
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1));
 
-	ImGui::Begin("MasterServer Log", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar);
+	ImGui::Begin("MasterServer Log", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 
 
 	if (ImGui::Button("Clear Log"))
@@ -84,7 +81,7 @@ void Terminal::RenderTerminalLog()
 	ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.1f);
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1));
 
-	ImGui::Begin("Terminal Log", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar);
+	ImGui::Begin("Terminal Log", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 
 	if (ImGui::Button("Clear Log"))
 	{
@@ -152,6 +149,9 @@ void Terminal::MainMenuBar()
 					std::string error;
 					if (m_masterServer->Initialize(port, max, &error))
 					{
+						std::thread t(&MasterServer::Start, m_masterServer);
+						m_masterServerThread = std::move(t);
+						m_masterServerThread.detach();
 						LOG_TERMINAL_INFO("[MASTERSERVER] Successfully start up Masterserver!");
 					}
 					else
@@ -168,10 +168,14 @@ void Terminal::MainMenuBar()
 			}
 			if (ImGui::MenuItem("Shutdown"))
 			{
-				m_masterServer->Exit();
-				m_masterServer->Terminate();
-				delete m_masterServer;
-				m_masterServer = nullptr;
+				if (m_masterServer)
+				{
+					m_masterServer->Exit();
+					std::this_thread::sleep_for(std::chrono::seconds(3));
+					m_masterServer->Terminate();
+					delete m_masterServer;
+					m_masterServer = nullptr;
+				}
 				LOG_TERMINAL_INFO("[MASTERSERVER] Successfully shut down Masterserver!");
 			}
 
