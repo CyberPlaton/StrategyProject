@@ -17,10 +17,10 @@
 	#endif
 #endif
 
-#define CHERRYSODA_DEFAULT_MAIN \
+#define CHERRYSODA_DEFAULT_MAIN(width, height) \
 int main(int argc, char* argv[]) \
 { \
-	GameApp* game = new GameApp; \
+	GameApp* game = new GameApp(width, height); \
 	game->Run(argc, argv); \
 	delete game; \
 	return 0; \

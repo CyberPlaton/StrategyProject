@@ -106,7 +106,7 @@ public:
 	typedef cherrysoda::Engine base;
 
 	// ENGINE OVERRIDES
-	App();
+	App(uint64_t width, uint64_t height);
 	void Update() override;
 	void Initialize() override;
 	void LoadContent() override;

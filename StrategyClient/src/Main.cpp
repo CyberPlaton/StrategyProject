@@ -110,7 +110,7 @@ void NetCommMngr::UpdateNetGameobject(net::SGameobject* object)
 	g_App->Send(out);
 	*/
 }
-App::App() : base(), 
+App::App(uint64_t width, uint64_t height) : base(width, height, "Empty Title"),
 m_DefaultTexture(nullptr), m_Image(nullptr)
 {
 	SetTitle(TITLE(CLIENT_TITLE_STRING, 0, 1, 0));
@@ -806,4 +806,4 @@ void cherrysoda::LuaFactory::InitializeBinding(cherrysoda::Lua* lua)
 
 
 using GameApp = App;
-CHERRYSODA_DEFAULT_MAIN
+CHERRYSODA_DEFAULT_MAIN(1280, 720)
