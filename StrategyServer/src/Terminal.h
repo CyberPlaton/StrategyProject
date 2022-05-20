@@ -20,6 +20,7 @@
 // MASTERSERVER AND DBMS
 #include "DBMS.h"
 #include "MasterServer.h"
+#include "CommandImpl.h"
 
 class Terminal
 {
@@ -64,7 +65,6 @@ private:
 
 
 	// MS
-	MasterServer* m_masterServer;
 	std::thread m_masterServerThread;
 
 private:

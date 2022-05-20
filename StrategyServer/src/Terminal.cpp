@@ -140,16 +140,16 @@ void Terminal::MainMenuBar()
 		{
 			if (ImGui::MenuItem("Startup"))
 			{
-				if (!m_masterServer)
+				if (!MasterServer::MasterServerCreated())
 				{
 					uint32_t port = 60777;
 					uint32_t max = 1;
 
-					m_masterServer = new MasterServer();
+					auto ms = MasterServer::get();
 					std::string error;
-					if (m_masterServer->Initialize(port, max, &error))
+					if (ms->Initialize(port, max, &error))
 					{
-						std::thread t(&MasterServer::Start, m_masterServer);
+						std::thread t(&MasterServer::Start, ms);
 						m_masterServerThread = std::move(t);
 						m_masterServerThread.detach();
 						LOG_TERMINAL_INFO("[MASTERSERVER] Successfully start up Masterserver!");
@@ -157,8 +157,7 @@ void Terminal::MainMenuBar()
 					else
 					{
 						LOG_TERMINAL_ERROR("[MASTERSERVER] Failed to start up Masterserver!\n\t >> \"%s\"", error.c_str());
-						delete m_masterServer;
-						m_masterServer = nullptr;
+						MasterServer::del();
 					}
 				}
 				else
@@ -168,13 +167,14 @@ void Terminal::MainMenuBar()
 			}
 			if (ImGui::MenuItem("Shutdown"))
 			{
-				if (m_masterServer)
+				if (MasterServer::MasterServerCreated())
 				{
-					m_masterServer->Exit();
+					auto ms = MasterServer::get();
+
+					ms->Exit();
 					std::this_thread::sleep_for(std::chrono::seconds(3));
-					m_masterServer->Terminate();
-					delete m_masterServer;
-					m_masterServer = nullptr;
+					ms->Terminate();
+					MasterServer::del();
 				}
 				LOG_TERMINAL_INFO("[MASTERSERVER] Successfully shut down Masterserver!");
 			}
@@ -207,6 +207,50 @@ void Terminal::MainMenuBar()
 			ImGui::EndMenu();
 		}
 
+
+		if (ImGui::BeginMenu("Debug"))
+		{
+			if (ImGui::MenuItem("Add Debug Command"))
+			{
+				if (MasterServer::MasterServerCreated())
+				{
+					auto cmd = new CommandDebug();
+					MasterServer::get()->AddCommand(cmd);
+				}
+			}
+			if (ImGui::MenuItem("Retrieve Debug Command Output"))
+			{
+				if (MasterServer::MasterServerCreated())
+				{
+					auto s = MasterServer::get()->RetrieveNextOutput();
+
+					std::string command, message;
+					bool delimiter_found = false;
+					bool delimiter_skipped = false;
+					for (int i = 0; i < s.size(); i++)
+					{
+						if (s[i] != '!' && delimiter_found == false)
+						{
+							command.append(1, s[i]);
+						}
+						else if (s[i] == '!' && delimiter_skipped == false)
+						{
+							delimiter_skipped = true;
+							delimiter_found = true;
+							continue;
+						}
+						else
+						{
+							message.append(1, s[i]);
+						}
+					}
+
+					LOG_TERMINAL_CRITICAL("[DEBUG COMMAND] Command: %s, Message: %s", command.c_str(), message.c_str());
+				}
+			}
+
+			ImGui::EndMenu();
+		}
 	}
 	ImGui::EndMainMenuBar();
 }
@@ -286,12 +330,12 @@ void Terminal::Terminate()
 	glfwTerminate();
 
 	// Terminate DBMS and MS
-	if (m_masterServer)
+	if (MasterServer::MasterServerCreated())
 	{
-		m_masterServer->Exit();
-		m_masterServer->Terminate();
-		delete m_masterServer;
-		m_masterServer = nullptr;
+		auto ms = MasterServer::get();
+		ms->Exit();
+		ms->Terminate();
+		MasterServer::del();
 	}
 
 	dbms::DBMS::del();
@@ -360,7 +404,7 @@ void Terminal::LogMasterServer(const char* fmt, ...) IM_FMTARGS(2)
 Terminal* Terminal::g_Terminal = nullptr;
 
 
-Terminal::Terminal() : m_masterServer(nullptr)
+Terminal::Terminal()
 {
 }
 

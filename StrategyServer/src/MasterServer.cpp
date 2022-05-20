@@ -1,5 +1,11 @@
 #include "MasterServer.h"
 
+MasterServer* MasterServer::g_MasterServer = nullptr;
+
+bool MasterServer::MasterServerCreated()
+{
+	return g_MasterServer != nullptr;
+}
 
 void MasterServer::OnMessage(RakNet::Packet* packet)
 {
@@ -101,9 +107,26 @@ uint64_t MasterServer::GetVersion()
 {
 	return 1000;
 }
+
+void MasterServer::AddCommand(ICommand* cmd)
+{
+	m_commandQueue.push_back(cmd);
+}
+
+std::string MasterServer::RetrieveNextOutput()
+{
+	if (!m_outputQueue.empty())
+	{
+		auto s = m_outputQueue.pop_front();
+		return s;
+	}
+	return "";
+}
+
 void MasterServer::OnUpdate()
 {
 	BackupClientCount(10);
+	ExecuteTerminalCommands();
 }
 void MasterServer::BackupClientCount(uint32_t seconds)
 {
@@ -113,6 +136,29 @@ void MasterServer::BackupClientCount(uint32_t seconds)
 		m_timer.StartTimer();
 	}
 }
+
+void MasterServer::ExecuteTerminalCommands()
+{
+	tsqueue< ICommand* > reoccurring;
+	while (!m_commandQueue.empty())
+	{
+		auto cmd = m_commandQueue.pop_front();
+		cmd->Execute();
+		m_outputQueue.push_back(cmd->RetrieveCommandOutput());
+		
+		if (cmd->Persistent())
+		{
+			reoccurring.push_back(cmd);
+		}
+	}
+
+	while (!reoccurring.empty())
+	{
+		m_commandQueue.push_back(reoccurring.pop_front());
+	}
+}
+
+
 uint32_t MasterServer::AssignClientId()
 {
 	return m_nextId++;

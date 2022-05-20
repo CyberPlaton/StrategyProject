@@ -10,15 +10,16 @@
 #include "DBMS.h"
 
 #include "ICommand.h"
-
+#include "ThreadSafeQueue.h"
 
 class MasterServer : public net::ServerInterface
 {
 public:
-	MasterServer() : net::ServerInterface()
-	{
-		m_timer.StartTimer();
-	}
+	// STATIC HELPERS
+	STATIC_GET_DEL(MasterServer, g_MasterServer);
+	static bool MasterServerCreated();
+
+
 
 	// SERVER INTERFACE OVERRIDES
 	void OnMessage(RakNet::Packet* packet) override final;
@@ -37,15 +38,28 @@ public:
 	std::string MapdataToText(tinyxml2::XMLDocument& doc);
 	tinyxml2::XMLDocument& MapdataFromText(std::string& maptext);
 	uint64_t GetVersion();
+	void AddCommand(ICommand* cmd);
+	std::string RetrieveNextOutput();
 
 private:
+	static MasterServer* g_MasterServer;
 
 	Timer m_timer;
 
 	std::map< RakNet::RakString, uint32_t > m_clients;
 	uint32_t m_nextId = 10000;
 
+	// Terminal Command Handling
+	tsqueue< std::string > m_outputQueue;
+	tsqueue< ICommand* > m_commandQueue;
+
+
 private:
+	MasterServer() : net::ServerInterface()
+	{
+		m_timer.StartTimer();
+	}
 	uint32_t AssignClientId();
 	void BackupClientCount(uint32_t seconds);
+	void ExecuteTerminalCommands();
 };
