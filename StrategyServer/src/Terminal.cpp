@@ -9,9 +9,12 @@ bool Terminal::OnUpdate()
 	}
 	else
 	{
+		RetrieveCommandOutput();
+
 		MainMenuBar();
 		RenderTerminalLog();
 		RenderMasterServerLog();
+
 
 		return true;
 	}
@@ -99,10 +102,16 @@ void Terminal::RenderTerminalLog()
 	{
 		const char* color_item = m_TerItems[i - 1];
 
-		if (strstr(color_item, "[info]")) { m_TerColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); }
-		else if (strstr(color_item, "[warn]")) { m_TerColor = ImVec4(1.0f, 1.0f, 0.0f, 1.0f); }
-		else if (strstr(color_item, "[error]")) { m_TerColor = ImVec4(1.0f, 0.3f, 0.0f, 1.0f); }
-		else if (strstr(color_item, "[critical]")) { m_TerColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); }
+		if (strstr(color_item, "[info]")) { m_TerColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); }			// Green
+		else if (strstr(color_item, "[warn]")) { m_TerColor = ImVec4(1.0f, 1.0f, 0.0f, 1.0f); }		// Yellow
+		else if (strstr(color_item, "[error]")) { m_TerColor = ImVec4(1.0f, 0.3f, 0.0f, 1.0f); }	// Orange
+		else if (strstr(color_item, "[critical]")) { m_TerColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); } // Red
+		
+		else if (strstr(color_item, "[cyan]")) { m_TerColor = ImVec4(0.12f, 0.99f, 1.0f, 1.0f); }	// Cyan
+		else if (strstr(color_item, "[magenta]")) { m_TerColor = ImVec4(0.92f, 0.05f, 1.0f, 1.0f); }// Magenta
+		else if (strstr(color_item, "[blue]")) { m_TerColor = ImVec4(0.1f, 0.375f, 1.0f, 1.0f); }	// Blue
+		else if (strstr(color_item, "[white]")) { m_TerColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); }	// White
+
 
 		const char* item = m_TerItems[i];
 
@@ -121,6 +130,41 @@ void Terminal::RenderTerminalLog()
 	ImGui::PopStyleVar();
 }
 
+
+void Terminal::RetrieveCommandOutput()
+{
+	if (MasterServer::MasterServerCreated())
+	{
+		auto s = MasterServer::get()->RetrieveNextOutput();
+		if (s.compare("") == 0) return;
+
+		std::string command, message;
+		bool delimiter_found = false;
+		bool delimiter_skipped = false;
+		for (int i = 0; i < s.size(); i++)
+		{
+			if (s[i] != '!' && delimiter_found == false)
+			{
+				command.append(1, s[i]);
+			}
+			else if (s[i] == '!' && delimiter_skipped == false)
+			{
+				delimiter_skipped = true;
+				delimiter_found = true;
+				continue;
+			}
+			else
+			{
+				message.append(1, s[i]);
+			}
+		}
+		m_commandOutputVectorMap[command].push_back(message);
+	}
+}
+
+void Terminal::AddCommandOutputToMasterServerLog()
+{
+}
 
 void Terminal::MainMenuBar()
 {
@@ -245,7 +289,14 @@ void Terminal::MainMenuBar()
 						}
 					}
 
+					LOG_TERMINAL_INFO("[DEBUG COMMAND] Command: %s, Message: %s", command.c_str(), message.c_str());
+					LOG_TERMINAL_WARN("[DEBUG COMMAND] Command: %s, Message: %s", command.c_str(), message.c_str());
+					LOG_TERMINAL_ERROR("[DEBUG COMMAND] Command: %s, Message: %s", command.c_str(), message.c_str());
 					LOG_TERMINAL_CRITICAL("[DEBUG COMMAND] Command: %s, Message: %s", command.c_str(), message.c_str());
+					LOG_TERMINAL_FMT("blue", "[DEBUG COMMAND] Command: %s, Message: %s", command.c_str(), message.c_str());
+					LOG_TERMINAL_FMT("magenta", "[DEBUG COMMAND] Command: %s, Message: %s", command.c_str(), message.c_str());
+					LOG_TERMINAL_FMT("cyan", "[DEBUG COMMAND] Command: %s, Message: %s", command.c_str(), message.c_str());
+					LOG_TERMINAL_FMT("white", "[DEBUG COMMAND] Command: %s, Message: %s", command.c_str(), message.c_str());
 				}
 			}
 

@@ -12,13 +12,13 @@ bool Logger::Initialize()
 
 #ifdef DEBUG
 	// Complete tracing.
-	// Output to file and output to realtime ingame log.
+	// Output to file and output to real time in-game log.
 	spdlog::set_pattern("%^[%Y-%m-%d %H:%M:%S][%n] %v%$");
 
 	g_ConsoleLog = spdlog::stdout_color_mt("DEBUG");
 #elif defined RELEASE
 	// Partial tracing.
-	// Output to realtime ingame log.
+	// Output to real time in-game log.
 #elif defined DISTR
 	// Minimal tracing.
 	// Output to file.
@@ -30,5 +30,6 @@ bool Logger::Initialize()
 
 	LOG_DBG_INFO("[{:.4f}] Starting Application...", 0.0);
 	LOG_FILE_INFO("[{:.4f}] Starting Application...", 0.0);
+
 	return true;
 }

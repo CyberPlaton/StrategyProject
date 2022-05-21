@@ -67,6 +67,9 @@ private:
 	// MS
 	std::thread m_masterServerThread;
 
+	// Terminal Output.
+	std::map< std::string, std::vector< std::string > > m_commandOutputVectorMap;
+
 private:
 	Terminal();
 	Terminal(const Terminal& lh) = delete;
@@ -83,6 +86,9 @@ private:
 	void RenderMasterServerLog();
 	void RenderTerminalLog();
 	char* Strdup(const char* s) { IM_ASSERT(s); size_t len = strlen(s) + 1; void* buf = malloc(len); IM_ASSERT(buf); return (char*)memcpy(buf, (const void*)s, len); }
+	
+	void RetrieveCommandOutput();
+	void AddCommandOutputToMasterServerLog();
 
 private:
 	void MainMenuBar();
@@ -92,6 +98,7 @@ private:
 #define LOG_TERMINAL_WARN(...)		Terminal::get()->LogTerminal(__VA_ARGS__); Terminal::get()->LogTerminal("[warn]")
 #define LOG_TERMINAL_ERROR(...)		Terminal::get()->LogTerminal(__VA_ARGS__); Terminal::get()->LogTerminal("[error]")
 #define LOG_TERMINAL_CRITICAL(...)  Terminal::get()->LogTerminal(__VA_ARGS__); Terminal::get()->LogTerminal("[critical]")
+#define LOG_TERMINAL_FMT(color, ...)  Terminal::get()->LogTerminal(__VA_ARGS__); Terminal::get()->LogTerminal( "[" ##color "]" )
 
 #define LOG_MS_INFO(...)		Terminal::get()->LogMasterServer(__VA_ARGS__); Terminal::get()->LogMasterServer("[info]")
 #define LOG_MS_WARN(...)		Terminal::get()->LogMasterServer(__VA_ARGS__); Terminal::get()->LogMasterServer("[warn]")
