@@ -89,6 +89,7 @@ private:
 	
 	void RetrieveCommandOutput();
 	void AddCommandOutputToMasterServerLog();
+	void OutputColoredCommandOutput(const char* color, const char* fmt, ...);
 
 private:
 	void MainMenuBar();
@@ -104,3 +105,4 @@ private:
 #define LOG_MS_WARN(...)		Terminal::get()->LogMasterServer(__VA_ARGS__); Terminal::get()->LogMasterServer("[warn]")
 #define LOG_MS_ERROR(...)		Terminal::get()->LogMasterServer(__VA_ARGS__); Terminal::get()->LogMasterServer("[error]")
 #define LOG_MS_CRITICAL(...)	Terminal::get()->LogMasterServer(__VA_ARGS__); Terminal::get()->LogMasterServer("[critical]")
+#define LOG_MS_FMT(color, ...)	Terminal::get()->LogMasterServer(__VA_ARGS__); Terminal::get()->LogMasterServer( "[" ##color "]" )

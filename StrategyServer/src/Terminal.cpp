@@ -15,6 +15,19 @@ bool Terminal::OnUpdate()
 		RenderTerminalLog();
 		RenderMasterServerLog();
 
+		for (auto p : m_commandOutputVectorMap)
+		{
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.1f);
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1));
+			ImGui::Begin(p.first.c_str());
+			for (auto m : p.second)
+			{
+				OutputColoredCommandOutput("white", m.c_str());
+			}
+			ImGui::End();
+			ImGui::PopStyleVar();
+			ImGui::PopStyleVar();
+		}
 
 		return true;
 	}
@@ -32,7 +45,9 @@ void Terminal::RenderMasterServerLog()
 	ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.1f);
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1));
 
-	ImGui::Begin("MasterServer Log", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+	ImGui::Begin("MasterServer Log", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar |
+											ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+											ImGuiWindowFlags_NoBringToFrontOnFocus);
 
 
 	if (ImGui::Button("Clear Log"))
@@ -55,6 +70,12 @@ void Terminal::RenderMasterServerLog()
 		else if (strstr(color_item, "[warn]")) { m_MSColor = ImVec4(1.0f, 1.0f, 0.0f, 1.0f); }
 		else if (strstr(color_item, "[error]")) { m_MSColor = ImVec4(1.0f, 0.3f, 0.0f, 1.0f); }
 		else if (strstr(color_item, "[critical]")) { m_MSColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); }
+
+		else if (strstr(color_item, "[cyan]")) { m_TerColor = ImVec4(0.12f, 0.99f, 1.0f, 1.0f); }	// Cyan
+		else if (strstr(color_item, "[magenta]")) { m_TerColor = ImVec4(0.92f, 0.05f, 1.0f, 1.0f); }// Magenta
+		else if (strstr(color_item, "[blue]")) { m_TerColor = ImVec4(0.1f, 0.375f, 1.0f, 1.0f); }	// Blue
+		else if (strstr(color_item, "[white]")) { m_TerColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); }	// White
+
 
 		const char* item = m_MSItems[i];
 
@@ -84,7 +105,10 @@ void Terminal::RenderTerminalLog()
 	ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.1f);
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1));
 
-	ImGui::Begin("Terminal Log", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+	ImGui::Begin("Terminal Log", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar |
+										ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+										ImGuiWindowFlags_NoBringToFrontOnFocus);
+
 
 	if (ImGui::Button("Clear Log"))
 	{
@@ -158,12 +182,37 @@ void Terminal::RetrieveCommandOutput()
 				message.append(1, s[i]);
 			}
 		}
+
 		m_commandOutputVectorMap[command].push_back(message);
 	}
 }
 
 void Terminal::AddCommandOutputToMasterServerLog()
 {
+}
+
+void Terminal::OutputColoredCommandOutput(const char* color, const char* fmt, ...) IM_FMTARGS(2)
+{
+	ImVec4 col;
+
+	if (strstr(color, "green"))				{ col = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); }			// Green
+	else if (strstr(color, "yellow"))		{ col = ImVec4(1.0f, 1.0f, 0.0f, 1.0f); }			// Yellow
+	else if (strstr(color, "orange"))		{ col = ImVec4(1.0f, 0.3f, 0.0f, 1.0f); }			// Orange
+	else if (strstr(color, "red"))			{ col = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); }			// Red
+											  
+	else if (strstr(color, "cyan"))			{ col = ImVec4(0.12f, 0.99f, 1.0f, 1.0f); }			// Cyan
+	else if (strstr(color, "magenta"))		{ col = ImVec4(0.92f, 0.05f, 1.0f, 1.0f); }			// Magenta
+	else if (strstr(color, "blue"))			{ col = ImVec4(0.1f, 0.375f, 1.0f, 1.0f); }			// Blue
+	else if (strstr(color, "white"))		{ col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); }			// White
+
+
+	char buf[1024];
+	va_list args;
+	va_start(args, fmt);
+	vsnprintf(buf, IM_ARRAYSIZE(buf), fmt, args);
+	buf[IM_ARRAYSIZE(buf) - 1] = 0;
+	va_end(args);
+	ImGui::TextColored(col, Strdup(buf));
 }
 
 void Terminal::MainMenuBar()
@@ -262,44 +311,6 @@ void Terminal::MainMenuBar()
 					MasterServer::get()->AddCommand(cmd);
 				}
 			}
-			if (ImGui::MenuItem("Retrieve Debug Command Output"))
-			{
-				if (MasterServer::MasterServerCreated())
-				{
-					auto s = MasterServer::get()->RetrieveNextOutput();
-
-					std::string command, message;
-					bool delimiter_found = false;
-					bool delimiter_skipped = false;
-					for (int i = 0; i < s.size(); i++)
-					{
-						if (s[i] != '!' && delimiter_found == false)
-						{
-							command.append(1, s[i]);
-						}
-						else if (s[i] == '!' && delimiter_skipped == false)
-						{
-							delimiter_skipped = true;
-							delimiter_found = true;
-							continue;
-						}
-						else
-						{
-							message.append(1, s[i]);
-						}
-					}
-
-					LOG_TERMINAL_INFO("[DEBUG COMMAND] Command: %s, Message: %s", command.c_str(), message.c_str());
-					LOG_TERMINAL_WARN("[DEBUG COMMAND] Command: %s, Message: %s", command.c_str(), message.c_str());
-					LOG_TERMINAL_ERROR("[DEBUG COMMAND] Command: %s, Message: %s", command.c_str(), message.c_str());
-					LOG_TERMINAL_CRITICAL("[DEBUG COMMAND] Command: %s, Message: %s", command.c_str(), message.c_str());
-					LOG_TERMINAL_FMT("blue", "[DEBUG COMMAND] Command: %s, Message: %s", command.c_str(), message.c_str());
-					LOG_TERMINAL_FMT("magenta", "[DEBUG COMMAND] Command: %s, Message: %s", command.c_str(), message.c_str());
-					LOG_TERMINAL_FMT("cyan", "[DEBUG COMMAND] Command: %s, Message: %s", command.c_str(), message.c_str());
-					LOG_TERMINAL_FMT("white", "[DEBUG COMMAND] Command: %s, Message: %s", command.c_str(), message.c_str());
-				}
-			}
-
 			ImGui::EndMenu();
 		}
 	}
