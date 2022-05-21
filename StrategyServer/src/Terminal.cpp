@@ -373,6 +373,11 @@ bool Terminal::Initialize(TerminalDescription* desc)
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 
+	// Enable Docking while holding Shift.
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	io.ConfigDockingWithShift = true;
+
+
 	ImGui::StyleColorsClassic();
 
 	if (!ImGui_ImplGlfw_InitForOpenGL(m_window, true)) return false;
