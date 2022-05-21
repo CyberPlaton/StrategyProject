@@ -5,6 +5,10 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <any>
+#include <sstream>
+#include <iostream>
+#include <exception>
 
 // GLEW AND GLFW
 #define GLEW_STATIC
@@ -49,6 +53,9 @@ public:
 
 private:
 	static Terminal* g_Terminal;
+	static bool m_MSCommandInputWindow;
+	static bool m_DBMSCommandInputWindow;
+
 
 	GLFWwindow* m_window;
 	ImVec4 m_clearColor;
@@ -83,8 +90,16 @@ private:
 	void OnFrameEnd();
 	bool OnUpdate();
 	
+	void ShowMasterServerCommandInput();
+	void ShowDBMSCommandInput();
+	void RenderDBMSCommandOutput();
+	void RenderMasterServerCommandOutput();
 	void RenderMasterServerLog();
 	void RenderTerminalLog();
+	void ParseCommandInput(std::string s, bool ms = false, bool dbms = false);
+	void AddCommandToMS(std::string& s);
+	void AddCommandToDBMS(std::string& s);
+
 	char* Strdup(const char* s) { IM_ASSERT(s); size_t len = strlen(s) + 1; void* buf = malloc(len); IM_ASSERT(buf); return (char*)memcpy(buf, (const void*)s, len); }
 	
 	void RetrieveCommandOutput();

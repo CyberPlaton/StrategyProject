@@ -1,5 +1,9 @@
 #include "Terminal.h"
 
+Terminal* Terminal::g_Terminal = nullptr;
+bool Terminal::m_MSCommandInputWindow = false;
+bool Terminal::m_DBMSCommandInputWindow = false;
+
 
 bool Terminal::OnUpdate()
 {
@@ -15,24 +19,78 @@ bool Terminal::OnUpdate()
 		RenderTerminalLog();
 		RenderMasterServerLog();
 
-		for (auto p : m_commandOutputVectorMap)
-		{
-			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.1f);
-			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1));
-			ImGui::Begin(p.first.c_str());
-			for (auto m : p.second)
-			{
-				OutputColoredCommandOutput("white", m.c_str());
-			}
-			ImGui::End();
-			ImGui::PopStyleVar();
-			ImGui::PopStyleVar();
-		}
+		RenderMasterServerCommandOutput();
+		ShowMasterServerCommandInput();
+
+
+		RenderDBMSCommandOutput();
+		ShowDBMSCommandInput();
+
 
 		return true;
 	}
 }
 
+
+void Terminal::ShowMasterServerCommandInput()
+{
+	if (m_MSCommandInputWindow)
+	{
+		ImGui::Begin("MasterServer Command Input", &m_MSCommandInputWindow);
+		static char ms_input_buf[64];
+		ImGui::InputText("##command", ms_input_buf, IM_ARRAYSIZE(ms_input_buf));
+		ImGui::SameLine();
+		if (ImGui::Button("Add", ImVec2(30, 20)))
+		{
+			std::string s(ms_input_buf);
+			LOG_TERMINAL_INFO("[MASTERSERVER] Add Command: %s", s.c_str());
+			ParseCommandInput(s, true, false);
+			memset(ms_input_buf, 0, IM_ARRAYSIZE(ms_input_buf));
+		}
+		ImGui::End();
+	}
+}
+
+void Terminal::ShowDBMSCommandInput()
+{
+	if (m_DBMSCommandInputWindow)
+	{
+		ImGui::Begin("DBMS Command Input", &m_DBMSCommandInputWindow);
+		static char dbms_input_buf[64];
+		ImGui::InputText("##command", dbms_input_buf, IM_ARRAYSIZE(dbms_input_buf));
+		ImGui::SameLine();
+		if (ImGui::Button("Add", ImVec2(30, 20)))
+		{
+			std::string s(dbms_input_buf);
+			LOG_TERMINAL_INFO("[MASTERSERVER] Add Command: %s", s.c_str());
+			ParseCommandInput(s, false, true);
+			memset(dbms_input_buf, 0, IM_ARRAYSIZE(dbms_input_buf));
+		}
+		ImGui::End();
+	}
+}
+
+void Terminal::RenderDBMSCommandOutput()
+{
+
+}
+
+void Terminal::RenderMasterServerCommandOutput()
+{
+	for (auto p : m_commandOutputVectorMap)
+	{
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.1f);
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1));
+		ImGui::Begin(p.first.c_str());
+		for (auto m : p.second)
+		{
+			OutputColoredCommandOutput("white", m.c_str());
+		}
+		ImGui::End();
+		ImGui::PopStyleVar();
+		ImGui::PopStyleVar();
+	}
+}
 
 void Terminal::RenderMasterServerLog()
 {
@@ -155,6 +213,81 @@ void Terminal::RenderTerminalLog()
 }
 
 
+void Terminal::ParseCommandInput(std::string s, bool ms, bool dbms)
+{
+	std::string command;
+	if (int pos = s.find("cmd"); pos != std::string::npos)
+	{
+		std::istringstream stream(s);
+		std::string p;
+		while (std::getline(stream, p, ' '))
+		{
+			if (p.compare("cmd") == 0) continue;
+			else
+			{
+				command.append(p);
+				command.append(" ");
+			}
+		}
+	}
+
+	if (ms)
+	{
+		// Add all commands to master server
+		AddCommandToMS(command);
+	}
+	if (dbms)
+	{
+		// Add all commands to dbms
+		AddCommandToDBMS(command);
+	}
+}
+
+void Terminal::AddCommandToMS(std::string& s)
+{
+	std::vector< std::string > params;
+	if (MasterServer::MasterServerCreated())
+	{
+		// Split string by blank space.
+		std::istringstream stream(s);
+		std::string p;
+		std::string cmd;
+		bool command_name_found = false;
+		while (std::getline(stream, p, ' '))
+		{
+			if (command_name_found == false)
+			{
+				// Command name is not a param.
+				cmd = p;
+				command_name_found = true;
+			}
+			else
+			{
+				params.push_back(p);
+			}
+		}
+
+
+		try
+		{
+			// Need to parse for command type.
+			if (cmd.compare("debug_command") == 0)
+			{
+				MasterServer::get()->AddCommand(new CommandDebug(std::stoi(params[0]), params[1]));
+			}
+		}
+		catch (const std::exception& e)
+		{
+			LOG_TERMINAL_ERROR("[MASTERSERVER] Exception adding command:\n\t>> %s", e.what());
+		}
+	}
+}
+
+void Terminal::AddCommandToDBMS(std::string& s)
+{
+	// Need to parse for command type.
+}
+
 void Terminal::RetrieveCommandOutput()
 {
 	if (MasterServer::MasterServerCreated())
@@ -231,6 +364,10 @@ void Terminal::MainMenuBar()
 
 		if (ImGui::BeginMenu("MasterServer"))
 		{
+			if (ImGui::MenuItem("Toggle Command Input"))
+			{
+				m_MSCommandInputWindow = (m_MSCommandInputWindow == true) ? false : true;
+			}
 			if (ImGui::MenuItem("Startup"))
 			{
 				if (!MasterServer::MasterServerCreated())
@@ -279,6 +416,10 @@ void Terminal::MainMenuBar()
 		{
 			using namespace dbms;
 
+			if (ImGui::MenuItem("Toggle Command Input"))
+			{
+				m_DBMSCommandInputWindow = (m_DBMSCommandInputWindow == true) ? false : true;
+			}
 			if (ImGui::MenuItem("Startup"))
 			{
 				if (DBMS::get()->Initialized())
@@ -307,7 +448,7 @@ void Terminal::MainMenuBar()
 			{
 				if (MasterServer::MasterServerCreated())
 				{
-					auto cmd = new CommandDebug();
+					auto cmd = new CommandDebug(777, "Hello, World!");
 					MasterServer::get()->AddCommand(cmd);
 				}
 			}
@@ -467,9 +608,6 @@ void Terminal::LogMasterServer(const char* fmt, ...) IM_FMTARGS(2)
 	va_end(args);
 	m_MSItems.push_front(Strdup(buf));
 }
-
-Terminal* Terminal::g_Terminal = nullptr;
-
 
 Terminal::Terminal()
 {
