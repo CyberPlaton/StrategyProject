@@ -68,6 +68,8 @@ STRING(major) \
 #define MAX_MAPSIZE_Y 256
 #define DEFAULT_DECAL_SIZE_X 128
 #define DEFAULT_DECAL_SIZE_Y 128
+#define DEFAULT_UNIT_DECAL_OFFSET_X -0.2f
+#define DEFAULT_UNIT_DECAL_OFFSET_Y -0.4f
 
 
 #define DEFAULT_WIDGET_IMAGE_SIZE_X 16
@@ -117,6 +119,7 @@ public:
 		loaded &= LoadTilesetData("Structure", "assets/Tileset/Structure", "assets/TilesetData/Structure.json");
 		loaded &= LoadTilesetData("Wall", "assets/Tileset/Wall", "assets/TilesetData/Wall.json");
 		loaded &= LoadTilesetData("Hill", "assets/Tileset/Hill", "assets/TilesetData/Hill.json");
+		loaded &= LoadTilesetData("Unit", "assets/Tileset/Unit", "assets/TilesetData/Unit.json");
 
 		loaded &= LoadEditorGraphicalData();
 
@@ -194,8 +197,10 @@ private:
 	std::map< std::string, olc::Decal* > m_bridgeDecalDatabase;
 	std::map< std::string, olc::Decal* > m_riverDecalDatabase;
 	std::map< std::string, olc::Decal* > m_hillDecalDatabase;
+	std::map< std::string, olc::Decal* > m_unitDecalDatabase;
 	std::map< std::string, olc::Decal* > m_decalDatabase;
 	std::vector< olc::Sprite* > m_spriteDatabase;
+	std::map< std::string, std::pair< uint64_t, uint64_t > > m_decalSizeDatabase;
 
 	// Editor specific decal datatabase.
 	std::map< std::string, olc::Decal* > m_editorDecalDatabase;
@@ -222,14 +227,16 @@ private:
 	void HandleInput();
 	void UpdateVisibleRect();
 	void RenderMapobject(Entity* object);
-	Entity* CreateMapobject(uint64_t x, uint64_t y, std::string decal, std::string name = "none");
-	Entity* CreateMapobject(uint64_t x, uint64_t y, std::string layer, std::string decal, uint64_t w, uint64_t h);
+	Entity* CreateMapobject(uint64_t x, uint64_t y, std::string decal, bool unit, std::string name = "none");
+	Entity* CreateMapobject(uint64_t x, uint64_t y, std::string layer, std::string decal);
 	std::string CreateMapobjectName();
 	bool IsMapobjectNameUsed(const std::string& name);
 	void DeleteMapobject(Entity* object);
 	std::string GetMapobjectNameAt(int x, int y, std::string layer);
 	Entity* GetMapobjectAt(int x, int y, std::string layer);
-
+	void SetDecalSize(const std::string& name, uint64_t w, uint64_t h);
+	uint64_t GetDecalWidth(const std::string& name);
+	uint64_t GetDecalHeight(const std::string& name);
 
 
 	void MakeMapobjectTownhall(int x, int y, std::string layer);

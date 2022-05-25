@@ -275,6 +275,13 @@ void GameEditor::RenderDecalDatabase()
 			RenderDecalDatabase(m_structureDecalDatabase);
 			ImGui::EndTabItem();
 		}
+		if (ImGui::BeginTabItem("Unit"))
+		{
+			ImGui::Separator();
+			RenderDecalDatabase(m_unitDecalDatabase);
+			ImGui::EndTabItem();
+		}
+
 		ImGui::EndTabBar();
 	}
 	ImGui::End();
@@ -382,19 +389,26 @@ void GameEditor::RenderMainFrame()
 		}
 	}
 
+
 	auto terr_cell_decal = m_editorDecalDatabase["FilledRect"];
 	auto build_cell_decal = m_editorDecalDatabase["Rect"];
-	for (auto& c : territory_cells)
+	if (g_bRenderCityTerritory)
 	{
-		tv.DrawDecal(c.position, terr_cell_decal, olc::vf2d(1.0f, 1.0f), c.color);
+		// Draw City Territory
+		for (auto& c : territory_cells)
+		{
+			tv.DrawDecal(c.position, terr_cell_decal, olc::vf2d(1.0f, 1.0f), c.color);
+		}
 	}
-	for (auto& c : building_slot_cells)
+	if (g_bRenderCityBuildingSlots)
 	{
-		tv.DrawDecal(c.position, build_cell_decal, olc::vf2d(1.0f, 1.0f), c.color);
+		// Draw City Building Slots
+		for (auto& c : building_slot_cells)
+		{
+			tv.DrawDecal(c.position, build_cell_decal, olc::vf2d(1.0f, 1.0f), c.color);
+		}
+
 	}
-
-
-
 	if (g_bRenderGrid)
 	{
 		// Draw Grid.
@@ -436,7 +450,15 @@ void GameEditor::RenderMapobject(Entity* object)
 {
 	if (auto c = object->Get< ComponentSprite >("Sprite"); c)
 	{
-		tv.DrawDecal({ object->m_positionx, object->m_positiony }, m_decalDatabase[c->m_decal]);
+		// Offset for Units which are 180x180.
+		float offx = 0.0f, offy = 0.0f;
+		if (object->Get< ComponentUnit >("Unit"))
+		{
+			offy = DEFAULT_UNIT_DECAL_OFFSET_Y;
+			offx = DEFAULT_UNIT_DECAL_OFFSET_X;
+		}
+
+		tv.DrawDecal({ object->m_positionx + offx, object->m_positiony + offy }, m_decalDatabase[c->m_decal]);
 	}
 	else
 	{
@@ -453,8 +475,6 @@ bool GameEditor::LoadTilesetData(const std::string& database, const std::string&
 	const auto& at = doc["textures"];
 	for (const auto& tex : at.GetArray())
 	{
-		//std::string name = tex["name"].GetString();
-
 		const auto& imgs = tex["images"];
 		for (const auto& img : imgs.GetArray())
 		{
@@ -465,6 +485,8 @@ bool GameEditor::LoadTilesetData(const std::string& database, const std::string&
 			auto sprite = new olc::Sprite(tilesetpath + "/" + name + ".png");
 			if (sprite->width == 0 && sprite->height == 0) continue;
 			auto decal = new olc::Decal(sprite);
+
+			SetDecalSize(name, sprite->width, sprite->height);
 
 			if (database.compare("Forest") == 0)
 			{
@@ -506,6 +528,11 @@ bool GameEditor::LoadTilesetData(const std::string& database, const std::string&
 			{
 				m_hillDecalDatabase.try_emplace(name, decal);
 			}
+			else if (database.compare("Unit") == 0)
+			{
+				m_unitDecalDatabase.try_emplace(name, decal);
+			}
+
 
 			m_decalDatabase.try_emplace(name, decal);
 			m_spriteDatabase.push_back(sprite);
@@ -599,7 +626,7 @@ void GameEditor::HandleInput()
 		{
 			if (g_sSelectedMapobject.compare("none") != 0)
 			{
-				CreateMapobject(point.x, point.y, g_sSelectedMapobject, g_sSelectedMapobject);
+				CreateMapobject(point.x, point.y, m_currentLayer, g_sSelectedMapobject);
 			}
 			else
 			{
@@ -711,23 +738,63 @@ Entity* GameEditor::GetMapobjectAt(int x, int y, std::string layer)
 
 	return nullptr;
 }
+
+void GameEditor::SetDecalSize(const std::string& name, uint64_t w, uint64_t h)
+{
+	m_decalSizeDatabase.try_emplace(name, std::make_pair(w, h));
+}
+
+uint64_t GameEditor::GetDecalWidth(const std::string& name)
+{
+	if (m_decalSizeDatabase.find(name) != m_decalSizeDatabase.end())
+	{
+		return m_decalSizeDatabase[name].first;
+	}
+}
+
+uint64_t GameEditor::GetDecalHeight(const std::string& name)
+{
+	if (m_decalSizeDatabase.find(name) != m_decalSizeDatabase.end())
+	{
+		return m_decalSizeDatabase[name].second;
+	}
+}
+
 std::string GameEditor::CreateMapobjectName()
 {
 	return "Mapobject_" + std::to_string(m_mapobjectCount++);
 }
-Entity* GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string layer, std::string decal, uint64_t w, uint64_t h)
+Entity* GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string layer, std::string decal)
 {
 	auto current_layer = m_currentLayer;
 	m_currentLayer = layer;
 
-	auto entity = CreateMapobject(x, y, decal, decal);
+	bool is_unit = false;
+	if (m_unitDecalDatabase.find(decal) != m_unitDecalDatabase.end())
+	{
+		is_unit = true;
+	}
+
+	auto entity = CreateMapobject(x, y, decal, is_unit, decal);
+
+	float w, h;
+	if (is_unit)
+	{
+		h = w = 180;
+	}
+	else
+	{
+		w = DEFAULT_DECAL_SIZE_X;
+		h = DEFAULT_DECAL_SIZE_Y;
+	}
+
 	entity->Get< ComponentSprite >("Sprite")->m_width = w;
 	entity->Get< ComponentSprite >("Sprite")->m_height = h;
 
 	m_currentLayer = current_layer;
 	return entity;
 }
-Entity* GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string decal, std::string name)
+Entity* GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string decal, bool unit, std::string name)
 {
 	if (x < 0 || 
 		y < 0 ||
@@ -750,6 +817,11 @@ Entity* GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string decal, s
 	object->m_name = name;
 	object->m_positionx = x;
 	object->m_positiony = y;
+
+	if (unit)
+	{
+		object->Add(new ComponentUnit(), "Unit");
+	}
 
 	// If there is another Object already, delete it first.
 	if (m_gameworld[m_currentLayer][x][y])
@@ -1260,7 +1332,7 @@ bool GameEditor::ImportMapData(const std::string& filepath)
 			h = entity->IntAttribute("h");
 			const char* sprite = entity->Attribute("sprite");
 
-			auto object = CreateMapobject(x, y, std::string(layer_name), std::string(sprite), w, h);
+			auto object = CreateMapobject(x, y, std::string(layer_name), std::string(sprite));
 
 			auto townhall = entity->FirstChildElement("Townhall");
 			auto fort = entity->FirstChildElement("Fort");

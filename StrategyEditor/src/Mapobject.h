@@ -73,6 +73,10 @@ struct ComponentFort : public ComponentCity
 	ComponentFort(int x, int y) : ComponentCity("Fort", x, y){}
 };
 
+struct ComponentUnit : public Component
+{
+	ComponentUnit(): Component("Unit") {}
+};
 
 
 struct Entity
