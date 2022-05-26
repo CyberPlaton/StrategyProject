@@ -27,7 +27,8 @@ static std::string g_sAlteredLayer = "none";
 static uint64_t g_iImguiImageButtonID = 10000;
 static uint64_t g_iCreatedLayerCount = 1; // Used as next layer order number.
 static bool g_bRenderGrid = true;
-
+static float g_fMouseXPrevious = 0.0f;
+static float g_fMouseYPrevious = 0.0f;
 
 
 GameEditor editor;
@@ -615,16 +616,25 @@ void GameEditor::HandleInput()
 			}
 		}
 
-		if (GetMouse(1).bReleased)
+		// Delete Mapobject.
+		if (GetMouse(1).bReleased && (g_fMouseXPrevious != mousex) && (g_fMouseYPrevious != mousey))
 		{
+			g_fMouseXPrevious = mousex;
+			g_fMouseYPrevious = mousey;
+
 			if (auto entity = GetMapobjectAt(mousex, mousey, m_currentLayer); entity != nullptr)
 			{
 				DeleteMapobject(entity);
 			}
 			g_sSelectedMapobject = "none";
 		}
-		if (GetMouse(0).bReleased)
+
+		// Create new Mapobject.
+		if (GetMouse(0).bHeld && (g_fMouseXPrevious != mousex) && (g_fMouseYPrevious != mousey))
 		{
+			g_fMouseXPrevious = mousex;
+			g_fMouseYPrevious = mousey;
+
 			if (g_sSelectedMapobject.compare("none") != 0)
 			{
 				CreateMapobject(point.x, point.y, m_currentLayer, g_sSelectedMapobject);
