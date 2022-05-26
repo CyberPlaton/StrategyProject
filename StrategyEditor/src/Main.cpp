@@ -452,17 +452,18 @@ void GameEditor::RenderMapobject(Entity* object)
 	{
 		// Offset for Units which are 180x180.
 		float offx = 0.0f, offy = 0.0f;
+		float scalex = 1.0f, scaley = 1.0f;
 		if (object->Get< ComponentUnit >("Unit"))
 		{
 			offy = DEFAULT_UNIT_DECAL_OFFSET_Y;
 			offx = DEFAULT_UNIT_DECAL_OFFSET_X;
 		}
 
-		tv.DrawDecal({ object->m_positionx + offx, object->m_positiony + offy }, m_decalDatabase[c->m_decal]);
+		tv.DrawDecal({ object->m_positionx + offx, object->m_positiony + offy }, m_decalDatabase[c->m_decal], { scalex, scaley });
 	}
 	else
 	{
-		tv.DrawStringDecal({ object->m_positionx, object->m_positiony }, object->m_name);
+		tv.DrawStringDecal({ object->m_positionx, object->m_positiony }, object->m_name, olc::WHITE, { 1.0f, 1.0f });
 	}
 }
 bool GameEditor::LoadTilesetData(const std::string& database, const std::string& tilesetpath, const std::string& datapath)
@@ -776,6 +777,7 @@ Entity* GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string layer, s
 	}
 
 	auto entity = CreateMapobject(x, y, decal, is_unit, decal);
+	if (entity == nullptr) return nullptr;
 
 	float w, h;
 	if (is_unit)
@@ -796,10 +798,15 @@ Entity* GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string layer, s
 }
 Entity* GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string decal, bool unit, std::string name)
 {
+	// Ensure Boundaries.
 	if (x < 0 || 
 		y < 0 ||
 		x > MAX_MAPSIZE_X - 1 ||
 		y > MAX_MAPSIZE_Y - 1) return nullptr;
+
+	// Ensure Current layer selected valid.
+	if (m_gameworld.find(m_currentLayer) == m_gameworld.end()) return nullptr;
+
 
 	if (name.compare("none") == 0 || IsMapobjectNameUsed(name))
 	{
