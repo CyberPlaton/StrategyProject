@@ -16,6 +16,8 @@
 #include "olc/olcPixelGameEngine.h"
 #define OLC_PGEX_TRANSFORMEDVIEW
 #include "olc/olcPGEX_TransformedView.h"
+#define OLC_PGEX_SOUND
+#include "olc/olcPGEX_Sound.h"
 #define OLC_GFX_OPENGL33
 #define OLC_PGEX_DEAR_IMGUI_IMPLEMENTATION
 #include "olc/imgui_impl_pge.h"
