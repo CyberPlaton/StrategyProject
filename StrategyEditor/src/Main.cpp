@@ -617,7 +617,7 @@ void GameEditor::HandleInput()
 		}
 
 		// Delete Mapobject.
-		if (GetMouse(1).bReleased && (g_fMouseXPrevious != mousex) && (g_fMouseYPrevious != mousey))
+		if (GetMouse(1).bHeld && (g_fMouseXPrevious != mousex) && (g_fMouseYPrevious != mousey))
 		{
 			g_fMouseXPrevious = mousex;
 			g_fMouseYPrevious = mousey;
