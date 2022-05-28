@@ -3,8 +3,19 @@
 * 03.04.2022 - Version 0.1 complete:
 *			 o Rendering Decal Database loaded from JSON in Gameengine format.
 *			 o Layer menu. Add, Remove, Toggle visibility and Edit layers you place objects on.
-*			 o Coloring Layer names in a intuitive way to hint at their current status (active, visible etc.)
-*			 o Render Decals in Tabs according to their type (e.g. Forest, Water etc)
+*			 o Coloring Layer names in a intuitive way to hint at their current status (active, visible etc.).
+*			 o Render Decals in Tabs according to their type (e.g. Forest, Water etc).
+* 
+* 
+* 28.05.2022 - Version 0.2 complete:
+*			 o Creating special Game Entities (Cities and Forts).
+*			 o Adding Territory and Building slots for Cities and Forts.
+*			 o Ambient Audio "Editor". Playing loaded and chosen Audio Track.
+*
+* TODO: Ambient Audio "Editor" has to be update to be based on FMOD,
+*		as soon as the Audio Engine with FMOD is completed.
+*		After this the "Editor" can be extended based on FMOD to utilize 
+*		".bank" files, FMOD events, triggers etc.
 */
 
 // OLC INLCUDE
