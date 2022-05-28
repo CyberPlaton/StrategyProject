@@ -78,6 +78,21 @@ struct ComponentUnit : public Component
 	ComponentUnit(): Component("Unit") {}
 };
 
+struct ComponentSound : public Component
+{
+	ComponentSound(int x, int y, int w, int h, const std::string& sound_name) : Component("Sound")
+	{
+		x = x;
+		y = y;
+		w = w;
+		h = h;
+		m_soundName = sound_name;
+	}
+
+
+	int x, y, w, h;
+	std::string m_soundName;
+};
 
 struct Entity
 {

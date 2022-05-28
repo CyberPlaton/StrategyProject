@@ -98,10 +98,15 @@ public:
 public:
 	bool OnUserCreate() override
 	{
+		// Initialize Audio.
+		olc::SOUND::InitialiseAudio(44100, 1, 8, 512);
+
+		// Initialize Layered rendering.
 		m_GUILayer = CreateLayer();
 		EnableLayer(m_GUILayer, true);
 		SetLayerCustomRenderFunction(0, std::bind(&GameEditor::DrawUI, this));
 
+		// Initialize renderer
 		tv = olc::TileTransformedView({ ScreenWidth(), ScreenHeight() }, { DEFAULT_DECAL_SIZE_X, DEFAULT_DECAL_SIZE_Y });
 
 		m_visibleLayers.resize(256);
@@ -110,7 +115,7 @@ public:
 		m_visibleLayers[0] = 1;
 		UpdateLayerSorting();
 
-		//return LoadTilesetData("assets/Tileset", "assets/TilesetData/TilesetOverworld.json") && LoadEditorGraphicalData();
+		// Load Assets
 		bool loaded = LoadTilesetData("Forest", "assets/Tileset/Forest", "assets/TilesetData/Forest.json");
 		loaded &= LoadTilesetData("Ground","assets/Tileset/Ground", "assets/TilesetData/Ground.json");
 		loaded &= LoadTilesetData("Mountain","assets/Tileset/Mountain", "assets/TilesetData/Mountain.json");
@@ -138,7 +143,8 @@ public:
 		m_decalDatabase.emplace("Fort_2", decal);
 		m_spriteDatabase.push_back(sprite);
 
-
+		// Load Audio assets
+		loaded &= LoadAudioData();
 
 		return loaded;
 	}
@@ -160,6 +166,12 @@ public:
 		return true;
 	}
 
+	bool OnUserDestroy() override final
+	{
+		olc::SOUND::DestroyAudio();
+		return true;
+	}
+
 	void DrawUI(void)
 	{		
 		RenderGUI();
@@ -174,6 +186,7 @@ private:
 	
 	float m_camerax = 0;
 	float m_cameray = 0;
+	float m_cameraHeigth = 1.0f;
 
 	olc::vi2d m_visiblePointLeftUp;
 	olc::vi2d m_visiblePointDownRight;
@@ -207,6 +220,10 @@ private:
 	// Editor specific decal datatabase.
 	std::map< std::string, olc::Decal* > m_editorDecalDatabase;
 	std::vector< olc::Sprite* > m_editorSpriteDatabase;
+
+	// Audio
+	std::map< std::string, std::pair< bool, int > > m_soundMap;
+
 private:
 
 	// GUI
@@ -217,6 +234,7 @@ private:
 	void RenderDecalDatabase(const std::map< std::string, olc::Decal* >& db);
 	void RenderEntityDatabase();
 	void DisplayEntityEditor(Entity* e);
+	void DisplayBackgroundAudioEditor();
 
 	// GAMEWORLD
 	void RenderMainFrame();
@@ -225,6 +243,7 @@ private:
 	// UTIL
 	bool LoadTilesetData(const std::string& database, const std::string& tilesetpath, const std::string& datapath);
 	bool LoadEditorGraphicalData();
+	bool LoadAudioData();
 	void ToggleMenuItem(bool& item);
 	void HandleInput();
 	void UpdateVisibleRect();

@@ -4,6 +4,8 @@
 static bool g_bDecalDatabaseOpen = true;
 static bool g_bEntityDatabaseOpen = true;
 static bool g_bEntityEditorOpen = false;
+static bool g_bBackgroundAudioEditorOpen = false;
+static int g_iPlayingBackgroundAudio = 0;
 static Entity* g_pEditedEntity = nullptr;
 static Entity* g_pEditedCity = nullptr;
 static bool g_bAddingTownhall = false;
@@ -62,6 +64,8 @@ void GameEditor::RenderGUI()
 	if (g_bEntityDatabaseOpen) RenderEntityDatabase();
 	// Rendering Layers
 	if(g_bRenderingLayersOpen) RenderLayerUI();
+	// Ambient Sound Editor
+	if (g_bBackgroundAudioEditorOpen) DisplayBackgroundAudioEditor();
 }
 bool GameEditor::LoadEditorGraphicalData()
 {
@@ -123,9 +127,35 @@ bool GameEditor::LoadEditorGraphicalData()
 	m_editorDecalDatabase.try_emplace("FilledRect", decal);
 	m_editorSpriteDatabase.push_back(sprite);
 
+	sprite = new olc::Sprite("assets/Editor/speaker_audio_sound_loud.png");
+	decal = new olc::Decal(sprite);
+	m_editorDecalDatabase.try_emplace("AudioOn", decal);
+	m_editorSpriteDatabase.push_back(sprite);
+
+	sprite = new olc::Sprite("assets/Editor/speaker_audio_sound_off.png");
+	decal = new olc::Decal(sprite);
+	m_editorDecalDatabase.try_emplace("AudioOff", decal);
+	m_editorSpriteDatabase.push_back(sprite);
+
 
 	return true;
 }
+
+bool GameEditor::LoadAudioData()
+{
+	int forest_theme = olc::SOUND::LoadAudioSample("assets/Audio/main_theme_forest.wav");
+	if (forest_theme == -1) return false;
+
+	int battle_theme = olc::SOUND::LoadAudioSample("assets/Audio/main_theme_battle.wav");
+	if (forest_theme == -1) return false;
+
+	m_soundMap.emplace("ForestTheme", std::make_pair(false, forest_theme));
+	m_soundMap.emplace("BattleTheme", std::make_pair(false, battle_theme));
+
+
+	return true;
+}
+
 void GameEditor::RenderMainMenu()
 {
 	if (ImGui::BeginMainMenuBar())
@@ -200,10 +230,19 @@ void GameEditor::RenderMainMenu()
 				{
 					g_bAddingTerritory = true;
 				}
-
-
 				ImGui::EndMenu();
 			}
+			ImGui::EndMenu();
+		}
+
+
+		if (ImGui::BeginMenu("Audio"))
+		{
+			if (ImGui::MenuItem("Edit Ambient"))
+			{
+				ToggleMenuItem(g_bBackgroundAudioEditorOpen);
+			}
+
 			ImGui::EndMenu();
 		}
 
@@ -446,6 +485,13 @@ void GameEditor::RenderMainFrame()
 	{
 		DrawStringDecal({ ScreenWidth() - ScreenWidth() * 0.75f, 50.0f }, "Press ESC to Stop Editing...", olc::RED, { 2.5f, 2.5f });
 	}
+
+	// Draw Camera Position
+	std::string position = std::to_string(m_camerax) + ":" + std::to_string(m_cameray);
+	std::string height = std::to_string(m_cameraHeigth);
+	DrawStringDecal({10.0f, 45.0f }, position);
+	DrawStringDecal({ 10.0f, 60.0f }, height);
+
 }
 void GameEditor::RenderMapobject(Entity* object)
 {
@@ -547,6 +593,8 @@ void GameEditor::HandleInput()
 	olc::vf2d point = tv.ScreenToWorld({ (float)GetMouseX(), (float)GetMouseY() });
 	float mousex = point.x;
 	float mousey = point.y;
+	m_camerax = mousex;
+	m_cameray = mousey;
 
 	olc::vi2d topLeft = tv.GetTileUnderScreenPos({ 0, 0 });
 	olc::vi2d bottomDown = tv.GetBottomRightTile();
@@ -656,8 +704,16 @@ void GameEditor::HandleInput()
 			g_bIsPanning = false;
 			tv.EndPan(GetMousePos());
 		}
-		if (GetMouseWheel() > 0) tv.ZoomAtScreenPos(2.0f, GetMousePos());
-		if (GetMouseWheel() < 0) tv.ZoomAtScreenPos(0.5f, GetMousePos());
+		if (GetMouseWheel() > 0)
+		{
+			tv.ZoomAtScreenPos(2.0f, GetMousePos());
+			m_cameraHeigth -= 1.0f;
+		}
+		if (GetMouseWheel() < 0)
+		{
+			tv.ZoomAtScreenPos(0.5f, GetMousePos());
+			m_cameraHeigth += 1.0f;
+		}
 
 		if (!g_bIsPanning)
 		{
@@ -956,6 +1012,45 @@ void GameEditor::DisplayEntityEditor(Entity* e)
 	ImGui::Begin(name.c_str(), &g_bEntityEditorOpen);
 	ImGui::End();
 }
+
+void GameEditor::DisplayBackgroundAudioEditor()
+{
+	static const char* name = "Ambient Audio";
+	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
+	ImGui::Begin(name, &g_bBackgroundAudioEditorOpen);
+	for (auto& p : m_soundMap)
+	{
+		ImVec4 color(0.0f, 0.0f, 0.39f, 1.0f);
+
+		if (g_iPlayingBackgroundAudio == p.second.second)
+		{
+			color = { 0.0f, 0.39f, 0.0f, 1.0f };
+		}
+		
+		ImGui::PushStyleColor(ImGuiCol_Button, color);
+		if (ImGui::Button(p.first.c_str()))
+		{
+			if (p.second.first == false)
+			{
+				// Play Sound.
+				olc::SOUND::PlaySample(p.second.second);
+				m_soundMap[p.first].first = true;
+				g_iPlayingBackgroundAudio = p.second.second;
+			}
+			else
+			{
+				// Stop Sound.
+				olc::SOUND::StopSample(p.second.second);
+				m_soundMap[p.first].first = false;
+				g_iPlayingBackgroundAudio = 0;
+			}
+		}
+		ImGui::PopStyleColor();
+	}
+	ImGui::End();
+}
+
 void GameEditor::CreateRenderingLayer(std::string layer_name, int order)
 {
 	// If a layer already exists, dont do anything.
