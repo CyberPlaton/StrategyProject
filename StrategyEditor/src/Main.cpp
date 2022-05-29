@@ -9,6 +9,8 @@ static int g_iPlayingBackgroundAudio = 0;
 static bool g_bAddingSoundSource = false;
 static std::string g_sSoundSource = "none";
 static bool g_bRenderSoundSourceDimensions = false;
+static bool g_bEditingSoundSource = false;
+static Entity* g_pEditedSoundSource = nullptr;
 static Entity* g_pEditedEntity = nullptr;
 static Entity* g_pEditedCity = nullptr;
 static bool g_bAddingTownhall = false;
@@ -69,6 +71,8 @@ void GameEditor::RenderGUI()
 	if(g_bRenderingLayersOpen) RenderLayerUI();
 	// Ambient Sound Editor
 	if (g_bBackgroundAudioEditorOpen) DisplayBackgroundAudioEditor();
+	// Sound source editing
+	if (g_bEditingSoundSource) DisplaySoundSourceEditor(g_pEditedSoundSource);
 }
 bool GameEditor::LoadEditorGraphicalData()
 {
@@ -128,6 +132,22 @@ bool GameEditor::LoadEditorGraphicalData()
 	sprite = new olc::Sprite("assets/Editor/FilledRect.png");
 	decal = new olc::Decal(sprite);
 	m_editorDecalDatabase.try_emplace("FilledRect", decal);
+	m_editorSpriteDatabase.push_back(sprite);
+
+
+	sprite = new olc::Sprite("assets/Editor/media_player_ui_button_play.png");
+	decal = new olc::Decal(sprite);
+	m_editorDecalDatabase.try_emplace("Play", decal);
+	m_editorSpriteDatabase.push_back(sprite);
+
+	sprite = new olc::Sprite("assets/Editor/media_player_ui_button_repeat_loop.png");
+	decal = new olc::Decal(sprite);
+	m_editorDecalDatabase.try_emplace("Repeat", decal);
+	m_editorSpriteDatabase.push_back(sprite);
+
+	sprite = new olc::Sprite("assets/Editor/media_player_ui_button_stop.png");
+	decal = new olc::Decal(sprite);
+	m_editorDecalDatabase.try_emplace("Stop", decal);
 	m_editorSpriteDatabase.push_back(sprite);
 
 	return true;
@@ -841,6 +861,18 @@ void GameEditor::HandleInput()
 			g_sSoundSource = "none";
 		}
 	}
+	if (!g_bAddingSoundSource)
+	{
+		if (GetMouse(0).bReleased)
+		{
+			auto sound_source = GetMapobjectAt(mousex, mousey, "AudioSourceLayer");
+			if (sound_source)
+			{
+				g_bEditingSoundSource = true;
+				g_pEditedSoundSource = sound_source;
+			}
+		}
+	}
 }
 void GameEditor::UpdateVisibleRect()
 {
@@ -1195,7 +1227,89 @@ void GameEditor::DisplayBackgroundAudioEditor()
 	}
 	ImGui::End();
 }
+void GameEditor::DisplaySoundSourceEditor(Entity* e)
+{
+	std::string name = "Sound Source Edit: " + e->m_name;
+	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
+	ImGui::Begin(name.c_str(), &g_bEditingSoundSource);
 
+	ImGuiID play_sound_id = g_iImguiImageButtonID + strlen(name.c_str()) + (intptr_t)"Play";
+	ImGuiID stop_sound_id = g_iImguiImageButtonID + strlen(name.c_str()) + (intptr_t)"Stop";
+	ImGuiID loop_sound_id = g_iImguiImageButtonID + strlen(name.c_str()) + (intptr_t)"Repeat";
+
+	// Play or Stop Sound source and Set Looping.
+	ImGui::PushID(loop_sound_id);
+	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Repeat"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
+	{
+		if (m_soundMap[e->m_name].first == false)
+		{
+			olc::SOUND::PlaySample(m_soundMap[e->m_name].second, true);
+			m_soundMap[e->m_name].first = true;
+		}
+		else
+		{
+			olc::SOUND::StopSample(m_soundMap[e->m_name].second);
+			olc::SOUND::PlaySample(m_soundMap[e->m_name].second, true);
+		}
+	}
+	ImGui::PopID();
+	BeginTooltip("Play the Sound Source in a loop");
+	ImGui::SameLine();
+	ImGui::PushID(play_sound_id);
+	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Play"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
+	{
+		if (m_soundMap[e->m_name].first == false)
+		{
+			olc::SOUND::PlaySample(m_soundMap[e->m_name].second);
+			m_soundMap[e->m_name].first = true;
+		}
+		else
+		{
+			olc::SOUND::StopSample(m_soundMap[e->m_name].second);
+			olc::SOUND::PlaySample(m_soundMap[e->m_name].second);
+		}
+	}
+	ImGui::PopID();
+	BeginTooltip("Play the Sound Source once");
+	ImGui::SameLine();
+	ImGui::PushID(stop_sound_id);
+	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Stop"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
+	{
+		if (m_soundMap[e->m_name].first)
+		{
+			olc::SOUND::StopSample(m_soundMap[e->m_name].second);
+			m_soundMap[e->m_name].first = false;
+		}
+	}
+	ImGui::PopID();
+	BeginTooltip("Stop the Sound Source");
+
+
+	// Change Sound source name
+	static char sound_source_name_buf[64] = ""; 
+	ImGui::InputText("|", sound_source_name_buf, 64);
+	ImGui::SameLine();
+	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["OK"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
+	{
+		// Before renaming stop the current sample.
+		if (m_soundMap[e->m_name].first)
+		{
+			olc::SOUND::StopSample(m_soundMap[e->m_name].second);
+		}
+
+		e->m_name = sound_source_name_buf;
+		memset(&sound_source_name_buf, 0, sizeof(sound_source_name_buf));
+	}
+
+
+	// Change width and height.
+
+
+	// Change color.
+	
+	ImGui::End();
+}
 void GameEditor::CreateRenderingLayer(std::string layer_name, int order)
 {
 	// If a layer already exists, dont do anything.

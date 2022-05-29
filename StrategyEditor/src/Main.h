@@ -276,6 +276,7 @@ private:
 	void RenderEntityDatabase();
 	void DisplayEntityEditor(Entity* e);
 	void DisplayBackgroundAudioEditor();
+	void DisplaySoundSourceEditor(Entity* e);
 
 	// GAMEWORLD
 	void RenderMainFrame();
