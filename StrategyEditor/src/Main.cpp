@@ -129,17 +129,6 @@ bool GameEditor::LoadEditorGraphicalData()
 	m_editorDecalDatabase.try_emplace("FilledRect", decal);
 	m_editorSpriteDatabase.push_back(sprite);
 
-	sprite = new olc::Sprite("assets/Editor/speaker_audio_sound_loud.png");
-	decal = new olc::Decal(sprite);
-	m_editorDecalDatabase.try_emplace("AudioOn", decal);
-	m_editorSpriteDatabase.push_back(sprite);
-
-	sprite = new olc::Sprite("assets/Editor/speaker_audio_sound_off.png");
-	decal = new olc::Decal(sprite);
-	m_editorDecalDatabase.try_emplace("AudioOff", decal);
-	m_editorSpriteDatabase.push_back(sprite);
-
-
 	return true;
 }
 
@@ -671,7 +660,9 @@ void GameEditor::HandleInput()
 		{
 			if (GetMouse(0).bReleased)
 			{
-
+				CreateMapobjectAudioSource(mousex, mousey, 1, 1, g_sSoundSource);
+				g_bAddingSoundSource = false;
+				g_sSoundSource = "none";
 			}
 		}
 
@@ -842,7 +833,51 @@ std::string GameEditor::CreateMapobjectName()
 {
 	return "Mapobject_" + std::to_string(m_mapobjectCount++);
 }
-Entity* GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string layer, std::string decal)
+Entity* GameEditor::CreateMapobjectAudioSource(uint64_t x, uint64_t y, uint64_t w, uint64_t h, const std::string& soundname)
+{
+	// Ensure Boundaries.
+	if (x < 0 ||
+		y < 0 ||
+		x > MAX_MAPSIZE_X - 1 ||
+		y > MAX_MAPSIZE_Y - 1) return nullptr;
+
+	std::string name = soundname;
+
+	// Create a default Entity with 
+	// a visual representation.
+	//auto entity = CreateMapobject(x, y, "AudioSourceLayer", "AudioOn", soundname);
+	if (name.compare("none") == 0 || IsMapobjectNameUsed(name))
+	{
+		name += "_" + CreateMapobjectName();
+	}
+	else
+	{
+		m_mapobjectCount++;
+	}
+	// Create object.
+	auto entity = new Entity();
+	m_entities.push_back(entity);
+	entity->Add(new ComponentSprite("AudioOn", "AudioSourceLayer"), "Sprite");
+	entity->m_name = name;
+	entity->m_positionx = x;
+	entity->m_positiony = y;
+	entity->Get< ComponentSprite >("Sprite")->m_width = DEFAULT_DECAL_SIZE_X;
+	entity->Get< ComponentSprite >("Sprite")->m_height = DEFAULT_DECAL_SIZE_Y;
+	
+	entity->Add(new ComponentSound(x, y, w, h, soundname), "Sound");
+
+
+	// If there is another Object already, delete it first.
+	if (m_gameworld["AudioSourceLayer"][x][y])
+	{
+		DeleteMapobject(m_gameworld["AudioSourceLayer"][x][y]);
+	}
+
+	// Add Object to layer Gameworld.
+	m_gameworld["AudioSourceLayer"][x][y] = entity;
+	return entity;
+}
+Entity* GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string layer, std::string decal, std::string name)
 {
 	auto current_layer = m_currentLayer;
 	m_currentLayer = layer;

@@ -150,7 +150,7 @@ public:
 
 		loaded &= LoadEditorGraphicalData();
 
-
+		// Load special Asset data.
 		auto sprite = new olc::Sprite("assets/Tileset/Structure/Fort.png");
 		auto decal = new olc::Decal(sprite);
 		m_structureDecalDatabase.emplace("Fort", decal);
@@ -162,6 +162,14 @@ public:
 		m_structureDecalDatabase.emplace("Fort_2", decal);
 		m_decalDatabase.emplace("Fort_2", decal);
 		m_spriteDatabase.push_back(sprite);
+
+		sprite = new olc::Sprite("assets/Editor/speaker_audio_sound_loud.png");
+		decal = new olc::Decal(sprite);
+		m_editorDecalDatabase.try_emplace("AudioOn", decal);
+		m_editorSpriteDatabase.push_back(sprite);
+		m_decalDatabase.emplace("AudioOn", decal);
+		m_spriteDatabase.push_back(sprite);
+
 
 		// Load Audio assets
 		loaded &= LoadAudioData();
@@ -270,7 +278,8 @@ private:
 	void UpdateVisibleRect();
 	void RenderMapobject(Entity* object);
 	Entity* CreateMapobject(uint64_t x, uint64_t y, std::string decal, bool unit, std::string name = "none");
-	Entity* CreateMapobject(uint64_t x, uint64_t y, std::string layer, std::string decal);
+	Entity* CreateMapobject(uint64_t x, uint64_t y, std::string layer, std::string decal, std::string name = "none");
+	Entity* CreateMapobjectAudioSource(uint64_t x, uint64_t y, uint64_t w, uint64_t h, const std::string& soundname);
 	std::string CreateMapobjectName();
 	bool IsMapobjectNameUsed(const std::string& name);
 	void DeleteMapobject(Entity* object);
