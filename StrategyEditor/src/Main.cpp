@@ -872,6 +872,16 @@ void GameEditor::HandleInput()
 				g_pEditedSoundSource = sound_source;
 			}
 		}
+		if (GetMouse(1).bReleased)
+		{
+			auto sound_source = GetMapobjectAt(mousex, mousey, "AudioSourceLayer");
+			if (sound_source)
+			{
+				// Remove Sound Source from Project.
+				DeleteMapobjectAudioSource(sound_source);
+			}
+		}
+
 	}
 }
 void GameEditor::UpdateVisibleRect()
@@ -973,7 +983,7 @@ Entity* GameEditor::CreateMapobjectAudioSource(uint64_t x, uint64_t y, uint64_t 
 	// Create object.
 	auto entity = new Entity();
 	m_entities.push_back(entity);
-	entity->Add(new ComponentSprite("AudioOn", "AudioSourceLayer"), "Sprite");
+	entity->Add(new ComponentSprite("AudioOff", "AudioSourceLayer"), "Sprite");
 	entity->m_name = name;
 	entity->m_positionx = x;
 	entity->m_positiony = y;
@@ -1115,6 +1125,23 @@ void GameEditor::DeleteMapobject(Entity* object)
 	delete entity;
 	m_gameworld[layer][x][y] = nullptr;
 }
+
+void GameEditor::DeleteMapobjectAudioSource(Entity* object)
+{
+	auto sound_component = object->Get< ComponentSound >("Sound");
+	// Stop according sample from playing.
+	m_soundMap[sound_component->m_soundName].first = false;
+	olc::SOUND::StopSample(m_soundMap[sound_component->m_soundName].second);
+
+	// Close the editing window if it is on.
+	g_bEditingSoundSource = false;
+	g_pEditedSoundSource = nullptr;
+	g_sSoundSource = "none";
+
+	// General delete of the Object.
+	DeleteMapobject(object);
+}
+
 void GameEditor::UpdateEntities()
 {
 	for (const auto& e : m_entities)
@@ -1205,23 +1232,6 @@ void GameEditor::DisplayBackgroundAudioEditor()
 			// Selected a sound source to be placed on the map.
 			g_bAddingSoundSource = true;
 			g_sSoundSource = p.first;
-
-			/*
-			if (p.second.first == false)
-			{
-				// Play Sound.
-				olc::SOUND::PlaySample(p.second.second);
-				m_soundMap[p.first].first = true;
-				g_iPlayingBackgroundAudio = p.second.second;
-			}
-			else
-			{
-				// Stop Sound.
-				olc::SOUND::StopSample(p.second.second);
-				m_soundMap[p.first].first = false;
-				g_iPlayingBackgroundAudio = 0;
-			}
-			*/
 		}
 		ImGui::PopStyleColor();
 	}
@@ -1229,28 +1239,32 @@ void GameEditor::DisplayBackgroundAudioEditor()
 }
 void GameEditor::DisplaySoundSourceEditor(Entity* e)
 {
-	std::string name = "Sound Source Edit: " + e->m_name;
+	auto sound_component = e->Get< ComponentSound >("Sound");
+	auto sound_name = sound_component->m_soundName;
+
+	std::string window_title = "Sound Source Edit: " + sound_name;
 	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
 	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
-	ImGui::Begin(name.c_str(), &g_bEditingSoundSource);
+	ImGui::Begin(window_title.c_str(), &g_bEditingSoundSource);
 
-	ImGuiID play_sound_id = g_iImguiImageButtonID + strlen(name.c_str()) + (intptr_t)"Play";
-	ImGuiID stop_sound_id = g_iImguiImageButtonID + strlen(name.c_str()) + (intptr_t)"Stop";
-	ImGuiID loop_sound_id = g_iImguiImageButtonID + strlen(name.c_str()) + (intptr_t)"Repeat";
+	ImGuiID play_sound_id = g_iImguiImageButtonID + strlen(sound_name.c_str()) + (intptr_t)"Play";
+	ImGuiID stop_sound_id = g_iImguiImageButtonID + strlen(sound_name.c_str()) + (intptr_t)"Stop";
+	ImGuiID loop_sound_id = g_iImguiImageButtonID + strlen(sound_name.c_str()) + (intptr_t)"Repeat";
+
 
 	// Play or Stop Sound source and Set Looping.
 	ImGui::PushID(loop_sound_id);
 	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Repeat"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
 	{
-		if (m_soundMap[e->m_name].first == false)
+		if (m_soundMap[sound_name].first == false)
 		{
-			olc::SOUND::PlaySample(m_soundMap[e->m_name].second, true);
-			m_soundMap[e->m_name].first = true;
+			olc::SOUND::PlaySample(m_soundMap[sound_name].second, true);
+			m_soundMap[sound_name].first = true;
 		}
 		else
 		{
-			olc::SOUND::StopSample(m_soundMap[e->m_name].second);
-			olc::SOUND::PlaySample(m_soundMap[e->m_name].second, true);
+			olc::SOUND::StopSample(m_soundMap[sound_name].second);
+			olc::SOUND::PlaySample(m_soundMap[sound_name].second, true);
 		}
 	}
 	ImGui::PopID();
@@ -1259,15 +1273,15 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 	ImGui::PushID(play_sound_id);
 	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Play"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
 	{
-		if (m_soundMap[e->m_name].first == false)
+		if (m_soundMap[sound_name].first == false)
 		{
-			olc::SOUND::PlaySample(m_soundMap[e->m_name].second);
-			m_soundMap[e->m_name].first = true;
+			olc::SOUND::PlaySample(m_soundMap[sound_name].second);
+			m_soundMap[sound_name].first = true;
 		}
 		else
 		{
-			olc::SOUND::StopSample(m_soundMap[e->m_name].second);
-			olc::SOUND::PlaySample(m_soundMap[e->m_name].second);
+			olc::SOUND::StopSample(m_soundMap[sound_name].second);
+			olc::SOUND::PlaySample(m_soundMap[sound_name].second);
 		}
 	}
 	ImGui::PopID();
@@ -1276,10 +1290,10 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 	ImGui::PushID(stop_sound_id);
 	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Stop"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
 	{
-		if (m_soundMap[e->m_name].first)
+		if (m_soundMap[sound_name].first)
 		{
-			olc::SOUND::StopSample(m_soundMap[e->m_name].second);
-			m_soundMap[e->m_name].first = false;
+			olc::SOUND::StopSample(m_soundMap[sound_name].second);
+			m_soundMap[sound_name].first = false;
 		}
 	}
 	ImGui::PopID();
@@ -1293,12 +1307,12 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["OK"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
 	{
 		// Before renaming stop the current sample.
-		if (m_soundMap[e->m_name].first)
+		if (m_soundMap[sound_name].first)
 		{
-			olc::SOUND::StopSample(m_soundMap[e->m_name].second);
+			olc::SOUND::StopSample(m_soundMap[sound_name].second);
 		}
 
-		e->m_name = sound_source_name_buf;
+		sound_component->m_soundName = sound_source_name_buf;
 		memset(&sound_source_name_buf, 0, sizeof(sound_source_name_buf));
 	}
 
@@ -1674,6 +1688,28 @@ bool GameEditor::ExportMapData(const std::string& filepath)
 						}
 					}
 
+					auto entity = layer[x][y];
+					// Export Unit Data.
+					if (entity->Has("Unit"))
+					{
+						printf("Exporting ComponentUnit Data currently not supported!\n");
+					}
+					// Export Sound Source Data.
+					if (entity->Has("Sound"))
+					{
+						auto sound_component = entity->Get< ComponentSound >("Sound");
+						
+						auto xmlSound = object->InsertNewChildElement("Sound");
+
+						xmlSound->SetAttribute("w", sound_component->w);
+						xmlSound->SetAttribute("h", sound_component->h);
+						xmlSound->SetAttribute("r", sound_component->r);
+						xmlSound->SetAttribute("g", sound_component->g);
+						xmlSound->SetAttribute("b", sound_component->b);
+						xmlSound->SetAttribute("a", sound_component->a);
+						xmlSound->SetAttribute("soundName", sound_component->m_soundName.c_str());
+					}
+
 
 					// Position
 					object->SetAttribute("x", layer[x][y]->m_positionx);
@@ -1731,6 +1767,7 @@ bool GameEditor::ImportMapData(const std::string& filepath)
 
 			auto townhall = entity->FirstChildElement("Townhall");
 			auto fort = entity->FirstChildElement("Fort");
+			auto sound = entity->FirstChildElement("Sound");
 			if (townhall)
 			{
 				object->Add(new ComponentTownhall(x, y), "Townhall");
@@ -1771,7 +1808,18 @@ bool GameEditor::ImportMapData(const std::string& filepath)
 					tslot = tslot->NextSiblingElement("Slot");
 				}
 			}
+			if (sound)
+			{
+				auto w = sound->IntAttribute("w", 1);
+				auto h = sound->IntAttribute("h", 1);
+				auto r = sound->IntAttribute("r", 1);
+				auto g = sound->IntAttribute("g", 1);
+				auto b = sound->IntAttribute("b", 1);
+				auto a = sound->IntAttribute("a", 1);
+				auto sound_name = sound->Attribute("soundName");
 
+				object->Add(new ComponentSound(w, h, r, g, b, a, sound_name), "Sound");
+			}
 
 
 			entity = entity->NextSiblingElement("Object");

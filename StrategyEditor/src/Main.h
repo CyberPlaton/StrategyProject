@@ -296,6 +296,7 @@ private:
 	std::string CreateMapobjectName();
 	bool IsMapobjectNameUsed(const std::string& name);
 	void DeleteMapobject(Entity* object);
+	void DeleteMapobjectAudioSource(Entity* object);
 	std::string GetMapobjectNameAt(int x, int y, std::string layer);
 	Entity* GetMapobjectAt(int x, int y, std::string layer);
 	void SetDecalSize(const std::string& name, uint64_t w, uint64_t h);
