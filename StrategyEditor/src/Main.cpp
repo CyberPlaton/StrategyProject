@@ -6,6 +6,8 @@ static bool g_bEntityDatabaseOpen = true;
 static bool g_bEntityEditorOpen = false;
 static bool g_bBackgroundAudioEditorOpen = false;
 static int g_iPlayingBackgroundAudio = 0;
+static bool g_bAddingSoundSource = false;
+static std::string g_sSoundSource = "none";
 static Entity* g_pEditedEntity = nullptr;
 static Entity* g_pEditedCity = nullptr;
 static bool g_bAddingTownhall = false;
@@ -593,12 +595,14 @@ void GameEditor::HandleInput()
 	olc::vf2d point = tv.ScreenToWorld({ (float)GetMouseX(), (float)GetMouseY() });
 	float mousex = point.x;
 	float mousey = point.y;
-	m_camerax = mousex;
-	m_cameray = mousey;
-
+	
 	olc::vi2d topLeft = tv.GetTileUnderScreenPos({ 0, 0 });
 	olc::vi2d bottomDown = tv.GetBottomRightTile();
 	olc::vi2d middle = { bottomDown.x / 2, bottomDown.y / 2 };
+
+	m_camerax = middle.x;
+	m_cameray = middle.y;
+
 
 	if (!g_bImguiHasFocus)
 	{
@@ -661,6 +665,13 @@ void GameEditor::HandleInput()
 			{
 				MakeMapobjectFort(mousex, mousey, g_sDefaultCityLayer);
 				g_bAddingFort = false;
+			}
+		}
+		if (g_bAddingSoundSource)
+		{
+			if (GetMouse(0).bReleased)
+			{
+
 			}
 		}
 
@@ -978,7 +989,8 @@ void GameEditor::RenderEntityDatabase()
 			g_vecEditedEntities.push_back(e);
 		}
 		ImGui::PopID();
-		
+		BeginTooltip("Edit the Entity. Add/Remove components and/or alter data of them");
+
 		if (!g_bEntityEditorOpen)
 		{
 			ImGui::SameLine();
@@ -991,6 +1003,7 @@ void GameEditor::RenderEntityDatabase()
 				return;
 			}
 			ImGui::PopID();
+			BeginTooltip("Delete the Entity from the Map");
 		}
 	}
 	ImGui::End();
@@ -1015,22 +1028,28 @@ void GameEditor::DisplayEntityEditor(Entity* e)
 
 void GameEditor::DisplayBackgroundAudioEditor()
 {
-	static const char* name = "Ambient Audio";
+	static const char* name = "Audio Editor";
 	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
 	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
 	ImGui::Begin(name, &g_bBackgroundAudioEditorOpen);
 	for (auto& p : m_soundMap)
 	{
 		ImVec4 color(0.0f, 0.0f, 0.39f, 1.0f);
-
+		// If Sound is being played change the Color.
 		if (g_iPlayingBackgroundAudio == p.second.second)
 		{
 			color = { 0.0f, 0.39f, 0.0f, 1.0f };
 		}
-		
 		ImGui::PushStyleColor(ImGuiCol_Button, color);
+		
+		
 		if (ImGui::Button(p.first.c_str()))
 		{
+			// Selected a sound source to be placed on the map.
+			g_bAddingSoundSource = true;
+			g_sSoundSource = p.first;
+
+			/*
 			if (p.second.first == false)
 			{
 				// Play Sound.
@@ -1045,6 +1064,7 @@ void GameEditor::DisplayBackgroundAudioEditor()
 				m_soundMap[p.first].first = false;
 				g_iPlayingBackgroundAudio = 0;
 			}
+			*/
 		}
 		ImGui::PopStyleColor();
 	}
@@ -1117,8 +1137,20 @@ void GameEditor::RenderLayerUI()
 
 
 	bool is_layer_normal;
+	bool is_layer_uneditable;
 	for (auto& layer : m_sortedLayers)
 	{
+		is_layer_uneditable = false;
+		// Find whether this layer is permanent and uneditable.
+		for (auto& n : m_PermanentLayersVec)
+		{
+			if (n == layer.first)
+			{
+				is_layer_uneditable = true;
+				break;
+			}
+		}
+
 		is_layer_normal = true;
 		// Highlight active layer with red text.
 		// Highlight unvisible layer with greyish text.
@@ -1157,41 +1189,46 @@ void GameEditor::RenderLayerUI()
 		ImGuiID visible_id = g_iImguiImageButtonID + layer.first + (intptr_t)"Visible";
 
 		// Create all the buttons with functionality for each layer.
-		ImGui::PushID(pencil_id);
-		if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Pencil"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
+		// Except the layer is permanent, then we do not create ALL of them.
+		if (is_layer_uneditable == false)
 		{
-			g_bChangeLayerNameOpen = true;
-			g_sAlteredLayer = layer.second;
-		}
-		ImGui::PopID();
-		BeginTooltip("Edit layer name");
-		ImGui::SameLine();
-		ImGui::PushID(slider_id);
-		if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Slider"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
-		{
-			g_bChangeLayerOrderOpen = true;
-			g_sAlteredLayer = layer.second;
-		}
-		ImGui::PopID();
-		BeginTooltip("Edit layer order");
-		ImGui::SameLine();
-		ImGui::PushID(delete_id);
-		if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Delete"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
-		{
-			DeleteRenderingLayer(layer.second);
-			layers_dirty = true;
-		}
-		ImGui::PopID();
-		BeginTooltip("Delete layer");
+			ImGui::PushID(pencil_id);
+			if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Pencil"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
+			{
+				g_bChangeLayerNameOpen = true;
+				g_sAlteredLayer = layer.second;
+			}
+			ImGui::PopID();
+			BeginTooltip("Edit layer name");
+			ImGui::SameLine();
+			ImGui::PushID(slider_id);
+			if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Slider"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
+			{
+				g_bChangeLayerOrderOpen = true;
+				g_sAlteredLayer = layer.second;
+			}
+			ImGui::PopID();
+			BeginTooltip("Edit layer order");
+			ImGui::SameLine();
+			ImGui::PushID(delete_id);
+			if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Delete"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
+			{
+				DeleteRenderingLayer(layer.second);
+				layers_dirty = true;
+			}
+			ImGui::PopID();
+			BeginTooltip("Delete layer");
 
-		ImGui::SameLine();
-		ImGui::PushID(target_id);
-		if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["TargetLayer"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
-		{
-			m_currentLayer = layer.second;
+			ImGui::SameLine();
+			ImGui::PushID(target_id);
+			if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["TargetLayer"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
+			{
+				m_currentLayer = layer.second;
+			}
+			ImGui::PopID();
+			BeginTooltip("Select target layer");
+
 		}
-		ImGui::PopID();
-		BeginTooltip("Select target layer");
 
 		ImGui::SameLine();
 		ImGui::PushID(visible_id);

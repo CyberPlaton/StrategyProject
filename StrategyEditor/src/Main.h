@@ -35,7 +35,7 @@
 
 
 #define EDITOR_MAJOR_VERSION 0
-#define EDITOR_MINOR_VERSION 1
+#define EDITOR_MINOR_VERSION 2
 #define EDITOR_PATCH_VERSION 0
 
 
@@ -124,7 +124,16 @@ public:
 		CreateRenderingLayer("Default", 0);
 		m_currentLayer = "Default";
 		m_visibleLayers[0] = 1;
+		
+		// Create the default audio source layer.
+		CreateRenderingLayer("AudioSourceLayer", 99);
+		m_visibleLayers[99] = 0;
+		m_PermanentLayersVec.push_back(99);
+
 		UpdateLayerSorting();
+
+
+
 
 		// Load Assets
 		bool loaded = LoadTilesetData("Forest", "assets/Tileset/Forest", "assets/TilesetData/Forest.json");
@@ -228,12 +237,13 @@ private:
 	std::vector< olc::Sprite* > m_spriteDatabase;
 	std::map< std::string, std::pair< uint64_t, uint64_t > > m_decalSizeDatabase;
 
-	// Editor specific decal datatabase.
+	// Editor specific decal database.
 	std::map< std::string, olc::Decal* > m_editorDecalDatabase;
 	std::vector< olc::Sprite* > m_editorSpriteDatabase;
 
 	// Audio
 	std::map< std::string, std::pair< bool, int > > m_soundMap;
+	std::vector< int > m_PermanentLayersVec;
 
 private:
 
