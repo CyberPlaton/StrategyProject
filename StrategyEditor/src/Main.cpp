@@ -8,6 +8,7 @@ static bool g_bBackgroundAudioEditorOpen = false;
 static int g_iPlayingBackgroundAudio = 0;
 static bool g_bAddingSoundSource = false;
 static std::string g_sSoundSource = "none";
+static bool g_bRenderSoundSourceDimensions = false;
 static Entity* g_pEditedEntity = nullptr;
 static Entity* g_pEditedCity = nullptr;
 static bool g_bAddingTownhall = false;
@@ -183,7 +184,11 @@ void GameEditor::RenderMainMenu()
 		{
 			if (ImGui::MenuItem("Imgui Demo")) ToggleMenuItem(g_bImguiDemoOpen);
 			if (ImGui::MenuItem("Save")) ExportMapData("assets/Map.xml");
-			if (ImGui::MenuItem("Load")) ImportMapData("assets/Map.xml");
+			if (ImGui::MenuItem("Load"))
+			{
+				ImportMapData("assets/Map.xml");
+				SetAllLayersVisible();
+			}
 			if (ImGui::MenuItem("Exit"))
 			{
 				olc_Terminate();
@@ -257,9 +262,13 @@ void GameEditor::RenderMainMenu()
 
 		if (ImGui::BeginMenu("Audio"))
 		{
-			if (ImGui::MenuItem("Edit Ambient"))
+			if (ImGui::MenuItem("Edit Sources"))
 			{
 				ToggleMenuItem(g_bBackgroundAudioEditorOpen);
+			}
+			if (ImGui::MenuItem("Display Source Dimensions"))
+			{
+				ToggleMenuItem(g_bRenderSoundSourceDimensions);
 			}
 
 			ImGui::EndMenu();
@@ -411,6 +420,8 @@ void GameEditor::RenderMainFrame()
 					olc::Pixel terr_color = { 230, 0, 0, 100 };
 
 					auto e = layer_world[x][y];
+
+					// Render City/Fort specific data.
 					if (e->Has("Townhall") || e->Has("Fort"))
 					{
 						bool townhall = true;
@@ -443,6 +454,20 @@ void GameEditor::RenderMainFrame()
 						}
 					}
 
+					// Render Audio Source specific data.
+					if (g_bRenderSoundSourceDimensions)
+					{
+						if (e->Has("Sound"))
+						{
+							auto sound = e->Get< ComponentSound >("Sound");
+							auto color = olc::Pixel(sound->r, sound->g, sound->b, sound->a);
+							float xpos = e->m_positionx - sound->w;
+							float ypos = e->m_positiony - sound->h;
+							float w = sound->w * 2 + 1;
+							float h = sound->h * 2 + 1;
+							tv.DrawDecal({xpos, ypos}, m_editorDecalDatabase["FilledRect"], { w, h }, color);
+						}
+					}
 				}
 			}
 		}
@@ -466,7 +491,6 @@ void GameEditor::RenderMainFrame()
 		{
 			tv.DrawDecal(c.position, build_cell_decal, olc::vf2d(1.0f, 1.0f), c.color);
 		}
-
 	}
 	if (g_bRenderGrid)
 	{
@@ -523,6 +547,21 @@ void GameEditor::RenderMapobject(Entity* object)
 		{
 			offy = DEFAULT_UNIT_DECAL_OFFSET_Y;
 			offx = DEFAULT_UNIT_DECAL_OFFSET_X;
+		}
+
+		if (object->Has("Sound"))
+		{
+			auto sound = object->Get< ComponentSound >("Sound");
+			if (m_soundMap[sound->m_soundName].first)
+			{
+				// Audio Source Playing.
+				c->m_decal = "AudioOn";
+			}
+			else
+			{
+				// Audio Source Not Playing.
+				c->m_decal = "AudioOff";
+			}
 		}
 
 		tv.DrawDecal({ object->m_positionx + offx, object->m_positiony + offy }, m_decalDatabase[c->m_decal], { scalex, scaley });
@@ -684,15 +723,6 @@ void GameEditor::HandleInput()
 				g_bAddingFort = false;
 			}
 		}
-		if (g_bAddingSoundSource)
-		{
-			if (GetMouse(0).bReleased)
-			{
-				CreateMapobjectAudioSource(mousex, mousey, 1, 1, g_sSoundSource);
-				g_bAddingSoundSource = false;
-				g_sSoundSource = "none";
-			}
-		}
 
 		// Delete Mapobject.
 		if (GetMouse(1).bHeld && (g_fMouseXPrevious != mousex) && (g_fMouseYPrevious != mousey))
@@ -794,6 +824,23 @@ void GameEditor::HandleInput()
 			}
 		}
 	}
+
+
+	// Handle input despite Imgui having focus.
+	if (g_bAddingSoundSource)
+	{
+		if (GetMouse(0).bReleased)
+		{
+			CreateMapobjectAudioSource(mousex, mousey, 2.0f, 2.0f, g_sSoundSource);
+			g_bAddingSoundSource = false;
+			g_sSoundSource = "none";
+		}
+		if (GetMouse(1).bReleased || GetKey(olc::ESCAPE).bReleased)
+		{
+			g_bAddingSoundSource = false;
+			g_sSoundSource = "none";
+		}
+	}
 }
 void GameEditor::UpdateVisibleRect()
 {
@@ -857,6 +904,15 @@ uint64_t GameEditor::GetDecalHeight(const std::string& name)
 	}
 }
 
+olc::Pixel GameEditor::GetRandomColor(uint64_t alpha /*= 255*/)
+{
+	int r = rand() % 255;
+	int g = rand() % 255;
+	int b = rand() % 255;
+
+	return olc::Pixel(r, g, b, alpha);
+}
+
 std::string GameEditor::CreateMapobjectName()
 {
 	return "Mapobject_" + std::to_string(m_mapobjectCount++);
@@ -892,8 +948,14 @@ Entity* GameEditor::CreateMapobjectAudioSource(uint64_t x, uint64_t y, uint64_t 
 	entity->Get< ComponentSprite >("Sprite")->m_width = DEFAULT_DECAL_SIZE_X;
 	entity->Get< ComponentSprite >("Sprite")->m_height = DEFAULT_DECAL_SIZE_Y;
 	
-	entity->Add(new ComponentSound(x, y, w, h, soundname), "Sound");
-
+	auto sound_component = new ComponentSound(w, h, soundname);
+	olc::Pixel color = GetRandomColor(150);
+	sound_component->r = color.r;
+	sound_component->g = color.g;
+	sound_component->b = color.b;
+	sound_component->a = color.a;
+	entity->Add(sound_component, "Sound");
+	
 
 	// If there is another Object already, delete it first.
 	if (m_gameworld["AudioSourceLayer"][x][y])
@@ -1343,6 +1405,13 @@ void GameEditor::RenderLayerUI()
 	if (layers_dirty)
 	{
 		UpdateLayerSorting();
+	}
+}
+void GameEditor::SetAllLayersVisible()
+{
+	for (auto& layer : m_layerOrder)
+	{
+		m_visibleLayers[layer.second] = 1;
 	}
 }
 void GameEditor::ToggleLayerVisibility(int layer)

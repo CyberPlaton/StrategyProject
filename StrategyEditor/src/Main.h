@@ -109,6 +109,9 @@ public:
 public:
 	bool OnUserCreate() override
 	{
+		// Initialize Random.
+		srand(time(0));
+
 		// Initialize Audio.
 		olc::SOUND::InitialiseAudio(44100, 1, 8, 512);
 
@@ -168,6 +171,13 @@ public:
 		m_editorDecalDatabase.try_emplace("AudioOn", decal);
 		m_editorSpriteDatabase.push_back(sprite);
 		m_decalDatabase.emplace("AudioOn", decal);
+		m_spriteDatabase.push_back(sprite);
+
+		sprite = new olc::Sprite("assets/Editor/speaker_audio_sound_off.png");
+		decal = new olc::Decal(sprite);
+		m_editorDecalDatabase.try_emplace("AudioOff", decal);
+		m_editorSpriteDatabase.push_back(sprite);
+		m_decalDatabase.emplace("AudioOff", decal);
 		m_spriteDatabase.push_back(sprite);
 
 
@@ -290,6 +300,7 @@ private:
 	void SetDecalSize(const std::string& name, uint64_t w, uint64_t h);
 	uint64_t GetDecalWidth(const std::string& name);
 	uint64_t GetDecalHeight(const std::string& name);
+	olc::Pixel GetRandomColor(uint64_t alpha = 255);
 
 
 	void MakeMapobjectTownhall(int x, int y, std::string layer);
@@ -308,6 +319,7 @@ private:
 	void DeleteRenderingLayer(std::string layer_name);
 	void InitializeMatrix(std::vector< std::vector< Entity* > >& matrix);
 	void UpdateLayerSorting();
+	void SetAllLayersVisible();
 	void ToggleLayerVisibility(int layer);
 	bool LayerVisible(int layer);
 
