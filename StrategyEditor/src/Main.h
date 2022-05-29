@@ -172,7 +172,7 @@ public:
 
 
 		// Load Audio assets
-		loaded &= LoadAudioData();
+		loaded &= LoadAudioData("assets/Audio/LoadDefinition.xml");
 
 		return loaded;
 	}
@@ -251,6 +251,8 @@ private:
 
 	// Audio
 	std::map< std::string, std::pair< bool, int > > m_soundMap;
+
+	// Permanent Editor specific layers which cannot be altered.
 	std::vector< int > m_PermanentLayersVec;
 
 private:
@@ -272,7 +274,7 @@ private:
 	// UTIL
 	bool LoadTilesetData(const std::string& database, const std::string& tilesetpath, const std::string& datapath);
 	bool LoadEditorGraphicalData();
-	bool LoadAudioData();
+	bool LoadAudioData(const std::string& filepath);
 	void ToggleMenuItem(bool& item);
 	void HandleInput();
 	void UpdateVisibleRect();

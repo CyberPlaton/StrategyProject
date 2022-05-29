@@ -132,17 +132,45 @@ bool GameEditor::LoadEditorGraphicalData()
 	return true;
 }
 
-bool GameEditor::LoadAudioData()
+bool GameEditor::LoadAudioData(const std::string& filepath)
 {
-	int forest_theme = olc::SOUND::LoadAudioSample("assets/Audio/main_theme_forest.wav");
-	if (forest_theme == -1) return false;
+	tinyxml2::XMLDocument doc;
+	if (doc.LoadFile(filepath.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		doc.Clear();
+		return false;
+	}
 
-	int battle_theme = olc::SOUND::LoadAudioSample("assets/Audio/main_theme_battle.wav");
-	if (forest_theme == -1) return false;
+	auto root = doc.RootElement();
+	std::string main_path = root->Attribute("path");
+	auto sound = root->FirstChildElement("Sound");
+	while (sound)
+	{
+		std::string path = main_path;
 
-	m_soundMap.emplace("ForestTheme", std::make_pair(false, forest_theme));
-	m_soundMap.emplace("BattleTheme", std::make_pair(false, battle_theme));
+		std::string sound_path = sound->Attribute("path");
+		if (sound_path.compare("") == 0)
+		{
+			path += "/" +std::string(sound->GetText()) + ".wav";
+		}
+		else
+		{
+			path += "/" + sound_path + "/" + std::string(sound->GetText()) + ".wav";
+		}
 
+		int id = olc::SOUND::LoadAudioSample(path);
+		if (id != -1)
+		{
+			// Store sound.
+			m_soundMap.try_emplace(std::string(sound->GetText()), std::make_pair(false, id));
+		}
+		else
+		{
+			printf("Could not load Sound \"%s\" at \"%s\"!\n", sound->GetText(), path.c_str());
+		}
+
+		sound = sound->NextSiblingElement("Sound");
+	}
 
 	return true;
 }
