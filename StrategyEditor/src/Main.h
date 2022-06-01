@@ -12,6 +12,14 @@
 *			 o Adding Territory and Building slots for Cities and Forts.
 *			 o Ambient Audio "Editor". Playing loaded and chosen Audio Track.
 *
+* 30.05.2022 - Version 0.2.1 "complete":
+*			 o Adding sound sources to the map.
+*			 o Serializing and Deserializing entities with Sound Components.
+*			 o Displaying collision boxes of sound sources.
+*			 o Sound Source editor: Changing name, so that another sound file is played.
+*				Play once, looped and stop a sound file.
+*			 o Adding a Proof of concept scene in the Jungle Forest playing ambient sounds.
+* 
 * TODO: Ambient Audio "Editor" has to be update to be based on FMOD,
 *		as soon as the Audio Engine with FMOD is completed.
 *		After this the "Editor" can be extended based on FMOD to utilize 
@@ -33,10 +41,11 @@
 #define OLC_PGEX_DEAR_IMGUI_IMPLEMENTATION
 #include "olc/imgui_impl_pge.h"
 
+#include "SoundSystem.h"
 
 #define EDITOR_MAJOR_VERSION 0
 #define EDITOR_MINOR_VERSION 2
-#define EDITOR_PATCH_VERSION 0
+#define EDITOR_PATCH_VERSION 1
 
 
 #define STRING(text) #text

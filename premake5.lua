@@ -495,6 +495,7 @@ workspace "Strategy"
 			"%{prj.name}/common/include/imgui",				-- Editor GUI
 			"%{prj.name}/common/include/GL",				-- ImGui
 			"%{prj.name}/common/include/GLFW",				-- ImGui
+			"%{prj.name}/common/include/FMOD",				-- FMOD
 		}
 		filter "configurations:Debug"
 			-- Set working directory for debugging
@@ -515,6 +516,10 @@ workspace "Strategy"
 				"opengl32",
 				"tinyxml2",
 				"imgui",
+
+				"fmod_vc",
+				"fsbank_vc",
+				"fmodstudio_vc"
 			}
 		filter "configurations:Debug"
 			libdirs{"libs", "%{prj.name}/common/lib/Debug"}
@@ -525,6 +530,10 @@ workspace "Strategy"
 				"opengl32",
 				"tinyxml2",
 				"imgui",
+
+				"fmod_vc",
+				"fsbank_vc",
+				"fmodstudio_vc"
 			}
 		filter "configurations:Release"
 			libdirs{"libs", "%{prj.name}/common/lib/Release"}
@@ -535,6 +544,10 @@ workspace "Strategy"
 				"opengl32",
 				"tinyxml2",
 				"imgui",
+
+				"fmod_vc",
+				"fsbank_vc",
+				"fmodstudio_vc"
 			}
 		-- Everything defined below is only if we building on windows
 		filter "system:Windows"
