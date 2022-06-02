@@ -1,0 +1,211 @@
+#include "SoundSystem.h"
+
+SoundSystem* SoundSystem::g_SoundSystem = nullptr;
+
+uint64_t SoundSystem::GetHashValue(const std::string& name)
+{
+	if (m_hashValueMap.find(name) == m_hashValueMap.end())
+	{
+		m_hashValueMap.try_emplace(name, m_nextHashValue++);
+	}
+
+	return m_hashValueMap[name];
+}
+
+bool SoundSystem::Initialize()
+{
+	// Initialize System.
+	auto result = FMOD::System_Create(&m_system);
+	if (result != FMOD_OK) return false;
+
+	result = m_system->init(256, FMOD_INIT_NORMAL, 0);
+	if (result != FMOD_OK) return false;
+
+	m_channelGroupVec.resize(1024);
+
+	// Create Master channel.
+	FMOD::ChannelGroup* cg = nullptr;
+	m_system->getMasterChannelGroup(&cg);
+
+	auto index = GetHashValue("Master");
+	m_channelGroupVec[index] = cg;
+
+
+	// Set initial position.
+	m_listenerX = nullptr;
+	m_listenerY = nullptr;
+	m_listenerZ = nullptr;
+	m_listenerXBefore = 0;
+	m_listenerYBefore = 0;
+	m_listenerZBefore = 0;
+
+	return true;
+}
+
+void SoundSystem::Terminate()
+{
+	// Release all sounds.
+	while (m_soundChannelVec.size() > 0)
+	{
+		auto sound = m_soundChannelVec[m_soundChannelVec.size() - 1];
+		m_soundChannelVec.pop_back();
+
+		sound->Release();
+		delete sound; 
+		sound = nullptr;
+	}
+
+	// Release all groups.
+	while (m_channelGroupVec.size() > 0)
+	{
+		auto group = m_channelGroupVec[m_channelGroupVec.size() - 1];
+		m_channelGroupVec.pop_back();
+
+		group->release();
+	}
+
+	// Close and release system.
+	m_system->close();
+	m_system->release();
+}
+
+void SoundSystem::Update()
+{
+	auto system = SoundSystem::get()->System();
+
+	// Update listener position and velocity.
+	FMOD_VECTOR up = { 0.0f, 1.0f, 0.0f };
+	FMOD_VECTOR forward = { 0.0f, 0.0f, 1.0f };
+	FMOD_VECTOR vel;
+	vel.x = (*m_listenerX - m_listenerXBefore) * (1000 / m_interfaceUpdateTime);
+	vel.y = (*m_listenerY - m_listenerYBefore) * (1000 / m_interfaceUpdateTime);
+	vel.z = (*m_listenerZ - m_listenerZBefore) * (1000 / m_interfaceUpdateTime);
+
+	m_listenerXBefore = *m_listenerX;
+	m_listenerYBefore = *m_listenerY;
+	m_listenerZBefore = *m_listenerZ;
+
+	FMOD_VECTOR lastpos = {m_listenerXBefore, m_listenerYBefore, m_listenerZBefore };
+	FMOD_VECTOR listenerpos = { *m_listenerX, *m_listenerY, *m_listenerZ };
+	system->set3DListenerAttributes(0, &listenerpos, &vel, &forward, &up);
+
+
+	// Update FMOD.
+	system->update();
+}
+
+void SoundSystem::SetListenerPositionVector(float* x, float* y, float* z)
+{
+	m_listenerX = x;
+	m_listenerY = y;
+	m_listenerZ = z;
+}
+
+bool SoundSystem::CreateChannelGroup(const std::string& name, const std::string& parent)
+{
+	FMOD::ChannelGroup* cg = nullptr;
+	m_system->createChannelGroup(name.c_str(), &cg);
+
+	// Add new ChannelGroup to storage under specific index.
+	auto index = GetHashValue(name);
+	m_channelGroupVec[index] = cg;
+
+	// Get master ChannelGroup and add group to it.
+	index = GetHashValue(parent);
+	m_channelGroupVec[index]->addGroup(cg);
+
+
+	return true;
+}
+
+bool SoundSystem::CreateSoundOnChannel(const std::string& filepath, const std::string& channel_group_name, bool sound_2d)
+{
+	auto index = GetHashValue(channel_group_name);
+
+	SoundChannel* sc = nullptr;
+	if (SoundChannel::LoadSoundToChannel(sc, filepath, sound_2d))
+	{
+		SoundChannel::AddChannelToGroup(sc, channel_group_name);
+
+		m_soundChannelVec.push_back(sc);
+
+		return true;
+	}
+
+	return false;
+}
+
+FMOD::ChannelGroup* SoundSystem::GetChannelGroup(const std::string& name)
+{
+	auto index = GetHashValue(name);
+	return m_channelGroupVec[index];
+}
+
+
+
+
+bool SoundChannel::LoadSoundToChannel(SoundChannel* channel, const std::string& filepath, bool sound_2d)
+{
+	auto system = SoundSystem::get()->System();
+	if (channel->GetHasSound())
+	{
+		SoundChannel::UnloadSoundFromChannel(channel);
+	}
+
+	auto mode = FMOD_3D;
+	if (sound_2d) mode = FMOD_2D;
+
+	auto result = system->createSound(filepath.c_str(), mode, 0, &channel->m_data.m_sound);
+
+	if (result == FMOD_OK)
+	{
+		channel->SetHasSound(true);
+
+		system->playSound(channel->GetSound(), 0, true, &channel->m_data.m_channel);
+
+		return true;
+	}
+
+	return false;
+}
+
+void SoundChannel::UnloadSoundFromChannel(SoundChannel* channel)
+{
+	if (channel->GetHasSound())
+	{
+		channel->GetSound()->release();
+	}
+}
+
+void SoundChannel::AddChannelToGroup(SoundChannel* channel, const std::string& group_name)
+{
+	auto system = SoundSystem::get();
+
+	auto group = system->GetChannelGroup(group_name);
+
+	channel->GetChannel()->setChannelGroup(group);
+}
+
+void SoundChannel::Play()
+{
+	if (m_data.m_played) return;
+
+
+	m_data.m_played = true;
+}
+
+void SoundChannel::Pause()
+{
+	if (!m_data.m_played) return;
+
+
+	m_data.m_played = false;
+}
+
+void SoundChannel::Stop()
+{
+	if (!m_data.m_played) return;
+
+
+	m_data.m_played = false;
+}

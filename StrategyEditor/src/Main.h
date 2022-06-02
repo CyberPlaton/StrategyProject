@@ -123,6 +123,12 @@ public:
 
 		// Initialize Audio.
 		olc::SOUND::InitialiseAudio(44100, 1, 8, 512);
+		// FMOD
+		SoundSystem::get()->Initialize();
+		SoundSystem::get()->CreateChannelGroup("SFX");
+		SoundSystem::get()->CreateChannelGroup("Music");
+
+
 
 		// Initialize Layered rendering.
 		m_GUILayer = CreateLayer();
