@@ -29,7 +29,7 @@ void CONCAT_STRING(Set, name)(returntype value) \
 /// @brief Managing a single channel and its related sound.
 struct SoundChannel
 {
-	static bool LoadSoundToChannel(SoundChannel* channel, const std::string& filepath, bool sound_2d = false);
+	static SoundChannel* LoadSoundToChannel(const std::string& filepath, bool sound_2d = false);
 	static void UnloadSoundFromChannel(SoundChannel* channel);
 	static void AddChannelToGroup(SoundChannel* channel, const std::string& group_name);
 
@@ -57,6 +57,10 @@ struct SoundChannel
 		FMOD::Sound* m_sound;
 
 		FMOD::Channel* m_channel;
+
+		FMOD::ChannelGroup* m_group;
+
+		std::string m_name;
 	};
 
 
@@ -79,8 +83,10 @@ struct SoundChannel
 	DECLARE_GET_SET(FMOD_VECTOR, Position, m_data.m_position);
 	DECLARE_GET_SET(FMOD_VECTOR, Velocity, m_data.m_velocity);
 	DECLARE_GET_SET(bool, Looped, m_data.m_looped);
+	DECLARE_GET_SET(const std::string&, Name, m_data.m_name);
 	DECLARE_GET_SET(bool, HasSound, m_data.m_hasSound);
 	DECLARE_GET_SET(FMOD::Channel*, Channel, m_data.m_channel);
+	DECLARE_GET_SET(FMOD::ChannelGroup*, ChannelGroup, m_data.m_group);
 	DECLARE_GET_SET(FMOD::Sound*, Sound, m_data.m_sound);
 
 private:
@@ -106,7 +112,7 @@ public:
 	/// @param x 
 	/// @param y 
 	/// @param z 
-	void SetListenerPositionVector(float* x, float* y, float* z);
+	void SetListenerPositionVector(float x, float y, float z);
 
 	/// @brief Create a channel group.
 	/// @param name 
@@ -114,7 +120,10 @@ public:
 	bool CreateChannelGroup(const std::string& name, const std::string& parent = "Master");
 	
 
-	bool CreateSoundOnChannel(const std::string& filepath, const std::string& channel_group_name, bool sound_2d = false);
+	bool CreateSoundOnChannel(const std::string& filepath, const std::string& name, const std::string& channel_group_name, bool sound_2d = false, FMOD_VECTOR position = {0.0f, 0.0f, 0.0f});
+
+
+	SoundChannel* GetSound(const std::string& sound);
 
 
 	FMOD::ChannelGroup* GetChannelGroup(const std::string& name);
@@ -126,9 +135,9 @@ private:
 	float m_interfaceUpdateTime = 50;
 
 	/// @brief Listeners positional value.
-	float* m_listenerX;
-	float* m_listenerY;
-	float* m_listenerZ;
+	float m_listenerX;
+	float m_listenerY;
+	float m_listenerZ;
 
 	/// @brief  Listener previous position for computing velocity.
 	float m_listenerXBefore;

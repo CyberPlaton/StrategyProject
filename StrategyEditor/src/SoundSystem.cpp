@@ -32,12 +32,14 @@ bool SoundSystem::Initialize()
 
 
 	// Set initial position.
-	m_listenerX = nullptr;
-	m_listenerY = nullptr;
-	m_listenerZ = nullptr;
+	m_listenerX = 0;
+	m_listenerY = 0;
+	m_listenerZ = 0;
 	m_listenerXBefore = 0;
 	m_listenerYBefore = 0;
 	m_listenerZBefore = 0;
+
+	m_system->set3DSettings(0.1f, 1.0f, 1.0f);
 
 	return true;
 }
@@ -76,17 +78,19 @@ void SoundSystem::Update()
 	// Update listener position and velocity.
 	FMOD_VECTOR up = { 0.0f, 1.0f, 0.0f };
 	FMOD_VECTOR forward = { 0.0f, 0.0f, 1.0f };
-	FMOD_VECTOR vel;
-	vel.x = (*m_listenerX - m_listenerXBefore) * (1000 / m_interfaceUpdateTime);
-	vel.y = (*m_listenerY - m_listenerYBefore) * (1000 / m_interfaceUpdateTime);
-	vel.z = (*m_listenerZ - m_listenerZBefore) * (1000 / m_interfaceUpdateTime);
 
-	m_listenerXBefore = *m_listenerX;
-	m_listenerYBefore = *m_listenerY;
-	m_listenerZBefore = *m_listenerZ;
+	// Velocity is needed to produce a doppler effect. We dont require one.
+	FMOD_VECTOR vel = { 0.0f, 0.0f, 0.0f };
+	//vel.x = (m_listenerX - m_listenerXBefore) * (1000 / m_interfaceUpdateTime);
+	//vel.y = (m_listenerY - m_listenerYBefore) * (1000 / m_interfaceUpdateTime);
+	//vel.z = (m_listenerZ - m_listenerZBefore) * (1000 / m_interfaceUpdateTime);
+
+	m_listenerXBefore = m_listenerX;
+	m_listenerYBefore = m_listenerY;
+	m_listenerZBefore = m_listenerZ;
 
 	FMOD_VECTOR lastpos = {m_listenerXBefore, m_listenerYBefore, m_listenerZBefore };
-	FMOD_VECTOR listenerpos = { *m_listenerX, *m_listenerY, *m_listenerZ };
+	FMOD_VECTOR listenerpos = { m_listenerX, m_listenerY, m_listenerZ };
 	system->set3DListenerAttributes(0, &listenerpos, &vel, &forward, &up);
 
 
@@ -94,7 +98,7 @@ void SoundSystem::Update()
 	system->update();
 }
 
-void SoundSystem::SetListenerPositionVector(float* x, float* y, float* z)
+void SoundSystem::SetListenerPositionVector(float x, float y, float z)
 {
 	m_listenerX = x;
 	m_listenerY = y;
@@ -118,14 +122,18 @@ bool SoundSystem::CreateChannelGroup(const std::string& name, const std::string&
 	return true;
 }
 
-bool SoundSystem::CreateSoundOnChannel(const std::string& filepath, const std::string& channel_group_name, bool sound_2d)
+bool SoundSystem::CreateSoundOnChannel(const std::string& filepath, const std::string& name, const std::string& channel_group_name, bool sound_2d, FMOD_VECTOR position)
 {
 	auto index = GetHashValue(channel_group_name);
 
 	SoundChannel* sc = nullptr;
-	if (SoundChannel::LoadSoundToChannel(sc, filepath, sound_2d))
+	if (sc = SoundChannel::LoadSoundToChannel(filepath, sound_2d); sc != nullptr)
 	{
 		SoundChannel::AddChannelToGroup(sc, channel_group_name);
+
+		sc->SetPosition(position);
+		sc->SetChannelGroup(m_channelGroupVec[index]);
+		sc->SetName(name);
 
 		m_soundChannelVec.push_back(sc);
 
@@ -133,6 +141,21 @@ bool SoundSystem::CreateSoundOnChannel(const std::string& filepath, const std::s
 	}
 
 	return false;
+}
+
+SoundChannel* SoundSystem::GetSound(const std::string& sound)
+{
+	for (auto& s : m_soundChannelVec)
+	{
+		auto n = s->GetName();
+
+		if (n.compare(sound) == 0)
+		{
+			return s;
+		}
+	}
+
+	return nullptr;
 }
 
 FMOD::ChannelGroup* SoundSystem::GetChannelGroup(const std::string& name)
@@ -144,9 +167,11 @@ FMOD::ChannelGroup* SoundSystem::GetChannelGroup(const std::string& name)
 
 
 
-bool SoundChannel::LoadSoundToChannel(SoundChannel* channel, const std::string& filepath, bool sound_2d)
+SoundChannel* SoundChannel::LoadSoundToChannel(const std::string& filepath, bool sound_2d)
 {
 	auto system = SoundSystem::get()->System();
+	auto channel = new SoundChannel();
+
 	if (channel->GetHasSound())
 	{
 		SoundChannel::UnloadSoundFromChannel(channel);
@@ -163,10 +188,10 @@ bool SoundChannel::LoadSoundToChannel(SoundChannel* channel, const std::string& 
 
 		system->playSound(channel->GetSound(), 0, true, &channel->m_data.m_channel);
 
-		return true;
+		return channel;
 	}
 
-	return false;
+	return nullptr;
 }
 
 void SoundChannel::UnloadSoundFromChannel(SoundChannel* channel)
@@ -189,6 +214,12 @@ void SoundChannel::AddChannelToGroup(SoundChannel* channel, const std::string& g
 void SoundChannel::Play()
 {
 	if (m_data.m_played) return;
+
+	auto system = SoundSystem::get()->System();
+
+	system->playSound(m_data.m_sound, m_data.m_group, false, &m_data.m_channel);
+
+	m_data.m_channel->set3DAttributes(&m_data.m_position, &m_data.m_velocity);
 
 
 	m_data.m_played = true;

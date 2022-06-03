@@ -555,6 +555,10 @@ void GameEditor::RenderMainFrame()
 	DrawStringDecal({10.0f, 45.0f }, position);
 	DrawStringDecal({ 10.0f, 60.0f }, height);
 
+
+	// Draw Tile Number under Mouse.
+	position = std::to_string(m_tilex) + ":" + std::to_string(m_tiley);
+	tv.DrawStringDecal({ (float)m_tilex + 0.5f, (float)m_tiley + 0.5f }, position, olc::RED);
 }
 void GameEditor::RenderMapobject(Entity* object)
 {
@@ -671,13 +675,15 @@ void GameEditor::HandleInput()
 	olc::vf2d point = tv.ScreenToWorld({ (float)GetMouseX(), (float)GetMouseY() });
 	float mousex = point.x;
 	float mousey = point.y;
+	m_tilex = (uint64_t)mousex;
+	m_tiley = (uint64_t)mousey;
 	
 	olc::vi2d topLeft = tv.GetTileUnderScreenPos({ 0, 0 });
 	olc::vi2d bottomDown = tv.GetBottomRightTile();
 	olc::vi2d middle = { bottomDown.x / 2, bottomDown.y / 2 };
 
-	m_camerax = middle.x;
-	m_cameray = middle.y;
+	m_camerax = m_tilex;
+	m_cameray = m_tiley;
 
 
 	if (!g_bImguiHasFocus)

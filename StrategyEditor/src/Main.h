@@ -125,10 +125,16 @@ public:
 		olc::SOUND::InitialiseAudio(44100, 1, 8, 512);
 		// FMOD
 		SoundSystem::get()->Initialize();
+
 		SoundSystem::get()->CreateChannelGroup("SFX");
 		SoundSystem::get()->CreateChannelGroup("Music");
 
+		auto tilex = 25.0f;
+		auto tiley = 25.0f;
+		SoundSystem::get()->CreateSoundOnChannel("assets/Audio/main_theme_battle.wav", "BattleTheme", "Music", false, { tilex, tiley, 1.0f});
 
+		auto sound = SoundSystem::get()->GetSound("BattleTheme");
+		sound->Play();
 
 		// Initialize Layered rendering.
 		m_GUILayer = CreateLayer();
@@ -207,6 +213,11 @@ public:
 		Clear(olc::BLANK);
 		SetDrawTarget((uint8_t)m_GUILayer);
 
+
+		SoundSystem::get()->SetListenerPositionVector(m_camerax, m_cameray, -m_cameraHeigth);
+		SoundSystem::get()->Update();
+
+
 		HandleInput();
 		UpdateVisibleRect();
 
@@ -221,6 +232,7 @@ public:
 
 	bool OnUserDestroy() override final
 	{
+		SoundSystem::get()->Terminate();
 		olc::SOUND::DestroyAudio();
 		return true;
 	}
@@ -239,6 +251,8 @@ private:
 	
 	float m_camerax = 0;
 	float m_cameray = 0;
+	uint64_t m_tilex = 0;
+	uint64_t m_tiley = 0;
 	float m_cameraHeigth = 1.0f;
 
 	olc::vi2d m_visiblePointLeftUp;
