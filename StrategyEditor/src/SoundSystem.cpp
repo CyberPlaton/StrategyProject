@@ -18,7 +18,7 @@ bool SoundSystem::Initialize()
 	auto result = FMOD::System_Create(&m_system);
 	if (result != FMOD_OK) return false;
 
-	result = m_system->init(256, FMOD_INIT_NORMAL, 0);
+	result = m_system->init(SOUND_DEFAULT_CHANNEL_COUNT, FMOD_3D_LINEARSQUAREROLLOFF | FMOD_INIT_NORMAL, 0);
 	if (result != FMOD_OK) return false;
 
 	m_channelGroupVec.resize(1024);
@@ -39,7 +39,7 @@ bool SoundSystem::Initialize()
 	m_listenerYBefore = 0;
 	m_listenerZBefore = 0;
 
-	m_system->set3DSettings(0.1f, 1.0f, 1.0f);
+	m_system->set3DSettings(0.0f, SOUND_DEFAULT_DISTANCE_FACTOR, SOUND_DEFAULT_ROLLOFF_FACTOR);
 
 	return true;
 }
@@ -186,6 +186,8 @@ SoundChannel* SoundChannel::LoadSoundToChannel(const std::string& filepath, bool
 	{
 		channel->SetHasSound(true);
 
+		channel->m_data.m_sound->set3DMinMaxDistance(SOUND_DEFAULT_MIN_DISTANCE, SOUND_DEFAULT_MAX_DISTANCE);
+
 		system->playSound(channel->GetSound(), 0, true, &channel->m_data.m_channel);
 
 		return channel;
@@ -216,6 +218,8 @@ void SoundChannel::Play()
 	if (m_data.m_played) return;
 
 	auto system = SoundSystem::get()->System();
+
+	m_data.m_channel->setVolume(m_data.m_volume);
 
 	system->playSound(m_data.m_sound, m_data.m_group, false, &m_data.m_channel);
 

@@ -25,6 +25,12 @@ void CONCAT_STRING(Set, name)(returntype value) \
 	member = value; \
 } \
 
+#define SOUND_DEFAULT_DISTANCE_FACTOR 1.0f // 1 Meter Unit.
+#define SOUND_DEFAULT_ROLLOFF_FACTOR 0.0f  // Use FMOD_3D_LINEARSQUAREROLLOFF instead.
+#define SOUND_DEFAULT_CHANNEL_COUNT 256
+#define SOUND_DEFAULT_MIN_DISTANCE 0.1f
+#define SOUND_DEFAULT_MAX_DISTANCE 256 * 128.0f
+
 
 /// @brief Managing a single channel and its related sound.
 struct SoundChannel

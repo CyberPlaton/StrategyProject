@@ -98,6 +98,10 @@ STRING(major) \
 #define DEFAULT_WIDGET_IMAGE_SIZE_Y 16
 
 
+#define DEFAULT_MAP_HEIGHT_STEP 10.0f
+#define DEFAULT_MIN_ZOOM_DISTANCE 1.0f
+#define DEFAULT_MAX_ZOOM_DISTANCE 50.0f
+
 // COMMON
 #include "Mapobject.h"
 using LayeredGameworld = std::map< std::string, std::vector< std::vector< Entity* > > >;
@@ -129,11 +133,12 @@ public:
 		SoundSystem::get()->CreateChannelGroup("SFX");
 		SoundSystem::get()->CreateChannelGroup("Music");
 
-		auto tilex = 25.0f;
-		auto tiley = 25.0f;
-		SoundSystem::get()->CreateSoundOnChannel("assets/Audio/main_theme_battle.wav", "BattleTheme", "Music", false, { tilex, tiley, 1.0f});
+		auto tilex = 15.0f;
+		auto tiley = 5.0f;
+		SoundSystem::get()->CreateSoundOnChannel("assets/Audio/main_theme_battle.wav", "BattleTheme", "Music", false, { tilex, tiley, 0.0f});
 
 		auto sound = SoundSystem::get()->GetSound("BattleTheme");
+		sound->SetVolume(0.1f); // For this to work we have to set the Group volume.
 		sound->Play();
 
 		// Initialize Layered rendering.

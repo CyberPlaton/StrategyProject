@@ -792,13 +792,21 @@ void GameEditor::HandleInput()
 		}
 		if (GetMouseWheel() > 0)
 		{
-			tv.ZoomAtScreenPos(2.0f, GetMousePos());
-			m_cameraHeigth -= 1.0f;
+			// Do not allow to zoom in too much.
+			if (m_cameraHeigth > DEFAULT_MIN_ZOOM_DISTANCE)
+			{
+				tv.ZoomAtScreenPos(2.0f, GetMousePos());
+				m_cameraHeigth -= DEFAULT_MAP_HEIGHT_STEP;
+			}
 		}
 		if (GetMouseWheel() < 0)
 		{
-			tv.ZoomAtScreenPos(0.5f, GetMousePos());
-			m_cameraHeigth += 1.0f;
+			// Do not allow to zoom out too much.
+			if (m_cameraHeigth < DEFAULT_MAX_ZOOM_DISTANCE)
+			{
+				tv.ZoomAtScreenPos(0.5f, GetMousePos());
+				m_cameraHeigth += DEFAULT_MAP_HEIGHT_STEP;
+			}
 		}
 
 		if (!g_bIsPanning)
