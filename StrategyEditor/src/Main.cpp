@@ -4,7 +4,10 @@
 static bool g_bDecalDatabaseOpen = true;
 static bool g_bEntityDatabaseOpen = true;
 static bool g_bEntityEditorOpen = false;
+
 static bool g_bBackgroundAudioEditorOpen = false;
+static bool g_bAudioSoundChannelEditorOpen = false;
+static Tree g_SoundChannelTree("Master");
 static int g_iPlayingBackgroundAudio = 0;
 static bool g_bAddingSoundSource = false;
 static std::string g_sSoundSource = "none";
@@ -71,6 +74,8 @@ void GameEditor::RenderGUI()
 	if(g_bRenderingLayersOpen) RenderLayerUI();
 	// Ambient Sound Editor
 	if (g_bBackgroundAudioEditorOpen) DisplayBackgroundAudioEditor();
+	// SoundChannel Editor
+	if (g_bAudioSoundChannelEditorOpen) DisplaySoundChannelEditor();
 	// Sound source editing
 	if (g_bEditingSoundSource) DisplaySoundSourceEditor(g_pEditedSoundSource);
 }
@@ -286,6 +291,11 @@ void GameEditor::RenderMainMenu()
 			{
 				ToggleMenuItem(g_bBackgroundAudioEditorOpen);
 			}
+			if (ImGui::MenuItem("Edit SoundChannels"))
+			{
+				ToggleMenuItem(g_bAudioSoundChannelEditorOpen);
+			}
+
 			if (ImGui::MenuItem("Display Source Dimensions"))
 			{
 				ToggleMenuItem(g_bRenderSoundSourceDimensions);
@@ -1251,6 +1261,51 @@ void GameEditor::DisplayBackgroundAudioEditor()
 	}
 	ImGui::End();
 }
+
+void GameEditor::DisplaySoundChannelEditor()
+{
+	g_SoundChannelTree["Master"]["SFX"];
+	g_SoundChannelTree["Master"]["Music"];
+	g_SoundChannelTree["Master"]["SFX"]["Jungle"];
+	g_SoundChannelTree["Master"]["SFX"]["Wind"];
+
+	static const char* name = "SoundChannel Editor";
+	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
+	ImGui::Begin(name, &g_bAudioSoundChannelEditorOpen);
+	
+	// The Tree Itself.
+	if (ImGui::TreeNode(g_SoundChannelTree.m_name.c_str()))
+	{
+		// First grade children.
+		for (int i = 0; i < g_SoundChannelTree.m_children.size(); i++)
+		{
+			if (ImGui::TreeNode(g_SoundChannelTree.m_children[i]->m_name.c_str()))
+			{
+				// Second grade children.
+				for (int j = 0; j < g_SoundChannelTree.m_children[i]->m_children.size(); j++)
+				{
+					if (ImGui::TreeNode(g_SoundChannelTree.m_children[i]->m_children[j]->m_name.c_str()))
+					{
+						ImGui::TreePop();
+					}
+				}
+				ImGui::TreePop();
+			}
+		}
+		ImGui::TreePop();
+	}
+
+	ImGui::Separator();
+	if (ImGui::SmallButton("Create and Submit Tree"))
+	{
+	}
+	if (ImGui::SmallButton("Reload Tree"))
+	{
+	}
+	ImGui::End();
+}
+
 void GameEditor::DisplaySoundSourceEditor(Entity* e)
 {
 	auto sound_component = e->Get< ComponentSound >("Sound");
@@ -1329,6 +1384,8 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 		sound_component->m_soundName = sound_source_name_buf;
 		memset(&sound_source_name_buf, 0, sizeof(sound_source_name_buf));
 	}
+
+	// Change Channel Group
 
 
 	// Change width and height.

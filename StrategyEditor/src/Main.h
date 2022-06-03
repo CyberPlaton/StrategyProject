@@ -30,6 +30,7 @@
 #define GLEW_STATIC
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
+
 #define OLC_GFX_OPENGL33
 #define OLC_PGE_APPLICATION
 #include "olc/olcPixelGameEngine.h"
@@ -106,6 +107,34 @@ STRING(major) \
 #include "Mapobject.h"
 using LayeredGameworld = std::map< std::string, std::vector< std::vector< Entity* > > >;
 
+// COMMON USED DATASTRUCTURES
+struct Tree
+{
+	Tree(const std::string& name) : m_name(name) {};
+	Tree() : m_name("None") {};
+
+	Tree& operator[](const std::string& name)
+	{
+		if (m_name.compare(name) == 0)
+		{
+			return *this;
+		}
+
+		for (auto& kid : m_children)
+		{
+			if (kid->m_name.compare(name) == 0) return *kid;
+		}
+
+		auto node = new Tree(name);
+		m_children.push_back(node);
+		return *node;
+	}
+
+	std::vector< Tree* > m_children;
+	std::string m_name;
+};
+
+
 
 // Utility. Create a hook function to actually call the GameEditors OnUserUpdate function.
 class GameEditor;
@@ -127,6 +156,7 @@ public:
 
 		// Initialize Audio.
 		olc::SOUND::InitialiseAudio(44100, 1, 8, 512);
+		
 		// FMOD
 		SoundSystem::get()->Initialize();
 
@@ -137,9 +167,6 @@ public:
 		auto tiley = 5.0f;
 		SoundSystem::get()->CreateSoundOnChannel("assets/Audio/main_theme_battle.wav", "BattleTheme", "Music", false, { tilex, tiley, 0.0f});
 
-		auto sound = SoundSystem::get()->GetSound("BattleTheme");
-		sound->SetVolume(0.1f); // For this to work we have to set the Group volume.
-		sound->Play();
 
 		// Initialize Layered rendering.
 		m_GUILayer = CreateLayer();
@@ -310,6 +337,7 @@ private:
 	void RenderEntityDatabase();
 	void DisplayEntityEditor(Entity* e);
 	void DisplayBackgroundAudioEditor();
+	void DisplaySoundChannelEditor();
 	void DisplaySoundSourceEditor(Entity* e);
 
 	// GAMEWORLD
