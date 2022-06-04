@@ -76,6 +76,9 @@ STRING(major) \
 #endif
 
 
+// SPDLOG
+#include "Logging.h"
+#define APP_RUN_TIME Logger::AppRunningTime()
 // XML
 #include "tinyxml2/tinyxml2.h"
 // JSON
@@ -171,6 +174,9 @@ public:
 	{
 		// Initialize Random.
 		srand(time(0));
+
+		// Initialize Logging.
+		if (!Logger::Initialize()) return false;
 
 		// Initialize Audio.
 		olc::SOUND::InitialiseAudio(44100, 1, 8, 512);
@@ -284,6 +290,7 @@ public:
 	{
 		SoundSystem::get()->Terminate();
 		olc::SOUND::DestroyAudio();
+		Logger::Terminate();
 		return true;
 	}
 
@@ -386,6 +393,8 @@ private:
 	uint64_t GetDecalWidth(const std::string& name);
 	uint64_t GetDecalHeight(const std::string& name);
 	olc::Pixel GetRandomColor(uint64_t alpha = 255);
+	bool CreateAndSubmitSoundChannelTree(Tree* tree);
+	void CreateAndSubmitSoundChannelNode(Tree* tree);
 
 
 	void MakeMapobjectTownhall(int x, int y, std::string layer);

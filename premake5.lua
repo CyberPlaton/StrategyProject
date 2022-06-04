@@ -496,6 +496,7 @@ workspace "Strategy"
 			"%{prj.name}/common/include/GL",				-- ImGui
 			"%{prj.name}/common/include/GLFW",				-- ImGui
 			"%{prj.name}/common/include/FMOD",				-- FMOD
+			"%{prj.name}/common/include/spdlog",				-- SPDLOG
 		}
 		filter "configurations:Debug"
 			-- Set working directory for debugging
@@ -519,7 +520,9 @@ workspace "Strategy"
 
 				"fmod_vc",
 				"fsbank_vc",
-				"fmodstudio_vc"
+				"fmodstudio_vc",
+
+				"spdlog"
 			}
 		filter "configurations:Debug"
 			libdirs{"libs", "%{prj.name}/common/lib/Debug"}
@@ -533,7 +536,9 @@ workspace "Strategy"
 
 				"fmod_vc",
 				"fsbank_vc",
-				"fmodstudio_vc"
+				"fmodstudio_vc",
+
+				"spdlogd"
 			}
 		filter "configurations:Release"
 			libdirs{"libs", "%{prj.name}/common/lib/Release"}
@@ -547,7 +552,9 @@ workspace "Strategy"
 
 				"fmod_vc",
 				"fsbank_vc",
-				"fmodstudio_vc"
+				"fmodstudio_vc",
+
+				"spdlog"
 			}
 		-- Everything defined below is only if we building on windows
 		filter "system:Windows"

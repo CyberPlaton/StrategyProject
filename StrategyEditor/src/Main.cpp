@@ -192,7 +192,7 @@ bool GameEditor::LoadAudioData(const std::string& filepath)
 		}
 		else
 		{
-			printf("Could not load Sound \"%s\" at \"%s\"!\n", sound->GetText(), path.c_str());
+			LOG_DBG_ERROR("[{:.4f}][LoadAudioData] Failed loading Sound \"{}\" at \"{}\"!", APP_RUN_TIME, sound->GetText(), path.c_str());
 		}
 
 		sound = sound->NextSiblingElement("Sound");
@@ -1023,6 +1023,19 @@ olc::Pixel GameEditor::GetRandomColor(uint64_t alpha /*= 255*/)
 	return olc::Pixel(r, g, b, alpha);
 }
 
+bool GameEditor::CreateAndSubmitSoundChannelTree(Tree* tree)
+{
+	// 
+	
+
+	return false;
+}
+
+void GameEditor::CreateAndSubmitSoundChannelNode(Tree* tree)
+{
+
+}
+
 std::string GameEditor::CreateMapobjectName()
 {
 	return "Mapobject_" + std::to_string(m_mapobjectCount++);
@@ -1326,16 +1339,16 @@ void GameEditor::DisplaySoundChannelEditor()
 	ImGui::Separator();
 	if (ImGui::SmallButton("Create and Submit Tree"))
 	{
+		if (CreateAndSubmitSoundChannelTree(g_SoundChannelTree))
+		{
+			LOG_DBG_INFO("[{:.4f}][CreateAndSubmitSoundChannelTree] Success", APP_RUN_TIME);
+		}
 	}
 	if (ImGui::SmallButton("Reload Tree"))
 	{
 		if (LoadSoundChannelTree("assets/Audio/SoundChannelTree.xml", g_SoundChannelTree))
 		{
-
-		}
-		else
-		{
-
+			LOG_DBG_INFO("[{:.4f}][LoadSoundChannelTree] Success", APP_RUN_TIME);
 		}
 	}
 	ImGui::End();
@@ -1810,7 +1823,7 @@ bool GameEditor::ExportMapData(const std::string& filepath)
 					// Export Unit Data.
 					if (entity->Has("Unit"))
 					{
-						printf("Exporting ComponentUnit Data currently not supported!\n");
+						LOG_DBG_ERROR("[{:.4f}][ExportMapData] Serializing ComponentUnit data not supported!", APP_RUN_TIME);
 					}
 					// Export Sound Source Data.
 					if (entity->Has("Sound"))
