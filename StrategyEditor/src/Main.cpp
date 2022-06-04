@@ -10,6 +10,7 @@ static bool g_bAudioSoundChannelEditorOpen = false;
 static Tree* g_SoundChannelTree = new Tree("Master");
 static int g_iPlayingBackgroundAudio = 0;
 static bool g_bAddingSoundSource = false;
+static std::map< std::string, Entity* > g_InGameSoundSourcesMap;
 static std::string g_sSoundSource = "none";
 static bool g_bRenderSoundSourceDimensions = false;
 static bool g_bEditingSoundSource = false;
@@ -919,9 +920,13 @@ void GameEditor::HandleInput()
 	{
 		if (GetMouse(0).bReleased)
 		{
-			CreateMapobjectAudioSource(mousex, mousey, 2.0f, 2.0f, g_sSoundSource);
+			auto sound_source = CreateMapobjectAudioSource(mousex, mousey, 2.0f, 2.0f, g_sSoundSource);
 			g_bAddingSoundSource = false;
 			g_sSoundSource = "none";
+
+
+			auto sound_name = sound_source->Get< ComponentSound >("Sound")->m_soundName;
+			g_InGameSoundSourcesMap.try_emplace(sound_name, sound_source);
 		}
 		if (GetMouse(1).bReleased || GetKey(olc::ESCAPE).bReleased)
 		{
@@ -946,6 +951,11 @@ void GameEditor::HandleInput()
 			if (sound_source)
 			{
 				// Remove Sound Source from Project.
+				auto sound_name = sound_source->Get< ComponentSound >("Sound")->m_soundName;
+				if (g_InGameSoundSourcesMap.find(sound_name) != g_InGameSoundSourcesMap.end())
+				{
+					g_InGameSoundSourcesMap.erase(sound_name);
+				}
 				DeleteMapobjectAudioSource(sound_source);
 			}
 		}
@@ -1317,25 +1327,39 @@ void GameEditor::DisplayBackgroundAudioEditor()
 	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
 	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
 	ImGui::Begin(name, &g_bBackgroundAudioEditorOpen);
-	for (auto& p : m_soundMap)
+
+	bool tree_open = ImGui::TreeNode("Audio Assets");
+	ImGui::SameLine(); HelpMarker("Currently loaded and available audio assets");
+	if (tree_open)
 	{
-		ImVec4 color(0.0f, 0.0f, 0.39f, 1.0f);
-		// If Sound is being played change the Color.
-		if (g_iPlayingBackgroundAudio == p.second.second)
+		for (auto& p : m_soundMap)
 		{
-			color = { 0.0f, 0.39f, 0.0f, 1.0f };
+			if (ImGui::Button(p.first.c_str()))
+			{
+				// Selected a sound source to be placed on the map.
+				g_bAddingSoundSource = true;
+				g_sSoundSource = p.first;
+			}
 		}
-		ImGui::PushStyleColor(ImGuiCol_Button, color);
-		
-		
-		if (ImGui::Button(p.first.c_str()))
-		{
-			// Selected a sound source to be placed on the map.
-			g_bAddingSoundSource = true;
-			g_sSoundSource = p.first;
-		}
-		ImGui::PopStyleColor();
+		ImGui::TreePop();
 	}
+
+	tree_open = ImGui::TreeNode("Sound Sources");
+	ImGui::SameLine(); HelpMarker("Sound sources currently placed on the map");
+	if (tree_open)
+	{
+		for (auto& pair : g_InGameSoundSourcesMap)
+		{
+			if (ImGui::Button(pair.first.c_str()))
+			{
+				g_bEditingSoundSource = true;
+				g_pEditedSoundSource = pair.second;
+			}
+		}
+
+		ImGui::TreePop();
+	}
+
 	ImGui::End();
 }
 
@@ -1979,6 +2003,15 @@ bool GameEditor::ImportMapData(const std::string& filepath)
 				auto sound_name = sound->Attribute("soundName");
 
 				object->Add(new ComponentSound(w, h, r, g, b, a, sound_name), "Sound");
+
+				if (g_InGameSoundSourcesMap.find(sound_name) != g_InGameSoundSourcesMap.end())
+				{
+					LOG_DBG_WARN("[{:.4f}][ImportMapData] Duplicate Sound Source \"{}\"!", APP_RUN_TIME, sound_name);
+				}
+				else
+				{
+					g_InGameSoundSourcesMap.try_emplace(sound_name, object);
+				}
 			}
 
 
