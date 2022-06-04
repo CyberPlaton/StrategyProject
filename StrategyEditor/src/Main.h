@@ -130,6 +130,24 @@ struct Tree
 		return *node;
 	}
 
+	Tree* Node(const std::string& name)
+	{
+		if (m_name.compare(name) == 0)
+		{
+			return this;
+		}
+
+		for (auto& kid : m_children)
+		{
+			if (kid->m_name.compare(name) == 0) return kid;
+		}
+
+		auto node = new Tree(name);
+		m_children.push_back(node);
+		return node;
+	}
+
+
 	std::vector< Tree* > m_children;
 	std::string m_name;
 };
@@ -348,6 +366,8 @@ private:
 	bool LoadTilesetData(const std::string& database, const std::string& tilesetpath, const std::string& datapath);
 	bool LoadEditorGraphicalData();
 	bool LoadAudioData(const std::string& filepath);
+	bool LoadSoundChannelTree(const std::string& filepath, Tree* tree);
+	void LoadSoundChannelNode(tinyxml2::XMLElement* xml_node, Tree* tree);
 	void ToggleMenuItem(bool& item);
 	void HandleInput();
 	void UpdateVisibleRect();
