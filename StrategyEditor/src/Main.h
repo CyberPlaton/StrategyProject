@@ -150,6 +150,16 @@ struct Tree
 		return node;
 	}
 
+	void ClearTree()
+	{
+		while (m_children.size() > 0)
+		{
+			auto kid = m_children[m_children.size() - 1];
+			delete kid;
+			kid = nullptr;
+			m_children.pop_back();
+		}
+	}
 
 	std::vector< Tree* > m_children;
 	std::string m_name;
@@ -183,14 +193,14 @@ public:
 		
 		// FMOD
 		SoundSystem::get()->Initialize();
-
+		/*
 		SoundSystem::get()->CreateChannelGroup("SFX");
 		SoundSystem::get()->CreateChannelGroup("Music");
 
 		auto tilex = 15.0f;
 		auto tiley = 5.0f;
 		SoundSystem::get()->CreateSoundOnChannel("assets/Audio/main_theme_battle.wav", "BattleTheme", "Music", false, { tilex, tiley, 0.0f});
-
+		*/
 
 		// Initialize Layered rendering.
 		m_GUILayer = CreateLayer();
@@ -394,7 +404,7 @@ private:
 	uint64_t GetDecalHeight(const std::string& name);
 	olc::Pixel GetRandomColor(uint64_t alpha = 255);
 	bool CreateAndSubmitSoundChannelTree(Tree* tree);
-	void CreateAndSubmitSoundChannelNode(Tree* tree);
+	bool CreateAndSubmitSoundChannelNode(Tree* tree, const std::string& parent);
 
 
 	void MakeMapobjectTownhall(int x, int y, std::string layer);

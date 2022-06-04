@@ -1025,15 +1025,35 @@ olc::Pixel GameEditor::GetRandomColor(uint64_t alpha /*= 255*/)
 
 bool GameEditor::CreateAndSubmitSoundChannelTree(Tree* tree)
 {
-	// 
-	
+	auto system = SoundSystem::get();
 
-	return false;
+	// First release all channel groups if there are any.
+	system->ReleaseAllChannelGroups();
+
+	// Create the Master channel.
+	bool result = system->CreateMasterChannelGroup(g_SoundChannelTree->m_name);
+
+	// Create Channel Groups.
+	for (auto& kid : g_SoundChannelTree->m_children)
+	{
+		result &= CreateAndSubmitSoundChannelNode(kid, g_SoundChannelTree->m_name);
+	}
+
+	return result;
 }
 
-void GameEditor::CreateAndSubmitSoundChannelNode(Tree* tree)
+bool GameEditor::CreateAndSubmitSoundChannelNode(Tree* tree, const std::string& parent)
 {
+	auto system = SoundSystem::get();
 
+	bool result = system->CreateChannelGroup(tree->m_name, parent);
+
+	for (auto& kid : tree->m_children)
+	{
+		result &= CreateAndSubmitSoundChannelNode(kid, tree->m_name);
+	}
+
+	return result;
 }
 
 std::string GameEditor::CreateMapobjectName()
@@ -1343,12 +1363,21 @@ void GameEditor::DisplaySoundChannelEditor()
 		{
 			LOG_DBG_INFO("[{:.4f}][CreateAndSubmitSoundChannelTree] Success", APP_RUN_TIME);
 		}
+		else
+		{
+			LOG_DBG_ERROR("[{:.4f}][CreateAndSubmitSoundChannelTree] Failed", APP_RUN_TIME);
+			SoundSystem::get()->ReleaseAllChannelGroups();
+		}
 	}
 	if (ImGui::SmallButton("Reload Tree"))
 	{
 		if (LoadSoundChannelTree("assets/Audio/SoundChannelTree.xml", g_SoundChannelTree))
 		{
 			LOG_DBG_INFO("[{:.4f}][LoadSoundChannelTree] Success", APP_RUN_TIME);
+		}
+		else
+		{
+			LOG_DBG_ERROR("[{:.4f}][LoadSoundChannelTree] Failed", APP_RUN_TIME);
 		}
 	}
 	ImGui::End();

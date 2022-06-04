@@ -119,7 +119,40 @@ bool SoundSystem::CreateChannelGroup(const std::string& name, const std::string&
 	m_channelGroupVec[index]->addGroup(cg);
 
 
-	return true;
+	return cg != nullptr;
+}
+
+bool SoundSystem::CreateMasterChannelGroup(const std::string& name /*= "Master"*/)
+{
+	FMOD::ChannelGroup* cg = nullptr;
+	m_system->getMasterChannelGroup(&cg);
+
+	auto index = GetHashValue("Master");
+	m_channelGroupVec[index] = cg;
+
+	return cg != nullptr;
+}
+
+void SoundSystem::ReleaseAllChannelGroups()
+{
+	for (int i = 0; i < m_channelGroupVec.size(); i++)
+	{
+		auto group = m_channelGroupVec[i];
+		if (group)
+		{
+			ReleaseChannelGroup(group);
+			m_channelGroupVec[i] = nullptr;
+		}
+	}
+
+	m_hashValueMap.clear();
+	m_nextHashValue = 0;
+}
+
+void SoundSystem::ReleaseChannelGroup(FMOD::ChannelGroup* group)
+{
+	group->release();
+	group = nullptr;
 }
 
 bool SoundSystem::CreateSoundOnChannel(const std::string& filepath, const std::string& name, const std::string& channel_group_name, bool sound_2d, FMOD_VECTOR position)

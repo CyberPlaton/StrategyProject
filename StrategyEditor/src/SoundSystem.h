@@ -124,7 +124,9 @@ public:
 	/// @param name 
 	/// @return 
 	bool CreateChannelGroup(const std::string& name, const std::string& parent = "Master");
-	
+	bool CreateMasterChannelGroup(const std::string& name = "Master");
+	void ReleaseAllChannelGroups();
+	void ReleaseChannelGroup(FMOD::ChannelGroup* group);
 
 	bool CreateSoundOnChannel(const std::string& filepath, const std::string& name, const std::string& channel_group_name, bool sound_2d = false, FMOD_VECTOR position = {0.0f, 0.0f, 0.0f});
 
@@ -155,7 +157,7 @@ private:
 
 private:
 
-	uint64_t m_nextHashValue = 1;
+	uint64_t m_nextHashValue = 0;
 	std::map< std::string, uint64_t > m_hashValueMap;
 	uint64_t GetHashValue(const std::string& name);
 };
