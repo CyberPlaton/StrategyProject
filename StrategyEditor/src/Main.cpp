@@ -1316,21 +1316,9 @@ void GameEditor::DisplaySoundChannelEditor()
 	// The Tree Itself.
 	if (ImGui::TreeNode(g_SoundChannelTree->m_name.c_str()))
 	{
-		// First grade children.
 		for (int i = 0; i < g_SoundChannelTree->m_children.size(); i++)
 		{
-			if (ImGui::TreeNode(g_SoundChannelTree->m_children[i]->m_name.c_str()))
-			{
-				// Second grade children.
-				for (int j = 0; j < g_SoundChannelTree->m_children[i]->m_children.size(); j++)
-				{
-					if (ImGui::TreeNode(g_SoundChannelTree->m_children[i]->m_children[j]->m_name.c_str()))
-					{
-						ImGui::TreePop();
-					}
-				}
-				ImGui::TreePop();
-			}
+			DisplaySoundChannelNode(g_SoundChannelTree->m_children[i]);
 		}
 		ImGui::TreePop();
 	}
@@ -1351,6 +1339,18 @@ void GameEditor::DisplaySoundChannelEditor()
 		}
 	}
 	ImGui::End();
+}
+
+void GameEditor::DisplaySoundChannelNode(Tree* tree)
+{
+	if (ImGui::TreeNode(tree->m_name.c_str()))
+	{
+		for (int i = 0; i < tree->m_children.size(); i++)
+		{
+			DisplaySoundChannelNode(tree->m_children[i]);
+		}
+		ImGui::TreePop();
+	}
 }
 
 void GameEditor::DisplaySoundSourceEditor(Entity* e)

@@ -356,6 +356,7 @@ private:
 	void DisplayEntityEditor(Entity* e);
 	void DisplayBackgroundAudioEditor();
 	void DisplaySoundChannelEditor();
+	void DisplaySoundChannelNode(Tree* tree);
 	void DisplaySoundSourceEditor(Entity* e);
 
 	// GAMEWORLD
