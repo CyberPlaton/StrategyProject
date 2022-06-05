@@ -1151,7 +1151,7 @@ Entity* GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string decal, b
 
 	if (name.compare("none") == 0 || IsMapobjectNameUsed(name))
 	{
-		name += "_" + CreateMapobjectName();
+		name = "Entity_" + CreateMapobjectName();
 	}
 	else
 	{
@@ -1409,7 +1409,7 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 	auto sound_component = e->Get< ComponentSound >("Sound");
 	auto sound_name = sound_component->m_soundName;
 
-	std::string window_title = "Sound Source Edit: " + sound_name;
+	std::string window_title = "Sound Source Edit: " + e->m_name;
 	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
 	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
 	ImGui::Begin(window_title.c_str(), &g_bEditingSoundSource);

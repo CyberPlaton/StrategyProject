@@ -20,7 +20,11 @@ void Entity::Update()
 
 	if (Has("Sound"))
 	{
-		if (SoundSystem::get()->GetSound(m_name)->GetIsPlayed())
+		auto sound_component = Get< ComponentSound >("Sound");
+
+		auto sound_channel = SoundSystem::get()->GetSound(sound_component->m_soundName);
+
+		if (sound_channel != nullptr && sound_channel->GetIsPlayed())
 		{
 			Get< ComponentSprite >("Sprite")->m_decal = "AudioOn";
 		}
