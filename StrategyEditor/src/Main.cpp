@@ -628,21 +628,6 @@ void GameEditor::RenderMapobject(Entity* object)
 			offx = DEFAULT_UNIT_DECAL_OFFSET_X;
 		}
 
-		if (object->Has("Sound"))
-		{
-			auto sound = object->Get< ComponentSound >("Sound");
-			if (m_soundMap[sound->m_soundName].first)
-			{
-				// Audio Source Playing.
-				c->m_decal = "AudioOn";
-			}
-			else
-			{
-				// Audio Source Not Playing.
-				c->m_decal = "AudioOff";
-			}
-		}
-
 		tv.DrawDecal({ object->m_positionx + offx, object->m_positiony + offy }, m_decalDatabase[c->m_decal], { scalex, scaley });
 	}
 	else
@@ -826,7 +811,7 @@ void GameEditor::HandleInput()
 
 			if (g_sSelectedMapobject.compare("none") != 0)
 			{
-				CreateMapobject(point.x, point.y, m_currentLayer, g_sSelectedMapobject);
+				CreateMapobjectEx(point.x, point.y, m_currentLayer, g_sSelectedMapobject);
 			}
 			else
 			{
@@ -926,7 +911,8 @@ void GameEditor::HandleInput()
 
 
 			auto sound_name = sound_source->Get< ComponentSound >("Sound")->m_soundName;
-			g_InGameSoundSourcesMap.try_emplace(sound_name, sound_source);
+			auto name = sound_source->m_name + " (" + sound_name + ")";
+			g_InGameSoundSourcesMap.try_emplace(name, sound_source);
 		}
 		if (GetMouse(1).bReleased || GetKey(olc::ESCAPE).bReleased)
 		{
@@ -952,9 +938,10 @@ void GameEditor::HandleInput()
 			{
 				// Remove Sound Source from Project.
 				auto sound_name = sound_source->Get< ComponentSound >("Sound")->m_soundName;
-				if (g_InGameSoundSourcesMap.find(sound_name) != g_InGameSoundSourcesMap.end())
+				auto name = sound_source->m_name + " (" + sound_name + ")";
+				if (g_InGameSoundSourcesMap.find(name) != g_InGameSoundSourcesMap.end())
 				{
-					g_InGameSoundSourcesMap.erase(sound_name);
+					g_InGameSoundSourcesMap.erase(name);
 				}
 				DeleteMapobjectAudioSource(sound_source);
 			}
@@ -1078,7 +1065,7 @@ Entity* GameEditor::CreateMapobjectAudioSource(uint64_t x, uint64_t y, uint64_t 
 		x > MAX_MAPSIZE_X - 1 ||
 		y > MAX_MAPSIZE_Y - 1) return nullptr;
 
-	std::string name = soundname;
+	std::string name = "SoundSource_" + soundname;
 
 	// Create a default Entity with 
 	// a visual representation.
@@ -1092,10 +1079,9 @@ Entity* GameEditor::CreateMapobjectAudioSource(uint64_t x, uint64_t y, uint64_t 
 		m_mapobjectCount++;
 	}
 	// Create object.
-	auto entity = new Entity();
+	auto entity = new Entity(name);
 	m_entities.push_back(entity);
 	entity->Add(new ComponentSprite("AudioOff", "AudioSourceLayer"), "Sprite");
-	entity->m_name = name;
 	entity->m_positionx = x;
 	entity->m_positiony = y;
 	entity->Get< ComponentSprite >("Sprite")->m_width = DEFAULT_DECAL_SIZE_X;
@@ -1120,7 +1106,7 @@ Entity* GameEditor::CreateMapobjectAudioSource(uint64_t x, uint64_t y, uint64_t 
 	m_gameworld["AudioSourceLayer"][x][y] = entity;
 	return entity;
 }
-Entity* GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string layer, std::string decal, std::string name)
+Entity* GameEditor::CreateMapobjectEx(uint64_t x, uint64_t y, std::string layer, std::string decal, std::string name)
 {
 	auto current_layer = m_currentLayer;
 	m_currentLayer = layer;
@@ -1131,7 +1117,7 @@ Entity* GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string layer, s
 		is_unit = true;
 	}
 
-	auto entity = CreateMapobject(x, y, decal, is_unit, decal);
+	auto entity = CreateMapobject(x, y, decal, is_unit, name);
 	if (entity == nullptr) return nullptr;
 
 	float w, h;
@@ -1173,10 +1159,9 @@ Entity* GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string decal, b
 	}
 
 	// Create object.
-	auto object = new Entity();
+	auto object = new Entity(name);
 	m_entities.push_back(object);
 	object->Add(new ComponentSprite(decal, m_currentLayer), "Sprite");
-	object->m_name = name;
 	object->m_positionx = x;
 	object->m_positiony = y;
 
@@ -1939,79 +1924,25 @@ bool GameEditor::ImportMapData(const std::string& filepath)
 		auto entity = layer->FirstChildElement("Object");
 		while (entity)
 		{
-			// Get object data and create it in Project.
-			int x, y, w, h;
-			x = entity->IntAttribute("x");
-			y = entity->IntAttribute("y");
-			w = entity->IntAttribute("w");
-			h = entity->IntAttribute("h");
-			const char* sprite = entity->Attribute("sprite");
+			auto obj = ImportEntity(entity, layer_name);
 
-			auto object = CreateMapobject(x, y, std::string(layer_name), std::string(sprite));
 
 			auto townhall = entity->FirstChildElement("Townhall");
 			auto fort = entity->FirstChildElement("Fort");
 			auto sound = entity->FirstChildElement("Sound");
+
+
 			if (townhall)
 			{
-				object->Add(new ComponentTownhall(x, y), "Townhall");
+				ImportEntityComponentTownhall(townhall, obj);
 			}
 			if (fort)
 			{
-				object->Add(new ComponentFort(x, y), "Fort");
-			}
-			if (townhall || fort)
-			{
-				ComponentCity* city_comp = nullptr;
-				auto city = townhall;
-				// Get Territory and Buildingslots if any.
-				if (!city)
-				{
-					city = fort;
-					city_comp = object->Get< ComponentFort >("Fort");
-				}
-				else
-				{
-					city_comp = object->Get< ComponentTownhall >("Townhall");
-				}
-				
-				auto bs = city->FirstChildElement("BuildingSlots");
-				auto bslot = bs->FirstChildElement("Slot");
-				while (bslot)
-				{
-					city_comp->AddBuildingSlot(bslot->IntAttribute("x"), bslot->IntAttribute("y"));
-
-					bslot = bslot->NextSiblingElement("Slot");
-				}
-				auto ts = city->FirstChildElement("Territory");
-				auto tslot = ts->FirstChildElement("Slot");
-				while (tslot)
-				{
-					city_comp->AddTerritory(tslot->IntAttribute("x"), tslot->IntAttribute("y"));
-
-					tslot = tslot->NextSiblingElement("Slot");
-				}
+				ImportEntityComponentFort(fort, obj);
 			}
 			if (sound)
 			{
-				auto w = sound->IntAttribute("w", 1);
-				auto h = sound->IntAttribute("h", 1);
-				auto r = sound->IntAttribute("r", 1);
-				auto g = sound->IntAttribute("g", 1);
-				auto b = sound->IntAttribute("b", 1);
-				auto a = sound->IntAttribute("a", 1);
-				auto sound_name = sound->Attribute("soundName");
-
-				object->Add(new ComponentSound(w, h, r, g, b, a, sound_name), "Sound");
-
-				if (g_InGameSoundSourcesMap.find(sound_name) != g_InGameSoundSourcesMap.end())
-				{
-					LOG_DBG_WARN("[{:.4f}][ImportMapData] Duplicate Sound Source \"{}\"!", APP_RUN_TIME, sound_name);
-				}
-				else
-				{
-					g_InGameSoundSourcesMap.try_emplace(sound_name, object);
-				}
+				ImportEntityComponentSound(sound, obj);
 			}
 
 
@@ -2025,6 +1956,100 @@ bool GameEditor::ImportMapData(const std::string& filepath)
 	UpdateLayerSorting();
 	return true;
 }
+
+Entity* GameEditor::ImportEntity(tinyxml2::XMLElement* xml, const std::string& layer)
+{
+	int x, y, w, h;
+
+	x = xml->IntAttribute("x");
+	y = xml->IntAttribute("y");
+	w = xml->IntAttribute("w");
+	h = xml->IntAttribute("h");
+
+	const char* sprite = xml->Attribute("sprite");
+
+	auto object = CreateMapobjectEx(x, y, layer, sprite);
+
+	return object;
+}
+
+void GameEditor::ImportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* entity)
+{
+	auto w = xml->IntAttribute("w", 1);
+	auto h = xml->IntAttribute("h", 1);
+	auto r = xml->IntAttribute("r", 1);
+	auto g = xml->IntAttribute("g", 1);
+	auto b = xml->IntAttribute("b", 1);
+	auto a = xml->IntAttribute("a", 1);
+	auto sound_name = xml->Attribute("soundName");
+
+	entity->Add(new ComponentSound(w, h, r, g, b, a, sound_name), "Sound");
+
+	auto name = entity->m_name + "_(" + sound_name + ")";
+
+	if (g_InGameSoundSourcesMap.find(name) != g_InGameSoundSourcesMap.end())
+	{
+		LOG_DBG_WARN("[{:.4f}][ImportMapData] Duplicate Sound Source \"{}\"!", APP_RUN_TIME, name);
+	}
+	else
+	{
+		g_InGameSoundSourcesMap.try_emplace(name, entity);
+	}
+}
+
+void GameEditor::ImportEntityComponentFort(tinyxml2::XMLElement* xml, Entity* entity)
+{
+	entity->Add(new ComponentFort(entity->m_positionx, entity->m_positiony), "Fort");
+	auto fort = entity->Get< ComponentFort >("Fort");
+
+	// Get Building slots and Territory defined for Entity.
+	auto bs = xml->FirstChildElement("BuildingSlots");
+	auto bslot = bs->FirstChildElement("Slot");
+	while (bslot)
+	{
+		fort->AddBuildingSlot(bslot->IntAttribute("x"), bslot->IntAttribute("y"));
+
+		bslot = bslot->NextSiblingElement("Slot");
+	}
+	auto ts = xml->FirstChildElement("Territory");
+	auto tslot = ts->FirstChildElement("Slot");
+	while (tslot)
+	{
+		fort->AddTerritory(tslot->IntAttribute("x"), tslot->IntAttribute("y"));
+
+		tslot = tslot->NextSiblingElement("Slot");
+	}
+}
+
+void GameEditor::ImportEntityComponentTownhall(tinyxml2::XMLElement* xml, Entity* entity)
+{
+	entity->Add(new ComponentTownhall(entity->m_positionx, entity->m_positiony), "Townhall");
+	auto townhall = entity->Get< ComponentCity >("Townhall");
+
+	// Get Building slots and Territory defined for Entity.
+	auto bs = xml->FirstChildElement("BuildingSlots");
+	auto bslot = bs->FirstChildElement("Slot");
+	while (bslot)
+	{
+		townhall->AddBuildingSlot(bslot->IntAttribute("x"), bslot->IntAttribute("y"));
+
+		bslot = bslot->NextSiblingElement("Slot");
+	}
+	auto ts = xml->FirstChildElement("Territory");
+	auto tslot = ts->FirstChildElement("Slot");
+	while (tslot)
+	{
+		townhall->AddTerritory(tslot->IntAttribute("x"), tslot->IntAttribute("y"));
+
+		tslot = tslot->NextSiblingElement("Slot");
+	}
+}
+
+void GameEditor::ImportEntityComponentUnit(tinyxml2::XMLElement* xml, Entity* entity)
+{
+
+}
+
 void GameEditor::MakeMapobjectTownhall(int x, int y, std::string layer)
 {
 	if (x < 0 ||

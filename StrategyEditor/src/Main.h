@@ -391,7 +391,7 @@ private:
 	void UpdateVisibleRect();
 	void RenderMapobject(Entity* object);
 	Entity* CreateMapobject(uint64_t x, uint64_t y, std::string decal, bool unit, std::string name = "none");
-	Entity* CreateMapobject(uint64_t x, uint64_t y, std::string layer, std::string decal, std::string name = "none");
+	Entity* CreateMapobjectEx(uint64_t x, uint64_t y, std::string layer, std::string decal, std::string name = "none");
 	Entity* CreateMapobjectAudioSource(uint64_t x, uint64_t y, uint64_t w, uint64_t h, const std::string& soundname);
 	std::string CreateMapobjectName();
 	bool IsMapobjectNameUsed(const std::string& name);
@@ -430,9 +430,16 @@ private:
 	// UTIL ALGORITHM
 	std::multimap< int, std::string, std::greater<int> > SortDescending(std::map< std::string, int >& map);
 	std::map< int, std::string > SortAscending(std::map< std::string, int >& map);
+	
 
+	// UTIL SERIALIZATION/DESERIALIZATION
 	bool ExportMapData(const std::string& filepath);
 	bool ImportMapData(const std::string& filepath);
+	Entity* ImportEntity(tinyxml2::XMLElement* xml, const std::string& layer);
+	void ImportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* entity);
+	void ImportEntityComponentFort(tinyxml2::XMLElement* xml, Entity* entity);
+	void ImportEntityComponentTownhall(tinyxml2::XMLElement* xml, Entity* entity);
+	void ImportEntityComponentUnit(tinyxml2::XMLElement* xml, Entity* entity);
 
 	// UTIL IMGUI
 	void BeginTooltip(const char* help_text);

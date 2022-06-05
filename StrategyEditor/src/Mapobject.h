@@ -1,6 +1,7 @@
 #pragma once
 
 #include "olcPixelGameEngine.h"
+#include "SoundSystem.h"
 
 #include <vector>
 #include <map>
@@ -97,6 +98,8 @@ struct ComponentSound : public Component
 
 struct Entity
 {
+	Entity(const std::string& entity_name) : m_name(entity_name){}
+	Entity() { m_name = "none"; }
 
 	void Update();
 	bool Dirty() { return m_dirty; }
@@ -124,7 +127,6 @@ struct Entity
 
 	Entity* m_parent;
 	std::vector< Entity* > m_children;
-
 
 	std::map< std::string, Component* > m_components;
 };

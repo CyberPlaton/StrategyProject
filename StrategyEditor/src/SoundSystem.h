@@ -1,7 +1,11 @@
+#ifndef _SOUND_SYSTEM_H_
+#define _SOUND_SYSTEM_H_
 
 #include "FMOD/fmod.hpp"
 #include "FMOD/fmod_studio.hpp"
 #include "FMOD/fsbank.h"
+
+#include "Logging.h"
 
 #include <map>
 #include <vector>
@@ -94,6 +98,7 @@ struct SoundChannel
 	DECLARE_GET_SET(FMOD::Channel*, Channel, m_data.m_channel);
 	DECLARE_GET_SET(FMOD::ChannelGroup*, ChannelGroup, m_data.m_group);
 	DECLARE_GET_SET(FMOD::Sound*, Sound, m_data.m_sound);
+	DECLARE_GET_SET(bool, IsPlayed, m_data.m_played);
 
 private:
 	Data m_data;
@@ -161,3 +166,5 @@ private:
 	std::map< std::string, uint64_t > m_hashValueMap;
 	uint64_t GetHashValue(const std::string& name);
 };
+
+#endif
