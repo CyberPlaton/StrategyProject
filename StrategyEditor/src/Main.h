@@ -388,7 +388,8 @@ private:
 	bool LoadTilesetData(const std::string& database, const std::string& tilesetpath, const std::string& datapath);
 	bool LoadEditorGraphicalData();
 	bool LoadAudioData(const std::string& filepath);
-	bool LoadSoundChannelTree(const std::string& filepath, Tree* tree);
+	bool LoadSoundChannelTreeMapData(tinyxml2::XMLElement* xml, Tree* tree);
+	bool LoadSoundChannelTreeStandalone(const std::string& filepath, Tree* tree);
 	void LoadSoundChannelNode(tinyxml2::XMLElement* xml_node, Tree* tree);
 	void ToggleMenuItem(bool& item);
 	void HandleInput();

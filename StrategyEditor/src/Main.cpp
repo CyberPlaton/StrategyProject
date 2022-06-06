@@ -205,7 +205,7 @@ bool GameEditor::LoadAudioData(const std::string& filepath)
 	return true;
 }
 
-bool GameEditor::LoadSoundChannelTree(const std::string& filepath, Tree* tree)
+bool GameEditor::LoadSoundChannelTreeStandalone(const std::string& filepath, Tree* tree)
 {
 	tinyxml2::XMLDocument doc;
 	if (doc.LoadFile(filepath.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
@@ -230,6 +230,20 @@ bool GameEditor::LoadSoundChannelTree(const std::string& filepath, Tree* tree)
 		node = node->NextSiblingElement("Node");
 	}
 
+	return true;
+}
+bool GameEditor::LoadSoundChannelTreeMapData(tinyxml2::XMLElement* xml, Tree* tree)
+{
+	auto node = xml->FirstChildElement("Node");
+	while (node)
+	{
+		tree->Node(tree->m_name)->Node(node->Attribute("name"));
+		auto tree_node = tree->Node(node->Attribute("name"));
+
+		LoadSoundChannelNode(node, tree_node);
+
+		node = node->NextSiblingElement("Node");
+	}
 
 	return true;
 }
@@ -1400,23 +1414,23 @@ void GameEditor::DisplaySoundChannelEditor()
 	{
 		if (CreateAndSubmitSoundChannelTree(g_SoundChannelTree))
 		{
-			LOG_DBG_INFO("[{:.4f}][CreateAndSubmitSoundChannelTree] Success", APP_RUN_TIME);
+			LOG_DBG_INFO("[{:.4f}][CreateAndSubmitSoundChannelTree] Success!", APP_RUN_TIME);
 		}
 		else
 		{
-			LOG_DBG_ERROR("[{:.4f}][CreateAndSubmitSoundChannelTree] Failed", APP_RUN_TIME);
+			LOG_DBG_ERROR("[{:.4f}][CreateAndSubmitSoundChannelTree] Failed!", APP_RUN_TIME);
 			SoundSystem::get()->ReleaseAllChannelGroups();
 		}
 	}
 	if (ImGui::SmallButton("Reload Tree"))
 	{
-		if (LoadSoundChannelTree("assets/Audio/SoundChannelTree.xml", g_SoundChannelTree))
+		if (LoadSoundChannelTreeStandalone("assets/Audio/SoundChannelTree.xml", g_SoundChannelTree))
 		{
-			LOG_DBG_INFO("[{:.4f}][LoadSoundChannelTree] Success", APP_RUN_TIME);
+			LOG_DBG_INFO("[{:.4f}][LoadSoundChannelTree] Success!", APP_RUN_TIME);
 		}
 		else
 		{
-			LOG_DBG_ERROR("[{:.4f}][LoadSoundChannelTree] Failed", APP_RUN_TIME);
+			LOG_DBG_ERROR("[{:.4f}][LoadSoundChannelTree] Failed!", APP_RUN_TIME);
 		}
 	}
 	ImGui::End();
@@ -1555,6 +1569,7 @@ void GameEditor::DisplayChannelGroupChanger(Entity* e)
 	auto sound_component = e->Get< ComponentSound >("Sound");
 	auto sound_channel_group = sound_component->m_soundChannelGroup;
 	int current_item_index = 0;
+	bool changed = false;
 	for (int i = 0; i < sound_channel_group_vec.size(); i++)
 	{
 		if (sound_channel_group_vec[i].compare(sound_channel_group) == 0)
@@ -1575,6 +1590,7 @@ void GameEditor::DisplayChannelGroupChanger(Entity* e)
 			{
 				current_item_index = i;
 				LOG_DBG_INFO("[{:.4f}][DisplayChannelGroupChanger] Changed Sound Channel Group to \"{}\"", APP_RUN_TIME, sound_channel_group_vec[current_item_index]);
+				changed = true;
 			}
 
 			if (is_selected)
@@ -1585,6 +1601,9 @@ void GameEditor::DisplayChannelGroupChanger(Entity* e)
 		ImGui::EndCombo();
 	}
 	HelpMarkerWithoutQuestion("Change the channel group on which the sound will be played. The change will find place on the next \"Play\" command for the sound source");
+
+	// Apply the change.
+	if (changed) sound_component->m_soundChannelGroup = sound_channel_group_vec[current_item_index];
 }
 
 
@@ -2031,8 +2050,24 @@ bool GameEditor::ImportMapData(const std::string& filepath)
 		return false;
 	}
 
-
 	auto root = doc.RootElement();
+
+	// LOAD SOUND CHANNEL TREE
+	auto sound_channel_tree = root->FirstChildElement("SoundChannelTree");
+	if (sound_channel_tree)
+	{
+		if (LoadSoundChannelTreeMapData(sound_channel_tree, g_SoundChannelTree))
+		{
+			LOG_DBG_INFO("[{:.4f}][LoadSoundChannelTreeMapData] Success loading SoundChannelTree!", APP_RUN_TIME);
+		}
+		else
+		{
+			LOG_DBG_ERROR("[{:.4f}][LoadSoundChannelTreeMapData] Failed loading SoundChannelTree!", APP_RUN_TIME);
+		}
+	}
+
+
+	// LOAD LAYER DATA.
 	auto layers = root->FirstChildElement("Layers");
 	auto layer = layers->FirstChildElement("Layer");
 	while (layer)
@@ -2076,6 +2111,7 @@ bool GameEditor::ImportMapData(const std::string& filepath)
 
 
 	UpdateLayerSorting();
+	LOG_DBG_INFO("[{:.4f}][ImportMapData] Success!", APP_RUN_TIME);
 	return true;
 }
 
