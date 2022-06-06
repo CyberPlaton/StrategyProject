@@ -20,6 +20,18 @@
 *				Play once, looped and stop a sound file.
 *			 o Adding a Proof of concept scene in the Jungle Forest playing ambient sounds.
 * 
+* 06.06.2022 - Version 0.3.0 complete:
+*			 o Adding SoundChannel Editor for creation a Sound Channel tree to be submitted to FMOD.
+*			 o Now embedding SoundChannel data into the Map. Supporting exporting and importing the Tree structure.
+*			 o Reworked Audio Editor:
+*				- Displaying all loaded and available Audio Assets.
+*				- Displaying all placed on the world map Sound Sources (by clicking on them you can edit them).
+*			 o Reworked Sound Source Editor:
+*				- Changing the name is now safer and a MUST (however not really enforced).
+*				- Adding convenient way to set the desired ChannelGroup for the Sound Source
+*				- Adding manipulation of the collision box dimensions.
+*				- Adding convenient way to alter collision box color (Color Picker).
+* 
 * TODO: Ambient Audio "Editor" has to be update to be based on FMOD,
 *		as soon as the Audio Engine with FMOD is completed.
 *		After this the "Editor" can be extended based on FMOD to utilize 
@@ -45,8 +57,8 @@
 #include "SoundSystem.h"
 
 #define EDITOR_MAJOR_VERSION 0
-#define EDITOR_MINOR_VERSION 2
-#define EDITOR_PATCH_VERSION 1
+#define EDITOR_MINOR_VERSION 3
+#define EDITOR_PATCH_VERSION 0
 
 
 #define STRING(text) #text
