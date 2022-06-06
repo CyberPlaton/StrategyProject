@@ -439,11 +439,18 @@ private:
 	// UTIL SERIALIZATION/DESERIALIZATION
 	bool ExportMapData(const std::string& filepath);
 	bool ImportMapData(const std::string& filepath);
+	// Import
 	Entity* ImportEntity(tinyxml2::XMLElement* xml, const std::string& layer);
 	void ImportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* entity);
 	void ImportEntityComponentFort(tinyxml2::XMLElement* xml, Entity* entity);
 	void ImportEntityComponentTownhall(tinyxml2::XMLElement* xml, Entity* entity);
 	void ImportEntityComponentUnit(tinyxml2::XMLElement* xml, Entity* entity);
+	// Export
+	void ExportEntity(tinyxml2::XMLElement* xml, Entity* entity);
+	void ExportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* entity);
+	void ExportEntityComponentFort(tinyxml2::XMLElement* xml, Entity* entity);
+	void ExportEntityComponentTownhall(tinyxml2::XMLElement* xml, Entity* entity);
+	void ExportEntityComponentUnit(tinyxml2::XMLElement* xml, Entity* entity);
 
 	// UTIL IMGUI
 	void BeginTooltip(const char* help_text);

@@ -1906,104 +1906,122 @@ bool GameEditor::ExportMapData(const std::string& filepath)
 	{
 		auto layer = m_gameworld[l.second];
 
+		// Start Layer.
 		auto xmlLayer = layers->InsertNewChildElement("Layer");
 		xmlLayer->SetAttribute("n", l.first);
 		xmlLayer->SetAttribute("name", l.second.c_str());
 
+		// Start Entity Export.
 		for (int x = 0; x < layer.size(); x++)
 		{
 			for (int y = 0; y < layer[x].size(); y++)
 			{
 				if (layer[x][y])
 				{
-					auto object = xmlLayer->InsertNewChildElement("Object");
-
-					// Insert relevant Data for each Object.
-					if (layer[x][y]->Has("Townhall"))
-					{
-						auto townhall = object->InsertNewChildElement("Townhall");
-						auto building_slots = townhall->InsertNewChildElement("BuildingSlots");
-						auto territory = townhall->InsertNewChildElement("Territory");
-
-						auto component = layer[x][y]->Get< ComponentTownhall >("Townhall");
-						for (auto bs : component->m_buildingSlots)
-						{
-							auto slot = building_slots->InsertNewChildElement("Slot");
-							slot->SetAttribute("x", bs.first);
-							slot->SetAttribute("y", bs.second);
-						}
-						for (auto tr : component->m_territory)
-						{
-							auto terr = territory->InsertNewChildElement("Slot");
-							terr->SetAttribute("x", tr.first);
-							terr->SetAttribute("y", tr.second);
-						}
-					}
-					if (layer[x][y]->Has("Fort"))
-					{
-						auto fort = object->InsertNewChildElement("Fort");
-
-						auto building_slots = fort->InsertNewChildElement("BuildingSlots");
-						auto territory = fort->InsertNewChildElement("Territory");
-
-						auto component = layer[x][y]->Get< ComponentTownhall >("Fort");
-						for (auto bs : component->m_buildingSlots)
-						{
-							auto slot = building_slots->InsertNewChildElement("Slot");
-							slot->SetAttribute("x", bs.first);
-							slot->SetAttribute("y", bs.second);
-						}
-						for (auto tr : component->m_territory)
-						{
-							auto terr = territory->InsertNewChildElement("Slot");
-							terr->SetAttribute("x", tr.first);
-							terr->SetAttribute("y", tr.second);
-						}
-					}
-
+					auto xml = xmlLayer->InsertNewChildElement("Object");
 					auto entity = layer[x][y];
-					// Export Unit Data.
-					if (entity->Has("Unit"))
-					{
-						LOG_DBG_ERROR("[{:.4f}][ExportMapData] Serializing ComponentUnit data not supported!", APP_RUN_TIME);
-					}
-					// Export Sound Source Data.
-					if (entity->Has("Sound"))
-					{
-						auto sound_component = entity->Get< ComponentSound >("Sound");
-						
-						auto xmlSound = object->InsertNewChildElement("Sound");
-
-						xmlSound->SetAttribute("w", sound_component->w);
-						xmlSound->SetAttribute("h", sound_component->h);
-						xmlSound->SetAttribute("r", sound_component->r);
-						xmlSound->SetAttribute("g", sound_component->g);
-						xmlSound->SetAttribute("b", sound_component->b);
-						xmlSound->SetAttribute("a", sound_component->a);
-						xmlSound->SetAttribute("soundName", sound_component->m_soundName.c_str());
-					}
-
-
-					// Position
-					object->SetAttribute("x", layer[x][y]->m_positionx);
-					object->SetAttribute("y", layer[x][y]->m_positiony);
-
-					// Sprite
-					object->SetAttribute("sprite", layer[x][y]->Get< ComponentSprite >("Sprite")->m_decal.c_str());
-
-					// Width/Height
-					object->SetAttribute("w", layer[x][y]->Get< ComponentSprite >("Sprite")->m_width);
-					object->SetAttribute("h", layer[x][y]->Get< ComponentSprite >("Sprite")->m_height);
+					ExportEntity(xml, entity);
 				}
 			}
 		}
 	}
 
-
-
 	doc.SaveFile(filepath.c_str());
 	return true;
 }
+
+void GameEditor::ExportEntity(tinyxml2::XMLElement* xml, Entity* entity)
+{
+	// Export default data.
+	// Position
+	xml->SetAttribute("x", entity->m_positionx);
+	xml->SetAttribute("y", entity->m_positiony);
+
+	// Sprite
+	xml->SetAttribute("sprite", entity->Get< ComponentSprite >("Sprite")->m_decal.c_str());
+
+	// Width/Height
+	xml->SetAttribute("w", entity->Get< ComponentSprite >("Sprite")->m_width);
+	xml->SetAttribute("h", entity->Get< ComponentSprite >("Sprite")->m_height);
+
+
+	// Export component data.
+	bool has_fort = entity->Has("Fort");
+	bool has_townhall = entity->Has("Townhall");
+	bool has_unit = entity->Has("Unit");
+	bool has_sound = entity->Has("Sound");
+
+	if (has_fort) ExportEntityComponentFort(xml, entity);
+	if (has_townhall) ExportEntityComponentTownhall(xml, entity);
+	if (has_unit) ExportEntityComponentUnit(xml, entity);
+	if (has_sound) ExportEntityComponentSound(xml, entity);
+}
+void GameEditor::ExportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* entity)
+{
+	auto sound_component = entity->Get< ComponentSound >("Sound");
+	auto sound_xml = xml->InsertNewChildElement("Sound");
+
+	sound_xml->SetAttribute("w", sound_component->w);
+	sound_xml->SetAttribute("h", sound_component->h);
+	sound_xml->SetAttribute("r", sound_component->r);
+	sound_xml->SetAttribute("g", sound_component->g);
+	sound_xml->SetAttribute("b", sound_component->b);
+	sound_xml->SetAttribute("a", sound_component->a);
+	sound_xml->SetAttribute("soundName", sound_component->m_soundName.c_str());
+	sound_xml->SetAttribute("soundChannelGroupName", sound_component->m_soundChannelGroup.c_str());
+
+	// Special for the sound component we export the custom given name,
+	// this may cause problems on loading duplicate or errorous names.
+	sound_xml->SetAttribute("entityName", entity->m_name.c_str());
+}
+void GameEditor::ExportEntityComponentFort(tinyxml2::XMLElement* xml, Entity* entity)
+{
+	auto fort = xml->InsertNewChildElement("Fort");
+	auto building_slots = xml->InsertNewChildElement("BuildingSlots");
+	auto territory = xml->InsertNewChildElement("Territory");
+
+	auto component = entity->Get< ComponentTownhall >("Fort");
+
+	for (auto bs : component->m_buildingSlots)
+	{
+		auto slot = building_slots->InsertNewChildElement("Slot");
+		slot->SetAttribute("x", bs.first);
+		slot->SetAttribute("y", bs.second);
+	}
+	for (auto tr : component->m_territory)
+	{
+		auto terr = territory->InsertNewChildElement("Slot");
+		terr->SetAttribute("x", tr.first);
+		terr->SetAttribute("y", tr.second);
+	}
+}
+void GameEditor::ExportEntityComponentTownhall(tinyxml2::XMLElement* xml, Entity* entity)
+{
+	auto th = xml->InsertNewChildElement("Townhall");
+	auto building_slots = xml->InsertNewChildElement("BuildingSlots");
+	auto territory = xml->InsertNewChildElement("Territory");
+
+	auto component = entity->Get< ComponentTownhall >("Townhall");
+
+	for (auto bs : component->m_buildingSlots)
+	{
+		auto slot = building_slots->InsertNewChildElement("Slot");
+		slot->SetAttribute("x", bs.first);
+		slot->SetAttribute("y", bs.second);
+	}
+	for (auto tr : component->m_territory)
+	{
+		auto terr = territory->InsertNewChildElement("Slot");
+		terr->SetAttribute("x", tr.first);
+		terr->SetAttribute("y", tr.second);
+	}
+}
+void GameEditor::ExportEntityComponentUnit(tinyxml2::XMLElement* xml, Entity* entity)
+{
+	LOG_DBG_ERROR("[{:.4f}][ExportEntityComponentUnit] Serializing ComponentUnit data not supported!", APP_RUN_TIME);
+}
+
+
 bool GameEditor::ImportMapData(const std::string& filepath)
 {
 	tinyxml2::XMLDocument doc;
@@ -2086,20 +2104,13 @@ void GameEditor::ImportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* e
 	auto b = xml->IntAttribute("b", 1);
 	auto a = xml->IntAttribute("a", 1);
 	auto sound_name = xml->Attribute("soundName");
-	auto group = xml->Attribute("soundChannelGroup");
+	auto group = xml->Attribute("soundChannelGroupName");
+	auto sound_entity_name = xml->Attribute("entityName");
 
 	entity->Add(new ComponentSound(w, h, r, g, b, a, sound_name, group), "Sound");
-
-	auto name = entity->m_name + "_(" + sound_name + ")";
-
-	if (g_InGameSoundSourcesMap.find(name) != g_InGameSoundSourcesMap.end())
-	{
-		LOG_DBG_WARN("[{:.4f}][ImportMapData] Duplicate Sound Source \"{}\"!", APP_RUN_TIME, name);
-	}
-	else
-	{
-		g_InGameSoundSourcesMap.try_emplace(name, entity);
-	}
+	entity->m_name = sound_entity_name;
+	
+	g_InGameSoundSourcesMap.try_emplace(entity->m_name, entity);
 }
 
 void GameEditor::ImportEntityComponentFort(tinyxml2::XMLElement* xml, Entity* entity)
@@ -2152,7 +2163,7 @@ void GameEditor::ImportEntityComponentTownhall(tinyxml2::XMLElement* xml, Entity
 
 void GameEditor::ImportEntityComponentUnit(tinyxml2::XMLElement* xml, Entity* entity)
 {
-
+	LOG_DBG_ERROR("[{:.4f}][ImportEntityComponentUnit] Serializing ComponentUnit data not supported!", APP_RUN_TIME);
 }
 
 void GameEditor::MakeMapobjectTownhall(int x, int y, std::string layer)
