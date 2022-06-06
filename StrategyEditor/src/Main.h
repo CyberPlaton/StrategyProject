@@ -405,7 +405,7 @@ private:
 	olc::Pixel GetRandomColor(uint64_t alpha = 255);
 	bool CreateAndSubmitSoundChannelTree(Tree* tree);
 	bool CreateAndSubmitSoundChannelNode(Tree* tree, const std::string& parent);
-
+	void UpdateInGameSoundSourcesMap(std::map< std::string, Entity* >& map);
 
 	void MakeMapobjectTownhall(int x, int y, std::string layer);
 	void MakeMapobjectFort(int x, int y, std::string layer);
@@ -455,4 +455,16 @@ private:
 			ImGui::EndTooltip();
 		}
 	}
+	static void HelpMarkerWithoutQuestion(const char* desc)
+	{
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+			ImGui::TextUnformatted(desc);
+			ImGui::PopTextWrapPos();
+			ImGui::EndTooltip();
+		}
+	}
+
 };

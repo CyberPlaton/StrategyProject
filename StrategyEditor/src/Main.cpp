@@ -11,6 +11,7 @@ static Tree* g_SoundChannelTree = new Tree("Master");
 static int g_iPlayingBackgroundAudio = 0;
 static bool g_bAddingSoundSource = false;
 static std::map< std::string, Entity* > g_InGameSoundSourcesMap;
+static bool g_bInGameSoundSourcesMapDirty = false;
 static std::string g_sSoundSource = "none";
 static bool g_bRenderSoundSourceDimensions = false;
 static bool g_bEditingSoundSource = false;
@@ -79,6 +80,8 @@ void GameEditor::RenderGUI()
 	if (g_bAudioSoundChannelEditorOpen) DisplaySoundChannelEditor();
 	// Sound source editing
 	if (g_bEditingSoundSource) DisplaySoundSourceEditor(g_pEditedSoundSource);
+	// Sound Source Map Update
+	if (g_bInGameSoundSourcesMapDirty) UpdateInGameSoundSourcesMap(g_InGameSoundSourcesMap);
 }
 bool GameEditor::LoadEditorGraphicalData()
 {
@@ -1053,6 +1056,31 @@ bool GameEditor::CreateAndSubmitSoundChannelNode(Tree* tree, const std::string& 
 	return result;
 }
 
+void GameEditor::UpdateInGameSoundSourcesMap(std::map< std::string, Entity* >& map)
+{
+	std::map< std::string, std::string > changes;
+
+	for (auto& pair : map)
+	{
+		// Check for different names.
+		if (pair.first.compare(pair.second->m_name) != 0)
+		{
+			// Mem the change required.
+			changes.emplace(pair.first, pair.second->m_name);
+		}
+	}
+
+	// Apply the changes.
+	for (auto& pair : changes)
+	{
+		auto node = map.extract(pair.first);
+
+		node.key() = pair.second;
+
+		map.insert(std::move(node));
+	}
+}
+
 std::string GameEditor::CreateMapobjectName()
 {
 	return "Mapobject_" + std::to_string(m_mapobjectCount++);
@@ -1435,7 +1463,9 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 		}
 	}
 	ImGui::PopID();
-	BeginTooltip("Play the Sound Source in a loop");
+	HelpMarkerWithoutQuestion("Play the Sound Source in a loop");
+	
+	
 	ImGui::SameLine();
 	ImGui::PushID(play_sound_id);
 	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Play"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
@@ -1452,7 +1482,9 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 		}
 	}
 	ImGui::PopID();
-	BeginTooltip("Play the Sound Source once");
+	HelpMarkerWithoutQuestion("Play the Sound Source once");
+
+
 	ImGui::SameLine();
 	ImGui::PushID(stop_sound_id);
 	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Stop"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
@@ -1464,25 +1496,42 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 		}
 	}
 	ImGui::PopID();
-	BeginTooltip("Stop the Sound Source");
+	HelpMarkerWithoutQuestion("Stop the Sound Source");
 
 
 	// Change Sound source name
 	static char sound_source_name_buf[64] = ""; 
 	ImGui::InputText("|", sound_source_name_buf, 64);
+	HelpMarkerWithoutQuestion("Change the unique name of the Sound Source. The name does not change the sound file being played");
 	ImGui::SameLine();
-	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["OK"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
+	if (ImGui::SmallButton("OK"))
 	{
 		// Before renaming stop the current sample.
-		if (m_soundMap[sound_name].first)
+		//if (m_soundMap[sound_name].first)
+		//{
+		//	olc::SOUND::StopSample(m_soundMap[sound_name].second);
+		//}
+
+		// Check whether the new name is a duplicate.
+		auto name = std::string(sound_source_name_buf);
+		if (g_InGameSoundSourcesMap.find(name) == g_InGameSoundSourcesMap.end())
 		{
-			olc::SOUND::StopSample(m_soundMap[sound_name].second);
+			// Not a Duplicate!
+			// Change the Entity Name.
+			e->m_name = std::string(sound_source_name_buf);
+
+			memset(&sound_source_name_buf, 0, sizeof(sound_source_name_buf));
+
+			// Update the Map to adjust to changes.
+			g_bInGameSoundSourcesMapDirty = true;
 		}
-
-		sound_component->m_soundName = sound_source_name_buf;
-		memset(&sound_source_name_buf, 0, sizeof(sound_source_name_buf));
+		else
+		{
+			// Duplicate!
+			LOG_DBG_ERROR("[{:.4f}][DisplaySoundSourceEditor] Cannot change Sound Source Entity name from \"{}\" to \"{}\", as the name is taken already!", APP_RUN_TIME, e->m_name, name);
+		}
 	}
-
+	
 	// Change Channel Group
 
 
