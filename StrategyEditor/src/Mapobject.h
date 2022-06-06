@@ -85,12 +85,12 @@ struct ComponentSound : public Component
 	{
 		m_soundName = sound_name;
 	}
-	ComponentSound(uint64_t w, uint64_t h, uint64_t r, uint64_t g, uint64_t b, uint64_t a, const std::string& sound_name) : Component("Sound"), w(w), h(h), r(r), g(g), b(b), a(a)
+	ComponentSound(uint64_t w, uint64_t h, float r, float g, float b, float a, const std::string& sound_name) : Component("Sound"), w(w), h(h), r(r), g(g), b(b), a(a)
 	{
 		m_soundName = sound_name;
 		m_soundChannelGroup = "Master";
 	}
-	ComponentSound(uint64_t w, uint64_t h, uint64_t r, uint64_t g, uint64_t b, uint64_t a, const std::string& sound_name, const std::string& channel_group) : Component("Sound"), w(w), h(h), r(r), g(g), b(b), a(a)
+	ComponentSound(uint64_t w, uint64_t h, float r, float g, float b, float a, const std::string& sound_name, const std::string& channel_group) : Component("Sound"), w(w), h(h), r(r), g(g), b(b), a(a)
 	{
 		m_soundName = sound_name;
 		m_soundChannelGroup = channel_group;
@@ -100,7 +100,7 @@ struct ComponentSound : public Component
 	uint64_t w, h;
 	std::string m_soundName;
 	std::string m_soundChannelGroup;
-	uint64_t r, g, b, a;
+	float r, g, b, a;
 };
 
 struct Entity

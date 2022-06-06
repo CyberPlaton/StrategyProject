@@ -379,6 +379,8 @@ private:
 	// GUI SOUND EDITOR UTIL
 	void DisplayChannelGroupChanger(Entity* e);
 	void AddSoundChannelGroupToVec(Tree* tree, std::vector< std::string >& vec);
+	void DisplayDimensionChanger(Entity* e);
+	void DisplayCollisionBoxColorPicker(Entity* e);
 
 	// GAMEWORLD
 	void RenderMainFrame();
@@ -411,6 +413,7 @@ private:
 	bool CreateAndSubmitSoundChannelTree(Tree* tree);
 	bool CreateAndSubmitSoundChannelNode(Tree* tree, const std::string& parent);
 	void UpdateInGameSoundSourcesMap(std::map< std::string, Entity* >& map);
+	uint32_t ConvertColorToPixel(ImVec4 color);
 
 	void MakeMapobjectTownhall(int x, int y, std::string layer);
 	void MakeMapobjectFort(int x, int y, std::string layer);

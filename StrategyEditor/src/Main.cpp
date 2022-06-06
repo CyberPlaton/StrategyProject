@@ -554,7 +554,7 @@ void GameEditor::RenderMainFrame()
 						if (e->Has("Sound"))
 						{
 							auto sound = e->Get< ComponentSound >("Sound");
-							auto color = olc::Pixel(sound->r, sound->g, sound->b, sound->a);
+							auto color = olc::Pixel(ConvertColorToPixel(ImVec4(sound->r, sound->g, sound->b, sound->a)));
 							float xpos = e->m_positionx - sound->w;
 							float ypos = e->m_positiony - sound->h;
 							float w = sound->w * 2 + 1;
@@ -1097,6 +1097,11 @@ void GameEditor::UpdateInGameSoundSourcesMap(std::map< std::string, Entity* >& m
 	}
 }
 
+uint32_t GameEditor::ConvertColorToPixel(ImVec4 color)
+{
+	return ImGui::ColorConvertFloat4ToU32(color);
+}
+
 std::string GameEditor::CreateMapobjectName()
 {
 	return "Mapobject_" + std::to_string(m_mapobjectCount++);
@@ -1546,13 +1551,47 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 	DisplayChannelGroupChanger(e);
 
 	// Change width and height.
-
+	DisplayDimensionChanger(e);
 
 	// Change color.
-
+	DisplayCollisionBoxColorPicker(e);
 	
 	ImGui::End();
 }
+
+
+void GameEditor::DisplayCollisionBoxColorPicker(Entity* e)
+{
+	auto sound = e->Get< ComponentSound >("Sound");
+
+	ImVec4 color = {sound->r, sound->g, sound->b, sound->a};
+	
+	ImGui::ColorEdit4("Collider Color", (float*)&color, ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_InputRGB);
+	
+	sound->r = color.x;
+	sound->g = color.y;
+	sound->b = color.z;
+	sound->a = color.w;
+}
+
+void GameEditor::DisplayDimensionChanger(Entity* e)
+{
+	auto sound = e->Get< ComponentSound >("Sound");
+
+	int w, h;
+	w = sound->w;
+	h = sound->h;
+
+	ImGui::SliderInt("Width", &w, 1, MAX_MAPSIZE_X, "%d", ImGuiSliderFlags_Logarithmic);
+	HelpMarkerWithoutQuestion("Set the collision box width");
+	ImGui::SliderInt("Height", &h, 1, MAX_MAPSIZE_Y, "%d", ImGuiSliderFlags_Logarithmic);
+	HelpMarkerWithoutQuestion("Set the collision box height");
+
+
+	sound->w = w;
+	sound->h = h;
+}
+
 
 void GameEditor::DisplayChannelGroupChanger(Entity* e)
 {
@@ -2135,10 +2174,10 @@ void GameEditor::ImportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* e
 {
 	auto w = xml->IntAttribute("w", 1);
 	auto h = xml->IntAttribute("h", 1);
-	auto r = xml->IntAttribute("r", 1);
-	auto g = xml->IntAttribute("g", 1);
-	auto b = xml->IntAttribute("b", 1);
-	auto a = xml->IntAttribute("a", 1);
+	auto r = xml->FloatAttribute("r", 1.0f);
+	auto g = xml->FloatAttribute("g", 1.0f);
+	auto b = xml->FloatAttribute("b", 1.0f);
+	auto a = xml->FloatAttribute("a", 1.0f);
 	auto sound_name = xml->Attribute("soundName");
 	auto group = xml->Attribute("soundChannelGroupName");
 	auto sound_entity_name = xml->Attribute("entityName");
