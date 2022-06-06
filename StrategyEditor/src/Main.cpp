@@ -197,6 +197,7 @@ bool GameEditor::LoadAudioData(const std::string& filepath)
 		else
 		{
 			LOG_DBG_ERROR("[{:.4f}][LoadAudioData] Failed loading Sound \"{}\" at \"{}\"!", APP_RUN_TIME, sound->GetText(), path.c_str());
+			LOG_FILE_ERROR("[{:.4f}][LoadAudioData] Failed loading Sound \"{}\" at \"{}\"!", APP_RUN_TIME, sound->GetText(), path.c_str());
 		}
 
 		sound = sound->NextSiblingElement("Sound");
@@ -1420,10 +1421,12 @@ void GameEditor::DisplaySoundChannelEditor()
 		if (CreateAndSubmitSoundChannelTree(g_SoundChannelTree))
 		{
 			LOG_DBG_INFO("[{:.4f}][CreateAndSubmitSoundChannelTree] Success!", APP_RUN_TIME);
+			LOG_FILE_INFO("[{:.4f}][CreateAndSubmitSoundChannelTree] Success!", APP_RUN_TIME);
 		}
 		else
 		{
 			LOG_DBG_ERROR("[{:.4f}][CreateAndSubmitSoundChannelTree] Failed!", APP_RUN_TIME);
+			LOG_FILE_ERROR("[{:.4f}][CreateAndSubmitSoundChannelTree] Failed!", APP_RUN_TIME);
 			SoundSystem::get()->ReleaseAllChannelGroups();
 		}
 	}
@@ -1432,10 +1435,12 @@ void GameEditor::DisplaySoundChannelEditor()
 		if (LoadSoundChannelTreeStandalone("assets/Audio/SoundChannelTree.xml", g_SoundChannelTree))
 		{
 			LOG_DBG_INFO("[{:.4f}][LoadSoundChannelTree] Success!", APP_RUN_TIME);
+			LOG_FILE_INFO("[{:.4f}][LoadSoundChannelTree] Success!", APP_RUN_TIME);
 		}
 		else
 		{
 			LOG_DBG_ERROR("[{:.4f}][LoadSoundChannelTree] Failed!", APP_RUN_TIME);
+			LOG_FILE_ERROR("[{:.4f}][LoadSoundChannelTree] Failed!", APP_RUN_TIME);
 		}
 	}
 	ImGui::End();
@@ -1544,6 +1549,7 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 		else
 		{
 			LOG_DBG_ERROR("[{:.4f}][DisplaySoundSourceEditor] Error changing Sound-Source-Entity name from \"{}\" to \"{}\"!", APP_RUN_TIME, e->m_name, name);
+			LOG_FILE_ERROR("[{:.4f}][DisplaySoundSourceEditor] Error changing Sound-Source-Entity name from \"{}\" to \"{}\"!", APP_RUN_TIME, e->m_name, name);
 		}
 	}
 	
@@ -1960,6 +1966,12 @@ bool GameEditor::ExportMapData(const std::string& filepath)
 	auto root = doc.NewElement("Map");
 	doc.InsertEndChild(root);
 
+
+	// Export Sound Channel Data.
+	ExportSoundChannelTree(root, g_SoundChannelTree);
+
+
+	// Export World Layer Data.
 	auto layers = root->InsertNewChildElement("Layers");
 	for (auto& l : m_sortedLayers)
 	{
@@ -1984,6 +1996,8 @@ bool GameEditor::ExportMapData(const std::string& filepath)
 			}
 		}
 	}
+
+
 
 	doc.SaveFile(filepath.c_str());
 	return true;
@@ -2078,8 +2092,33 @@ void GameEditor::ExportEntityComponentTownhall(tinyxml2::XMLElement* xml, Entity
 void GameEditor::ExportEntityComponentUnit(tinyxml2::XMLElement* xml, Entity* entity)
 {
 	LOG_DBG_ERROR("[{:.4f}][ExportEntityComponentUnit] Serializing ComponentUnit data not supported!", APP_RUN_TIME);
+	LOG_FILE_ERROR("[{:.4f}][ExportEntityComponentUnit] Serializing ComponentUnit data not supported!", APP_RUN_TIME);
 }
 
+
+void GameEditor::ExportSoundChannelTree(tinyxml2::XMLElement* xml, Tree* tree)
+{
+	auto root = xml->InsertNewChildElement("SoundChannelTree");
+	root->SetAttribute("root", tree->m_name.c_str());
+
+	for (auto& kid : tree->m_children)
+	{
+		ExportSoundChannelTreeNode(root, kid);
+	}
+}
+
+void GameEditor::ExportSoundChannelTreeNode(tinyxml2::XMLElement* xml, Tree* tree)
+{
+	auto node = xml->InsertNewChildElement("Node");
+	node->SetAttribute("name", tree->m_name.c_str());
+
+	for (auto& kid : tree->m_children)
+	{
+		auto leaf = node->InsertNewChildElement("Node");
+		leaf->SetAttribute("name", kid->m_name.c_str());
+		ExportSoundChannelTreeNode(leaf, kid);
+	}
+}
 
 bool GameEditor::ImportMapData(const std::string& filepath)
 {
@@ -2099,10 +2138,12 @@ bool GameEditor::ImportMapData(const std::string& filepath)
 		if (LoadSoundChannelTreeMapData(sound_channel_tree, g_SoundChannelTree))
 		{
 			LOG_DBG_INFO("[{:.4f}][LoadSoundChannelTreeMapData] Success loading SoundChannelTree!", APP_RUN_TIME);
+			LOG_FILE_INFO("[{:.4f}][LoadSoundChannelTreeMapData] Success loading SoundChannelTree!", APP_RUN_TIME);
 		}
 		else
 		{
 			LOG_DBG_ERROR("[{:.4f}][LoadSoundChannelTreeMapData] Failed loading SoundChannelTree!", APP_RUN_TIME);
+			LOG_FILE_ERROR("[{:.4f}][LoadSoundChannelTreeMapData] Failed loading SoundChannelTree!", APP_RUN_TIME);
 		}
 	}
 
@@ -2240,6 +2281,7 @@ void GameEditor::ImportEntityComponentTownhall(tinyxml2::XMLElement* xml, Entity
 void GameEditor::ImportEntityComponentUnit(tinyxml2::XMLElement* xml, Entity* entity)
 {
 	LOG_DBG_ERROR("[{:.4f}][ImportEntityComponentUnit] Serializing ComponentUnit data not supported!", APP_RUN_TIME);
+	LOG_FILE_ERROR("[{:.4f}][ImportEntityComponentUnit] Serializing ComponentUnit data not supported!", APP_RUN_TIME);
 }
 
 void GameEditor::MakeMapobjectTownhall(int x, int y, std::string layer)

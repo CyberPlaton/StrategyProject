@@ -62,27 +62,31 @@ private:
 #define APP_RUN_TIME() Logger::AppRunningTime()
 #ifdef DEBUG
 // Stdout in DEBUG
-#define LOG_DBG_INFO(...) Logger::ConsoleLog()->info(__VA_ARGS__)
-#define LOG_DBG_WARN(...) Logger::ConsoleLog()->warn(__VA_ARGS__)
-#define LOG_DBG_ERROR(...) Logger::ConsoleLog()->error(__VA_ARGS__)
-#define LOG_DBG_CRITICAL(...) Logger::ConsoleLog()->critical(__VA_ARGS__)
+#define LOG_DBG_INFO(...)		Logger::ConsoleLog()->info(__VA_ARGS__)
+#define LOG_DBG_WARN(...)		Logger::ConsoleLog()->warn(__VA_ARGS__)
+#define LOG_DBG_ERROR(...)		Logger::ConsoleLog()->error(__VA_ARGS__)
+#define LOG_DBG_CRITICAL(...)	Logger::ConsoleLog()->critical(__VA_ARGS__)
 // No File output in DEBUG.
 #define LOG_FILE_INFO(...)
 #define LOG_FILE_WARN(...)
 #define LOG_FILE_ERROR(...)
 #define LOG_FILE_CRITICAL(...)
-#elif RELEASE
+#endif
+
+#ifdef RELEASE
 // No Stdout in RELEASE
-#define LOG_DBG_INFO(...)
-#define LOG_DBG_WARN(...)
-#define LOG_DBG_ERROR(...)
-#define LOG_DBG_CRITICAL(...)
+#define LOG_DBG_INFO(...)		Logger::ConsoleLog()->info(__VA_ARGS__)
+#define LOG_DBG_WARN(...)		Logger::ConsoleLog()->warn(__VA_ARGS__)
+#define LOG_DBG_ERROR(...)		Logger::ConsoleLog()->error(__VA_ARGS__)
+#define LOG_DBG_CRITICAL(...)	Logger::ConsoleLog()->critical(__VA_ARGS__)
 // No File output in RELEASE
 #define LOG_FILE_INFO(...)
 #define LOG_FILE_WARN(...)
 #define LOG_FILE_ERROR(...)
 #define LOG_FILE_CRITICAL(...)
-#elif DISTR
+#endif
+
+#ifdef DISTR
 // No Stdout in RELEASE
 #define LOG_DBG_INFO(...)
 #define LOG_DBG_WARN(...)

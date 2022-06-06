@@ -182,6 +182,11 @@ public:
 public:
 	bool OnUserCreate() override
 	{
+#ifdef DISTR
+		// Remove console in distribution build (Windows only).
+		ShowWindow(GetConsoleWindow(), SW_HIDE);
+#endif
+
 		// Initialize Random.
 		srand(time(0));
 
@@ -390,9 +395,6 @@ private:
 	bool LoadTilesetData(const std::string& database, const std::string& tilesetpath, const std::string& datapath);
 	bool LoadEditorGraphicalData();
 	bool LoadAudioData(const std::string& filepath);
-	bool LoadSoundChannelTreeMapData(tinyxml2::XMLElement* xml, Tree* tree);
-	bool LoadSoundChannelTreeStandalone(const std::string& filepath, Tree* tree);
-	void LoadSoundChannelNode(tinyxml2::XMLElement* xml_node, Tree* tree);
 	void ToggleMenuItem(bool& item);
 	void HandleInput();
 	void UpdateVisibleRect();
@@ -449,12 +451,20 @@ private:
 	void ImportEntityComponentFort(tinyxml2::XMLElement* xml, Entity* entity);
 	void ImportEntityComponentTownhall(tinyxml2::XMLElement* xml, Entity* entity);
 	void ImportEntityComponentUnit(tinyxml2::XMLElement* xml, Entity* entity);
+	// Import Sound Channel Tree Data
+	bool LoadSoundChannelTreeMapData(tinyxml2::XMLElement* xml, Tree* tree);
+	bool LoadSoundChannelTreeStandalone(const std::string& filepath, Tree* tree);
+	void LoadSoundChannelNode(tinyxml2::XMLElement* xml_node, Tree* tree);
+
 	// Export
 	void ExportEntity(tinyxml2::XMLElement* xml, Entity* entity);
 	void ExportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* entity);
 	void ExportEntityComponentFort(tinyxml2::XMLElement* xml, Entity* entity);
 	void ExportEntityComponentTownhall(tinyxml2::XMLElement* xml, Entity* entity);
 	void ExportEntityComponentUnit(tinyxml2::XMLElement* xml, Entity* entity);
+	// Export Sound Channel Tree Data
+	void ExportSoundChannelTree(tinyxml2::XMLElement* xml, Tree* tree);
+	void ExportSoundChannelTreeNode(tinyxml2::XMLElement* xml, Tree* tree);
 
 	// UTIL IMGUI
 	void BeginTooltip(const char* help_text);
