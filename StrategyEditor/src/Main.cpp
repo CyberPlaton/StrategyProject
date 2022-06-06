@@ -275,35 +275,35 @@ void GameEditor::RenderMainMenu()
 				ToggleMenuItem(g_bDecalDatabaseOpen);
 			}
 			ImGui::SameLine();
-			ImGui::Checkbox("IsOpen", &g_bDecalDatabaseOpen);
+			ImGui::Checkbox("Open", &g_bDecalDatabaseOpen);
 
 			if (ImGui::MenuItem("Entity Database"))
 			{
 				ToggleMenuItem(g_bEntityDatabaseOpen);
 			}
 			ImGui::SameLine();
-			ImGui::Checkbox("IsOpen", &g_bEntityDatabaseOpen);
+			ImGui::Checkbox("Open", &g_bEntityDatabaseOpen);
 
 			if (ImGui::MenuItem("Rendering Grid"))
 			{
 				ToggleMenuItem(g_bRenderGrid);
 			}
 			ImGui::SameLine();
-			ImGui::Checkbox("IsOpen", &g_bRenderGrid);
+			ImGui::Checkbox("Open", &g_bRenderGrid);
 
 			if (ImGui::MenuItem("Rendering City Territory"))
 			{
 				ToggleMenuItem(g_bRenderCityTerritory);
 			}
 			ImGui::SameLine();
-			ImGui::Checkbox("IsOpen", &g_bRenderCityTerritory);
+			ImGui::Checkbox("Open", &g_bRenderCityTerritory);
 
 			if (ImGui::MenuItem("Rendering City Buildind Slots"))
 			{
 				ToggleMenuItem(g_bRenderCityBuildingSlots);
 			}
 			ImGui::SameLine();
-			ImGui::Checkbox("IsOpen", &g_bRenderCityBuildingSlots);
+			ImGui::Checkbox("Open", &g_bRenderCityBuildingSlots);
 
 			ImGui::EndMenu();
 		}
@@ -348,6 +348,8 @@ void GameEditor::RenderMainMenu()
 			{
 				ToggleMenuItem(g_bRenderSoundSourceDimensions);
 			}
+			ImGui::SameLine();
+			ImGui::Checkbox("Open", &g_bRenderSoundSourceDimensions);
 
 			ImGui::EndMenu();
 		}
@@ -1506,17 +1508,12 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 	ImGui::SameLine();
 	if (ImGui::SmallButton("OK"))
 	{
-		// Before renaming stop the current sample.
-		//if (m_soundMap[sound_name].first)
-		//{
-		//	olc::SOUND::StopSample(m_soundMap[sound_name].second);
-		//}
-
-		// Check whether the new name is a duplicate.
 		auto name = std::string(sound_source_name_buf);
-		if (g_InGameSoundSourcesMap.find(name) == g_InGameSoundSourcesMap.end())
+
+		// Do not Allow empty names.
+		// Check whether the new name is a duplicate.
+		if (name.size() != 0 && g_InGameSoundSourcesMap.find(name) == g_InGameSoundSourcesMap.end())
 		{
-			// Not a Duplicate!
 			// Change the Entity Name.
 			e->m_name = std::string(sound_source_name_buf);
 
@@ -1527,21 +1524,79 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 		}
 		else
 		{
-			// Duplicate!
-			LOG_DBG_ERROR("[{:.4f}][DisplaySoundSourceEditor] Cannot change Sound Source Entity name from \"{}\" to \"{}\", as the name is taken already!", APP_RUN_TIME, e->m_name, name);
+			LOG_DBG_ERROR("[{:.4f}][DisplaySoundSourceEditor] Error changing Sound-Source-Entity name from \"{}\" to \"{}\"!", APP_RUN_TIME, e->m_name, name);
 		}
 	}
 	
 	// Change Channel Group
-
+	DisplayChannelGroupChanger(e);
 
 	// Change width and height.
 
 
 	// Change color.
+
 	
 	ImGui::End();
 }
+
+void GameEditor::DisplayChannelGroupChanger(Entity* e)
+{
+	// Create an array for the imgui combo
+	std::vector< std::string > sound_channel_group_vec;
+	
+	sound_channel_group_vec.push_back(g_SoundChannelTree->m_name);
+	for (auto& kid : g_SoundChannelTree->m_children)
+	{
+		AddSoundChannelGroupToVec(kid, sound_channel_group_vec);
+	}
+
+	// Find our current item index in the vector.
+	auto sound_component = e->Get< ComponentSound >("Sound");
+	auto sound_channel_group = sound_component->m_soundChannelGroup;
+	int current_item_index = 0;
+	for (int i = 0; i < sound_channel_group_vec.size(); i++)
+	{
+		if (sound_channel_group_vec[i].compare(sound_channel_group) == 0)
+		{
+			current_item_index = i;
+			break;
+		}
+	}
+
+	// Create the Combo window.
+	if (ImGui::BeginCombo("SoundChannelGroup", sound_channel_group.c_str()))
+	{
+		for (int i = 0; i < sound_channel_group_vec.size(); i++)
+		{
+			const bool is_selected = (current_item_index == i);
+
+			if (ImGui::Selectable(sound_channel_group_vec[i].c_str(), is_selected))
+			{
+				current_item_index = i;
+				LOG_DBG_INFO("[{:.4f}][DisplayChannelGroupChanger] Changed Sound Channel Group to \"{}\"", APP_RUN_TIME, sound_channel_group_vec[current_item_index]);
+			}
+
+			if (is_selected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+		}
+		ImGui::EndCombo();
+	}
+	HelpMarkerWithoutQuestion("Change the channel group on which the sound will be played. The change will find place on the next \"Play\" command for the sound source");
+}
+
+
+void GameEditor::AddSoundChannelGroupToVec(Tree* tree, std::vector< std::string >& vec)
+{
+	vec.push_back(tree->m_name);
+	for (auto& kid : tree->m_children)
+	{
+		AddSoundChannelGroupToVec(kid, vec);
+	}
+}
+
 void GameEditor::CreateRenderingLayer(std::string layer_name, int order)
 {
 	// If a layer already exists, dont do anything.
@@ -2031,8 +2086,9 @@ void GameEditor::ImportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* e
 	auto b = xml->IntAttribute("b", 1);
 	auto a = xml->IntAttribute("a", 1);
 	auto sound_name = xml->Attribute("soundName");
+	auto group = xml->Attribute("soundChannelGroup");
 
-	entity->Add(new ComponentSound(w, h, r, g, b, a, sound_name), "Sound");
+	entity->Add(new ComponentSound(w, h, r, g, b, a, sound_name, group), "Sound");
 
 	auto name = entity->m_name + "_(" + sound_name + ")";
 

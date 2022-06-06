@@ -376,6 +376,10 @@ private:
 	void DisplaySoundChannelNode(Tree* tree);
 	void DisplaySoundSourceEditor(Entity* e);
 
+	// GUI SOUND EDITOR UTIL
+	void DisplayChannelGroupChanger(Entity* e);
+	void AddSoundChannelGroupToVec(Tree* tree, std::vector< std::string >& vec);
+
 	// GAMEWORLD
 	void RenderMainFrame();
 	void UpdateEntities();
