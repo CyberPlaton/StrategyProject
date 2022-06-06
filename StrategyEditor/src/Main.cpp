@@ -26,7 +26,7 @@ static bool g_bRenderCityTerritory = true;
 static bool g_bRenderCityBuildingSlots = true;
 static std::string g_sDefaultCityLayer = "Building";
 static std::vector< Entity* > g_vecEditedEntities;
-static bool g_bImguiDemoOpen = true;
+static bool g_bImguiDemoOpen = false;
 static bool g_bImguiHasFocus = false;
 static bool g_bIsPanning = false;
 static bool g_bRenderingLayersOpen = true;
@@ -1567,7 +1567,8 @@ void GameEditor::DisplayCollisionBoxColorPicker(Entity* e)
 	ImVec4 color = {sound->r, sound->g, sound->b, sound->a};
 	
 	ImGui::ColorEdit4("Collider Color", (float*)&color, ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_InputRGB);
-	
+	HelpMarkerWithoutQuestion("Change the color of the Sound Sources collision box");
+
 	sound->r = color.x;
 	sound->g = color.y;
 	sound->b = color.z;
