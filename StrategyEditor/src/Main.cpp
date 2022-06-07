@@ -41,6 +41,7 @@ static uint64_t g_iCreatedLayerCount = 1; // Used as next layer order number.
 static bool g_bRenderGrid = true;
 static float g_fMouseXPrevious = 0.0f;
 static float g_fMouseYPrevious = 0.0f;
+static bool g_bCameraPositionAtMousePosition = false;
 
 
 GameEditor editor;
@@ -319,6 +320,13 @@ void GameEditor::RenderMainMenu()
 			}
 			ImGui::SameLine();
 			ImGui::Checkbox("Open", &g_bRenderCityBuildingSlots);
+
+			if (ImGui::MenuItem("Camera Position At Mouse Position"))
+			{
+				ToggleMenuItem(g_bCameraPositionAtMousePosition);
+			}
+			ImGui::SameLine();
+			ImGui::Checkbox("Open", &g_bCameraPositionAtMousePosition);
 
 			ImGui::EndMenu();
 		}
@@ -632,8 +640,11 @@ void GameEditor::RenderMainFrame()
 
 
 	// Draw Tile Number under Mouse.
-	position = std::to_string(m_tilex) + ":" + std::to_string(m_tiley);
-	tv.DrawStringDecal({ (float)m_tilex + 0.5f, (float)m_tiley + 0.5f }, position, olc::RED);
+	position = std::to_string(m_tileUnderMouseX) + ":" + std::to_string(m_tileUnderMouseY);
+	tv.DrawStringDecal({ (float)m_tileUnderMouseX + 0.5f, (float)m_tileUnderMouseY + 0.5f }, position, olc::RED, {2.0f, 2.0f});
+	position = std::to_string(m_camerax) + ":" + std::to_string(m_cameray);
+	// Draw Camera position indicator on the Maptile.
+	tv.DrawStringDecal({ (float)m_camerax + 0.5f, (float)m_cameray + 0.5f }, position, olc::YELLOW, { 2.0f, 2.0f });
 }
 void GameEditor::RenderMapobject(Entity* object)
 {
@@ -735,15 +746,24 @@ void GameEditor::HandleInput()
 	olc::vf2d point = tv.ScreenToWorld({ (float)GetMouseX(), (float)GetMouseY() });
 	float mousex = point.x;
 	float mousey = point.y;
-	m_tilex = (uint64_t)mousex;
-	m_tiley = (uint64_t)mousey;
+	
+	m_tileUnderMouseX = (uint64_t)mousex;
+	m_tileUnderMouseY = (uint64_t)mousey;
 	
 	olc::vi2d topLeft = tv.GetTileUnderScreenPos({ 0, 0 });
 	olc::vi2d bottomDown = tv.GetBottomRightTile();
-	olc::vi2d middle = { bottomDown.x / 2, bottomDown.y / 2 };
+	olc::vi2d middle = { (bottomDown.x + topLeft.x) / 2, (bottomDown.y + topLeft.y) / 2 };
 
-	m_camerax = m_tilex;
-	m_cameray = m_tiley;
+	if (g_bCameraPositionAtMousePosition)
+	{
+		m_camerax = m_tileUnderMouseX;
+		m_cameray = m_tileUnderMouseY;
+	}
+	else
+	{
+		m_camerax = middle.x;
+		m_cameray = middle.y;
+	}
 
 
 	if (!g_bImguiHasFocus)
@@ -881,11 +901,10 @@ void GameEditor::HandleInput()
 			{
 				g_iCameraSpeed = 1;
 			}
-			if (GetKey(olc::W).bPressed || GetKey(olc::S).bPressed ||
-				GetKey(olc::A).bPressed || GetKey(olc::D).bPressed)
+			if (GetKey(olc::W).bHeld || GetKey(olc::S).bHeld ||
+				GetKey(olc::A).bHeld || GetKey(olc::D).bHeld)
 			{
-				m_camerax = tv.GetTileUnderScreenPos({ 0, 0 }).x;
-				m_cameray = tv.GetTileUnderScreenPos({ 0, 0 }).y;
+				
 				tv.StartPan(olc::vf2d{ m_camerax, m_cameray });
 			}
 			if (GetKey(olc::W).bHeld || GetKey(olc::S).bHeld ||
@@ -921,6 +940,7 @@ void GameEditor::HandleInput()
 
 
 	// Handle input despite Imgui having focus.
+	// Unfortunately, this is a limitation of ImGui which cannot be circumvented.
 	if (g_bAddingSoundSource)
 	{
 		if (GetMouse(0).bReleased)

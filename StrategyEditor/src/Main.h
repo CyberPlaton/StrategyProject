@@ -335,8 +335,8 @@ private:
 	
 	float m_camerax = 0;
 	float m_cameray = 0;
-	uint64_t m_tilex = 0;
-	uint64_t m_tiley = 0;
+	uint64_t m_tileUnderMouseX = 0;
+	uint64_t m_tileUnderMouseY = 0;
 	float m_cameraHeigth = 1.0f;
 
 	olc::vi2d m_visiblePointLeftUp;
