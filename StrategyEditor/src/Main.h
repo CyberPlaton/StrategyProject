@@ -32,6 +32,10 @@
 *				- Adding manipulation of the collision box dimensions.
 *				- Adding convenient way to alter collision box color (Color Picker).
 * 
+* 09.06.2022 - Version 0.3.1 Patch complete:
+*			 o Adding SoundChannel child nodes to SoundChannelTree structure.
+*			 o Removing SoundChannel nodes from SoundChannelTree structure.
+* 
 * TODO: Ambient Audio "Editor" has to be update to be based on FMOD,
 *		as soon as the Audio Engine with FMOD is completed.
 *		After this the "Editor" can be extended based on FMOD to utilize 
@@ -58,7 +62,7 @@
 
 #define EDITOR_MAJOR_VERSION 0
 #define EDITOR_MINOR_VERSION 3
-#define EDITOR_PATCH_VERSION 0
+#define EDITOR_PATCH_VERSION 1
 
 
 #define STRING(text) #text
@@ -162,6 +166,51 @@ struct Tree
 		return node;
 	}
 
+	bool Has(const std::string& name)
+	{
+		if (m_name.compare(name) == 0)
+		{
+			return true;
+		}
+
+		for (auto& kid : m_children)
+		{
+			if(kid->Has(name)) return true;
+		}
+
+		return false;
+	}
+
+	void RemoveNode(const std::string& name)
+	{
+		// If we are to be removed, clear everything.
+		if (m_name.compare(name) == 0)
+		{
+			ClearTree();
+		}
+
+		// If one of the first grade children is to be removed,
+		// remove it here.
+		for (int i = 0; i < m_children.size(); i++)
+		{
+			if (m_children[i]->m_name.compare(name) == 0)
+			{
+				m_children.erase(m_children.begin() + i);
+				return;
+			}
+		}
+
+		// If one of the higher grade children is to be removed,
+		// try to find the node in each one of them and to remove it.
+		for (auto& kid : m_children)
+		{
+			if (RemoveChildFromTree(kid, name))
+			{
+				return;
+			}
+		}
+	}
+
 	void ClearTree()
 	{
 		while (m_children.size() > 0)
@@ -175,6 +224,38 @@ struct Tree
 
 	std::vector< Tree* > m_children;
 	std::string m_name;
+
+private:
+
+	bool RemoveChildFromTree(Tree* node, const std::string& name)
+	{
+		// No need to check whether we are searched.
+
+		// Check for first grade children.
+		for (int i = 0; i < node->m_children.size(); i++)
+		{
+			auto n = node->m_children[i];
+
+			if (n->m_name.compare(name) == 0)
+			{
+				node->m_children.erase(node->m_children.begin() + i);
+				return true;
+			}
+		}
+
+
+		// Check for higher grade children.
+		for (auto& kid : node->m_children)
+		{
+			if (RemoveChildFromTree(kid, name))
+			{
+				return true;
+			}
+		}
+
+		// We couldnt find any node with provided name.
+		return false;
+	}
 };
 
 
@@ -392,6 +473,9 @@ private:
 	void DisplaySoundChannelEditor();
 	void DisplaySoundChannelNode(Tree* tree);
 	void DisplaySoundSourceEditor(Entity* e);
+	void DisplaySoundChannelAddRemoveOptions(Tree* node);
+	void DisplayAddingChildNodeToSoundChannel(Tree* node);
+	void RemoveNodeFromSoundChannelTree(Tree* tree, Tree* node);
 
 	// GUI SOUND EDITOR UTIL
 	void DisplayChannelGroupChanger(Entity* e);

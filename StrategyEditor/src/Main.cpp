@@ -11,6 +11,8 @@ static Tree* g_SoundChannelTree = new Tree("Master");
 static int g_iPlayingBackgroundAudio = 0;
 static bool g_bAddingSoundSource = false;
 static std::map< std::string, Entity* > g_InGameSoundSourcesMap;
+static bool g_bAddingChildToSoundChannel = false;
+static Tree* g_pAddingChildToSoundChannelNode = nullptr;
 static bool g_bInGameSoundSourcesMapDirty = false;
 static std::string g_sSoundSource = "none";
 static bool g_bRenderSoundSourceDimensions = false;
@@ -83,6 +85,8 @@ void GameEditor::RenderGUI()
 	if (g_bEditingSoundSource) DisplaySoundSourceEditor(g_pEditedSoundSource);
 	// Sound Source Map Update
 	if (g_bInGameSoundSourcesMapDirty) UpdateInGameSoundSourcesMap(g_InGameSoundSourcesMap);
+	// Adding Child to Sound Channel Tree
+	if (g_bAddingChildToSoundChannel) DisplayAddingChildNodeToSoundChannel(g_pAddingChildToSoundChannelNode);
 }
 bool GameEditor::LoadEditorGraphicalData()
 {
@@ -1426,7 +1430,12 @@ void GameEditor::DisplaySoundChannelEditor()
 	ImGui::Begin(name, &g_bAudioSoundChannelEditorOpen);
 	
 	// The Tree Itself.
-	if (ImGui::TreeNode(g_SoundChannelTree->m_name.c_str()))
+	bool tree_open = ImGui::TreeNode(g_SoundChannelTree->m_name.c_str());
+
+	// Show add/remove option next to Node.
+	DisplaySoundChannelAddRemoveOptions(g_SoundChannelTree);
+
+	if (tree_open)
 	{
 		for (int i = 0; i < g_SoundChannelTree->m_children.size(); i++)
 		{
@@ -1466,9 +1475,98 @@ void GameEditor::DisplaySoundChannelEditor()
 	ImGui::End();
 }
 
+void GameEditor::DisplaySoundChannelAddRemoveOptions(Tree* node)
+{
+	ImGuiID add_button_id = g_iImguiImageButtonID + strlen(node->m_name.c_str()) + (intptr_t)"Add";
+	ImGuiID remove_button_id = g_iImguiImageButtonID + strlen(node->m_name.c_str()) + (intptr_t)"Remove";
+
+	std::string node_name = node->m_name;
+	ImGui::SameLine();
+
+	ImGui::PushID(add_button_id);
+	if (ImGui::SmallButton("+"))
+	{
+		g_bAddingChildToSoundChannel = true;
+		g_pAddingChildToSoundChannelNode = node;
+	}
+	ImGui::PopID();
+
+	HelpMarkerWithoutQuestion(std::string("Add a new child node to \"" + node_name + "\"").c_str());
+	ImGui::SameLine();
+
+	ImGui::PushID(remove_button_id);
+	if (ImGui::SmallButton("-"))
+	{
+		RemoveNodeFromSoundChannelTree(g_SoundChannelTree, node);
+	}
+	ImGui::PopID();
+
+	HelpMarkerWithoutQuestion(std::string("Remove \"" + node_name + "\" and all of its children nodes").c_str());
+}
+
+
+void GameEditor::DisplayAddingChildNodeToSoundChannel(Tree* node)
+{
+	if (node)
+	{
+		ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
+		ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
+
+		std::string title = "Adding child to \"" + node->m_name + "\"";
+		ImGui::Begin(title.c_str(), &g_bAddingChildToSoundChannel);
+
+		static char new_sound_channel_child_name[64] = "";
+		ImGui::InputText("|", new_sound_channel_child_name, 64);
+		ImGui::SameLine();
+		if (ImGui::SmallButton("OK"))
+		{
+			// Check for sanity.
+			std::string name = std::string(new_sound_channel_child_name);
+
+			bool length = name.length() > 0;
+			bool duplicate = g_SoundChannelTree->Has(name);
+
+			if (length && !duplicate)
+			{
+				node->Node(name);
+			}
+
+
+			if (!length)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayAddingChildNodeToSoundChannel] Error adding SoundChannelNode \"{}\" to \"{}\": Name has 0 length!", APP_RUN_TIME, name, node->m_name);
+				LOG_FILE_ERROR("[{:.4f}][DisplayAddingChildNodeToSoundChannel]  Error adding SoundChannelNode \"{}\" to \"{}\": Name has 0 length!", APP_RUN_TIME, name, node->m_name);
+			}
+			if (duplicate)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayAddingChildNodeToSoundChannel] Error adding SoundChannelNode \"{}\" to \"{}\": Child name is duplicate!", APP_RUN_TIME, name, node->m_name);
+				LOG_FILE_ERROR("[{:.4f}][DisplayAddingChildNodeToSoundChannel]  Error adding SoundChannelNode \"{}\" to \"{}\": Child name is duplicate!", APP_RUN_TIME, name, node->m_name);
+			}
+
+			memset(&new_sound_channel_child_name, 0, sizeof(new_sound_channel_child_name));
+			g_bAddingChildToSoundChannel = false;
+			g_pAddingChildToSoundChannelNode = nullptr;
+		}
+
+		ImGui::End();
+	}
+}
+
+
+void GameEditor::RemoveNodeFromSoundChannelTree(Tree* tree, Tree* node)
+{
+	tree->RemoveNode(node->m_name);
+}
+
+
 void GameEditor::DisplaySoundChannelNode(Tree* tree)
 {
-	if (ImGui::TreeNode(tree->m_name.c_str()))
+	bool tree_open = ImGui::TreeNode(tree->m_name.c_str());
+
+	// Show add/remove option next to Node.
+	DisplaySoundChannelAddRemoveOptions(tree);
+
+	if (tree_open)
 	{
 		for (int i = 0; i < tree->m_children.size(); i++)
 		{
