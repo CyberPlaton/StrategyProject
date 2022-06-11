@@ -39,7 +39,7 @@ void CONCAT_STRING(Set, name)(returntype value) \
 /// @brief Managing a single channel and its related sound.
 struct SoundChannel
 {
-	static SoundChannel* LoadSoundToChannel(const std::string& filepath, bool sound_2d = false);
+	static bool LoadSoundToChannel(SoundChannel* channel, const std::string& filepath, bool sound_2d = false);
 	static void UnloadSoundFromChannel(SoundChannel* channel);
 	static void AddChannelToGroup(SoundChannel* channel, const std::string& group_name);
 

@@ -78,7 +78,6 @@ void SoundSystem::Update()
 	// Update listener position and velocity.
 	FMOD_VECTOR up = { 0.0f, 1.0f, 0.0f };
 	FMOD_VECTOR forward = { 0.0f, 0.0f, 1.0f };
-
 	// Velocity is needed to produce a doppler effect. We dont require one.
 	FMOD_VECTOR vel = { 0.0f, 0.0f, 0.0f };
 	//vel.x = (m_listenerX - m_listenerXBefore) * (1000 / m_interfaceUpdateTime);
@@ -93,6 +92,17 @@ void SoundSystem::Update()
 	FMOD_VECTOR listenerpos = { m_listenerX, m_listenerY, m_listenerZ };
 	system->set3DListenerAttributes(0, &listenerpos, &vel, &forward, &up);
 
+	// Update Audio Source positions according to listener positions.
+	FMOD_VECTOR position = {0, 0, 0};
+	FMOD_VECTOR velocity = {0, 0, 0};
+	for (auto& sound : m_soundChannelVec)
+	{
+		FMOD_VECTOR p = sound->GetPosition();
+
+		position = { p.x - (m_listenerX - m_listenerXBefore), p.y - (m_listenerY - m_listenerYBefore), p.z - (m_listenerZ - m_listenerZBefore) };
+
+		sound->GetChannel()->set3DAttributes(&position, &velocity);
+	}
 
 	// Update FMOD.
 	system->update();
@@ -159,8 +169,8 @@ bool SoundSystem::CreateSoundOnChannel(const std::string& filepath, const std::s
 {
 	auto index = GetHashValue(channel_group_name);
 
-	SoundChannel* sc = nullptr;
-	if (sc = SoundChannel::LoadSoundToChannel(filepath, sound_2d); sc != nullptr)
+	SoundChannel* sc = new SoundChannel();
+	if (SoundChannel::LoadSoundToChannel(sc,  filepath, sound_2d))
 	{
 		SoundChannel::AddChannelToGroup(sc, channel_group_name);
 
@@ -173,6 +183,10 @@ bool SoundSystem::CreateSoundOnChannel(const std::string& filepath, const std::s
 		return true;
 	}
 
+
+	// Clean up on failure.
+	delete sc;
+	sc = nullptr;
 	return false;
 }
 
@@ -194,7 +208,6 @@ bool SoundSystem::CreateSoundOnChannel(const std::string& filepath, const std::s
 		// Pan
 		s->SetPan(pan);
 
-		// Start
 		if (start_playing_directly) s->Play();
 
 		return true;
@@ -205,9 +218,6 @@ bool SoundSystem::CreateSoundOnChannel(const std::string& filepath, const std::s
 
 SoundChannel* SoundSystem::GetSound(const std::string& sound)
 {
-	/*
-	* ISSUE: If we have 2 sounds with the same name, then we have a problem. We will never reach the other ones.
-	*/
 	for (auto& s : m_soundChannelVec)
 	{
 		auto n = s->GetName();
@@ -230,10 +240,9 @@ FMOD::ChannelGroup* SoundSystem::GetChannelGroup(const std::string& name)
 
 
 
-SoundChannel* SoundChannel::LoadSoundToChannel(const std::string& filepath, bool sound_2d)
+bool SoundChannel::LoadSoundToChannel(SoundChannel* channel, const std::string& filepath, bool sound_2d)
 {
 	auto system = SoundSystem::get()->System();
-	auto channel = new SoundChannel();
 
 	if (channel->GetHasSound())
 	{
@@ -265,6 +274,10 @@ void SoundChannel::UnloadSoundFromChannel(SoundChannel* channel)
 	if (channel->GetHasSound())
 	{
 		channel->GetSound()->release();
+
+		channel->m_data.m_sound = nullptr;
+		
+		channel->SetHasSound(false);
 	}
 }
 

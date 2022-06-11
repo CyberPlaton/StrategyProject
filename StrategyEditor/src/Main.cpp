@@ -1587,6 +1587,7 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 {
 	auto sound_component = e->Get< ComponentSound >("Sound");
 	auto sound_name = sound_component->m_soundName;
+	auto sound_source_name = sound_component->m_soundSourceName;
 
 	std::string window_title = "Sound Source Edit: " + e->m_name + "(" + sound_name +")";
 	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
@@ -1602,11 +1603,11 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 	ImGui::PushID(loop_sound_id);
 	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Repeat"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
 	{
-		auto sound_channel = SoundSystem::get()->GetSound(sound_name);
+		auto sound_channel = SoundSystem::get()->GetSound(sound_source_name);
 		if (!sound_channel)
 		{
-			LOG_DBG_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_name);
-			LOG_FILE_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_name);
+			LOG_DBG_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_source_name);
+			LOG_FILE_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_source_name);
 		}
 		else
 		{
@@ -1628,11 +1629,11 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 	ImGui::PushID(play_sound_id);
 	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Play"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
 	{
-		auto sound_channel = SoundSystem::get()->GetSound(sound_name);
+		auto sound_channel = SoundSystem::get()->GetSound(sound_source_name);
 		if (!sound_channel)
 		{
-			LOG_DBG_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_name);
-			LOG_FILE_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_name);
+			LOG_DBG_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_source_name);
+			LOG_FILE_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_source_name);
 		}
 		else
 		{
@@ -1655,11 +1656,11 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 	ImGui::PushID(stop_sound_id);
 	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Stop"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
 	{
-		auto sound_channel = SoundSystem::get()->GetSound(sound_name);
+		auto sound_channel = SoundSystem::get()->GetSound(sound_source_name);
 		if (!sound_channel)
 		{
-			LOG_DBG_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_name);
-			LOG_FILE_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_name);
+			LOG_DBG_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_source_name);
+			LOG_FILE_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_source_name);
 		}
 		else
 		{
@@ -1671,29 +1672,6 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 	}
 	ImGui::PopID();
 	HelpMarkerWithoutQuestion("Stop the Sound Source");
-
-	ImGui::SameLine();
-	if (ImGui::SmallButton("Create"))
-	{
-		auto path = m_soundPathMap[sound_component->m_soundName];
-		auto name = sound_component->m_soundName;
-		auto channel_group = sound_component->m_soundChannelGroup;
-		auto sound_2d = false;
-		FMOD_VECTOR position = { e->m_positionx, e->m_positiony, 0 };
-		if (SoundSystem::get()->CreateSoundOnChannel(path, name, channel_group, sound_2d, position))
-		{
-			LOG_DBG_INFO("[{:.4f}][DisplaySoundSourceEditor] Created Sound Source \"{}\"", APP_RUN_TIME, name);
-			LOG_FILE_INFO("[{:.4f}][DisplaySoundSourceEditor] Created Sound Source \"{}\"", APP_RUN_TIME, name);
-		}
-		else
-		{
-			LOG_DBG_ERROR("[{:.4f}][DisplaySoundSourceEditor] Failed creating Sound Source \"{}\"", APP_RUN_TIME, name);
-			LOG_FILE_ERROR("[{:.4f}][DisplaySoundSourceEditor] Failed creating Sound Source \"{}\"", APP_RUN_TIME, name);
-
-		}
-	}
-	HelpMarkerWithoutQuestion("Create the Sound Source on FMOD. This is obligatory in order to play the Sound Source");
-
 
 	// Change Sound source name
 	static char sound_source_name_buf[64] = ""; 
@@ -1744,32 +1722,49 @@ void GameEditor::DisplaySoundFileNameChanger(Entity* e)
 	auto sound_component = e->Get< ComponentSound >("Sound");
 
 	ImGuiID sound_file_name_input_id = g_iImguiImageButtonID + strlen(sound_component->m_soundName.c_str()) + (intptr_t)"|";
-	ImGui::PushID(sound_file_name_input_id);
+	ImGuiID ok_button_id = g_iImguiImageButtonID + strlen(sound_component->m_soundName.c_str()) + (intptr_t)"OK";
 
+	ImGui::PushID(sound_file_name_input_id);
 	static char sound_file_name_buf[64] = "";
 	ImGui::InputText("|", sound_file_name_buf, 64);
 	ImGui::PopID();
 	HelpMarkerWithoutQuestion("Change the sound file name to be played. The name must be valid and loaded");
+	
+	
 	ImGui::SameLine();
+	ImGui::PushID(ok_button_id);
 	if (ImGui::SmallButton("OK"))
 	{
 		auto name = std::string(sound_file_name_buf);
+		auto old_name = sound_component->m_soundName;
 
 		// Do not Allow empty names.
 		// Check whether the new name is a duplicate.
-		if (name.size() != 0 && m_soundPathMap.find(name) == m_soundPathMap.end())
+		if (name.size() > 0 && m_soundPathMap.find(name) != m_soundPathMap.end())
 		{
 			// Change the Sound File Name.
 			sound_component->m_soundName = std::string(sound_file_name_buf);
 
+			// Update the SoundChannel.
+			auto sound = SoundSystem::get()->GetSound(sound_component->m_soundSourceName);
+			if (sound)
+			{
+				// ... just unload the old sound and load the new one.
+				sound->LoadSoundToChannel(sound, m_soundPathMap[name], sound->GetIs2D());
+			}
+
 			memset(&sound_file_name_buf, 0, sizeof(sound_file_name_buf));
+
+			LOG_DBG_INFO("[{:.4f}][DisplaySoundFileNameChanger] Changed Sound-Source-Sound name from \"{}\" to \"{}\"!", APP_RUN_TIME, old_name, name);
+			LOG_FILE_INFO("[{:.4f}][DisplaySoundFileNameChanger] Changed changing Sound-Source-Sound name from \"{}\" to \"{}\"!", APP_RUN_TIME, old_name, name);
 		}
 		else
 		{
-			LOG_DBG_ERROR("[{:.4f}][DisplaySoundFileNameChanger] Error changing Sound-Source-Sound name from \"{}\" to \"{}\"!", APP_RUN_TIME, sound_component->m_soundName, name);
-			LOG_FILE_ERROR("[{:.4f}][DisplaySoundFileNameChanger] Error changing Sound-Source-Sound name from \"{}\" to \"{}\"!", APP_RUN_TIME, sound_component->m_soundName, name);
+			LOG_DBG_ERROR("[{:.4f}][DisplaySoundFileNameChanger] Error changing Sound-Source-Sound name from \"{}\" to \"{}\"!", APP_RUN_TIME, old_name, name);
+			LOG_FILE_ERROR("[{:.4f}][DisplaySoundFileNameChanger] Error changing Sound-Source-Sound name from \"{}\" to \"{}\"!", APP_RUN_TIME, old_name, name);
 		}
 	}
+	ImGui::PopID();
 }
 
 void GameEditor::DisplayCollisionBoxColorPicker(Entity* e)
