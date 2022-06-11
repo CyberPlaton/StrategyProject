@@ -1711,10 +1711,55 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 	// Change width and height.
 	DisplayDimensionChanger(e);
 
+	// Change position.
+	DisplayPositionChanger(e);
+
 	// Change color.
 	DisplayCollisionBoxColorPicker(e);
 	
+
+
 	ImGui::End();
+}
+
+
+void GameEditor::DisplayPositionChanger(Entity* e)
+{
+	int x = e->m_positionx;
+	int y = e->m_positiony;
+	int z = 0.0f;
+
+	ImGui::SliderInt("X", &x, 0, MAX_MAPSIZE_X - 1, "%d", ImGuiSliderFlags_Logarithmic);
+	HelpMarkerWithoutQuestion("Change the x position of the Sound");
+	ImGui::SliderInt("Y", &y, 0, MAX_MAPSIZE_Y - 1, "%d", ImGuiSliderFlags_Logarithmic);
+	HelpMarkerWithoutQuestion("Change the y position of the Sound");
+	ImGui::SliderInt("Z", &z, 0, MAX_MAPSIZE_X - 1, "%d", ImGuiSliderFlags_Logarithmic);
+	HelpMarkerWithoutQuestion("Change the z position (height) of the Sound");
+
+
+	auto sound_component = e->Get< ComponentSound >("Sound");
+	auto sound = SoundSystem::get()->GetSound(sound_component->m_soundSourceName);
+	int prevx, prevy;
+	prevx = e->m_positionx;
+	prevy = e->m_positiony;
+	if (sound)
+	{
+		e->m_positionx = x;
+		e->m_positiony = y;
+		sound->SetPosition({ (float)x, (float)y, (float)z });
+
+		// Move the Entity to appropriate map tile in the game world.
+		m_gameworld["AudioSourceLayer"][prevx][prevy] = nullptr;
+		m_gameworld["AudioSourceLayer"][x][y] = e;
+
+		LOG_DBG_INFO("[{:.4f}][DisplayPositionChanger] Changed position of \"{}\" to {}:{}:{}!", APP_RUN_TIME, sound->GetName(), x, y, z);
+		LOG_FILE_INFO("[{:.4f}][DisplayPositionChanger] Changed position of \"{}\" to {}:{}:{}!", APP_RUN_TIME, sound->GetName(), x, y, z);
+	}
+	else
+	{
+		LOG_DBG_ERROR("[{:.4f}][DisplayPositionChanger] Could not change position of \"{}\" to {}:{}:{}! SoundChannel invalid!", APP_RUN_TIME, sound->GetName(), x, y, z);
+		LOG_FILE_ERROR("[{:.4f}][DisplayPositionChanger] Could not change position of \"{}\" to {}:{}:{}! SoundChannel invalid!", APP_RUN_TIME, sound->GetName(), x, y, z);
+	}
 }
 
 void GameEditor::DisplaySoundFileNameChanger(Entity* e)

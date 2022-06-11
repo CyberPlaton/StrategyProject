@@ -479,6 +479,7 @@ private:
 	void DisplayDimensionChanger(Entity* e);
 	void DisplayCollisionBoxColorPicker(Entity* e);
 	void DisplaySoundFileNameChanger(Entity* e);
+	void DisplayPositionChanger(Entity* e);
 
 	// GAMEWORLD
 	void RenderMainFrame();
