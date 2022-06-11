@@ -90,15 +90,23 @@ struct ComponentSound : public Component
 		m_soundName = sound_name;
 		m_soundChannelGroup = "Master";
 	}
-	ComponentSound(uint64_t w, uint64_t h, float r, float g, float b, float a, const std::string& sound_name, const std::string& channel_group) : Component("Sound"), w(w), h(h), r(r), g(g), b(b), a(a)
+	ComponentSound(uint64_t w, uint64_t h, float r, float g, float b, float a, const std::string& sound_name, const std::string& sound_source_name, const std::string& channel_group) : Component("Sound"), w(w), h(h), r(r), g(g), b(b), a(a)
 	{
 		m_soundName = sound_name;
+		m_soundSourceName = sound_source_name;
 		m_soundChannelGroup = channel_group;
 	}
 
 
 	uint64_t w, h;
+
+	/// @brief Name of the Sound File without extensions. E.g. atmosphere_1 or cicada_2. Non unique.
 	std::string m_soundName;
+	
+	/// @brief Name of the SoundChannel object. Stored in SoundSystem and searched for in GetSound(), thus unique.
+	std::string m_soundSourceName;
+	
+	/// @brief Name of the FMOD::ChannelGroup in which this sound is intended to play. Non unique.
 	std::string m_soundChannelGroup;
 	float r, g, b, a;
 };

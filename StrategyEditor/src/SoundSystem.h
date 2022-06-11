@@ -154,6 +154,7 @@ public:
 	void ReleaseAllChannelGroups();
 	void ReleaseChannelGroup(FMOD::ChannelGroup* group);
 
+	bool CreateSoundOnChannel(const std::string& filepath, const std::string& sound_name, const std::string& channel_group_name, bool loop, bool is2d, FMOD_VECTOR position, float vol, float pitch, float pan, bool start_playing_directly);
 	bool CreateSoundOnChannel(const std::string& filepath, const std::string& name, const std::string& channel_group_name, bool sound_2d = false, FMOD_VECTOR position = {0.0f, 0.0f, 0.0f});
 
 

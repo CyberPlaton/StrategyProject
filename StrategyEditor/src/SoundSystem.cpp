@@ -176,8 +176,38 @@ bool SoundSystem::CreateSoundOnChannel(const std::string& filepath, const std::s
 	return false;
 }
 
+bool SoundSystem::CreateSoundOnChannel(const std::string& filepath, const std::string& sound_name, const std::string& channel_group_name, bool loop, bool is2d, FMOD_VECTOR position, float vol, float pitch, float pan, bool start_playing_directly)
+{
+	if (CreateSoundOnChannel(filepath, sound_name, channel_group_name, is2d, position))
+	{
+		auto s = GetSound(sound_name);
+
+		// Loop
+		if (loop) s->GetSound()->setMode(FMOD_LOOP_NORMAL);
+
+		// Vol
+		s->SetVolume(vol);
+
+		// Pitch
+		s->SetPitch(pitch);
+
+		// Pan
+		s->SetPan(pan);
+
+		// Start
+		if (start_playing_directly) s->Play();
+
+		return true;
+	}
+
+	return false;
+}
+
 SoundChannel* SoundSystem::GetSound(const std::string& sound)
 {
+	/*
+	* ISSUE: If we have 2 sounds with the same name, then we have a problem. We will never reach the other ones.
+	*/
 	for (auto& s : m_soundChannelVec)
 	{
 		auto n = s->GetName();

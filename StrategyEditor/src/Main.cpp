@@ -11,6 +11,7 @@ static Tree* g_SoundChannelTree = new Tree("Master");
 static int g_iPlayingBackgroundAudio = 0;
 static bool g_bAddingSoundSource = false;
 static std::map< std::string, Entity* > g_InGameSoundSourcesMap;
+static bool g_bSoundChannelPlayingOnLoad = true;
 static bool g_bAddingChildToSoundChannel = false;
 static Tree* g_pAddingChildToSoundChannelNode = nullptr;
 static bool g_bInGameSoundSourcesMapDirty = false;
@@ -2247,10 +2248,30 @@ void GameEditor::ExportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* e
 	sound_xml->SetAttribute("a", sound_component->a);
 	sound_xml->SetAttribute("soundName", sound_component->m_soundName.c_str());
 	sound_xml->SetAttribute("soundChannelGroupName", sound_component->m_soundChannelGroup.c_str());
+	sound_xml->SetAttribute("soundSourceName", sound_component->m_soundSourceName.c_str());
 
 	// Special for the sound component we export the custom given name,
 	// this may cause problems on loading duplicate or errorous names.
 	sound_xml->SetAttribute("entityName", entity->m_name.c_str());
+
+
+	// Special for FMOD export sound data like Volume, Pitch etc.
+	auto sound = SoundSystem::get()->GetSound(sound_component->m_soundName);
+	if (sound)
+	{
+		sound_xml->SetAttribute("volume", sound->GetVolume());
+		sound_xml->SetAttribute("pitch", sound->GetPitch());
+		sound_xml->SetAttribute("pan", sound->GetPan());
+		sound_xml->SetAttribute("looped", sound->GetLooped());
+		sound_xml->SetAttribute("is2d", sound->GetIs2D());
+
+		// Dont export Position and Velocity, as Velocity is null and position is derived from Entity.
+	}
+	else
+	{
+		LOG_DBG_ERROR("[{:.4f}][ExportEntityComponentSound] SoundChannel \"{}\"could not be found! Cannot export SoundChannel data!", APP_RUN_TIME, sound_component->m_soundName);
+		LOG_FILE_ERROR("[{:.4f}][ExportEntityComponentSound] SoundChannel \"{}\"could not be found! Cannot export SoundChannel data!", APP_RUN_TIME, sound_component->m_soundName);
+	}
 }
 void GameEditor::ExportEntityComponentFort(tinyxml2::XMLElement* xml, Entity* entity)
 {
@@ -2428,29 +2449,38 @@ void GameEditor::ImportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* e
 	auto sound_name = xml->Attribute("soundName");
 	auto group = xml->Attribute("soundChannelGroupName");
 	auto sound_entity_name = xml->Attribute("entityName");
+	auto sound_source_name = xml->Attribute("soundSourceName");
 
-	entity->Add(new ComponentSound(w, h, r, g, b, a, sound_name, group), "Sound");
+
+	entity->Add(new ComponentSound(w, h, r, g, b, a, sound_name, sound_source_name, group), "Sound");
 	entity->m_name = sound_entity_name;
 	
 	g_InGameSoundSourcesMap.try_emplace(entity->m_name, entity);
 
 
+	// Retrieve data needed for FMOD.
+	auto volume = xml->FloatAttribute("volume");
+	auto pitch = xml->FloatAttribute("pitch");
+	auto pan = xml->FloatAttribute("pan");
+	auto looped = xml->BoolAttribute("looped");
+	auto is2d = xml->BoolAttribute("is2d");
+
 	// After importing automatically create sound on FMOD.
 	auto path = m_soundPathMap[sound_name];
-	auto name = sound_name;
+	auto name = sound_source_name;
 	auto channel_group = group;
 	auto sound_2d = false;
 	FMOD_VECTOR position = { entity->m_positionx, entity->m_positiony, 0 };
-	if (SoundSystem::get()->CreateSoundOnChannel(path, name, channel_group, sound_2d, position))
+
+	if (SoundSystem::get()->CreateSoundOnChannel(path, name, channel_group, looped, is2d, position, volume, pitch, pan, g_bSoundChannelPlayingOnLoad))
 	{
-		LOG_DBG_INFO("[{:.4f}][ImportEntityComponentSound] Created Sound Source \"{}\" (\"{}\")", APP_RUN_TIME, entity->m_name, name);
-		LOG_FILE_INFO("[{:.4f}][ImportEntityComponentSound] Created Sound Source \"{}\"( \"{}\")", APP_RUN_TIME, entity->m_name, name);
+		LOG_DBG_INFO("[{:.4f}][ImportEntityComponentSound] Created Sound Source: \"{}\" (\"{}\") with Sound \"{}\"", APP_RUN_TIME, entity->m_name, sound_source_name, sound_name);
+		LOG_FILE_INFO("[{:.4f}][ImportEntityComponentSound] Created Sound Source \"{}\"( \"{}\") with Sound \"{}\"", APP_RUN_TIME, entity->m_name, sound_source_name, sound_name);
 	}
 	else
 	{
-		LOG_DBG_ERROR("[{:.4f}][ImportEntityComponentSound] Failed creating Sound Source \"{}\" (\"{}\")", APP_RUN_TIME, entity->m_name, name);
-		LOG_FILE_ERROR("[{:.4f}][ImportEntityComponentSound] Failed creating Sound Source \"{}\" (\"{}\")", APP_RUN_TIME, entity->m_name, name);
-
+		LOG_DBG_ERROR("[{:.4f}][ImportEntityComponentSound] Failed creating Sound Source \"{}\" (\"{}\") with Sound \"{}\"", APP_RUN_TIME, entity->m_name, sound_source_name, sound_name);
+		LOG_FILE_ERROR("[{:.4f}][ImportEntityComponentSound] Failed creating Sound Source \"{}\" (\"{}\") with Sound \"{}\"", APP_RUN_TIME, entity->m_name, sound_source_name, sound_name);
 	}
 }
 
