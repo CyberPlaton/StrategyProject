@@ -2251,7 +2251,7 @@ void GameEditor::ExportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* e
 
 
 	// Special for FMOD export sound data like Volume, Pitch etc.
-	auto sound = SoundSystem::get()->GetSound(sound_component->m_soundName);
+	auto sound = SoundSystem::get()->GetSound(sound_component->m_soundSourceName);
 	if (sound)
 	{
 		sound_xml->SetAttribute("volume", sound->GetVolume());
