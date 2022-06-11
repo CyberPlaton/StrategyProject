@@ -54,36 +54,56 @@ struct SoundChannel
 		/// @brief A left/right pan level, from -1.0 to 1.0 inclusive. -1.0 = Full left, 0.0 = center, 1.0 = full right. Default = 0.0.
 		float m_pan;
 
+		/// @brief 3D only. The position in game space.
 		FMOD_VECTOR m_position;
 
+		/// @brief 3D only. The velocity of the sound.
 		FMOD_VECTOR m_velocity;
 
+		/// @brief Whether playing mode is looping.
 		bool m_looped;
 
+		/// @brief Whether currently playing.
 		bool m_played;
 
+		/// @brief Whether we have successfully loaded an FMOD::Sound.
 		bool m_hasSound;
 
-		FMOD::Sound* m_sound;
+		/// @brief Either 2D or 3D.
+		bool m_2d;
 
+		/// @brief The Sound which was created by FMOD.
+		FMOD::Sound* m_sound;
+		
+		/// @brief The underlying Channel on which this sound is played.
 		FMOD::Channel* m_channel;
 
+		/// @brief To which ChannelGroup this sound belongs. 
 		FMOD::ChannelGroup* m_group;
 
+		/// @brief The user given name of the sound source.
 		std::string m_name;
 	};
 
 
 	void Release()
 	{
-		// if HasSound(){ UnloadSoundFromChannel( this ); }
+		if (GetIsPlayed()) { Stop(); }
 
-		// m_channel->release();
+		if (GetHasSound()) { UnloadSoundFromChannel(this); }
+
+		// Apparently FMOD::SoundChannel* does not need to be released.
+		m_data.m_channel = nullptr;
 	}
 
 
+	/// @brief Comman FMOD to play this sound channel with specified options in data. 
 	void Play();
+
+	/// @brief If played pause sound. 
 	void Pause();
+	
+	/// @brief If played stop the sound. On next play it will start from beginning.
 	void Stop();
 
 
@@ -99,6 +119,7 @@ struct SoundChannel
 	DECLARE_GET_SET(FMOD::ChannelGroup*, ChannelGroup, m_data.m_group);
 	DECLARE_GET_SET(FMOD::Sound*, Sound, m_data.m_sound);
 	DECLARE_GET_SET(bool, IsPlayed, m_data.m_played);
+	DECLARE_GET_SET(bool, Is2D, m_data.m_2d);
 
 private:
 	Data m_data;

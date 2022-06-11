@@ -18,7 +18,7 @@ bool SoundSystem::Initialize()
 	auto result = FMOD::System_Create(&m_system);
 	if (result != FMOD_OK) return false;
 
-	result = m_system->init(SOUND_DEFAULT_CHANNEL_COUNT, FMOD_3D_LINEARSQUAREROLLOFF | FMOD_INIT_NORMAL, 0);
+	result = m_system->init(SOUND_DEFAULT_CHANNEL_COUNT, FMOD_3D_LINEARSQUAREROLLOFF | FMOD_INIT_NORMAL | FMOD_LOWMEM, 0);
 	if (result != FMOD_OK) return false;
 
 	m_channelGroupVec.resize(1024);
@@ -218,6 +218,7 @@ SoundChannel* SoundChannel::LoadSoundToChannel(const std::string& filepath, bool
 	if (result == FMOD_OK)
 	{
 		channel->SetHasSound(true);
+		channel->SetIs2D(sound_2d);
 
 		channel->m_data.m_sound->set3DMinMaxDistance(SOUND_DEFAULT_MIN_DISTANCE, SOUND_DEFAULT_MAX_DISTANCE);
 
@@ -252,14 +253,30 @@ void SoundChannel::Play()
 
 	auto system = SoundSystem::get()->System();
 
-	m_data.m_channel->setVolume(m_data.m_volume);
+	// Set data of SoundChannel
+	m_data.m_channel->setVolume(m_data.m_volume); // Volume. Done on Channel.
+	if (!m_data.m_2d)
+	{
+		m_data.m_channel->set3DAttributes(&m_data.m_position, &m_data.m_velocity); // 3D data. Done on Channel.
+	}
+	m_data.m_channel->setPan(m_data.m_pan); // Pan. Done on Channel.
+	m_data.m_channel->setPitch(m_data.m_pitch); // Pitch. Done on Channel.
+	if (m_data.m_looped)
+	{
+		m_data.m_sound->setMode(FMOD_LOOP_NORMAL); // Loop. Done on Sound.
+	}
 
-	system->playSound(m_data.m_sound, m_data.m_group, false, &m_data.m_channel);
-
-	m_data.m_channel->set3DAttributes(&m_data.m_position, &m_data.m_velocity);
+	m_data.m_channel->setChannelGroup(m_data.m_group); // ChannelGroup
 
 
-	m_data.m_played = true;
+
+
+	// Play SoundChannel
+	auto result = system->playSound(m_data.m_sound, m_data.m_group, false, &m_data.m_channel);
+	if (result == FMOD_OK)
+	{
+		m_data.m_played = true;
+	}
 }
 
 void SoundChannel::Pause()

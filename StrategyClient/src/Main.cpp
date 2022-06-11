@@ -728,17 +728,6 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 	// Unit
 	entity = factory->Begin(this)
 		.Add(new  Sprite("assets/UnitAtlas.json"))
-		.End();
-	entity->Get< Sprite >()->AddLoop("Idle", "Human_Spearman_Mithril");
-	entity->Get< Sprite >()->Play("Idle");
-	entity->Position2D(Math::Vec2(0.0f, 0.0f));
-	entity->Get< Sprite >()->CenterOrigin();
-	//entity->Get< Sprite >()->Scale2D({ 0.75f, 0.75f });
-	entity->Depth(0);
-
-	// Unit
-	entity = factory->Begin(this)
-		.Add(new  Sprite("assets/UnitAtlas.json"))
 		.Add(new Unit("Steel Swordman", 1, 50, 200, 25, 50, 0, 0, 0, 0))
 		.End();
 	entity->Get< Sprite >()->AddLoop("Idle", "Human_Swordman_Steel");
@@ -748,8 +737,6 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 	entity->Get< Sprite >()->CenterOrigin();
 	//entity->Get< Sprite >()->Scale2D({ 0.75f, 0.75f });
 	entity->Depth(0);
-
-
 
 	entity = factory->Begin(this)
 		.Add(new  SelectableUnit(1))

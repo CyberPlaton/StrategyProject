@@ -52,8 +52,6 @@
 #include "olc/olcPixelGameEngine.h"
 #define OLC_PGEX_TRANSFORMEDVIEW
 #include "olc/olcPGEX_TransformedView.h"
-#define OLC_PGEX_SOUND
-#include "olc/olcPGEX_Sound.h"
 #define OLC_GFX_OPENGL33
 #define OLC_PGEX_DEAR_IMGUI_IMPLEMENTATION
 #include "olc/imgui_impl_pge.h"
@@ -286,9 +284,6 @@ public:
 		// Initialize Logging.
 		if (!Logger::Initialize()) return false;
 
-		// Initialize Audio.
-		olc::SOUND::InitialiseAudio(44100, 1, 8, 512);
-		
 		// FMOD
 		SoundSystem::get()->Initialize();
 		/*
@@ -366,6 +361,8 @@ public:
 		m_spriteDatabase.push_back(sprite);
 
 
+
+
 		// Load Audio assets
 		loaded &= LoadAudioData("assets/Audio/LoadDefinition.xml");
 
@@ -397,7 +394,6 @@ public:
 	bool OnUserDestroy() override final
 	{
 		SoundSystem::get()->Terminate();
-		olc::SOUND::DestroyAudio();
 		Logger::Terminate();
 		return true;
 	}
@@ -454,7 +450,7 @@ private:
 	std::vector< olc::Sprite* > m_editorSpriteDatabase;
 
 	// Audio
-	std::map< std::string, std::pair< bool, int > > m_soundMap;
+	std::map< std::string, std::string > m_soundPathMap;
 
 	// Permanent Editor specific layers which cannot be altered.
 	std::vector< int > m_PermanentLayersVec;
@@ -482,6 +478,7 @@ private:
 	void AddSoundChannelGroupToVec(Tree* tree, std::vector< std::string >& vec);
 	void DisplayDimensionChanger(Entity* e);
 	void DisplayCollisionBoxColorPicker(Entity* e);
+	void DisplaySoundFileNameChanger(Entity* e);
 
 	// GAMEWORLD
 	void RenderMainFrame();

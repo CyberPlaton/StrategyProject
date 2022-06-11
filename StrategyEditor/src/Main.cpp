@@ -182,28 +182,25 @@ bool GameEditor::LoadAudioData(const std::string& filepath)
 	while (sound)
 	{
 		std::string path = main_path;
-
+		
 		std::string sound_path = sound->Attribute("path");
+		std::string sound_name = sound->GetText();
 		if (sound_path.compare("") == 0)
 		{
-			path += "/" +std::string(sound->GetText()) + ".wav";
+			path += "/" + sound_name;
 		}
 		else
 		{
-			path += "/" + sound_path + "/" + std::string(sound->GetText()) + ".wav";
+			path += "/" + sound_path + "/" + sound_name;
 		}
+	
+		// Remove extension (e.g. .wav)
+		std::string final_sound_name = sound_name.substr(0, sound_name.find("."));
 
-		int id = olc::SOUND::LoadAudioSample(path);
-		if (id != -1)
-		{
-			// Store sound.
-			m_soundMap.try_emplace(std::string(sound->GetText()), std::make_pair(false, id));
-		}
-		else
-		{
-			LOG_DBG_ERROR("[{:.4f}][LoadAudioData] Failed loading Sound \"{}\" at \"{}\"!", APP_RUN_TIME, sound->GetText(), path.c_str());
-			LOG_FILE_ERROR("[{:.4f}][LoadAudioData] Failed loading Sound \"{}\" at \"{}\"!", APP_RUN_TIME, sound->GetText(), path.c_str());
-		}
+		m_soundPathMap.emplace(final_sound_name, path);
+	
+		LOG_DBG_INFO("[{:.4f}][LoadAudioData] Loading Sound \"{}\" at \"{}\"!", APP_RUN_TIME, final_sound_name, path);
+		LOG_FILE_INFO("[{:.4f}][LoadAudioData] Loading Sound \"{}\" at \"{}\"!", APP_RUN_TIME, final_sound_name, path);
 
 		sound = sound->NextSiblingElement("Sound");
 	}
@@ -1299,10 +1296,19 @@ void GameEditor::DeleteMapobject(Entity* object)
 void GameEditor::DeleteMapobjectAudioSource(Entity* object)
 {
 	auto sound_component = object->Get< ComponentSound >("Sound");
-	// Stop according sample from playing.
-	m_soundMap[sound_component->m_soundName].first = false;
-	olc::SOUND::StopSample(m_soundMap[sound_component->m_soundName].second);
+	auto name = sound_component->m_soundName;
 
+	// Stop according sample from playing and release the sound channel.
+	auto sound = SoundSystem::get()->GetSound(name);
+	if (sound)
+	{
+		sound->Stop();
+		sound->Release();
+	}
+
+	// Erase object from Sound Sources.
+	if (g_InGameSoundSourcesMap.find(name) != g_InGameSoundSourcesMap.end()) g_InGameSoundSourcesMap.erase(name);
+	
 	// Close the editing window if it is on.
 	g_bEditingSoundSource = false;
 	g_pEditedSoundSource = nullptr;
@@ -1391,7 +1397,7 @@ void GameEditor::DisplayBackgroundAudioEditor()
 	ImGui::SameLine(); HelpMarker("Currently loaded and available audio assets");
 	if (tree_open)
 	{
-		for (auto& p : m_soundMap)
+		for (auto& p : m_soundPathMap)
 		{
 			if (ImGui::Button(p.first.c_str()))
 			{
@@ -1581,7 +1587,7 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 	auto sound_component = e->Get< ComponentSound >("Sound");
 	auto sound_name = sound_component->m_soundName;
 
-	std::string window_title = "Sound Source Edit: " + e->m_name;
+	std::string window_title = "Sound Source Edit: " + e->m_name + "(" + sound_name +")";
 	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
 	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
 	ImGui::Begin(window_title.c_str(), &g_bEditingSoundSource);
@@ -1595,15 +1601,22 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 	ImGui::PushID(loop_sound_id);
 	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Repeat"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
 	{
-		if (m_soundMap[sound_name].first == false)
+		auto sound_channel = SoundSystem::get()->GetSound(sound_name);
+		if (!sound_channel)
 		{
-			olc::SOUND::PlaySample(m_soundMap[sound_name].second, true);
-			m_soundMap[sound_name].first = true;
+			LOG_DBG_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_name);
+			LOG_FILE_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_name);
 		}
 		else
 		{
-			olc::SOUND::StopSample(m_soundMap[sound_name].second);
-			olc::SOUND::PlaySample(m_soundMap[sound_name].second, true);
+			if (sound_channel->GetLooped() == false)
+			{
+				sound_channel->SetLooped(true);
+			}
+			else
+			{
+				sound_channel->SetLooped(false);
+			}
 		}
 	}
 	ImGui::PopID();
@@ -1614,15 +1627,23 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 	ImGui::PushID(play_sound_id);
 	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Play"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
 	{
-		if (m_soundMap[sound_name].first == false)
+		auto sound_channel = SoundSystem::get()->GetSound(sound_name);
+		if (!sound_channel)
 		{
-			olc::SOUND::PlaySample(m_soundMap[sound_name].second);
-			m_soundMap[sound_name].first = true;
+			LOG_DBG_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_name);
+			LOG_FILE_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_name);
 		}
 		else
 		{
-			olc::SOUND::StopSample(m_soundMap[sound_name].second);
-			olc::SOUND::PlaySample(m_soundMap[sound_name].second);
+			if (sound_channel->GetIsPlayed() == false)
+			{
+				sound_channel->Play();
+			}
+			else
+			{
+				sound_channel->Stop();
+				sound_channel->Play();
+			}
 		}
 	}
 	ImGui::PopID();
@@ -1633,14 +1654,44 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 	ImGui::PushID(stop_sound_id);
 	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Stop"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
 	{
-		if (m_soundMap[sound_name].first)
+		auto sound_channel = SoundSystem::get()->GetSound(sound_name);
+		if (!sound_channel)
 		{
-			olc::SOUND::StopSample(m_soundMap[sound_name].second);
-			m_soundMap[sound_name].first = false;
+			LOG_DBG_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_name);
+			LOG_FILE_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_name);
+		}
+		else
+		{
+			if (sound_channel->GetIsPlayed())
+			{
+				sound_channel->Stop();
+			}
 		}
 	}
 	ImGui::PopID();
 	HelpMarkerWithoutQuestion("Stop the Sound Source");
+
+	ImGui::SameLine();
+	if (ImGui::SmallButton("Create"))
+	{
+		auto path = m_soundPathMap[sound_component->m_soundName];
+		auto name = sound_component->m_soundName;
+		auto channel_group = sound_component->m_soundChannelGroup;
+		auto sound_2d = false;
+		FMOD_VECTOR position = { e->m_positionx, e->m_positiony, 0 };
+		if (SoundSystem::get()->CreateSoundOnChannel(path, name, channel_group, sound_2d, position))
+		{
+			LOG_DBG_INFO("[{:.4f}][DisplaySoundSourceEditor] Created Sound Source \"{}\"", APP_RUN_TIME, name);
+			LOG_FILE_INFO("[{:.4f}][DisplaySoundSourceEditor] Created Sound Source \"{}\"", APP_RUN_TIME, name);
+		}
+		else
+		{
+			LOG_DBG_ERROR("[{:.4f}][DisplaySoundSourceEditor] Failed creating Sound Source \"{}\"", APP_RUN_TIME, name);
+			LOG_FILE_ERROR("[{:.4f}][DisplaySoundSourceEditor] Failed creating Sound Source \"{}\"", APP_RUN_TIME, name);
+
+		}
+	}
+	HelpMarkerWithoutQuestion("Create the Sound Source on FMOD. This is obligatory in order to play the Sound Source");
 
 
 	// Change Sound source name
@@ -1670,6 +1721,10 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 			LOG_FILE_ERROR("[{:.4f}][DisplaySoundSourceEditor] Error changing Sound-Source-Entity name from \"{}\" to \"{}\"!", APP_RUN_TIME, e->m_name, name);
 		}
 	}
+
+	// Change the Sound File Name
+	DisplaySoundFileNameChanger(e);
+
 	
 	// Change Channel Group
 	DisplayChannelGroupChanger(e);
@@ -1683,6 +1738,38 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 	ImGui::End();
 }
 
+void GameEditor::DisplaySoundFileNameChanger(Entity* e)
+{
+	auto sound_component = e->Get< ComponentSound >("Sound");
+
+	ImGuiID sound_file_name_input_id = g_iImguiImageButtonID + strlen(sound_component->m_soundName.c_str()) + (intptr_t)"|";
+	ImGui::PushID(sound_file_name_input_id);
+
+	static char sound_file_name_buf[64] = "";
+	ImGui::InputText("|", sound_file_name_buf, 64);
+	ImGui::PopID();
+	HelpMarkerWithoutQuestion("Change the sound file name to be played. The name must be valid and loaded");
+	ImGui::SameLine();
+	if (ImGui::SmallButton("OK"))
+	{
+		auto name = std::string(sound_file_name_buf);
+
+		// Do not Allow empty names.
+		// Check whether the new name is a duplicate.
+		if (name.size() != 0 && m_soundPathMap.find(name) == m_soundPathMap.end())
+		{
+			// Change the Sound File Name.
+			sound_component->m_soundName = std::string(sound_file_name_buf);
+
+			memset(&sound_file_name_buf, 0, sizeof(sound_file_name_buf));
+		}
+		else
+		{
+			LOG_DBG_ERROR("[{:.4f}][DisplaySoundFileNameChanger] Error changing Sound-Source-Sound name from \"{}\" to \"{}\"!", APP_RUN_TIME, sound_component->m_soundName, name);
+			LOG_FILE_ERROR("[{:.4f}][DisplaySoundFileNameChanger] Error changing Sound-Source-Sound name from \"{}\" to \"{}\"!", APP_RUN_TIME, sound_component->m_soundName, name);
+		}
+	}
+}
 
 void GameEditor::DisplayCollisionBoxColorPicker(Entity* e)
 {
@@ -2346,6 +2433,25 @@ void GameEditor::ImportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* e
 	entity->m_name = sound_entity_name;
 	
 	g_InGameSoundSourcesMap.try_emplace(entity->m_name, entity);
+
+
+	// After importing automatically create sound on FMOD.
+	auto path = m_soundPathMap[sound_name];
+	auto name = sound_name;
+	auto channel_group = group;
+	auto sound_2d = false;
+	FMOD_VECTOR position = { entity->m_positionx, entity->m_positiony, 0 };
+	if (SoundSystem::get()->CreateSoundOnChannel(path, name, channel_group, sound_2d, position))
+	{
+		LOG_DBG_INFO("[{:.4f}][ImportEntityComponentSound] Created Sound Source \"{}\" (\"{}\")", APP_RUN_TIME, entity->m_name, name);
+		LOG_FILE_INFO("[{:.4f}][ImportEntityComponentSound] Created Sound Source \"{}\"( \"{}\")", APP_RUN_TIME, entity->m_name, name);
+	}
+	else
+	{
+		LOG_DBG_ERROR("[{:.4f}][ImportEntityComponentSound] Failed creating Sound Source \"{}\" (\"{}\")", APP_RUN_TIME, entity->m_name, name);
+		LOG_FILE_ERROR("[{:.4f}][ImportEntityComponentSound] Failed creating Sound Source \"{}\" (\"{}\")", APP_RUN_TIME, entity->m_name, name);
+
+	}
 }
 
 void GameEditor::ImportEntityComponentFort(tinyxml2::XMLElement* xml, Entity* entity)
