@@ -267,6 +267,13 @@ private:
 
 
 
+struct ChannelGroupData
+{
+	float m_volume;
+};
+
+
+
 // Utility. Create a hook function to actually call the GameEditors OnUserUpdate function.
 class GameEditor;
 void MainRender(GameEditor* editor);
@@ -460,6 +467,7 @@ private:
 
 	// Audio
 	std::map< std::string, std::string > m_soundPathMap;
+	std::map< std::string, ChannelGroupData* > m_ChannelGroupMap;
 
 	// Permanent Editor specific layers which cannot be altered.
 	std::vector< int > m_PermanentLayersVec;

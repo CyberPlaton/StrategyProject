@@ -248,6 +248,12 @@ bool GameEditor::LoadSoundChannelTreeMapData(tinyxml2::XMLElement* xml, Tree* tr
 	{
 		tree->Node(tree->m_name)->Node(node->Attribute("name"));
 		auto tree_node = tree->Node(node->Attribute("name"));
+		
+		// Load volume settings.
+		auto data = new ChannelGroupData();
+		auto volume = node->FloatAttribute("volume");
+		data->m_volume = volume;
+		m_ChannelGroupMap.emplace(tree_node->m_name, data);
 
 		LoadSoundChannelNode(node, tree_node);
 
@@ -265,6 +271,13 @@ void GameEditor::LoadSoundChannelNode(tinyxml2::XMLElement* xml_node, Tree* tree
 
 		tree->Node(name)->Node(node->Attribute("name"));
 		auto tree_node = tree->Node(node->Attribute("name"));
+
+		// Load volume settings.
+		auto data = new ChannelGroupData();
+		auto volume = node->FloatAttribute("volume");
+		data->m_volume = volume;
+		m_ChannelGroupMap.emplace(tree_node->m_name, data);
+
 
 		LoadSoundChannelNode(node, tree_node);
 
@@ -2427,6 +2440,10 @@ void GameEditor::ExportSoundChannelTree(tinyxml2::XMLElement* xml, Tree* tree)
 	auto root = xml->InsertNewChildElement("SoundChannelTree");
 	root->SetAttribute("root", tree->m_name.c_str());
 
+	// Export volume settings.
+	auto volume = m_ChannelGroupMap[tree->m_name];
+	root->SetAttribute("volume", volume);
+
 	for (auto& kid : tree->m_children)
 	{
 		ExportSoundChannelTreeNode(root, kid);
@@ -2438,10 +2455,20 @@ void GameEditor::ExportSoundChannelTreeNode(tinyxml2::XMLElement* xml, Tree* tre
 	auto node = xml->InsertNewChildElement("Node");
 	node->SetAttribute("name", tree->m_name.c_str());
 
+	// Export volume settings.
+	auto volume = m_ChannelGroupMap[tree->m_name];
+	node->SetAttribute("volume", volume);
+
 	for (auto& kid : tree->m_children)
 	{
 		auto leaf = node->InsertNewChildElement("Node");
 		leaf->SetAttribute("name", kid->m_name.c_str());
+		
+	
+		volume = m_ChannelGroupMap[kid->m_name];
+		leaf->SetAttribute("volume", volume);
+
+
 		ExportSoundChannelTreeNode(leaf, kid);
 	}
 }
