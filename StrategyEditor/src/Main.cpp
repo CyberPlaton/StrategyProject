@@ -997,9 +997,19 @@ void GameEditor::HandleInput()
 void GameEditor::UpdateVisibleRect()
 {
 	m_visiblePointLeftUp = tv.GetTileUnderScreenPos({ 0, 0 });
+
+	// Increase draw distance by several maptiles.
+	if (m_visiblePointLeftUp.x > 10) m_visiblePointLeftUp.x -= 10;
+	if (m_visiblePointLeftUp.y > 10) m_visiblePointLeftUp.y -= 10;
 	if (m_visiblePointLeftUp.x < 0) m_visiblePointLeftUp.x = 0;
 	if (m_visiblePointLeftUp.y < 0) m_visiblePointLeftUp.y = 0;
+
 	m_visiblePointDownRight = tv.GetBottomRightTile();
+	
+	// Increase draw distance by several maptiles.
+	if (m_visiblePointDownRight.x < MAX_MAPSIZE_X - 11) m_visiblePointDownRight.x += 10;
+	if (m_visiblePointDownRight.y < MAX_MAPSIZE_Y - 11) m_visiblePointDownRight.y += 10;
+
 	if (m_visiblePointDownRight.x > MAX_MAPSIZE_X) m_visiblePointDownRight.x = MAX_MAPSIZE_X;
 	if (m_visiblePointDownRight.y > MAX_MAPSIZE_Y) m_visiblePointDownRight.y = MAX_MAPSIZE_Y;
 }
