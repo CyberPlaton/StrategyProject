@@ -1614,6 +1614,10 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 			// Change the Entity Name.
 			e->m_name = std::string(sound_source_name_buf);
 
+			// Change the Sound Source name (in SoundSystem and in Component).
+			SoundSystem::get()->ChangeSoundSourceName(sound_component->m_soundSourceName, e->m_name);
+			sound_component->m_soundSourceName = e->m_name;
+
 			memset(&sound_source_name_buf, 0, sizeof(sound_source_name_buf));
 
 			// Update the Map to adjust to changes.
@@ -2344,6 +2348,11 @@ void GameEditor::ExportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* e
 		sound_xml->SetAttribute("is2d", sound->GetIs2D());
 
 		// Dont export Position and Velocity, as Velocity is null and position is derived from Entity.
+		// Only Z axis can be exported here.
+		if (sound->GetIs2D() == false)
+		{
+			sound_xml->SetAttribute("z", sound->GetPosition().z);
+		}
 	}
 	else
 	{
@@ -2542,13 +2551,16 @@ void GameEditor::ImportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* e
 	auto pan = xml->FloatAttribute("pan");
 	auto looped = xml->BoolAttribute("looped");
 	auto is2d = xml->BoolAttribute("is2d");
+	auto z = 0.0f;
+	if (is2d == false) z = xml->FloatAttribute("z");
+
 
 	// After importing automatically create sound on FMOD.
 	auto path = m_soundPathMap[sound_name];
 	auto name = sound_source_name;
 	auto channel_group = group;
 	auto sound_2d = false;
-	FMOD_VECTOR position = { entity->m_positionx, entity->m_positiony, 0 };
+	FMOD_VECTOR position = { entity->m_positionx, entity->m_positiony, z };
 
 	if (SoundSystem::get()->CreateSoundOnChannel(path, name, channel_group, looped, is2d, position, volume, pitch, pan, g_bSoundChannelPlayingOnLoad))
 	{

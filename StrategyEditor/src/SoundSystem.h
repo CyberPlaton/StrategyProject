@@ -32,8 +32,8 @@ void CONCAT_STRING(Set, name)(returntype value) \
 #define SOUND_DEFAULT_DISTANCE_FACTOR 1.0f // 1 Meter Unit.
 #define SOUND_DEFAULT_ROLLOFF_FACTOR 0.0f  // Use FMOD_3D_LINEARSQUAREROLLOFF instead.
 #define SOUND_DEFAULT_CHANNEL_COUNT 256
-#define SOUND_DEFAULT_MIN_DISTANCE 0.1f
-#define SOUND_DEFAULT_MAX_DISTANCE 256 * 128.0 * SOUND_DEFAULT_DISTANCE_FACTOR
+#define SOUND_DEFAULT_MIN_DISTANCE 1.0f
+#define SOUND_DEFAULT_MAX_DISTANCE 10000.0f
 
 
 /// @brief Managing a single channel and its related sound.
@@ -164,8 +164,11 @@ public:
 
 	SoundChannel* GetSound(const std::string& sound);
 
-
 	FMOD::ChannelGroup* GetChannelGroup(const std::string& name);
+
+
+	// UTIL
+	bool ChangeSoundSourceName(const std::string& sound_source, const std::string& new_sound_source_name);
 
 private:
 	static SoundSystem* g_SoundSystem;

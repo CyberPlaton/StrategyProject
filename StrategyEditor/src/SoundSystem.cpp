@@ -18,7 +18,7 @@ bool SoundSystem::Initialize()
 	auto result = FMOD::System_Create(&m_system);
 	if (result != FMOD_OK) return false;
 
-	result = m_system->init(SOUND_DEFAULT_CHANNEL_COUNT, FMOD_3D_LINEARSQUAREROLLOFF | FMOD_INIT_NORMAL | FMOD_LOWMEM, 0);
+	result = m_system->init(SOUND_DEFAULT_CHANNEL_COUNT, FMOD_3D_LINEARROLLOFF | FMOD_INIT_NORMAL | FMOD_LOWMEM, 0);
 	if (result != FMOD_OK) return false;
 
 	m_channelGroupVec.resize(1024);
@@ -38,8 +38,6 @@ bool SoundSystem::Initialize()
 	m_listenerXBefore = 0;
 	m_listenerYBefore = 0;
 	m_listenerZBefore = 0;
-
-	m_system->set3DSettings(0.0f, SOUND_DEFAULT_DISTANCE_FACTOR, SOUND_DEFAULT_ROLLOFF_FACTOR);
 
 	return true;
 }
@@ -106,6 +104,19 @@ void SoundSystem::Update()
 
 	// Update FMOD.
 	system->update();
+}
+
+bool SoundSystem::ChangeSoundSourceName(const std::string& sound_source, const std::string& new_sound_source_name)
+{
+	for (auto& sc : m_soundChannelVec)
+	{
+		if (sc->GetName().compare(sound_source) == 0)
+		{
+			sc->SetName(new_sound_source_name);
+			return true;
+		}
+	}
+	return false;
 }
 
 void SoundSystem::SetListenerPositionVector(float x, float y, float z)
@@ -305,6 +316,9 @@ void SoundChannel::Play()
 	if (!m_data.m_2d)
 	{
 		m_data.m_channel->set3DAttributes(&m_data.m_position, &m_data.m_velocity); // 3D data. Done on Channel.
+
+		//m_data.m_sound->set3DConeSettings(100.0f, 260.0f, 0.1f);
+		m_data.m_sound->set3DMinMaxDistance(SOUND_DEFAULT_MIN_DISTANCE, SOUND_DEFAULT_MAX_DISTANCE);
 	}
 	m_data.m_channel->setPan(m_data.m_pan); // Pan. Done on Channel.
 	m_data.m_channel->setPitch(m_data.m_pitch); // Pitch. Done on Channel.
