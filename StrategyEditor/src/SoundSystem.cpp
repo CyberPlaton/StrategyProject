@@ -335,6 +335,24 @@ void SoundChannel::Stop()
 {
 	if (!m_data.m_played) return;
 
+	m_data.m_channel->stop();
 
 	m_data.m_played = false;
+}
+
+bool SoundChannel::GetIsPlayed()
+{
+	m_data.m_channel->isPlaying(&m_data.m_played);
+	return m_data.m_played;
+}
+
+void SoundChannel::SetPosition(FMOD_VECTOR position)
+{
+	m_data.m_position.x = position.x;
+	m_data.m_position.y = position.y;
+	m_data.m_position.z = position.z;
+
+	FMOD_VECTOR vel = { 0, 0, 0 };
+
+	m_data.m_channel->set3DAttributes(&m_data.m_position, &vel);
 }

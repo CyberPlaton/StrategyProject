@@ -110,7 +110,6 @@ struct SoundChannel
 	DECLARE_GET_SET(float, Volume, m_data.m_volume);
 	DECLARE_GET_SET(float, Pitch, m_data.m_pitch);
 	DECLARE_GET_SET(float, Pan, m_data.m_pan);
-	DECLARE_GET_SET(FMOD_VECTOR, Position, m_data.m_position);
 	DECLARE_GET_SET(FMOD_VECTOR, Velocity, m_data.m_velocity);
 	DECLARE_GET_SET(bool, Looped, m_data.m_looped);
 	DECLARE_GET_SET(const std::string&, Name, m_data.m_name);
@@ -118,8 +117,13 @@ struct SoundChannel
 	DECLARE_GET_SET(FMOD::Channel*, Channel, m_data.m_channel);
 	DECLARE_GET_SET(FMOD::ChannelGroup*, ChannelGroup, m_data.m_group);
 	DECLARE_GET_SET(FMOD::Sound*, Sound, m_data.m_sound);
-	DECLARE_GET_SET(bool, IsPlayed, m_data.m_played);
 	DECLARE_GET_SET(bool, Is2D, m_data.m_2d);
+
+
+	void SetPosition(FMOD_VECTOR position);
+	FMOD_VECTOR GetPosition() { return m_data.m_position; }
+
+	bool GetIsPlayed();
 
 private:
 	Data m_data;

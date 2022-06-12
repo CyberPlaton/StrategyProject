@@ -1714,10 +1714,6 @@ void GameEditor::DisplayPlayButton(Entity* e)
 				sound_channel->Stop();
 				sound_channel->Play();
 			}
-
-			// Change the ICON to indicate being played.
-			auto sprite = e->Get< ComponentSprite >("Sprite");
-			sprite->m_decal = "AudioOn";
 		}
 		else
 		{
@@ -1750,10 +1746,6 @@ void GameEditor::DisplayStopButton(Entity* e)
 			{
 				sound_channel->Stop();
 			}
-
-			// Change the ICON to indicate not being played.
-			auto sprite = e->Get< ComponentSprite >("Sprite");
-			sprite->m_decal = "AudioOff";
 		}
 		else
 		{
@@ -1768,20 +1760,23 @@ void GameEditor::DisplayStopButton(Entity* e)
 
 void GameEditor::DisplayPositionChanger(Entity* e)
 {
+	auto sound_component = e->Get< ComponentSound >("Sound");
+	auto sound = SoundSystem::get()->GetSound(sound_component->m_soundSourceName);
+
+
 	int x = e->m_positionx;
 	int y = e->m_positiony;
-	int z = 0.0f;
+	int z = sound->GetPosition().z;
 
 	ImGui::SliderInt("X", &x, 0, MAX_MAPSIZE_X - 1, "%d", ImGuiSliderFlags_Logarithmic);
 	HelpMarkerWithoutQuestion("Change the x position of the Sound");
 	ImGui::SliderInt("Y", &y, 0, MAX_MAPSIZE_Y - 1, "%d", ImGuiSliderFlags_Logarithmic);
 	HelpMarkerWithoutQuestion("Change the y position of the Sound");
-	ImGui::SliderInt("Z", &z, 0, MAX_MAPSIZE_X - 1, "%d", ImGuiSliderFlags_Logarithmic);
+	ImGui::SliderInt("Z", &z, -MAX_MAPSIZE_X + 1, MAX_MAPSIZE_X - 1, "%d", ImGuiSliderFlags_Logarithmic);
 	HelpMarkerWithoutQuestion("Change the z position (height) of the Sound");
 
 
-	auto sound_component = e->Get< ComponentSound >("Sound");
-	auto sound = SoundSystem::get()->GetSound(sound_component->m_soundSourceName);
+	
 	int prevx, prevy;
 	prevx = e->m_positionx;
 	prevy = e->m_positiony;
