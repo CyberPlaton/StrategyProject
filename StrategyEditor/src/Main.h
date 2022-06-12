@@ -36,6 +36,15 @@
 *			 o Adding SoundChannel child nodes to SoundChannelTree structure.
 *			 o Removing SoundChannel nodes from SoundChannelTree structure.
 * 
+* 12.06.2022 - Version 0.3.2 Patch complete:
+*			 o SoundChannel now playing if their hearable radius encompasses the camera (listener) position.
+*			 o Integration of FMOD with the Editor:
+*				 - Fixing the positioning of the sound in 3D space relative to the camera (listener).
+*				 - Defining the 3D max distance of a sound source.
+*			 o Quality of life improvements:
+*				 - Better UI visibility whether a sound source is played and in which mode.
+*				 - Increased the draw distance by 10 map tiles.
+* 
 * TODO: Ambient Audio "Editor" has to be update to be based on FMOD,
 *		as soon as the Audio Engine with FMOD is completed.
 *		After this the "Editor" can be extended based on FMOD to utilize 
@@ -60,7 +69,7 @@
 
 #define EDITOR_MAJOR_VERSION 0
 #define EDITOR_MINOR_VERSION 3
-#define EDITOR_PATCH_VERSION 1
+#define EDITOR_PATCH_VERSION 2
 
 
 #define STRING(text) #text

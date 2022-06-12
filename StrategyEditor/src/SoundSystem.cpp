@@ -243,8 +243,12 @@ bool SoundSystem::CreateSoundOnChannel(const std::string& filepath, const std::s
 		if (loop)
 		{
 			s->GetSound()->setMode(FMOD_LOOP_NORMAL);
-			s->SetLooped(loop);
 		}
+		else
+		{
+			s->GetSound()->setMode(FMOD_LOOP_OFF);
+		}
+		s->SetLooped(loop);
 
 		// Vol
 		s->SetVolume(vol);
