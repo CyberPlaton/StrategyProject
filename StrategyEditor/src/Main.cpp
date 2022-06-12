@@ -1586,92 +1586,17 @@ void GameEditor::DisplaySoundChannelNode(Tree* tree)
 void GameEditor::DisplaySoundSourceEditor(Entity* e)
 {
 	auto sound_component = e->Get< ComponentSound >("Sound");
-	auto sound_name = sound_component->m_soundName;
-	auto sound_source_name = sound_component->m_soundSourceName;
 
-	std::string window_title = "Sound Source Edit: " + e->m_name + "(" + sound_name +")";
+	std::string window_title = "Sound Source Edit: " + e->m_name + "(" + sound_component->m_soundName +")";
 	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
 	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
 	ImGui::Begin(window_title.c_str(), &g_bEditingSoundSource);
 
-	ImGuiID play_sound_id = g_iImguiImageButtonID + strlen(sound_name.c_str()) + (intptr_t)"Play";
-	ImGuiID stop_sound_id = g_iImguiImageButtonID + strlen(sound_name.c_str()) + (intptr_t)"Stop";
-	ImGuiID loop_sound_id = g_iImguiImageButtonID + strlen(sound_name.c_str()) + (intptr_t)"Repeat";
-
-
-	// Play or Stop Sound source and Set Looping.
-	ImGui::PushID(loop_sound_id);
-	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Repeat"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
-	{
-		auto sound_channel = SoundSystem::get()->GetSound(sound_source_name);
-		if (!sound_channel)
-		{
-			LOG_DBG_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_source_name);
-			LOG_FILE_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_source_name);
-		}
-		else
-		{
-			if (sound_channel->GetLooped() == false)
-			{
-				sound_channel->SetLooped(true);
-			}
-			else
-			{
-				sound_channel->SetLooped(false);
-			}
-		}
-	}
-	ImGui::PopID();
-	HelpMarkerWithoutQuestion("Play the Sound Source in a loop");
-	
-	
+	DisplayLoopButton(e);
 	ImGui::SameLine();
-	ImGui::PushID(play_sound_id);
-	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Play"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
-	{
-		auto sound_channel = SoundSystem::get()->GetSound(sound_source_name);
-		if (!sound_channel)
-		{
-			LOG_DBG_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_source_name);
-			LOG_FILE_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_source_name);
-		}
-		else
-		{
-			if (sound_channel->GetIsPlayed() == false)
-			{
-				sound_channel->Play();
-			}
-			else
-			{
-				sound_channel->Stop();
-				sound_channel->Play();
-			}
-		}
-	}
-	ImGui::PopID();
-	HelpMarkerWithoutQuestion("Play the Sound Source once");
-
-
+	DisplayPlayButton(e);
 	ImGui::SameLine();
-	ImGui::PushID(stop_sound_id);
-	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Stop"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
-	{
-		auto sound_channel = SoundSystem::get()->GetSound(sound_source_name);
-		if (!sound_channel)
-		{
-			LOG_DBG_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_source_name);
-			LOG_FILE_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_source_name);
-		}
-		else
-		{
-			if (sound_channel->GetIsPlayed())
-			{
-				sound_channel->Stop();
-			}
-		}
-	}
-	ImGui::PopID();
-	HelpMarkerWithoutQuestion("Stop the Sound Source");
+	DisplayStopButton(e);
 
 	// Change Sound source name
 	static char sound_source_name_buf[64] = ""; 
@@ -1720,6 +1645,124 @@ void GameEditor::DisplaySoundSourceEditor(Entity* e)
 
 
 	ImGui::End();
+}
+
+void GameEditor::DisplayLoopButton(Entity* e)
+{
+	auto sound_component = e->Get< ComponentSound >("Sound");
+	auto sound_source_name = sound_component->m_soundSourceName;
+	auto sound_channel = SoundSystem::get()->GetSound(sound_source_name);
+
+	// Get data about sound.
+	bool sound_looped = sound_channel->GetLooped();
+
+	if (sound_looped)
+	{
+		ImGui::PushStyleColor(ImGuiCol_Button, { 1.0f, 1.0f, 0.3f, 1.0f }); // Yellow button color.
+		ImGui::PushStyleColor(ImGuiCol_Text, { 0.0f, 0.0f, 0.0f, 1.0f });	// Black text color.
+	}
+	if (ImGui::Button("Loop"))
+	{
+		if (sound_channel)
+		{
+			if (sound_channel->GetLooped() == false)
+			{
+				sound_channel->SetLooped(true);
+			}
+			else
+			{
+				sound_channel->SetLooped(false);
+			}
+		}
+		else
+		{
+			LOG_DBG_ERROR("[{:.4f}][DisplayLoopButton] SoundChannel \"{}\" invalid!", APP_RUN_TIME, sound_source_name);
+			LOG_FILE_ERROR("[{:.4f}][DisplayLoopButton] SoundChannel \"{}\" invalid!", APP_RUN_TIME, sound_source_name);
+		}
+	}
+	if (sound_looped)
+	{
+		ImGui::PopStyleColor(); ImGui::PopStyleColor();
+	}
+	HelpMarkerWithoutQuestion("Play the Sound Source in a loop");
+}
+
+void GameEditor::DisplayPlayButton(Entity* e)
+{
+	auto sound_component = e->Get< ComponentSound >("Sound");
+	auto sound_source_name = sound_component->m_soundSourceName;
+	auto sound_channel = SoundSystem::get()->GetSound(sound_source_name);
+
+	// Get data about sound.
+	bool sound_played = sound_channel->GetIsPlayed();
+
+	if (sound_played)
+	{
+		ImGui::PushStyleColor(ImGuiCol_Button, { 1.0f, 1.0f, 0.3f, 1.0f }); // Yellow button color.
+		ImGui::PushStyleColor(ImGuiCol_Text, { 0.0f, 0.0f, 0.0f, 1.0f });	// Black text color.
+	}
+	if (ImGui::Button("Play"))
+	{
+		if (sound_channel)
+		{
+			if (sound_channel->GetIsPlayed() == false)
+			{
+				sound_channel->Play();
+			}
+			else
+			{
+				sound_channel->Stop();
+				sound_channel->Play();
+			}
+
+			// Change the ICON to indicate being played.
+			auto sprite = e->Get< ComponentSprite >("Sprite");
+			sprite->m_decal = "AudioOn";
+		}
+		else
+		{
+			LOG_DBG_ERROR("[{:.4f}][DisplayPlayButton] SoundChannel \"{}\" invalid!", APP_RUN_TIME, sound_source_name);
+			LOG_FILE_ERROR("[{:.4f}][DisplayPlayButton] SoundChannel \"{}\" invalid!", APP_RUN_TIME, sound_source_name);
+		}
+	}
+	if (sound_played)
+	{
+		ImGui::PopStyleColor(); ImGui::PopStyleColor();
+	}
+	HelpMarkerWithoutQuestion("Play the Sound Source once");
+}
+
+void GameEditor::DisplayStopButton(Entity* e)
+{
+	auto sound_component = e->Get< ComponentSound >("Sound");
+	auto sound_source_name = sound_component->m_soundSourceName;
+	auto sound_channel = SoundSystem::get()->GetSound(sound_source_name);
+
+	ImGuiID stop_sound_id = g_iImguiImageButtonID + strlen(sound_source_name.c_str()) + (intptr_t)"Stop";
+
+	ImGui::SameLine();
+	ImGui::PushID(stop_sound_id);
+	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Stop"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
+	{
+		if (sound_channel)
+		{
+			if (sound_channel->GetIsPlayed())
+			{
+				sound_channel->Stop();
+			}
+
+			// Change the ICON to indicate not being played.
+			auto sprite = e->Get< ComponentSprite >("Sprite");
+			sprite->m_decal = "AudioOff";
+		}
+		else
+		{
+			LOG_DBG_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_source_name);
+			LOG_FILE_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_source_name);
+		}
+	}
+	ImGui::PopID();
+	HelpMarkerWithoutQuestion("Stop the Sound Source");
 }
 
 

@@ -197,7 +197,11 @@ bool SoundSystem::CreateSoundOnChannel(const std::string& filepath, const std::s
 		auto s = GetSound(sound_name);
 
 		// Loop
-		if (loop) s->GetSound()->setMode(FMOD_LOOP_NORMAL);
+		if (loop)
+		{
+			s->GetSound()->setMode(FMOD_LOOP_NORMAL);
+			s->SetLooped(loop);
+		}
 
 		// Vol
 		s->SetVolume(vol);
@@ -310,9 +314,6 @@ void SoundChannel::Play()
 	}
 
 	m_data.m_channel->setChannelGroup(m_data.m_group); // ChannelGroup
-
-
-
 
 	// Play SoundChannel
 	auto result = system->playSound(m_data.m_sound, m_data.m_group, false, &m_data.m_channel);

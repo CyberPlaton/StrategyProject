@@ -481,6 +481,11 @@ private:
 	void DisplaySoundFileNameChanger(Entity* e);
 	void DisplayPositionChanger(Entity* e);
 
+	void DisplayLoopButton(Entity* e);
+	void DisplayPlayButton(Entity* e);
+	void DisplayStopButton(Entity* e);
+
+
 	// GAMEWORLD
 	void RenderMainFrame();
 	void UpdateEntities();
