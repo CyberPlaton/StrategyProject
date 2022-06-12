@@ -44,6 +44,7 @@
 *			 o Quality of life improvements:
 *				 - Better UI visibility whether a sound source is played and in which mode.
 *				 - Increased the draw distance by 10 map tiles.
+*			 o ChannelGroup Control now creates an FMOD representation and allows for volume customization.
 * 
 * TODO: Ambient Audio "Editor" has to be update to be based on FMOD,
 *		as soon as the Audio Engine with FMOD is completed.
@@ -502,6 +503,12 @@ private:
 	void DisplayPlayButton(Entity* e);
 	void DisplayStopButton(Entity* e);
 
+	void DisplayChannelGroupControl(Tree* tree);
+	void DisplayChannelGroupControlNode(Tree* tree);
+	void UpdateChannelGroupVolumeForFMOD(const std::string& group_name, float v);
+
+	bool CreateAndSubmitSoundChannelNode(Tree* tree, const std::string& parent);
+	bool CreateAndSubmitSoundChannelTree(Tree* tree);
 
 	// GAMEWORLD
 	void RenderMainFrame();
@@ -528,8 +535,6 @@ private:
 	uint64_t GetDecalWidth(const std::string& name);
 	uint64_t GetDecalHeight(const std::string& name);
 	olc::Pixel GetRandomColor(uint64_t alpha = 255);
-	bool CreateAndSubmitSoundChannelTree(Tree* tree);
-	bool CreateAndSubmitSoundChannelNode(Tree* tree, const std::string& parent);
 	void UpdateInGameSoundSourcesMap(std::map< std::string, Entity* >& map);
 	uint32_t ConvertColorToPixel(ImVec4 color);
 

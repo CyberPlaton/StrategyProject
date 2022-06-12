@@ -1090,38 +1090,6 @@ olc::Pixel GameEditor::GetRandomColor(uint64_t alpha /*= 255*/)
 	return olc::Pixel(r, g, b, alpha);
 }
 
-bool GameEditor::CreateAndSubmitSoundChannelTree(Tree* tree)
-{
-	auto system = SoundSystem::get();
-
-	// First release all channel groups if there are any.
-	system->ReleaseAllChannelGroups();
-
-	// Create the Master channel.
-	bool result = system->CreateMasterChannelGroup(g_SoundChannelTree->m_name);
-
-	// Create Channel Groups.
-	for (auto& kid : g_SoundChannelTree->m_children)
-	{
-		result &= CreateAndSubmitSoundChannelNode(kid, g_SoundChannelTree->m_name);
-	}
-
-	return result;
-}
-
-bool GameEditor::CreateAndSubmitSoundChannelNode(Tree* tree, const std::string& parent)
-{
-	auto system = SoundSystem::get();
-
-	bool result = system->CreateChannelGroup(tree->m_name, parent);
-
-	for (auto& kid : tree->m_children)
-	{
-		result &= CreateAndSubmitSoundChannelNode(kid, tree->m_name);
-	}
-
-	return result;
-}
 
 void GameEditor::UpdateInGameSoundSourcesMap(std::map< std::string, Entity* >& map)
 {
@@ -1480,36 +1448,59 @@ void GameEditor::DisplaySoundChannelEditor()
 		ImGui::TreePop();
 	}
 
-	ImGui::Separator();
-	if (ImGui::SmallButton("Create and Submit Tree"))
-	{
-		if (CreateAndSubmitSoundChannelTree(g_SoundChannelTree))
-		{
-			LOG_DBG_INFO("[{:.4f}][CreateAndSubmitSoundChannelTree] Success!", APP_RUN_TIME);
-			LOG_FILE_INFO("[{:.4f}][CreateAndSubmitSoundChannelTree] Success!", APP_RUN_TIME);
-		}
-		else
-		{
-			LOG_DBG_ERROR("[{:.4f}][CreateAndSubmitSoundChannelTree] Failed!", APP_RUN_TIME);
-			LOG_FILE_ERROR("[{:.4f}][CreateAndSubmitSoundChannelTree] Failed!", APP_RUN_TIME);
-			SoundSystem::get()->ReleaseAllChannelGroups();
-		}
-	}
-	if (ImGui::SmallButton("Reload Tree"))
-	{
-		if (LoadSoundChannelTreeStandalone("assets/Audio/SoundChannelTree.xml", g_SoundChannelTree))
-		{
-			LOG_DBG_INFO("[{:.4f}][LoadSoundChannelTree] Success!", APP_RUN_TIME);
-			LOG_FILE_INFO("[{:.4f}][LoadSoundChannelTree] Success!", APP_RUN_TIME);
-		}
-		else
-		{
-			LOG_DBG_ERROR("[{:.4f}][LoadSoundChannelTree] Failed!", APP_RUN_TIME);
-			LOG_FILE_ERROR("[{:.4f}][LoadSoundChannelTree] Failed!", APP_RUN_TIME);
-		}
-	}
+	DisplayChannelGroupControl(g_SoundChannelTree);
+
+
 	ImGui::End();
 }
+
+
+void GameEditor::DisplayChannelGroupControl(Tree* tree)
+{
+	ImGui::Separator();
+	
+	std::string slider_name = tree->m_name + " Vol.";
+	ImGui::Text(tree->m_name.c_str());
+	ImGui::SameLine();
+	auto group = m_ChannelGroupMap[tree->m_name];
+	float vol = group->m_volume;
+	ImGui::SliderFloat(slider_name.c_str(), &vol, 0.0f, 1.0f, "%.4f", 1.0f);
+	group->m_volume = vol;
+	UpdateChannelGroupVolumeForFMOD(tree->m_name, vol);
+
+	for (auto& kid : tree->m_children)
+	{
+		DisplayChannelGroupControlNode(kid);
+	}
+}
+
+void GameEditor::DisplayChannelGroupControlNode(Tree* tree)
+{
+	std::string slider_name = tree->m_name + " Vol.";
+	ImGui::Text(tree->m_name.c_str());
+	ImGui::SameLine();
+	auto group = m_ChannelGroupMap[tree->m_name];
+	float vol = group->m_volume;
+	ImGui::SliderFloat(slider_name.c_str(), &vol, 0.0f, 1.0f, "%.4f", 1.0f);
+	group->m_volume = vol;
+	UpdateChannelGroupVolumeForFMOD(tree->m_name, vol);
+
+	for (auto& kid : tree->m_children)
+	{
+		DisplayChannelGroupControlNode(kid);
+	}
+}
+
+
+void GameEditor::UpdateChannelGroupVolumeForFMOD(const std::string& group_name, float v)
+{
+	auto group = SoundSystem::get()->GetChannelGroup(group_name);
+	if(group)
+	{
+		group->setVolume(v);
+	}
+}
+
 
 void GameEditor::DisplaySoundChannelAddRemoveOptions(Tree* node)
 {
@@ -2488,8 +2479,25 @@ bool GameEditor::ImportMapData(const std::string& filepath)
 	auto sound_channel_tree = root->FirstChildElement("SoundChannelTree");
 	if (sound_channel_tree)
 	{
+		// Load Master ChannelGroup into the channel group control map.
+		auto data = new ChannelGroupData();
+		data->m_volume = sound_channel_tree->FloatAttribute("volume");
+		m_ChannelGroupMap.emplace("Master", data);
+
 		if (LoadSoundChannelTreeMapData(sound_channel_tree, g_SoundChannelTree))
 		{
+			// Create the ChannelGroup tree in FMOD.
+			if (CreateAndSubmitSoundChannelTree(g_SoundChannelTree))
+			{
+				LOG_DBG_INFO("[{:.4f}][CreateAndSubmitSoundChannelTree] Success creating ChannelGroup Tree for FMOD!", APP_RUN_TIME);
+				LOG_FILE_INFO("[{:.4f}][CreateAndSubmitSoundChannelTree] Success creating ChannelGroup Tree for FMOD!", APP_RUN_TIME);
+			}
+			else
+			{
+				LOG_DBG_ERROR("[{:.4f}][CreateAndSubmitSoundChannelTree] Failed creating ChannelGroup Tree for FMOD!", APP_RUN_TIME);
+				LOG_FILE_ERROR("[{:.4f}][CreateAndSubmitSoundChannelTree] Failed creating ChannelGroup Tree for FMOD!", APP_RUN_TIME);
+			}
+
 			LOG_DBG_INFO("[{:.4f}][LoadSoundChannelTreeMapData] Success loading SoundChannelTree!", APP_RUN_TIME);
 			LOG_FILE_INFO("[{:.4f}][LoadSoundChannelTreeMapData] Success loading SoundChannelTree!", APP_RUN_TIME);
 		}
@@ -2738,6 +2746,41 @@ void GameEditor::RemoveBuildingSlotFromCity(Entity* e, int slotx, int sloty)
 	{
 		e->Get< ComponentFort >("Fort")->RemoveBuildingSlot(slotx, sloty);
 	}
+}
+
+
+
+bool GameEditor::CreateAndSubmitSoundChannelTree(Tree* tree)
+{
+	auto system = SoundSystem::get();
+
+	// First release all channel groups if there are any.
+	system->ReleaseAllChannelGroups();
+
+	// Create the Master channel.
+	bool result = system->CreateMasterChannelGroup(g_SoundChannelTree->m_name);
+
+	// Create Channel Groups.
+	for (auto& kid : g_SoundChannelTree->m_children)
+	{
+		result &= CreateAndSubmitSoundChannelNode(kid, g_SoundChannelTree->m_name);
+	}
+
+	return result;
+}
+
+bool GameEditor::CreateAndSubmitSoundChannelNode(Tree* tree, const std::string& parent)
+{
+	auto system = SoundSystem::get();
+
+	bool result = system->CreateChannelGroup(tree->m_name, parent);
+
+	for (auto& kid : tree->m_children)
+	{
+		result &= CreateAndSubmitSoundChannelNode(kid, tree->m_name);
+	}
+
+	return result;
 }
 
 
