@@ -500,7 +500,7 @@ private:
 	void RenderMapobject(Entity* object);
 	Entity* CreateMapobject(uint64_t x, uint64_t y, std::string decal, bool unit, std::string name = "none");
 	Entity* CreateMapobjectEx(uint64_t x, uint64_t y, std::string layer, std::string decal, std::string name = "none");
-	Entity* CreateMapobjectAudioSource(uint64_t x, uint64_t y, uint64_t w, uint64_t h, const std::string& soundname);
+	Entity* CreateMapobjectAudioSource(uint64_t x, uint64_t y, float radius, const std::string& soundname);
 	std::string CreateMapobjectName();
 	bool IsMapobjectNameUsed(const std::string& name);
 	void DeleteMapobject(Entity* object);

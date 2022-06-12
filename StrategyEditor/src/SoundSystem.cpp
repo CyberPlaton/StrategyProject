@@ -318,7 +318,7 @@ void SoundChannel::Play()
 		m_data.m_channel->set3DAttributes(&m_data.m_position, &m_data.m_velocity); // 3D data. Done on Channel.
 
 		//m_data.m_sound->set3DConeSettings(100.0f, 260.0f, 0.1f);
-		m_data.m_sound->set3DMinMaxDistance(SOUND_DEFAULT_MIN_DISTANCE, SOUND_DEFAULT_MAX_DISTANCE);
+		SetRadius(m_data.m_radius);
 	}
 	m_data.m_channel->setPan(m_data.m_pan); // Pan. Done on Channel.
 	m_data.m_channel->setPitch(m_data.m_pitch); // Pitch. Done on Channel.
@@ -369,4 +369,10 @@ void SoundChannel::SetPosition(FMOD_VECTOR position)
 	FMOD_VECTOR vel = { 0, 0, 0 };
 
 	m_data.m_channel->set3DAttributes(&m_data.m_position, &vel);
+}
+
+void SoundChannel::SetRadius(float r)
+{
+	m_data.m_radius = r;
+	m_data.m_sound->set3DMinMaxDistance(SOUND_DEFAULT_MIN_DISTANCE, m_data.m_radius);
 }

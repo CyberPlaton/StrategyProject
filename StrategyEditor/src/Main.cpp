@@ -149,6 +149,11 @@ bool GameEditor::LoadEditorGraphicalData()
 	m_editorDecalDatabase.try_emplace("FilledRect", decal);
 	m_editorSpriteDatabase.push_back(sprite);
 
+	sprite = new olc::Sprite("assets/Editor/FilledCircle.png");
+	decal = new olc::Decal(sprite);
+	m_editorDecalDatabase.try_emplace("FilledCircle", decal);
+	m_editorSpriteDatabase.push_back(sprite);
+
 
 	sprite = new olc::Sprite("assets/Editor/media_player_ui_button_play.png");
 	decal = new olc::Decal(sprite);
@@ -566,11 +571,9 @@ void GameEditor::RenderMainFrame()
 						{
 							auto sound = e->Get< ComponentSound >("Sound");
 							auto color = olc::Pixel(ConvertColorToPixel(ImVec4(sound->r, sound->g, sound->b, sound->a)));
-							float xpos = e->m_positionx - sound->w;
-							float ypos = e->m_positiony - sound->h;
-							float w = sound->w * 2 + 1;
-							float h = sound->h * 2 + 1;
-							tv.DrawDecal({xpos, ypos}, m_editorDecalDatabase["FilledRect"], { w, h }, color);
+							float xpos = e->m_positionx - sound->m_radius;
+							float ypos = e->m_positiony - sound->m_radius;
+							tv.DrawDecal({xpos, ypos}, m_editorDecalDatabase["FilledCircle"], { sound->m_radius + 1, sound->m_radius + 1 }, color);
 						}
 					}
 				}
@@ -947,7 +950,7 @@ void GameEditor::HandleInput()
 	{
 		if (GetMouse(0).bReleased)
 		{
-			auto sound_source = CreateMapobjectAudioSource(mousex, mousey, 2.0f, 2.0f, g_sSoundSource);
+			auto sound_source = CreateMapobjectAudioSource(mousex, mousey, 1.0f, g_sSoundSource);
 			g_bAddingSoundSource = false;
 			g_sSoundSource = "none";
 
@@ -1129,10 +1132,11 @@ std::string GameEditor::CreateMapobjectName()
 {
 	return "Mapobject_" + std::to_string(m_mapobjectCount++);
 }
-Entity* GameEditor::CreateMapobjectAudioSource(uint64_t x, uint64_t y, uint64_t w, uint64_t h, const std::string& soundname)
+Entity* GameEditor::CreateMapobjectAudioSource(uint64_t x, uint64_t y, float radius, const std::string& soundname)
 {
 	// Ensure Boundaries.
-	if (x < 0 ||
+	if (radius < 0.0f ||
+		x < 0 ||
 		y < 0 ||
 		x > MAX_MAPSIZE_X - 1 ||
 		y > MAX_MAPSIZE_Y - 1) return nullptr;
@@ -1159,7 +1163,7 @@ Entity* GameEditor::CreateMapobjectAudioSource(uint64_t x, uint64_t y, uint64_t 
 	entity->Get< ComponentSprite >("Sprite")->m_width = DEFAULT_DECAL_SIZE_X;
 	entity->Get< ComponentSprite >("Sprite")->m_height = DEFAULT_DECAL_SIZE_Y;
 	
-	auto sound_component = new ComponentSound(w, h, soundname);
+	auto sound_component = new ComponentSound(radius, soundname);
 	olc::Pixel color = GetRandomColor(150);
 	sound_component->r = color.r;
 	sound_component->g = color.g;
@@ -1871,20 +1875,18 @@ void GameEditor::DisplayCollisionBoxColorPicker(Entity* e)
 
 void GameEditor::DisplayDimensionChanger(Entity* e)
 {
-	auto sound = e->Get< ComponentSound >("Sound");
+	auto sound_component = e->Get< ComponentSound >("Sound");
 
-	int w, h;
-	w = sound->w;
-	h = sound->h;
+	float r = sound_component->m_radius;
+	
+	ImGui::SliderFloat("Radius", &r, 0.1f, MAX_MAPSIZE_X, "%.4f", ImGuiSliderFlags_Logarithmic | ImGuiSliderFlags_AlwaysClamp);
+	HelpMarkerWithoutQuestion("Set the radius max distance of the sound source");
 
-	ImGui::SliderInt("Width", &w, 1, MAX_MAPSIZE_X, "%d", ImGuiSliderFlags_Logarithmic);
-	HelpMarkerWithoutQuestion("Set the collision box width");
-	ImGui::SliderInt("Height", &h, 1, MAX_MAPSIZE_Y, "%d", ImGuiSliderFlags_Logarithmic);
-	HelpMarkerWithoutQuestion("Set the collision box height");
+	sound_component->m_radius = r;
 
-
-	sound->w = w;
-	sound->h = h;
+	// Update radius data in FMOD.
+	auto sound = SoundSystem::get()->GetSound(sound_component->m_soundSourceName);
+	sound->SetRadius(r);
 }
 
 
@@ -2322,8 +2324,7 @@ void GameEditor::ExportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* e
 	auto sound_component = entity->Get< ComponentSound >("Sound");
 	auto sound_xml = xml->InsertNewChildElement("Sound");
 
-	sound_xml->SetAttribute("w", sound_component->w);
-	sound_xml->SetAttribute("h", sound_component->h);
+	sound_xml->SetAttribute("radius", sound_component->m_radius);
 	sound_xml->SetAttribute("r", sound_component->r);
 	sound_xml->SetAttribute("g", sound_component->g);
 	sound_xml->SetAttribute("b", sound_component->b);
@@ -2527,8 +2528,7 @@ Entity* GameEditor::ImportEntity(tinyxml2::XMLElement* xml, const std::string& l
 
 void GameEditor::ImportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* entity)
 {
-	auto w = xml->IntAttribute("w", 1);
-	auto h = xml->IntAttribute("h", 1);
+	auto radius = xml->FloatAttribute("radius", 1.0f);
 	auto r = xml->FloatAttribute("r", 1.0f);
 	auto g = xml->FloatAttribute("g", 1.0f);
 	auto b = xml->FloatAttribute("b", 1.0f);
@@ -2539,7 +2539,7 @@ void GameEditor::ImportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* e
 	auto sound_source_name = xml->Attribute("soundSourceName");
 
 
-	entity->Add(new ComponentSound(w, h, r, g, b, a, sound_name, sound_source_name, group), "Sound");
+	entity->Add(new ComponentSound(radius, r, g, b, a, sound_name, sound_source_name, group), "Sound");
 	entity->m_name = sound_entity_name;
 	
 	g_InGameSoundSourcesMap.try_emplace(entity->m_name, entity);
@@ -2562,6 +2562,7 @@ void GameEditor::ImportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* e
 	auto sound_2d = false;
 	FMOD_VECTOR position = { entity->m_positionx, entity->m_positiony, z };
 
+	// TODO: set radius explicit.
 	if (SoundSystem::get()->CreateSoundOnChannel(path, name, channel_group, looped, is2d, position, volume, pitch, pan, g_bSoundChannelPlayingOnLoad))
 	{
 		LOG_DBG_INFO("[{:.4f}][ImportEntityComponentSound] Created Sound Source: \"{}\" (\"{}\") with Sound \"{}\"", APP_RUN_TIME, entity->m_name, sound_source_name, sound_name);

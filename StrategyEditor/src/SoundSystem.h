@@ -45,6 +45,9 @@ struct SoundChannel
 
 	struct Data
 	{
+		/// @brief The Sound Source max distance. Used in FMOD::Sound::set3DMinMaxDistance().
+		float m_radius;
+
 		/// @brief A linear volume level. 0.0 = silent, 1.0 = full volume. Default = 1.0. Negative volumes and amplification (> 1.0) are supported.
 		float m_volume;
 
@@ -122,6 +125,9 @@ struct SoundChannel
 
 	void SetPosition(FMOD_VECTOR position);
 	FMOD_VECTOR GetPosition() { return m_data.m_position; }
+
+	float GetRadius() { return m_data.m_radius; }
+	void SetRadius(float r);
 
 	bool GetIsPlayed();
 

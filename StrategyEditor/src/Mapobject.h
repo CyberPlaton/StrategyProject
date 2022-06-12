@@ -81,24 +81,24 @@ struct ComponentUnit : public Component
 
 struct ComponentSound : public Component
 {
-	ComponentSound(uint64_t w, uint64_t h, const std::string& sound_name) : Component("Sound"), w(w), h(h)
+	ComponentSound(float radius, const std::string& sound_name) : Component("Sound"), m_radius(radius)
 	{
 		m_soundName = sound_name;
 	}
-	ComponentSound(uint64_t w, uint64_t h, float r, float g, float b, float a, const std::string& sound_name) : Component("Sound"), w(w), h(h), r(r), g(g), b(b), a(a)
+	ComponentSound(float radius, float r, float g, float b, float a, const std::string& sound_name) : Component("Sound"), m_radius(radius), r(r), g(g), b(b), a(a)
 	{
 		m_soundName = sound_name;
 		m_soundChannelGroup = "Master";
 	}
-	ComponentSound(uint64_t w, uint64_t h, float r, float g, float b, float a, const std::string& sound_name, const std::string& sound_source_name, const std::string& channel_group) : Component("Sound"), w(w), h(h), r(r), g(g), b(b), a(a)
+	ComponentSound(float radius, float r, float g, float b, float a, const std::string& sound_name, const std::string& sound_source_name, const std::string& channel_group) : Component("Sound"), m_radius(radius), r(r), g(g), b(b), a(a)
 	{
 		m_soundName = sound_name;
 		m_soundSourceName = sound_source_name;
 		m_soundChannelGroup = channel_group;
 	}
 
-
-	uint64_t w, h;
+	/// @brief The Sound Source max distance. Used in FMOD::Sound::set3DMinMaxDistance().
+	float m_radius;
 
 	/// @brief Name of the Sound File without extensions. E.g. atmosphere_1 or cicada_2. Non unique.
 	std::string m_soundName;
