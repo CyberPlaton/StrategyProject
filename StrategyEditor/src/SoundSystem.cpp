@@ -18,7 +18,7 @@ bool SoundSystem::Initialize()
 	auto result = FMOD::System_Create(&m_system);
 	if (result != FMOD_OK) return false;
 
-	result = m_system->init(SOUND_DEFAULT_CHANNEL_COUNT, FMOD_3D_LINEARROLLOFF | FMOD_INIT_NORMAL | FMOD_LOWMEM, 0);
+	result = m_system->init(SOUND_DEFAULT_CHANNEL_COUNT, FMOD_3D_LINEARSQUAREROLLOFF | FMOD_INIT_NORMAL | FMOD_LOWMEM, 0);
 	if (result != FMOD_OK) return false;
 
 	m_channelGroupVec.resize(1024);
@@ -72,6 +72,10 @@ void SoundSystem::Terminate()
 void SoundSystem::Update()
 {
 	auto system = SoundSystem::get()->System();
+
+	// Update sound sources being heard based on listener position.
+	UpdateHearableSoundSources();
+
 
 	// Update listener position and velocity.
 	FMOD_VECTOR up = { 0.0f, 1.0f, 0.0f };
@@ -201,7 +205,35 @@ bool SoundSystem::CreateSoundOnChannel(const std::string& filepath, const std::s
 	return false;
 }
 
-bool SoundSystem::CreateSoundOnChannel(const std::string& filepath, const std::string& sound_name, const std::string& channel_group_name, bool loop, bool is2d, FMOD_VECTOR position, float vol, float pitch, float pan, bool start_playing_directly)
+
+void SoundSystem::UpdateHearableSoundSources()
+{
+	float camerax = m_listenerX, cameray = m_listenerY;
+	float dist = 0.0f;
+	float radius = 0.0f;
+	for (auto& ss : m_soundChannelVec)
+	{
+		dist = DistanceBetweenPoints(camerax, cameray, ss->GetPosition().x, ss->GetPosition().y);
+		radius = ss->GetRadius();
+
+		if (dist <= radius)
+		{
+			ss->Play();
+		}
+		else
+		{
+			ss->Stop();
+		}
+	}
+}
+
+
+float SoundSystem::DistanceBetweenPoints(float ux, float uy, float vx, float vy)
+{
+	return std::sqrt((vx - ux) * (vx - ux) + (vy - uy) * (vy - uy));
+}
+
+bool SoundSystem::CreateSoundOnChannel(const std::string& filepath, const std::string& sound_name, const std::string& channel_group_name, bool loop, bool is2d, FMOD_VECTOR position, float vol, float pitch, float pan, float radius, bool start_playing_directly)
 {
 	if (CreateSoundOnChannel(filepath, sound_name, channel_group_name, is2d, position))
 	{
@@ -222,6 +254,9 @@ bool SoundSystem::CreateSoundOnChannel(const std::string& filepath, const std::s
 
 		// Pan
 		s->SetPan(pan);
+
+		// Radius
+		s->SetRadius(radius);
 
 		if (start_playing_directly) s->Play();
 

@@ -272,6 +272,8 @@ void GameEditor::LoadSoundChannelNode(tinyxml2::XMLElement* xml_node, Tree* tree
 	}
 }
 
+
+
 void GameEditor::RenderMainMenu()
 {
 	if (ImGui::BeginMainMenuBar())
@@ -2572,8 +2574,8 @@ void GameEditor::ImportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* e
 	auto sound_2d = false;
 	FMOD_VECTOR position = { entity->m_positionx, entity->m_positiony, z };
 
-	// TODO: set radius explicit.
-	if (SoundSystem::get()->CreateSoundOnChannel(path, name, channel_group, looped, is2d, position, volume, pitch, pan, g_bSoundChannelPlayingOnLoad))
+	
+	if (SoundSystem::get()->CreateSoundOnChannel(path, name, channel_group, looped, is2d, position, volume, pitch, pan, radius, g_bSoundChannelPlayingOnLoad))
 	{
 		LOG_DBG_INFO("[{:.4f}][ImportEntityComponentSound] Created Sound Source: \"{}\" (\"{}\") with Sound \"{}\"", APP_RUN_TIME, entity->m_name, sound_source_name, sound_name);
 		LOG_FILE_INFO("[{:.4f}][ImportEntityComponentSound] Created Sound Source \"{}\"( \"{}\") with Sound \"{}\"", APP_RUN_TIME, entity->m_name, sound_source_name, sound_name);

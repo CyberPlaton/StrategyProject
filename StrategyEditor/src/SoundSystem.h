@@ -29,10 +29,10 @@ void CONCAT_STRING(Set, name)(returntype value) \
 	member = value; \
 } \
 
-#define SOUND_DEFAULT_DISTANCE_FACTOR 1.0f // 1 Meter Unit.
+#define SOUND_DEFAULT_DISTANCE_FACTOR 1.0f // 1.0f = Meter Unit.
 #define SOUND_DEFAULT_ROLLOFF_FACTOR 0.0f  // Use FMOD_3D_LINEARSQUAREROLLOFF instead.
 #define SOUND_DEFAULT_CHANNEL_COUNT 256
-#define SOUND_DEFAULT_MIN_DISTANCE 1.0f
+#define SOUND_DEFAULT_MIN_DISTANCE 2.0f
 #define SOUND_DEFAULT_MAX_DISTANCE 10000.0f
 
 
@@ -164,7 +164,7 @@ public:
 	void ReleaseAllChannelGroups();
 	void ReleaseChannelGroup(FMOD::ChannelGroup* group);
 
-	bool CreateSoundOnChannel(const std::string& filepath, const std::string& sound_name, const std::string& channel_group_name, bool loop, bool is2d, FMOD_VECTOR position, float vol, float pitch, float pan, bool start_playing_directly);
+	bool CreateSoundOnChannel(const std::string& filepath, const std::string& sound_name, const std::string& channel_group_name, bool loop, bool is2d, FMOD_VECTOR position, float vol, float pitch, float pan, float radius, bool start_playing_directly);
 	bool CreateSoundOnChannel(const std::string& filepath, const std::string& name, const std::string& channel_group_name, bool sound_2d = false, FMOD_VECTOR position = {0.0f, 0.0f, 0.0f});
 
 
@@ -200,6 +200,9 @@ private:
 	uint64_t m_nextHashValue = 0;
 	std::map< std::string, uint64_t > m_hashValueMap;
 	uint64_t GetHashValue(const std::string& name);
+
+	float DistanceBetweenPoints(float ux, float uy, float vx, float vy);
+	void UpdateHearableSoundSources();
 };
 
 #endif

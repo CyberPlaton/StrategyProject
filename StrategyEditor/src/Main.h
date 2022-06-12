@@ -523,7 +523,6 @@ private:
 	void RemoveTerritoryFromCity(Entity* e, int slotx, int sloty);
 	void RemoveBuildingSlotFromCity(Entity* e, int slotx, int sloty);
 
-
 	// Note: Layer 0 is by Default the first created.
 	// Layers are drawn from 0 to n.
 	void CreateRenderingLayer(std::string layer_name, int order);
@@ -540,7 +539,6 @@ private:
 	std::multimap< int, std::string, std::greater<int> > SortDescending(std::map< std::string, int >& map);
 	std::map< int, std::string > SortAscending(std::map< std::string, int >& map);
 	
-
 	// UTIL SERIALIZATION/DESERIALIZATION
 	bool ExportMapData(const std::string& filepath);
 	bool ImportMapData(const std::string& filepath);
