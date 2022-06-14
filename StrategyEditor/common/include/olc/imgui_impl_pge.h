@@ -317,16 +317,23 @@ namespace olc
 
 		}
 
-		olc::rcode PGE_ImGUI::ImGui_ImplPGE_Init() {
+		olc::rcode PGE_ImGUI::ImGui_ImplPGE_Init() 
+		{
 			ImGui::CreateContext();
 
+			ImGuiIO& io = ImGui::GetIO();
+			
+			// Allow Docking.
+			io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+			io.ConfigDockingWithShift = true;
+
+			
 #ifdef OLC_GFX_OPENGL33
 			GLenum err = glewInit();
 			ImGui_ImplOpenGL3_Init();
 #else
 			ImGui_ImplOpenGL2_Init();
 #endif
-			ImGuiIO& io = ImGui::GetIO();
 
 			io.BackendPlatformName = "imgui_impl_pge";
 
@@ -508,6 +515,7 @@ namespace olc
 		void PGE_ImGUI::ImGui_ImplPGE_Render(void) {
 			//This finishes the Dear ImGui and renders it to the screen
 			ImGui::Render();
+
 #ifdef OLC_GFX_OPENGL33
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 #else
