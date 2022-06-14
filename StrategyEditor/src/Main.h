@@ -1,4 +1,33 @@
 /*
+* Milestones:
+*			 Version 0.1.x & 0.2.x complete: (Bootstrapping)
+*				 o Basic map creation, import and export.
+*				 o Editor setup.
+* 
+*			 Version 0.3.x complete: (Audio Editor)
+*				 o Defining audio properties intended for FMOD inside the map data.
+*				 o Live editing and checking of audio in the map (the feel and mood, different settings etc)
+* 
+*			 Version 0.4.x complete: (Unit Editor)
+*				 - Prerequisites: Add Animated Sprites to OLC.
+*				 o Create and define a Unit-"Scene" for a unit type.
+*				 o Define out of which elements the scene consists.
+*				 o Define the positions and other properties of those elements.
+*				 o Place those Unit-"Scene"-Entities as units into the map and preview them in real time.
+*					 (These units are the units which can be recruited by a player and commanded by him.
+*					  Thus we create here generally units which we can save and export as an independent unit
+*					  not bound by any specific map)
+* 
+*			 Version 0.5.x complete: (AI Editor)
+*				 o Creation and editing of different Navigation Meshes ready to be imported by the engine.
+*				 o Creation and editing of "Script"-Entities (they will not be executed inside the editor),
+*					written and LUA and loaded into the client.
+*					(think this through for security, having a LUA file in clients reach sounds not secure,
+*					however adding script entities to the map is awesome)
+* 
+*					
+* 
+* 
 * Change Log:
 * 03.04.2022 - Version 0.1 complete:
 *			 o Rendering Decal Database loaded from JSON in Gameengine format.
@@ -50,6 +79,10 @@
 *		as soon as the Audio Engine with FMOD is completed.
 *		After this the "Editor" can be extended based on FMOD to utilize 
 *		".bank" files, FMOD events, triggers etc.
+* 
+* 
+* 
+* 
 */
 
 // OLC INLCUDE
