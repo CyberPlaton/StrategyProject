@@ -50,7 +50,7 @@ namespace dbms
 
 		
 		/*
-		* GAME/GAMEOBJECT MANAGEMENT
+		* GAME MANAGEMENT
 		*/
 		// Create a new Game entry.
 		// Always succeeds.
@@ -60,15 +60,29 @@ namespace dbms
 		// Always succeeds.
 		static void DeleteGame(std::string gamename);
 
-		// Retrieve all Gameobjects in a Game from Database.
-		// Objects are pushed into given vector.
-		// Returns true on success.
+
+
+		/*
+		* GAME RELEVANT FUNCTIONALITY
+		*/
+		/// @brief Retrieve all networked Gameobjects in a game currently stored in database.
+		/// @param gamename Name of the game.
+		/// @param backv Vector in which to put the Gameobjects.
+		/// @return True on success.
 		static bool GetNetGameobjects(const std::string& gamename, std::vector< net::SGameobject* >& backv);
 
-		// Add a Gameobject to Game storage in Database
-		// If it already exists, override it.
-		// Returns true on success.
+		/// @brief Try adding a networked Gameobject to Database.
+		/// @param object Object to be added.
+		/// @param gamename Name of the game.
+		/// @return True on success.
 		static bool TryEmplaceNetGameobject(net::SGameobject* object, const std::string& gamename);
+
+		/// @brief Retrieve the requested effect and fill given effect object.
+		/// @param effect_name Name of the effect to be retrieved.
+		/// @param effect Object which to fill with data.
+		/// @return True on success.
+		static bool GetStatusEffect(const std::string& effect_name, net::SStatusEffect* effect);
+
 
 
 		
@@ -91,6 +105,10 @@ namespace dbms
 		// Returns true on success.
 		static bool DeleteUser(size_t id);
 
+
+		/*
+		* UTIL
+		*/
 		static void BackupUserNumber();
 		static const bool Initialized() { return m_initialized; }
 

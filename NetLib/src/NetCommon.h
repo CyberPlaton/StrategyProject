@@ -29,6 +29,7 @@ namespace net
 	struct SUnitGameobject;
 	struct SMaptileGameobject;
 	struct SMapobjectGameobject;
+	struct SStatusEffect;
 
 	FORCE_INLINE static uint64_t CreateGameobjectNetworkUUID()
 	{
@@ -420,6 +421,36 @@ RakNet::BitStream stream(packet->data, packet->length, false) \
 		RakNet::RakString m_maptileObjectType;
 		RakNet::RakString m_maptileObjectBiome;
 	};
+
+
+	/// @brief Status effects define changes in properties for an Entity: Unit, Building etc.
+	// E.g. a poison effect damages a unit each turn.
+	struct SStatusEffect
+	{
+		/// @brief 
+		RakNet::RakString m_effectName;
+		
+		/// @brief Whether this Effect does 'Damage' or 'Heal' etc.
+		RakNet::RakString m_effectType;
+		
+		/// @brief How much to apply. Whether healing or damaging or other effect type.
+		uint64_t m_effectValue;
+
+		/// @brief To what kind of entity the effect is applicable. E.g. 'Unit' or 'Townhall'.
+		RakNet::RakString m_effectApplicableTo;
+
+		/// @brief Either 'Turn' (meaning is applied for a number of turns) or ... .
+		RakNet::RakString m_effectTimerType;
+
+		/// @brief For how many turns the effect persists.
+		uint64_t m_effectTimerValue;
+
+		/// @brief Description of the Effect. Intended for user.
+		RakNet::RakString m_effectDesc;
+	};
+
+
+
 
 
 

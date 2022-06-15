@@ -103,8 +103,6 @@ void NetCommMngr::UpdateNetGameobject(net::SGameobject* object)
 {
 	printf("NetCommMngr::UpdateNetGameobject\n");
 
-	// Release the object from memory after sending over network.
-
 	/*
 	olc::net::message< net::Message > out;
 	out.header.id = net::Message::NET_MSG_GAMEOBJECT_UPDATE;
