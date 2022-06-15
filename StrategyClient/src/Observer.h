@@ -51,10 +51,11 @@ namespace cherrysoda
 				if (net_event->m_object->m_networkId == m_netIdToListenTo)
 				{
 					printf("\tUpdate net gameobject\n");
-
-					// Object to update is our responsibility.
+					
 					// Transmit data over network.
 					NetCommMngr::get()->UpdateNetGameobject(net_event->m_object);
+
+					// Release the object from memory after sending over network.
 				}
 			}
 		}

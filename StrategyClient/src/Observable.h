@@ -57,6 +57,20 @@ namespace cherrysoda
 
 			// Get Data from Entity.
 			auto unit = GetEntity()->Get< Unit >();
+			// Populate SNetGameobject structure.
+			auto net_object = new net::SGameobject();
+
+			// ...
+
+
+
+
+			// Create an event holding the entity data.
+			auto evnt = new NetGameobjectUpdateEvent(net_object);
+
+			// Fire the event.
+			GetEventSystem()->Add(evnt);
+
 
 			/*
 			// Put Data into net::NetGameobject and emit
