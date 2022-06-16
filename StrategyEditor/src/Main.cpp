@@ -7,6 +7,9 @@ static bool g_bEntityEditorOpen = false;
 
 static bool g_bUnitEditorOpen = false;
 static Prefab* g_pCurrentEditedPrefab = nullptr;
+static std::string g_sSelectedPrefabElement = "none";
+static bool g_bAddingChildToPrefabTreeNode = false;
+static PrefabTree* g_pAddingChildToPrefabTreeNode = nullptr;
 
 static bool g_bBackgroundAudioEditorOpen = false;
 static bool g_bAudioSoundChannelEditorOpen = false;
@@ -80,6 +83,8 @@ void GameEditor::RenderGUI()
 	if (g_bUnitEditorOpen)
 	{
 		DisplayUnitEditor();
+		// Adding Child to Prefab Tree
+		if (g_bAddingChildToPrefabTreeNode) DisplayAddingPrefabElementToPrefabTree(g_pCurrentEditedPrefab, g_pAddingChildToPrefabTreeNode);
 	}
 	else
 	{
@@ -1481,19 +1486,22 @@ void GameEditor::DisplaySoundChannelEditor()
 void GameEditor::DisplayChannelGroupControl(Tree* tree)
 {
 	ImGui::Separator();
-	
-	std::string slider_name = tree->m_name + " Vol.";
-	ImGui::Text(tree->m_name.c_str());
-	ImGui::SameLine();
-	auto group = m_ChannelGroupMap[tree->m_name];
-	float vol = group->m_volume;
-	ImGui::SliderFloat(slider_name.c_str(), &vol, 0.0f, 1.0f, "%.4f", 1.0f);
-	group->m_volume = vol;
-	UpdateChannelGroupVolumeForFMOD(tree->m_name, vol);
-
-	for (auto& kid : tree->m_children)
+	if(tree)
 	{
-		DisplayChannelGroupControlNode(kid);
+		std::string slider_name = tree->m_name + " Vol.";
+		ImGui::Text(tree->m_name.c_str());
+		ImGui::SameLine();
+		
+		auto group = m_ChannelGroupMap[tree->m_name];
+		float vol = group->m_volume;
+		ImGui::SliderFloat(slider_name.c_str(), &vol, 0.0f, 1.0f, "%.4f", 1.0f);
+		group->m_volume = vol;
+		UpdateChannelGroupVolumeForFMOD(tree->m_name, vol);
+
+		for (auto& kid : tree->m_children)
+		{
+			DisplayChannelGroupControlNode(kid);
+		}
 	}
 }
 
@@ -2794,8 +2802,6 @@ bool GameEditor::CreateAndSubmitSoundChannelTree(Tree* tree)
 
 void GameEditor::DisplayUnitEditor()
 {
-	
-
 	std::string name = "Unit Editor";
 	auto scene_edit_window_width = 300.f;
 	auto prefab_preview_window_width = 700.0f;
@@ -2805,7 +2811,7 @@ void GameEditor::DisplayUnitEditor()
 	ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
 
 	ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Appearing);
-	ImGui::SetNextWindowSize(ImVec2(scene_edit_window_width + prefab_preview_window_width + prefab_element_window_width, main_window_height), ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize(ImVec2(scene_edit_window_width + prefab_preview_window_width + prefab_element_window_width + 35.0f, main_window_height), ImGuiCond_Appearing);
 	ImGui::Begin(name.c_str(), &g_bUnitEditorOpen, flags);
 	
 	// Main Menu.
@@ -2826,7 +2832,7 @@ void GameEditor::DisplayUnitEditor()
 		DisplayUnitEditorPrefabPreview(g_pCurrentEditedPrefab, cursor_position_x + scene_edit_window_width + 0.1f, cursor_position_y, prefab_preview_window_width, main_window_height - 1.0f);
 
 		// Rightmost window for editing the current selected prefab element.
-		DisplayUnitEditorSelectedPrefabElementEditor(cursor_position_x + scene_edit_window_width + 0.2f + prefab_preview_window_width, cursor_position_y, prefab_element_window_width, main_window_height - 1.0f);
+		DisplayUnitEditorSelectedPrefabElementEditor(g_sSelectedPrefabElement, cursor_position_x + scene_edit_window_width + 0.2f + prefab_preview_window_width, cursor_position_y, prefab_element_window_width, main_window_height - 1.0f);
 	}
 
 	// EDITING WINDOW
@@ -2840,12 +2846,18 @@ void GameEditor::DisplayUnitEditor()
 
 void GameEditor::DisplaySceneEditingTree(Prefab* prefab)
 {
-	auto prefab_tree = prefab->m_sceneTree;
+	PrefabTree* prefab_tree = &prefab->m_sceneTree;
 
 	// Begin with root
-	bool tree_open = ImGui::TreeNode(prefab_tree.m_name.c_str());
+	bool tree_open = ImGui::TreeNode(prefab_tree->m_name.c_str());
+
+	if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
+	{
+		g_sSelectedPrefabElement = prefab_tree->m_name;
+	}
 
 	// Display editing options
+	DisplayAddRemovePrefabElementOptions(prefab_tree);
 
 	// Display kids
 	if(tree_open)
@@ -2861,6 +2873,14 @@ void GameEditor::DisplaySceneEditingTree(Prefab* prefab)
 void GameEditor::DisplaySceneEditingNode(PrefabTree* node)
 {
 	bool tree_open = ImGui::TreeNode(node->m_name.c_str());
+
+	if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
+	{
+		g_sSelectedPrefabElement = node->m_name;
+	}
+
+	// Show Add/Remove options.
+	DisplayAddRemovePrefabElementOptions(node);
 
 	if(tree_open)
 	{
@@ -2891,11 +2911,18 @@ void GameEditor::DisplayUnitEditorMainMenu()
 	ImGui::Separator();
 }
 
-void GameEditor::DisplayUnitEditorSelectedPrefabElementEditor(float x, float y, float w, float h)
+void GameEditor::DisplayUnitEditorSelectedPrefabElementEditor(const std::string& name, float x, float y, float w, float h)
 {
 	ImGui::SetCursorPosX(x);
 	ImGui::SetCursorPosY(y);
 	ImGui::BeginChild("SceneElement Editor", ImVec2(w, h), true);
+
+	if(g_sSelectedPrefabElement.compare("none") != 0)
+	{
+		ImGui::Text(g_sSelectedPrefabElement.c_str());
+		ImGui::Separator();
+	}
+
 	ImGui::EndChild();
 }
 
@@ -2905,6 +2932,88 @@ void GameEditor::DisplayUnitEditorPrefabPreview(Prefab* prefab, float x, float y
 	ImGui::SetCursorPosY(y);
 	ImGui::BeginChild("Prefab Preview", ImVec2(w, h), true);
 	ImGui::EndChild();
+}
+
+void GameEditor::DisplayAddRemovePrefabElementOptions(PrefabTree* node)
+{
+	ImGuiID add_button_id = g_iImguiImageButtonID + strlen(node->m_name.c_str()) + (intptr_t)"Add";
+	ImGuiID remove_button_id = g_iImguiImageButtonID + strlen(node->m_name.c_str()) + (intptr_t)"Remove";
+
+	std::string node_name = node->m_name;
+	ImGui::SameLine();
+
+	ImGui::PushID(add_button_id);
+	if (ImGui::SmallButton("+"))
+	{
+		g_bAddingChildToPrefabTreeNode = true;
+		g_pAddingChildToPrefabTreeNode = node;
+	}
+	ImGui::PopID();
+
+	HelpMarkerWithoutQuestion(std::string("Add a new child node to \"" + node_name + "\"").c_str());
+	ImGui::SameLine();
+
+	ImGui::PushID(remove_button_id);
+	if (ImGui::SmallButton("-"))
+	{
+		RemovePrefabElementFromPrefabTree(g_pCurrentEditedPrefab, node);
+	}
+	ImGui::PopID();
+
+	HelpMarkerWithoutQuestion(std::string("Remove \"" + node_name + "\" and all of its children nodes").c_str());
+
+}
+
+void GameEditor::DisplayAddingPrefabElementToPrefabTree(Prefab* prefab, PrefabTree* node)
+{
+	if (prefab && node)
+	{
+		ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
+		ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
+
+		std::string title = "Adding child to \"" + node->m_name + "\"";
+		ImGui::Begin(title.c_str(), &g_bAddingChildToPrefabTreeNode);
+
+		static char new_prefab_element_child_name[64] = "";
+		ImGui::InputText("|", new_prefab_element_child_name, 64);
+		ImGui::SameLine();
+		if (ImGui::SmallButton("OK"))
+		{
+			// Check for sanity.
+			std::string name = std::string(new_prefab_element_child_name);
+
+			bool length = name.length() > 0;
+			bool duplicate = prefab->m_sceneTree.Has(name);
+
+			if (length && !duplicate)
+			{
+				node->Node(name);
+			}
+
+
+			if (!length)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayAddingPrefabElementToPrefabTree] Error adding Prefab Node \"{}\" to \"{}\": Name has 0 length!", APP_RUN_TIME, name, node->m_name);
+				LOG_FILE_ERROR("[{:.4f}][DisplayAddingPrefabElementToPrefabTree]  Error adding Prefab Node \"{}\" to \"{}\": Name has 0 length!", APP_RUN_TIME, name, node->m_name);
+			}
+			if (duplicate)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayAddingPrefabElementToPrefabTree] Error adding Prefab Node \"{}\" to \"{}\": Child name is duplicate!", APP_RUN_TIME, name, node->m_name);
+				LOG_FILE_ERROR("[{:.4f}][DisplayAddingPrefabElementToPrefabTree]  Error adding Prefab Node \"{}\" to \"{}\": Child name is duplicate!", APP_RUN_TIME, name, node->m_name);
+			}
+
+			memset(&new_prefab_element_child_name, 0, sizeof(new_prefab_element_child_name));
+			g_bAddingChildToPrefabTreeNode = false;
+			g_pAddingChildToPrefabTreeNode = nullptr;
+		}
+
+		ImGui::End();
+	}
+}
+
+void GameEditor::RemovePrefabElementFromPrefabTree(Prefab* prefab, PrefabTree* node)
+{
+	prefab->m_sceneTree.RemoveNode(node->m_name);
 }
 
 bool GameEditor::CreateAndSubmitSoundChannelNode(Tree* tree, const std::string& parent)

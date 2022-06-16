@@ -191,7 +191,7 @@ struct Tree
 		return *node;
 	}
 
-	Tree* Node(const std::string& name)
+	virtual Tree* Node(const std::string& name)
 	{
 		if (m_name.compare(name) == 0)
 		{
@@ -310,9 +310,11 @@ struct ChannelGroupData
 /// @brief Tree extended with relevant data to be used for prefab creation.
 struct PrefabTree : public Tree
 {
-	PrefabTree(const std::string& name = "Root") : Tree(name) {};
+	PrefabTree(const std::string& name = "Root") : Tree(name), m_xpos(0), m_ypos(0), m_debugDecal("none")
+	{
+	};
 
-	Tree* Node(const std::string& name);
+	Tree* Node(const std::string& name) override final;
 
 
 
@@ -603,10 +605,13 @@ private:
 	void DisplaySceneEditingTree(Prefab* prefab);
 	void DisplaySceneEditingNode(PrefabTree* node);
 	void DisplayUnitEditorMainMenu();
-	void DisplayUnitEditorSelectedPrefabElementEditor(float x, float y, float w, float h);
+	void DisplayUnitEditorSelectedPrefabElementEditor(const std::string& name, float x, float y, float w, float h);
 	void DisplayUnitEditorPrefabPreview(Prefab* prefab, float x, float y, float w, float h);
+	void DisplayAddRemovePrefabElementOptions(PrefabTree* node);
+	void DisplayAddingPrefabElementToPrefabTree(Prefab* prefab, PrefabTree* node);
+	void RemovePrefabElementFromPrefabTree(Prefab* prefab, PrefabTree* node);
 
-	// GAMEWORLD
+	
 	void RenderMainFrame();
 	void UpdateEntities();
 
