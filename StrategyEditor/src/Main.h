@@ -106,6 +106,7 @@
 #define EDITOR_PATCH_VERSION 2
 
 
+
 #define STRING(text) #text
 #define EDITOR_TITLE_STRING StrategyEditor v
 #ifdef DEBUG
@@ -294,17 +295,71 @@ private:
 			}
 		}
 
-		// We couldnt find any node with provided name.
+		// We could not find any node with provided name.
 		return false;
 	}
 };
 
-
-
+/// @brief Information about a particular FMOD::ChannelGroup
 struct ChannelGroupData
 {
 	float m_volume;
 };
+
+
+/// @brief Tree extended with relevant data to be used for prefab creation.
+struct PrefabTree : public Tree
+{
+	PrefabTree(const std::string& name = "Root") : Tree(name) {};
+
+	Tree* Node(const std::string& name);
+
+
+
+	/// @brief Whether this element is a "Status Element" or "Banner" etc.
+	std::string m_elementType;
+
+	/// @brief Current visual representation solely for debugging/visualization purposes.
+	std::string m_debugDecal;
+
+	/// @brief Relative position of this node.
+	float m_xpos, m_ypos;
+};
+
+/// @brief 
+struct Prefab
+{
+	Prefab(const std::string& name) : m_prefabName(name)
+	{
+		// Create Root.
+		m_sceneTree["Root"];
+	}
+
+	std::string GetElementType(const std::string& name);
+	void SetElementType(const std::string& name, const std::string& element_type);
+
+	std::string GetDecal(const std::string& name);
+	void SetDecal(const std::string& name, const std::string& decal);
+
+	float GetPositionX(const std::string& name);
+	float GetPositionY(const std::string& name);
+
+	void SetPositionX(const std::string& name, float v);
+	void SetPositionY(const std::string& name, float v);
+
+
+
+	PrefabTree m_sceneTree;
+	std::string m_prefabName;
+};
+
+
+
+
+
+
+
+
 
 
 
@@ -542,6 +597,12 @@ private:
 
 	bool CreateAndSubmitSoundChannelNode(Tree* tree, const std::string& parent);
 	bool CreateAndSubmitSoundChannelTree(Tree* tree);
+
+	// GUI UNIT EDITOR UTIL
+	void DisplayUnitEditor();
+	void DisplaySceneEditingTree(Prefab* prefab);
+	void DisplaySceneEditingNode(PrefabTree* node);
+
 
 	// GAMEWORLD
 	void RenderMainFrame();

@@ -743,10 +743,27 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 		.Add(new  SelectableUnit(1))
 		.Add(new  Sprite("assets/UnitAtlas.json"))
 		.Add(new  CollidableComponent(true, false, true))
-		.Add(new  Unit("Peasant", 1, 20, 1, 1, 5, 0, 0, 0, 0))
+		.Add(new  Unit("HighElf_Swordman_Malachite", 1, 20, 1, 1, 5, 0, 0, 0, 0))
 		.End();
-	entity->Get< Sprite >()->AddLoop("Idle", "Human_Peasant");
-	entity->Get< Sprite >()->Play("Idle");
+	
+	// Create custom Animation adding them "Frame by Frame".
+	entity->Get< Sprite >()->Add("first", "HighElf_Swordman_Malachite", 0.16f,
+									 cherrysoda::Chooser<StringID>("second", 1.0f));
+
+	entity->Get< Sprite >()->Add("second", "HighElf_Swordman_Copper", 0.16f,
+									 cherrysoda::Chooser<StringID>("third", 1.0f));
+
+	entity->Get< Sprite >()->Add("third", "HighElf_Swordman_Adamantine", 0.16f,
+									 cherrysoda::Chooser<StringID>("fourth", 1.0f));
+
+	auto chooser = cherrysoda::Chooser<StringID>("first", 0.5f);
+	chooser.Add("second", 0.5f);
+
+	entity->Get< Sprite >()->Add("fourth", "HighElf_Swordman_Adamantine", 0.16f,
+								chooser);
+
+
+	entity->Get< Sprite >()->Play("first");
 	entity->Position2D(Math::Vec2(256.0f, -256.0f));
 	entity->Get< Sprite >()->CenterOrigin();
 	entity->Depth(0);

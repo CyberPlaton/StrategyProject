@@ -5,6 +5,9 @@ static bool g_bDecalDatabaseOpen = true;
 static bool g_bEntityDatabaseOpen = true;
 static bool g_bEntityEditorOpen = false;
 
+static bool g_bUnitEditorOpen = false;
+static Prefab* g_pCurrentEditedPrefab = nullptr;
+
 static bool g_bBackgroundAudioEditorOpen = false;
 static bool g_bAudioSoundChannelEditorOpen = false;
 static Tree* g_SoundChannelTree = new Tree("Master");
@@ -88,6 +91,8 @@ void GameEditor::RenderGUI()
 	if (g_bInGameSoundSourcesMapDirty) UpdateInGameSoundSourcesMap(g_InGameSoundSourcesMap);
 	// Adding Child to Sound Channel Tree
 	if (g_bAddingChildToSoundChannel) DisplayAddingChildNodeToSoundChannel(g_pAddingChildToSoundChannelNode);
+	// Unit Editor
+	if (g_bUnitEditorOpen) DisplayUnitEditor();
 }
 bool GameEditor::LoadEditorGraphicalData()
 {
@@ -396,6 +401,17 @@ void GameEditor::RenderMainMenu()
 			ImGui::SameLine();
 			ImGui::Checkbox("Open", &g_bRenderSoundSourceDimensions);
 
+			ImGui::EndMenu();
+		}
+
+
+		if (ImGui::BeginMenu("Unit"))
+		{
+			if (ImGui::MenuItem("Unit Editor"))
+			{
+				ToggleMenuItem(g_bUnitEditorOpen);
+			}
+		
 			ImGui::EndMenu();
 		}
 
@@ -2769,6 +2785,86 @@ bool GameEditor::CreateAndSubmitSoundChannelTree(Tree* tree)
 	return result;
 }
 
+void GameEditor::DisplayUnitEditor()
+{
+	std::string name = "Unit Editor";
+	ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize(ImVec2(1200, 720), ImGuiCond_Appearing);
+	ImGui::Begin(name.c_str(), &g_bUnitEditorOpen);
+
+	// MENU
+	if (ImGui::SmallButton("New..."))
+	{
+		g_pCurrentEditedPrefab = new Prefab("Testing_Prefab");
+	}
+	ImGui::SameLine();
+	if (ImGui::SmallButton("Save As..."))
+	{
+
+	}
+	ImGui::SameLine();
+	if (ImGui::SmallButton("Load..."))
+	{
+
+	}
+	ImGui::Separator();
+
+
+	ImGui::BeginChild("Left");
+	// PREFAB SCENE EDITING TREE
+	if (g_pCurrentEditedPrefab)
+	{
+		DisplaySceneEditingTree(g_pCurrentEditedPrefab);
+	}
+	ImGui::EndChild();
+
+
+
+
+
+	// EDITING WINDOW
+	auto wnd_size = ImGui::GetWindowSize();
+	auto position = ImVec2( (wnd_size.x - 64) * 0.5f, (wnd_size.y - 64) * 0.5f );
+	ImGui::SetCursorPos(position);
+	ImGui::Image((ImTextureID)m_unitDecalDatabase["figure_180x180_framed_standard_77_goblins"]->id, ImVec2(128, 128));
+
+	ImGui::End();
+}
+
+void GameEditor::DisplaySceneEditingTree(Prefab* prefab)
+{
+	auto prefab_tree = prefab->m_sceneTree;
+
+	// Begin with root
+	bool tree_open = ImGui::TreeNode(prefab_tree.m_name.c_str());
+
+	// Display editing options
+
+	// Display kids
+	if(tree_open)
+	{
+		for (auto& kid : prefab->m_sceneTree.m_children)
+		{
+			DisplaySceneEditingNode(reinterpret_cast<PrefabTree*>(kid));
+		}
+		ImGui::TreePop();
+	}
+}
+
+void GameEditor::DisplaySceneEditingNode(PrefabTree* node)
+{
+	bool tree_open = ImGui::TreeNode(node->m_name.c_str());
+
+	if(tree_open)
+	{
+		for (auto& kid : node->m_children)
+		{
+			DisplaySceneEditingNode(reinterpret_cast<PrefabTree*>(kid));
+		}
+		ImGui::TreePop();
+	}
+}
+
 bool GameEditor::CreateAndSubmitSoundChannelNode(Tree* tree, const std::string& parent)
 {
 	auto system = SoundSystem::get();
@@ -2790,4 +2886,69 @@ int main()
 		editor.Start();
 
 	return 0;
+}
+
+std::string Prefab::GetElementType(const std::string& name)
+{
+	auto node = m_sceneTree.Node(name);
+	return reinterpret_cast<PrefabTree*>(node)->m_elementType;
+}
+
+void Prefab::SetElementType(const std::string& name, const std::string& element_type)
+{
+	auto node = m_sceneTree.Node(name);
+	reinterpret_cast<PrefabTree*>(node)->m_elementType = element_type;
+}
+
+std::string Prefab::GetDecal(const std::string& name)
+{
+	auto node = m_sceneTree.Node(name);
+	return reinterpret_cast<PrefabTree*>(node)->m_debugDecal;
+}
+
+void Prefab::SetDecal(const std::string& name, const std::string& decal)
+{
+	auto node = m_sceneTree.Node(name);
+	reinterpret_cast<PrefabTree*>(node)->m_debugDecal = decal;
+}
+
+float Prefab::GetPositionX(const std::string& name)
+{
+	auto node = m_sceneTree.Node(name);
+	return reinterpret_cast<PrefabTree*>(node)->m_xpos;
+}
+
+float Prefab::GetPositionY(const std::string& name)
+{
+	auto node = m_sceneTree.Node(name);
+	return reinterpret_cast<PrefabTree*>(node)->m_ypos;
+}
+
+void Prefab::SetPositionX(const std::string& name, float v)
+{
+	auto node = m_sceneTree.Node(name);
+	reinterpret_cast<PrefabTree*>(node)->m_xpos = v;
+}
+
+void Prefab::SetPositionY(const std::string& name, float v)
+{
+	auto node = m_sceneTree.Node(name);
+	reinterpret_cast<PrefabTree*>(node)->m_ypos = v;
+}
+
+Tree* PrefabTree::Node(const std::string& name)
+{
+	if (m_name.compare(name) == 0)
+	{
+		return this;
+	}
+
+	for (auto& kid : m_children)
+	{
+		if (kid->m_name.compare(name) == 0) return kid;
+	}
+
+	auto node = new PrefabTree(name);
+	m_children.push_back(node);
+	return node;
 }
