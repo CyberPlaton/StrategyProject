@@ -602,7 +602,9 @@ private:
 	void DisplayUnitEditor();
 	void DisplaySceneEditingTree(Prefab* prefab);
 	void DisplaySceneEditingNode(PrefabTree* node);
-
+	void DisplayUnitEditorMainMenu();
+	void DisplayUnitEditorSelectedPrefabElementEditor(float x, float y, float w, float h);
+	void DisplayUnitEditorPrefabPreview(Prefab* prefab, float x, float y, float w, float h);
 
 	// GAMEWORLD
 	void RenderMainFrame();

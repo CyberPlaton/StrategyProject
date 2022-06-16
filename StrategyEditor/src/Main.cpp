@@ -75,24 +75,31 @@ void GameEditor::RenderGUI()
 	// Imgui Demo
 	if (g_bImguiDemoOpen) ImGui::ShowDemoWindow(&g_bImguiDemoOpen);
 
-	// Decal Database
-	if(g_bDecalDatabaseOpen) RenderDecalDatabase();
-	// Entity Database
-	if (g_bEntityDatabaseOpen) RenderEntityDatabase();
-	// Rendering Layers
-	if(g_bRenderingLayersOpen) RenderLayerUI();
-	// Ambient Sound Editor
-	if (g_bBackgroundAudioEditorOpen) DisplayBackgroundAudioEditor();
-	// SoundChannel Editor
-	if (g_bAudioSoundChannelEditorOpen) DisplaySoundChannelEditor();
-	// Sound source editing
-	if (g_bEditingSoundSource) DisplaySoundSourceEditor(g_pEditedSoundSource);
-	// Sound Source Map Update
-	if (g_bInGameSoundSourcesMapDirty) UpdateInGameSoundSourcesMap(g_InGameSoundSourcesMap);
-	// Adding Child to Sound Channel Tree
-	if (g_bAddingChildToSoundChannel) DisplayAddingChildNodeToSoundChannel(g_pAddingChildToSoundChannelNode);
+
 	// Unit Editor
-	if (g_bUnitEditorOpen) DisplayUnitEditor();
+	if (g_bUnitEditorOpen)
+	{
+		DisplayUnitEditor();
+	}
+	else
+	{
+		// Decal Database
+		if (g_bDecalDatabaseOpen) RenderDecalDatabase();
+		// Entity Database
+		if (g_bEntityDatabaseOpen) RenderEntityDatabase();
+		// Rendering Layers
+		if (g_bRenderingLayersOpen) RenderLayerUI();
+		// Ambient Sound Editor
+		if (g_bBackgroundAudioEditorOpen) DisplayBackgroundAudioEditor();
+		// SoundChannel Editor
+		if (g_bAudioSoundChannelEditorOpen) DisplaySoundChannelEditor();
+		// Sound source editing
+		if (g_bEditingSoundSource) DisplaySoundSourceEditor(g_pEditedSoundSource);
+		// Sound Source Map Update
+		if (g_bInGameSoundSourcesMapDirty) UpdateInGameSoundSourcesMap(g_InGameSoundSourcesMap);
+		// Adding Child to Sound Channel Tree
+		if (g_bAddingChildToSoundChannel) DisplayAddingChildNodeToSoundChannel(g_pAddingChildToSoundChannelNode);
+	}
 }
 bool GameEditor::LoadEditorGraphicalData()
 {
@@ -2787,46 +2794,46 @@ bool GameEditor::CreateAndSubmitSoundChannelTree(Tree* tree)
 
 void GameEditor::DisplayUnitEditor()
 {
+	
+
 	std::string name = "Unit Editor";
+	auto scene_edit_window_width = 300.f;
+	auto prefab_preview_window_width = 700.0f;
+	auto prefab_element_window_width = 300.f;
+	auto main_window_height = ScreenHeight() - 50.0f;
+
+	ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+
 	ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Appearing);
-	ImGui::SetNextWindowSize(ImVec2(1200, 720), ImGuiCond_Appearing);
-	ImGui::Begin(name.c_str(), &g_bUnitEditorOpen);
+	ImGui::SetNextWindowSize(ImVec2(scene_edit_window_width + prefab_preview_window_width + prefab_element_window_width, main_window_height), ImGuiCond_Appearing);
+	ImGui::Begin(name.c_str(), &g_bUnitEditorOpen, flags);
+	
+	// Main Menu.
+	DisplayUnitEditorMainMenu();
 
-	// MENU
-	if (ImGui::SmallButton("New..."))
-	{
-		g_pCurrentEditedPrefab = new Prefab("Testing_Prefab");
-	}
-	ImGui::SameLine();
-	if (ImGui::SmallButton("Save As..."))
-	{
+	// Required for window positioning.
+	auto cursor_position_y = ImGui::GetCursorPosY();
+	auto cursor_position_x = ImGui::GetCursorPosX();
 
-	}
-	ImGui::SameLine();
-	if (ImGui::SmallButton("Load..."))
-	{
-
-	}
-	ImGui::Separator();
-
-
-	ImGui::BeginChild("Left");
-	// PREFAB SCENE EDITING TREE
+	// Leftmost window for editing the scene tree.
 	if (g_pCurrentEditedPrefab)
 	{
+		ImGui::BeginChild("SceneTree Editor", ImVec2(scene_edit_window_width, main_window_height - 1.0f), true);
 		DisplaySceneEditingTree(g_pCurrentEditedPrefab);
+		ImGui::EndChild();
+
+		// Center window for previewing the edited prefab.
+		DisplayUnitEditorPrefabPreview(g_pCurrentEditedPrefab, cursor_position_x + scene_edit_window_width + 0.1f, cursor_position_y, prefab_preview_window_width, main_window_height - 1.0f);
+
+		// Rightmost window for editing the current selected prefab element.
+		DisplayUnitEditorSelectedPrefabElementEditor(cursor_position_x + scene_edit_window_width + 0.2f + prefab_preview_window_width, cursor_position_y, prefab_element_window_width, main_window_height - 1.0f);
 	}
-	ImGui::EndChild();
-
-
-
-
 
 	// EDITING WINDOW
-	auto wnd_size = ImGui::GetWindowSize();
-	auto position = ImVec2( (wnd_size.x - 64) * 0.5f, (wnd_size.y - 64) * 0.5f );
-	ImGui::SetCursorPos(position);
-	ImGui::Image((ImTextureID)m_unitDecalDatabase["figure_180x180_framed_standard_77_goblins"]->id, ImVec2(128, 128));
+	//auto wnd_size = ImGui::GetWindowSize();
+	//auto position = ImVec2( (wnd_size.x - 64) * 0.5f, (wnd_size.y - 64) * 0.5f );
+	//ImGui::SetCursorPos(position);
+	//ImGui::Image((ImTextureID)m_unitDecalDatabase["figure_180x180_framed_standard_77_goblins"]->id, ImVec2(128, 128));
 
 	ImGui::End();
 }
@@ -2863,6 +2870,41 @@ void GameEditor::DisplaySceneEditingNode(PrefabTree* node)
 		}
 		ImGui::TreePop();
 	}
+}
+
+void GameEditor::DisplayUnitEditorMainMenu()
+{
+	if (ImGui::SmallButton("New..."))
+	{
+		g_pCurrentEditedPrefab = new Prefab("Testing_Prefab");
+	}
+	ImGui::SameLine();
+	if (ImGui::SmallButton("Save As..."))
+	{
+
+	}
+	ImGui::SameLine();
+	if (ImGui::SmallButton("Load..."))
+	{
+
+	}
+	ImGui::Separator();
+}
+
+void GameEditor::DisplayUnitEditorSelectedPrefabElementEditor(float x, float y, float w, float h)
+{
+	ImGui::SetCursorPosX(x);
+	ImGui::SetCursorPosY(y);
+	ImGui::BeginChild("SceneElement Editor", ImVec2(w, h), true);
+	ImGui::EndChild();
+}
+
+void GameEditor::DisplayUnitEditorPrefabPreview(Prefab* prefab, float x, float y, float w, float h)
+{
+	ImGui::SetCursorPosX(x);
+	ImGui::SetCursorPosY(y);
+	ImGui::BeginChild("Prefab Preview", ImVec2(w, h), true);
+	ImGui::EndChild();
 }
 
 bool GameEditor::CreateAndSubmitSoundChannelNode(Tree* tree, const std::string& parent)
