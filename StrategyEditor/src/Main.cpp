@@ -10,6 +10,8 @@ static Prefab* g_pCurrentEditedPrefab = nullptr;
 static std::string g_sSelectedPrefabElement = "none";
 static bool g_bAddingChildToPrefabTreeNode = false;
 static PrefabTree* g_pAddingChildToPrefabTreeNode = nullptr;
+static bool g_bAddingComponentToPrefabElement = false;
+static PrefabTree* g_pAddingComponentToPrefabElement = nullptr;
 
 static bool g_bBackgroundAudioEditorOpen = false;
 static bool g_bAudioSoundChannelEditorOpen = false;
@@ -85,6 +87,8 @@ void GameEditor::RenderGUI()
 		DisplayUnitEditor();
 		// Adding Child to Prefab Tree
 		if (g_bAddingChildToPrefabTreeNode) DisplayAddingPrefabElementToPrefabTree(g_pCurrentEditedPrefab, g_pAddingChildToPrefabTreeNode);
+		// Adding component to Prefab element
+		if (g_bAddingComponentToPrefabElement) DisplayAddingComponentToPrefabElementEntity(g_pAddingComponentToPrefabElement);
 	}
 	else
 	{
@@ -2928,34 +2932,45 @@ void GameEditor::DisplayUnitEditorSelectedPrefabElementEditor(Prefab* prefab, fl
 		ImGui::Text(g_sSelectedPrefabElement.c_str());
 		ImGui::Separator();
 
+		// Get the PrefabTree Element.
+		auto prefab_tree = reinterpret_cast<PrefabTree*>(prefab->m_sceneTree.GetNode(g_sSelectedPrefabElement));		
+		auto components = prefab_tree->m_elementComponents;
+
+
 		// Show All components and allow to add new ones.
-		if(ImGui::SmallButton("+"))
+		if (ImGui::SmallButton("+"))
 		{
+			g_bAddingComponentToPrefabElement = true;
+			g_pAddingComponentToPrefabElement = prefab_tree;
 		}
 		HelpMarkerWithoutQuestion(std::string("Add component to \"" + g_sSelectedPrefabElement + "\"").c_str());
 		ImGui::Separator();
 
 
-
-		auto prefab_tree = reinterpret_cast<PrefabTree*>(prefab->m_sceneTree.GetNode(g_sSelectedPrefabElement));		
-		auto components = prefab_tree->m_elementComponents;
+		int index = 0;
 		for(auto& component: components)
 		{
-			if(ImGui::CollapsingHeader(component.c_str()))
+			ImGuiID remove_button_id = ++index + g_iImguiImageButtonID + component.size();
+
+			if(ImGui::CollapsingHeader(component.c_str(), ImGuiTreeNodeFlags_Bullet))
 			{
+				ImGui::PushID(remove_button_id);
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0f, 0.1f, 0.1f, 1.0f));
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
+				if (ImGui::Button("Remove"))
+				{
+
+				}
+				ImGui::PopID();
+				ImGui::PopStyleColor(2);
+				HelpMarkerWithoutQuestion(std::string("Remove \""+ component + "\" from \"" + g_sSelectedPrefabElement + "\"").c_str());
+
 				if(component.compare("Position") == 0)
 				{
 					DisplayPrefabPositionComponent(prefab_tree->m_positionData);
 				}
 			}
 		}
-		
-		// Allow Adding of components.
-
-		// Display All components.
-
-		// Allow to remove each of the components.
-
 	}
 
 	ImGui::EndChild();
@@ -2970,6 +2985,57 @@ void GameEditor::DisplayPrefabPositionComponent(PrefabTree::Position* component)
 	ImGui::SliderFloat("Y", &y, -256.0f, 256.0f, "%.4f", 1.0f);
 	component->m_xpos = x;
 	component->m_ypos = y;
+}
+
+void GameEditor::AddComponentToPrefabElement(PrefabTree* element, const std::string& component_name)
+{
+	bool component_added = false;
+	bool duplicate = false;
+	if (component_name.compare("StaticSprite") == 0)
+	{
+		if(element->m_staticSpriteData == nullptr)
+		{
+			element->m_staticSpriteData = new PrefabTree::StaticSprite();
+			component_added = true;
+		}
+		else
+		{
+			duplicate = true;
+		}
+	}
+	else if (component_name.compare("AnimatedSprite") == 0 && element->m_animatedSpritenData == nullptr)
+	{
+		if (element->m_animatedSpritenData == nullptr)
+		{
+			element->m_animatedSpritenData = new PrefabTree::AnimatedSprite();
+			component_added = true;
+		}
+		else
+		{
+			duplicate = true;
+		}
+	}
+	else
+	{
+		LOG_DBG_ERROR("[{:.4f}][AddComponentToPrefabElement] Error adding Component \"{}\" to PrefabElement \"{}\": Component not recognized!", APP_RUN_TIME, component_name, element->m_name);
+		LOG_FILE_ERROR("[{:.4f}][AddComponentToPrefabElement]  Error adding Component \"{}\" to PrefabElement \"{}\": Component not recognized!", APP_RUN_TIME, component_name, element->m_name);
+	}
+
+
+	if(duplicate)
+	{
+		LOG_DBG_ERROR("[{:.4f}][AddComponentToPrefabElement] Error adding Component \"{}\" to PrefabElement \"{}\": Component already added!", APP_RUN_TIME, component_name, element->m_name);
+		LOG_FILE_ERROR("[{:.4f}][AddComponentToPrefabElement]  Error adding Component \"{}\" to PrefabElement \"{}\": Component already added!", APP_RUN_TIME, component_name, element->m_name);
+	}
+	if(component_added)
+	{
+		element->m_elementComponents.push_back(component_name);
+	}
+}
+
+void GameEditor::RemoveComponentFromPrefabElement(PrefabTree* element, const std::string& component_name)
+{
+
 }
 
 void GameEditor::DisplayUnitEditorPrefabPreview(Prefab* prefab, float x, float y, float w, float h)
@@ -3062,6 +3128,51 @@ void GameEditor::RemovePrefabElementFromPrefabTree(Prefab* prefab, PrefabTree* n
 	prefab->m_sceneTree.RemoveNode(node->m_name);
 }
 
+void GameEditor::DisplayAddingComponentToPrefabElementEntity(PrefabTree* element)
+{
+	static bool sprite = false;
+	static bool anim_sprite = false;
+
+	std::string name = "Adding Components to \"" + element->m_name +"\"";
+	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
+	ImGui::Begin(name.c_str(), &g_bAddingComponentToPrefabElement, ImGuiWindowFlags_NoCollapse);
+
+
+	// Batch adding.. Show all available components.
+	ImGui::Checkbox("Static Sprite", &sprite);
+	ImGui::SameLine();
+	ImGui::Checkbox("Animated Sprite", &anim_sprite);
+
+	if (ImGui::SmallButton("Cancel"))
+	{
+		anim_sprite = false;
+		sprite = false;
+		g_bAddingComponentToPrefabElement = false;
+		element = nullptr;
+	}
+	ImGui::SameLine();
+	if(ImGui::SmallButton("OK"))
+	{
+		// Batch add everything.
+		if(sprite)
+		{
+			AddComponentToPrefabElement(element, "StaticSprite");
+		}
+		if (anim_sprite)
+		{
+			AddComponentToPrefabElement(element, "AnimatedSprite");
+		}
+
+		// End Batch adding.
+		anim_sprite = false;
+		sprite = false;
+		g_bAddingComponentToPrefabElement = false;
+	}
+
+	ImGui::End();
+}
+
 bool GameEditor::CreateAndSubmitSoundChannelNode(Tree* tree, const std::string& parent)
 {
 	auto system = SoundSystem::get();
@@ -3144,10 +3255,6 @@ Tree* PrefabTree::Node(const std::string& name)
 	{
 		if (kid->m_name.compare(name) == 0) return kid;
 	}
-
-
-	LOG_DBG_WARN("[{:.4f}][PrefabTree::Node] Create node \"{}\" in \"{}\"!", APP_RUN_TIME, name, this->m_name);
-
 
 	auto node = new PrefabTree(name);
 	m_children.push_back(node);

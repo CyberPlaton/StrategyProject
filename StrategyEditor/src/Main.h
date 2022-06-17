@@ -228,9 +228,6 @@ struct Tree
 			if (kid->m_name.compare(name) == 0) return kid;
 		}
 
-
-		LOG_DBG_WARN("[{:.4f}][PrefabTree::Node] Create node \"{}\" in \"{}\"!", APP_RUN_TIME, name, this->m_name);
-
 		auto node = new Tree(name);
 		m_children.push_back(node);
 		return node;
@@ -661,9 +658,13 @@ private:
 	void DisplayAddRemovePrefabElementOptions(PrefabTree* node);
 	void DisplayAddingPrefabElementToPrefabTree(Prefab* prefab, PrefabTree* node);
 	void RemovePrefabElementFromPrefabTree(Prefab* prefab, PrefabTree* node);
-	void DisplayAddingComponentToPrefabElementEntity();
+	void DisplayAddingComponentToPrefabElementEntity(PrefabTree* element);
 	// GUI UNIT ELEMENT EDITOR COMPONENT DISPLAY UTIL
 	void DisplayPrefabPositionComponent(PrefabTree::Position* component);
+
+	// GUI UNIT EDITOR HELPER
+	void AddComponentToPrefabElement(PrefabTree* element, const std::string& component_name);
+	void RemoveComponentFromPrefabElement(PrefabTree* element, const std::string& component_name);
 
 	
 	void RenderMainFrame();
