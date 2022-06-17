@@ -191,6 +191,31 @@ struct Tree
 		return *node;
 	}
 
+	Tree* GetNode(const std::string& name)
+	{
+		// Search in self.
+		if (m_name.compare(name) == 0)
+		{
+			return this;
+		}
+
+		// Search in first grade children.
+		for (auto& kid : m_children)
+		{
+			if (kid->m_name.compare(name) == 0) return kid;
+		}
+
+		// Search in deeper children.
+		for(auto& kid: m_children)
+		{
+			auto tree = kid->GetNode(name);
+			if (tree) return tree;
+		}
+
+		// Could not find it.
+		return nullptr;
+	}
+
 	virtual Tree* Node(const std::string& name)
 	{
 		if (m_name.compare(name) == 0)
@@ -202,6 +227,9 @@ struct Tree
 		{
 			if (kid->m_name.compare(name) == 0) return kid;
 		}
+
+
+		LOG_DBG_WARN("[{:.4f}][PrefabTree::Node] Create node \"{}\" in \"{}\"!", APP_RUN_TIME, name, this->m_name);
 
 		auto node = new Tree(name);
 		m_children.push_back(node);
@@ -310,13 +338,35 @@ struct ChannelGroupData
 /// @brief Tree extended with relevant data to be used for prefab creation.
 struct PrefabTree : public Tree
 {
-	PrefabTree(const std::string& name = "Root") : Tree(name), m_xpos(0), m_ypos(0), m_debugDecal("none")
+	struct Position
 	{
+		/// @brief Relative position of this node.
+		float m_xpos, m_ypos;
+	};
+	struct StaticSprite
+	{
+
+	};
+	struct AnimatedSprite
+	{
+
+	};
+
+
+
+	PrefabTree(const std::string& name = "Root") : Tree(name), m_debugDecal("none")
+	{
+		m_positionData = new Position();
+		m_positionData->m_xpos = 0;
+		m_positionData->m_ypos = 0;
+		m_elementComponents.push_back("Position");
 	};
 
 	Tree* Node(const std::string& name) override final;
 
 
+	/// @brief Just as an entity we have a number of components.
+	std::vector< std::string > m_elementComponents;
 
 	/// @brief Whether this element is a "Status Element" or "Banner" etc.
 	std::string m_elementType;
@@ -324,8 +374,11 @@ struct PrefabTree : public Tree
 	/// @brief Current visual representation solely for debugging/visualization purposes.
 	std::string m_debugDecal;
 
-	/// @brief Relative position of this node.
-	float m_xpos, m_ypos;
+	/// @brief Collection of possible components for the PrefabElement.
+	Position* m_positionData = nullptr;
+	StaticSprite* m_staticSpriteData = nullptr;
+	AnimatedSprite* m_animatedSpritenData = nullptr;
+
 };
 
 /// @brief 
@@ -348,8 +401,6 @@ struct Prefab
 
 	void SetPositionX(const std::string& name, float v);
 	void SetPositionY(const std::string& name, float v);
-
-
 
 	PrefabTree m_sceneTree;
 	std::string m_prefabName;
@@ -605,11 +656,14 @@ private:
 	void DisplaySceneEditingTree(Prefab* prefab);
 	void DisplaySceneEditingNode(PrefabTree* node);
 	void DisplayUnitEditorMainMenu();
-	void DisplayUnitEditorSelectedPrefabElementEditor(const std::string& name, float x, float y, float w, float h);
+	void DisplayUnitEditorSelectedPrefabElementEditor(Prefab* prefab, float x, float y, float w, float h);
 	void DisplayUnitEditorPrefabPreview(Prefab* prefab, float x, float y, float w, float h);
 	void DisplayAddRemovePrefabElementOptions(PrefabTree* node);
 	void DisplayAddingPrefabElementToPrefabTree(Prefab* prefab, PrefabTree* node);
 	void RemovePrefabElementFromPrefabTree(Prefab* prefab, PrefabTree* node);
+	void DisplayAddingComponentToPrefabElementEntity();
+	// GUI UNIT ELEMENT EDITOR COMPONENT DISPLAY UTIL
+	void DisplayPrefabPositionComponent(PrefabTree::Position* component);
 
 	
 	void RenderMainFrame();

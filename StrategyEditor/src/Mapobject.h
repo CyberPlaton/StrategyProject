@@ -117,22 +117,21 @@ struct Entity
 	Entity() { m_name = "none"; }
 
 	void Update();
+
 	bool Dirty() { return m_dirty; }
 	void Dirty(bool v) { m_dirty = v; }
+	
 	Component* Get(std::string component);
 	template < typename T >
 	T* Get(std::string component)
 	{
 		return reinterpret_cast<T*>(Get(component));
 	}
+	
 	bool Has(std::string component);
+	
 	void Add(Component* c, std::string name) { m_components.emplace(name, c); }
 	void Add(Entity* e) { m_children.push_back(e); }
-
-
-
-
-
 
 	bool m_dirty;
 

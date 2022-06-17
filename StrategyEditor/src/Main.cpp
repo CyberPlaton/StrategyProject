@@ -533,166 +533,170 @@ void GameEditor::ToggleMenuItem(bool& item)
 {
 	item = (item == true) ? false : true;
 }
+
 void GameEditor::RenderMainFrame()
 {
-	// Draw Grid
-	olc::vi2d topleft = tv.GetTopLeftTile().max({ 0, 0 });
-	olc::vi2d bottomright = tv.GetBottomRightTile().min({ MAX_MAPSIZE_X, MAX_MAPSIZE_Y });
-	olc::vi2d tile;
-
-	olc::vi2d upLeft = m_visiblePointLeftUp;
-	olc::vi2d downRight = m_visiblePointDownRight;
-
-	
-	struct MapCell
+	if(!g_bUnitEditorOpen)
 	{
-		olc::Pixel color;
-		olc::vf2d position;
+		// Draw Grid
+		olc::vi2d topleft = tv.GetTopLeftTile().max({ 0, 0 });
+		olc::vi2d bottomright = tv.GetBottomRightTile().min({ MAX_MAPSIZE_X, MAX_MAPSIZE_Y });
+		olc::vi2d tile;
 
-	};
-	std::vector< MapCell > territory_cells;
-	std::vector< MapCell > building_slot_cells;
-	
-	// Draw Mapobjects in reverse order to have accurate layering.
-	for (auto& layer : m_sortedLayersAscending)
-	{
-		if (LayerVisible(layer.first) == false) continue;
+		olc::vi2d upLeft = m_visiblePointLeftUp;
+		olc::vi2d downRight = m_visiblePointDownRight;
 
-		// We draw Layers from 0 in ascending order.
-		const auto& layer_name = layer.second;
-		const auto& layer_world = m_gameworld[layer_name];
-		for (int x = upLeft.x; x < downRight.x; x++)
+
+		struct MapCell
 		{
-			for (int y = upLeft.y; y < downRight.y; y++)
+			olc::Pixel color;
+			olc::vf2d position;
+
+		};
+		std::vector< MapCell > territory_cells;
+		std::vector< MapCell > building_slot_cells;
+
+		// Draw Mapobjects in reverse order to have accurate layering.
+		for (auto& layer : m_sortedLayersAscending)
+		{
+			if (LayerVisible(layer.first) == false) continue;
+
+			// We draw Layers from 0 in ascending order.
+			const auto& layer_name = layer.second;
+			const auto& layer_world = m_gameworld[layer_name];
+			for (int x = upLeft.x; x < downRight.x; x++)
 			{
-				if (layer_world[x][y])
+				for (int y = upLeft.y; y < downRight.y; y++)
 				{
-					RenderMapobject(layer_world[x][y]);
-
-					olc::Pixel slot_color = { 0, 255, 0, 255 };
-					olc::Pixel terr_color = { 230, 0, 0, 100 };
-
-					auto e = layer_world[x][y];
-
-					// Render City/Fort specific data.
-					if (e->Has("Townhall") || e->Has("Fort"))
+					if (layer_world[x][y])
 					{
-						bool townhall = true;
-						auto component = e->Get< ComponentCity >("Townhall");
-						if (!component)
+						RenderMapobject(layer_world[x][y]);
+
+						olc::Pixel slot_color = { 0, 255, 0, 255 };
+						olc::Pixel terr_color = { 230, 0, 0, 100 };
+
+						auto e = layer_world[x][y];
+
+						// Render City/Fort specific data.
+						if (e->Has("Townhall") || e->Has("Fort"))
 						{
-							component = e->Get< ComponentCity >("Fort");
-							townhall = false;
+							bool townhall = true;
+							auto component = e->Get< ComponentCity >("Townhall");
+							if (!component)
+							{
+								component = e->Get< ComponentCity >("Fort");
+								townhall = false;
+							}
+
+							olc::vf2d rect_size = { 3.0f, 2.0f };
+							if (!townhall) rect_size.x = 2.0f;
+
+							tv.DrawDecal(olc::vf2d(x, y), m_editorDecalDatabase["Rect"], rect_size, olc::RED);
+							tv.DrawStringDecal(olc::vf2d(x + 0.5f, y + 0.5f), component->m_name.c_str(), olc::RED, { 2.0f, 2.0f });
+
+							for (auto& slot : component->m_territory)
+							{
+								MapCell cell;
+								cell.position = olc::vf2d(slot.first, slot.second);
+								cell.color = terr_color;
+								territory_cells.push_back(cell);
+							}
+							for (auto& slot : component->m_buildingSlots)
+							{
+								MapCell cell;
+								cell.position = olc::vf2d(slot.first, slot.second);
+								cell.color = slot_color;
+								building_slot_cells.push_back(cell);
+							}
 						}
 
-						olc::vf2d rect_size = { 3.0f, 2.0f };
-						if (!townhall) rect_size.x = 2.0f;
-
-						tv.DrawDecal(olc::vf2d(x, y), m_editorDecalDatabase["Rect"], rect_size, olc::RED);
-						tv.DrawStringDecal(olc::vf2d(x + 0.5f, y + 0.5f), component->m_name.c_str(), olc::RED, { 2.0f, 2.0f });
-
-						for (auto& slot : component->m_territory)
+						// Render Audio Source specific data.
+						if (g_bRenderSoundSourceDimensions)
 						{
-							MapCell cell;
-							cell.position = olc::vf2d(slot.first, slot.second);
-							cell.color = terr_color;
-							territory_cells.push_back(cell);
-						}
-						for (auto& slot : component->m_buildingSlots)
-						{
-							MapCell cell;
-							cell.position = olc::vf2d(slot.first, slot.second);
-							cell.color = slot_color;
-							building_slot_cells.push_back(cell);
-						}
-					}
-
-					// Render Audio Source specific data.
-					if (g_bRenderSoundSourceDimensions)
-					{
-						if (e->Has("Sound"))
-						{
-							auto sound = e->Get< ComponentSound >("Sound");
-							auto color = olc::Pixel(ConvertColorToPixel(ImVec4(sound->r, sound->g, sound->b, sound->a)));
-							float xpos = e->m_positionx - sound->m_radius;
-							float ypos = e->m_positiony - sound->m_radius;
-							tv.DrawDecal({xpos, ypos}, m_editorDecalDatabase["FilledCircle"], { sound->m_radius + 1, sound->m_radius + 1 }, color);
+							if (e->Has("Sound"))
+							{
+								auto sound = e->Get< ComponentSound >("Sound");
+								auto color = olc::Pixel(ConvertColorToPixel(ImVec4(sound->r, sound->g, sound->b, sound->a)));
+								float xpos = e->m_positionx - sound->m_radius;
+								float ypos = e->m_positiony - sound->m_radius;
+								tv.DrawDecal({ xpos, ypos }, m_editorDecalDatabase["FilledCircle"], { sound->m_radius + 1, sound->m_radius + 1 }, color);
+							}
 						}
 					}
 				}
 			}
 		}
-	}
 
 
-	auto terr_cell_decal = m_editorDecalDatabase["FilledRect"];
-	auto build_cell_decal = m_editorDecalDatabase["Rect"];
-	if (g_bRenderCityTerritory)
-	{
-		// Draw City Territory
-		for (auto& c : territory_cells)
+		auto terr_cell_decal = m_editorDecalDatabase["FilledRect"];
+		auto build_cell_decal = m_editorDecalDatabase["Rect"];
+		if (g_bRenderCityTerritory)
 		{
-			tv.DrawDecal(c.position, terr_cell_decal, olc::vf2d(1.0f, 1.0f), c.color);
-		}
-	}
-	if (g_bRenderCityBuildingSlots)
-	{
-		// Draw City Building Slots
-		for (auto& c : building_slot_cells)
-		{
-			tv.DrawDecal(c.position, build_cell_decal, olc::vf2d(1.0f, 1.0f), c.color);
-		}
-	}
-	if (g_bRenderGrid)
-	{
-		// Draw Grid.
-		olc::Pixel color = { 255, 255, 255, 50 };
-		for (tile.y = topleft.y; tile.y < bottomright.y; tile.y++)
-		{
-			for (tile.x = topleft.x; tile.x < bottomright.x; tile.x++)
+			// Draw City Territory
+			for (auto& c : territory_cells)
 			{
-				tv.DrawLineDecal(tile, tile + olc::vf2d(0.0f, 1.0f), color);
-				tv.DrawLineDecal(tile, tile + olc::vf2d(1.0f, 0.0f), color);
+				tv.DrawDecal(c.position, terr_cell_decal, olc::vf2d(1.0f, 1.0f), c.color);
 			}
 		}
+		if (g_bRenderCityBuildingSlots)
+		{
+			// Draw City Building Slots
+			for (auto& c : building_slot_cells)
+			{
+				tv.DrawDecal(c.position, build_cell_decal, olc::vf2d(1.0f, 1.0f), c.color);
+			}
+		}
+		if (g_bRenderGrid)
+		{
+			// Draw Grid.
+			olc::Pixel color = { 255, 255, 255, 50 };
+			for (tile.y = topleft.y; tile.y < bottomright.y; tile.y++)
+			{
+				for (tile.x = topleft.x; tile.x < bottomright.x; tile.x++)
+				{
+					tv.DrawLineDecal(tile, tile + olc::vf2d(0.0f, 1.0f), color);
+					tv.DrawLineDecal(tile, tile + olc::vf2d(1.0f, 0.0f), color);
+				}
+			}
+		}
+
+
+		olc::vi2d mouse = GetMousePos();
+		olc::vi2d point = tv.ScreenToWorld(mouse);
+
+		// Draw selected Decal.
+		if (g_sSelectedMapobject.compare("none") != 0)
+		{
+			tv.DrawDecal({ (float)point.x, (float)point.y }, m_decalDatabase[g_sSelectedMapobject]);
+		}
+
+		tv.DrawDecal(point, m_editorDecalDatabase["Rect"], { 1.0f, 1.0f }, olc::YELLOW);
+
+
+		// Draw some hint text for editing.
+		if (g_pEditedCity == nullptr && (g_bAddingBuildingSlot || g_bAddingTerritory))
+		{
+			DrawStringDecal({ ScreenWidth() - ScreenWidth() * 0.75f, 50.0f }, "Select Townhall or Fort...", olc::RED, { 2.5f, 2.5f });
+		}
+		if (g_pEditedCity != nullptr && (g_bAddingBuildingSlot || g_bAddingTerritory))
+		{
+			DrawStringDecal({ ScreenWidth() - ScreenWidth() * 0.75f, 50.0f }, "Press ESC to Stop Editing...", olc::RED, { 2.5f, 2.5f });
+		}
+
+		// Draw Camera Position
+		std::string position = std::to_string(m_camerax) + ":" + std::to_string(m_cameray);
+		std::string height = std::to_string(m_cameraHeigth);
+		DrawStringDecal({ 10.0f, 45.0f }, position);
+		DrawStringDecal({ 10.0f, 60.0f }, height);
+
+
+		// Draw Tile Number under Mouse.
+		position = std::to_string(m_tileUnderMouseX) + ":" + std::to_string(m_tileUnderMouseY);
+		tv.DrawStringDecal({ (float)m_tileUnderMouseX + 0.5f, (float)m_tileUnderMouseY + 0.5f }, position, olc::RED, { 2.0f, 2.0f });
+		position = std::to_string(m_camerax) + ":" + std::to_string(m_cameray);
+		// Draw Camera position indicator on the Maptile.
+		tv.DrawStringDecal({ (float)m_camerax + 0.5f, (float)m_cameray + 0.5f }, position, olc::YELLOW, { 2.0f, 2.0f });
 	}
-
-	
-	olc::vi2d mouse = GetMousePos();
-	olc::vi2d point = tv.ScreenToWorld(mouse);
-
-	// Draw selected Decal.
-	if (g_sSelectedMapobject.compare("none") != 0)
-	{
-		tv.DrawDecal({ (float)point.x, (float)point.y }, m_decalDatabase[g_sSelectedMapobject]);
-	}
-
-	tv.DrawDecal(point, m_editorDecalDatabase["Rect"], { 1.0f, 1.0f }, olc::YELLOW);
-
-
-	// Draw some hint text for editing.
-	if (g_pEditedCity == nullptr && ( g_bAddingBuildingSlot || g_bAddingTerritory ))
-	{
-		DrawStringDecal({ ScreenWidth() - ScreenWidth() * 0.75f, 50.0f }, "Select Townhall or Fort...", olc::RED, { 2.5f, 2.5f });
-	}
-	if (g_pEditedCity != nullptr && (g_bAddingBuildingSlot || g_bAddingTerritory))
-	{
-		DrawStringDecal({ ScreenWidth() - ScreenWidth() * 0.75f, 50.0f }, "Press ESC to Stop Editing...", olc::RED, { 2.5f, 2.5f });
-	}
-
-	// Draw Camera Position
-	std::string position = std::to_string(m_camerax) + ":" + std::to_string(m_cameray);
-	std::string height = std::to_string(m_cameraHeigth);
-	DrawStringDecal({10.0f, 45.0f }, position);
-	DrawStringDecal({ 10.0f, 60.0f }, height);
-
-
-	// Draw Tile Number under Mouse.
-	position = std::to_string(m_tileUnderMouseX) + ":" + std::to_string(m_tileUnderMouseY);
-	tv.DrawStringDecal({ (float)m_tileUnderMouseX + 0.5f, (float)m_tileUnderMouseY + 0.5f }, position, olc::RED, {2.0f, 2.0f});
-	position = std::to_string(m_camerax) + ":" + std::to_string(m_cameray);
-	// Draw Camera position indicator on the Maptile.
-	tv.DrawStringDecal({ (float)m_camerax + 0.5f, (float)m_cameray + 0.5f }, position, olc::YELLOW, { 2.0f, 2.0f });
 }
 void GameEditor::RenderMapobject(Entity* object)
 {
@@ -2832,7 +2836,7 @@ void GameEditor::DisplayUnitEditor()
 		DisplayUnitEditorPrefabPreview(g_pCurrentEditedPrefab, cursor_position_x + scene_edit_window_width + 0.1f, cursor_position_y, prefab_preview_window_width, main_window_height - 1.0f);
 
 		// Rightmost window for editing the current selected prefab element.
-		DisplayUnitEditorSelectedPrefabElementEditor(g_sSelectedPrefabElement, cursor_position_x + scene_edit_window_width + 0.2f + prefab_preview_window_width, cursor_position_y, prefab_element_window_width, main_window_height - 1.0f);
+		DisplayUnitEditorSelectedPrefabElementEditor(g_pCurrentEditedPrefab, cursor_position_x + scene_edit_window_width + 0.2f + prefab_preview_window_width, cursor_position_y, prefab_element_window_width, main_window_height - 1.0f);
 	}
 
 	// EDITING WINDOW
@@ -2853,6 +2857,7 @@ void GameEditor::DisplaySceneEditingTree(Prefab* prefab)
 
 	if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
 	{
+		// Select.
 		g_sSelectedPrefabElement = prefab_tree->m_name;
 	}
 
@@ -2876,6 +2881,7 @@ void GameEditor::DisplaySceneEditingNode(PrefabTree* node)
 
 	if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
 	{
+		// Select.
 		g_sSelectedPrefabElement = node->m_name;
 	}
 
@@ -2911,7 +2917,7 @@ void GameEditor::DisplayUnitEditorMainMenu()
 	ImGui::Separator();
 }
 
-void GameEditor::DisplayUnitEditorSelectedPrefabElementEditor(const std::string& name, float x, float y, float w, float h)
+void GameEditor::DisplayUnitEditorSelectedPrefabElementEditor(Prefab* prefab, float x, float y, float w, float h)
 {
 	ImGui::SetCursorPosX(x);
 	ImGui::SetCursorPosY(y);
@@ -2921,9 +2927,49 @@ void GameEditor::DisplayUnitEditorSelectedPrefabElementEditor(const std::string&
 	{
 		ImGui::Text(g_sSelectedPrefabElement.c_str());
 		ImGui::Separator();
+
+		// Show All components and allow to add new ones.
+		if(ImGui::SmallButton("+"))
+		{
+		}
+		HelpMarkerWithoutQuestion(std::string("Add component to \"" + g_sSelectedPrefabElement + "\"").c_str());
+		ImGui::Separator();
+
+
+
+		auto prefab_tree = reinterpret_cast<PrefabTree*>(prefab->m_sceneTree.GetNode(g_sSelectedPrefabElement));		
+		auto components = prefab_tree->m_elementComponents;
+		for(auto& component: components)
+		{
+			if(ImGui::CollapsingHeader(component.c_str()))
+			{
+				if(component.compare("Position") == 0)
+				{
+					DisplayPrefabPositionComponent(prefab_tree->m_positionData);
+				}
+			}
+		}
+		
+		// Allow Adding of components.
+
+		// Display All components.
+
+		// Allow to remove each of the components.
+
 	}
 
 	ImGui::EndChild();
+}
+
+void GameEditor::DisplayPrefabPositionComponent(PrefabTree::Position* component)
+{
+	float x, y;
+	x = component->m_xpos;
+	y = component->m_ypos;
+	ImGui::SliderFloat("X", &x, -256.0f, 256.0f, "%.4f", 1.0f);
+	ImGui::SliderFloat("Y", &y, -256.0f, 256.0f, "%.4f", 1.0f);
+	component->m_xpos = x;
+	component->m_ypos = y;
 }
 
 void GameEditor::DisplayUnitEditorPrefabPreview(Prefab* prefab, float x, float y, float w, float h)
@@ -3066,25 +3112,25 @@ void Prefab::SetDecal(const std::string& name, const std::string& decal)
 float Prefab::GetPositionX(const std::string& name)
 {
 	auto node = m_sceneTree.Node(name);
-	return reinterpret_cast<PrefabTree*>(node)->m_xpos;
+	return reinterpret_cast<PrefabTree*>(node)->m_positionData->m_xpos;
 }
 
 float Prefab::GetPositionY(const std::string& name)
 {
 	auto node = m_sceneTree.Node(name);
-	return reinterpret_cast<PrefabTree*>(node)->m_ypos;
+	return reinterpret_cast<PrefabTree*>(node)->m_positionData->m_ypos;
 }
 
 void Prefab::SetPositionX(const std::string& name, float v)
 {
 	auto node = m_sceneTree.Node(name);
-	reinterpret_cast<PrefabTree*>(node)->m_xpos = v;
+	reinterpret_cast<PrefabTree*>(node)->m_positionData->m_xpos = v;
 }
 
 void Prefab::SetPositionY(const std::string& name, float v)
 {
 	auto node = m_sceneTree.Node(name);
-	reinterpret_cast<PrefabTree*>(node)->m_ypos = v;
+	reinterpret_cast<PrefabTree*>(node)->m_positionData->m_ypos = v;
 }
 
 Tree* PrefabTree::Node(const std::string& name)
@@ -3098,6 +3144,10 @@ Tree* PrefabTree::Node(const std::string& name)
 	{
 		if (kid->m_name.compare(name) == 0) return kid;
 	}
+
+
+	LOG_DBG_WARN("[{:.4f}][PrefabTree::Node] Create node \"{}\" in \"{}\"!", APP_RUN_TIME, name, this->m_name);
+
 
 	auto node = new PrefabTree(name);
 	m_children.push_back(node);
