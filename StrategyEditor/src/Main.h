@@ -263,6 +263,7 @@ struct Tree
 			if (m_children[i]->m_name.compare(name) == 0)
 			{
 				m_children.erase(m_children.begin() + i);
+				LOG_DBG_INFO("[{:.4f}][RemoveNode] Remove First-Grade child node \"{}\" from \"{}\"!", APP_RUN_TIME, name, m_name);
 				return;
 			}
 		}
@@ -296,8 +297,6 @@ private:
 
 	bool RemoveChildFromTree(Tree* node, const std::string& name)
 	{
-		// No need to check whether we are searched.
-
 		// Check for first grade children.
 		for (int i = 0; i < node->m_children.size(); i++)
 		{
@@ -306,6 +305,7 @@ private:
 			if (n->m_name.compare(name) == 0)
 			{
 				node->m_children.erase(node->m_children.begin() + i);
+				LOG_DBG_INFO("[{:.4f}][RemoveChildFromTree] Remove Higher-Grade child node \"{}\" from \"{}\"!", APP_RUN_TIME, name, node->m_name);
 				return true;
 			}
 		}
@@ -321,6 +321,7 @@ private:
 		}
 
 		// We could not find any node with provided name.
+		LOG_DBG_WARN("[{:.4f}][RemoveChildFromTree] Could not remove Higher-Grade child node \"{}\" from \"{}\"!", APP_RUN_TIME, name, node->m_name);
 		return false;
 	}
 };
@@ -338,7 +339,7 @@ struct PrefabTree : public Tree
 	struct Position
 	{
 		/// @brief Relative position of this node.
-		float m_xpos, m_ypos;
+		float m_xpos = 0.0f, m_ypos = 0.0f;
 	};
 	struct StaticSprite
 	{
@@ -376,7 +377,7 @@ struct PrefabTree : public Tree
 	/// @brief Collection of possible components for the PrefabElement.
 	Position* m_positionData = nullptr;
 	StaticSprite* m_staticSpriteData = nullptr;
-	AnimatedSprite* m_animatedSpritenData = nullptr;
+	AnimatedSprite* m_animatedSpriteData = nullptr;
 
 };
 
@@ -657,7 +658,7 @@ private:
 	void DisplayUnitEditorMainMenu();
 	void DisplayUnitEditorSelectedPrefabElementEditor(Prefab* prefab, float x, float y, float w, float h);
 	void DisplayUnitEditorPrefabPreview(Prefab* prefab, float x, float y, float w, float h);
-	void DisplayAddRemovePrefabElementOptions(PrefabTree* node);
+	void DisplayAddRemovePrefabElementOptions(PrefabTree* node, bool root = false);
 	void DisplayAddingPrefabElementToPrefabTree(Prefab* prefab, PrefabTree* node);
 	void RemovePrefabElementFromPrefabTree(Prefab* prefab, PrefabTree* node);
 	void DisplayAddingComponentToPrefabElementEntity(PrefabTree* element);

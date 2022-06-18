@@ -2857,7 +2857,7 @@ void GameEditor::DisplaySceneEditingTree(Prefab* prefab)
 	PrefabTree* prefab_tree = &prefab->m_sceneTree;
 
 	// Begin with root
-	bool tree_open = ImGui::TreeNode(prefab_tree->m_name.c_str());
+	bool tree_open = ImGui::TreeNodeEx(prefab_tree->m_name.c_str(), ImGuiTreeNodeFlags_DefaultOpen);
 
 	if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
 	{
@@ -2866,7 +2866,7 @@ void GameEditor::DisplaySceneEditingTree(Prefab* prefab)
 	}
 
 	// Display editing options
-	DisplayAddRemovePrefabElementOptions(prefab_tree);
+	DisplayAddRemovePrefabElementOptions(prefab_tree, true);
 
 	// Display kids
 	if(tree_open)
@@ -2881,7 +2881,7 @@ void GameEditor::DisplaySceneEditingTree(Prefab* prefab)
 
 void GameEditor::DisplaySceneEditingNode(PrefabTree* node)
 {
-	bool tree_open = ImGui::TreeNode(node->m_name.c_str());
+	bool tree_open = ImGui::TreeNodeEx(node->m_name.c_str(), ImGuiTreeNodeFlags_DefaultOpen);
 
 	if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
 	{
@@ -2946,11 +2946,12 @@ void GameEditor::DisplayUnitEditorSelectedPrefabElementEditor(Prefab* prefab, fl
 		HelpMarkerWithoutQuestion(std::string("Add component to \"" + g_sSelectedPrefabElement + "\"").c_str());
 		ImGui::Separator();
 
-
 		int index = 0;
 		for(auto& component: components)
 		{
+			bool remove_button_clicked = false;
 			ImGuiID remove_button_id = ++index + g_iImguiImageButtonID + component.size();
+
 
 			if(ImGui::CollapsingHeader(component.c_str(), ImGuiTreeNodeFlags_Bullet))
 			{
@@ -2959,25 +2960,29 @@ void GameEditor::DisplayUnitEditorSelectedPrefabElementEditor(Prefab* prefab, fl
 				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
 				if (ImGui::Button("Remove"))
 				{
-
+					RemoveComponentFromPrefabElement(prefab_tree, component);
+					// If we removed a component before the loop, the app crashes if we do continue...
+					remove_button_clicked = true;
 				}
 				ImGui::PopID();
 				ImGui::PopStyleColor(2);
 				HelpMarkerWithoutQuestion(std::string("Remove \""+ component + "\" from \"" + g_sSelectedPrefabElement + "\"").c_str());
 
-				if(component.compare("Position") == 0)
+				if(!remove_button_clicked)
 				{
-					DisplayPrefabPositionComponent(prefab_tree->m_positionData);
+					if(component.compare("Position") == 0)
+					{
+						DisplayPrefabPositionComponent(prefab_tree->m_positionData);
+					}
+					else if (component.compare("StaticSprite") == 0)
+					{
+						DisplayPrefabStaticSpriteComponent(prefab_tree->m_staticSpriteData);
+					}
+					else if (component.compare("AnimatedSprite") == 0)
+					{
+						DisplayPrefabAnimatedSpriteComponent(prefab_tree->m_animatedSpriteData);
+					}
 				}
-				else if (component.compare("StaticSprite") == 0)
-				{
-					DisplayPrefabStaticSpriteComponent(prefab_tree->m_staticSpriteData);
-				}
-				else if (component.compare("AnimatedSprite") == 0)
-				{
-					DisplayPrefabAnimatedSpriteComponent(prefab_tree->m_animatedSpritenData);
-				}
-
 			}
 		}
 	}
@@ -2987,6 +2992,8 @@ void GameEditor::DisplayUnitEditorSelectedPrefabElementEditor(Prefab* prefab, fl
 
 void GameEditor::DisplayPrefabPositionComponent(PrefabTree::Position* component)
 {
+	if (!component) return;
+
 	float x, y;
 	x = component->m_xpos;
 	y = component->m_ypos;
@@ -2998,11 +3005,20 @@ void GameEditor::DisplayPrefabPositionComponent(PrefabTree::Position* component)
 
 void GameEditor::DisplayPrefabStaticSpriteComponent(PrefabTree::StaticSprite* component)
 {
+	if (!component) return;
+
 	// Create an array for the imgui combo
 	std::string combo_preview_value = "##none";
 	std::vector< std::string > decal_vec;
-	for (auto& d : m_decalDatabase) decal_vec.push_back(d.first);
-	
+
+	// Add Allowed sprite databases here.
+	// Units.
+	for (auto& d : m_unitDecalDatabase) decal_vec.push_back(d.first);
+	// Banners.
+	// Status Indicators.
+	// Unit UI.
+
+
 	int current_item_index = 0;
 	bool changed = false;
 
@@ -3019,7 +3035,7 @@ void GameEditor::DisplayPrefabStaticSpriteComponent(PrefabTree::StaticSprite* co
 		}
 	}
 
-	if(ImGui::BeginCombo("Static Decal", combo_preview_value.c_str()))
+	if(ImGui::BeginCombo("Sprite", combo_preview_value.c_str()))
 	{
 		for(int i = 0; i < decal_vec.size(); i++)
 		{
@@ -3048,7 +3064,60 @@ void GameEditor::DisplayPrefabStaticSpriteComponent(PrefabTree::StaticSprite* co
 
 void GameEditor::DisplayPrefabAnimatedSpriteComponent(PrefabTree::AnimatedSprite* component)
 {
+	if (!component) return;
 
+	// Create an array for the imgui combo
+	std::string combo_preview_value = "##none";
+	std::vector< std::string > anim_decal_vec;
+
+	// Add Allowed sprite databases here.
+	// Units.
+	// Banners.
+	// Status Indicators.
+	// Unit UI.
+
+
+	int current_item_index = 0;
+	bool changed = false;
+
+	if (component->m_decal.compare("none") != 0)
+	{
+		// We have a decal.
+		for (int i = 0; i < anim_decal_vec.size(); i++)
+		{
+			if (anim_decal_vec[i].compare(component->m_decal) == 0)
+			{
+				combo_preview_value = component->m_decal;
+				current_item_index = i; break;
+			}
+		}
+	}
+
+	if (ImGui::BeginCombo("Sprite", combo_preview_value.c_str()))
+	{
+		for (int i = 0; i < anim_decal_vec.size(); i++)
+		{
+			const bool is_selected = (current_item_index == i);
+
+			if (ImGui::Selectable(anim_decal_vec[i].c_str(), is_selected))
+			{
+				current_item_index = i;
+				changed = true;
+			}
+
+			if (is_selected) ImGui::SetItemDefaultFocus();
+		}
+		ImGui::EndCombo();
+	}
+	HelpMarkerWithoutQuestion("Change the Animated Sprite of the Prefab Element. The preview will be exported to the final prefab.");
+
+
+	// Apply Change.
+	if (changed)
+	{
+		component->m_decal = anim_decal_vec[current_item_index];
+		LOG_DBG_INFO("[{:.4f}][DisplayPrefabAnimatedSpriteComponent] AnimatedSprite set to \"{}\"", APP_RUN_TIME, component->m_decal);
+	}
 }
 
 void GameEditor::AddComponentToPrefabElement(PrefabTree* element, const std::string& component_name)
@@ -3067,11 +3136,23 @@ void GameEditor::AddComponentToPrefabElement(PrefabTree* element, const std::str
 			duplicate = true;
 		}
 	}
-	else if (component_name.compare("AnimatedSprite") == 0 && element->m_animatedSpritenData == nullptr)
+	else if (component_name.compare("AnimatedSprite") == 0)
 	{
-		if (element->m_animatedSpritenData == nullptr)
+		if (element->m_animatedSpriteData == nullptr)
 		{
-			element->m_animatedSpritenData = new PrefabTree::AnimatedSprite();
+			element->m_animatedSpriteData = new PrefabTree::AnimatedSprite();
+			component_added = true;
+		}
+		else
+		{
+			duplicate = true;
+		}
+	}
+	else if(component_name.compare("Position") == 0)
+	{
+		if (element->m_positionData == nullptr)
+		{
+			element->m_positionData = new PrefabTree::Position();
 			component_added = true;
 		}
 		else
@@ -3094,12 +3175,40 @@ void GameEditor::AddComponentToPrefabElement(PrefabTree* element, const std::str
 	if(component_added)
 	{
 		element->m_elementComponents.push_back(component_name);
+		LOG_DBG_INFO("[{:.4f}][AddComponentToPrefabElement] Add Component \"{}\" tp Prefab Element \"{}\"!", APP_RUN_TIME, component_name, element->m_name);
+		LOG_FILE_INFO("[{:.4f}][AddComponentToPrefabElement] Add Component \"{}\" tp Prefab Element \"{}\"!", APP_RUN_TIME, component_name, element->m_name);
 	}
 }
 
 void GameEditor::RemoveComponentFromPrefabElement(PrefabTree* element, const std::string& component_name)
 {
+	// Find and remove the component.
+	std::vector< std::string >::iterator it = std::find(element->m_elementComponents.begin(), element->m_elementComponents.end(), component_name);
+	if(it != element->m_elementComponents.end())
+	{
+		element->m_elementComponents.erase(it);
+	}
 
+	// Delete the component object.
+	if(component_name.compare("Position") == 0)
+	{
+		delete element->m_positionData;
+		element->m_positionData = nullptr;
+	}
+	else if (component_name.compare("StaticSprite") == 0)
+	{
+		delete element->m_staticSpriteData;
+		element->m_staticSpriteData = nullptr;
+	}
+	else if (component_name.compare("AnimatedSprite") == 0)
+	{
+		delete element->m_animatedSpriteData;
+		element->m_animatedSpriteData = nullptr;
+	}
+	else
+	{
+		LOG_DBG_ERROR("[{:.4f}][RemoveComponentFromPrefabElement] Prefab Element Component not recognized \"{}\"!", APP_RUN_TIME, component_name);
+	}
 }
 
 void GameEditor::DisplayUnitEditorPrefabPreview(Prefab* prefab, float x, float y, float w, float h)
@@ -3110,7 +3219,7 @@ void GameEditor::DisplayUnitEditorPrefabPreview(Prefab* prefab, float x, float y
 	ImGui::EndChild();
 }
 
-void GameEditor::DisplayAddRemovePrefabElementOptions(PrefabTree* node)
+void GameEditor::DisplayAddRemovePrefabElementOptions(PrefabTree* node, bool root)
 {
 	ImGuiID add_button_id = g_iImguiImageButtonID + strlen(node->m_name.c_str()) + (intptr_t)"Add";
 	ImGuiID remove_button_id = g_iImguiImageButtonID + strlen(node->m_name.c_str()) + (intptr_t)"Remove";
@@ -3125,19 +3234,20 @@ void GameEditor::DisplayAddRemovePrefabElementOptions(PrefabTree* node)
 		g_pAddingChildToPrefabTreeNode = node;
 	}
 	ImGui::PopID();
-
 	HelpMarkerWithoutQuestion(std::string("Add a new child node to \"" + node_name + "\"").c_str());
-	ImGui::SameLine();
-
-	ImGui::PushID(remove_button_id);
-	if (ImGui::SmallButton("-"))
+	
+	if(!root)
 	{
-		RemovePrefabElementFromPrefabTree(g_pCurrentEditedPrefab, node);
+		ImGui::SameLine();
+		ImGui::PushID(remove_button_id);
+		if (ImGui::SmallButton("-"))
+		{
+			RemovePrefabElementFromPrefabTree(g_pCurrentEditedPrefab, node);
+		}
+		ImGui::PopID();
+		HelpMarkerWithoutQuestion(std::string("Remove \"" + node_name + "\" and all of its children nodes").c_str());
+
 	}
-	ImGui::PopID();
-
-	HelpMarkerWithoutQuestion(std::string("Remove \"" + node_name + "\" and all of its children nodes").c_str());
-
 }
 
 void GameEditor::DisplayAddingPrefabElementToPrefabTree(Prefab* prefab, PrefabTree* node)
@@ -3190,12 +3300,15 @@ void GameEditor::DisplayAddingPrefabElementToPrefabTree(Prefab* prefab, PrefabTr
 void GameEditor::RemovePrefabElementFromPrefabTree(Prefab* prefab, PrefabTree* node)
 {
 	prefab->m_sceneTree.RemoveNode(node->m_name);
+	delete node;
+	node = nullptr;
 }
 
 void GameEditor::DisplayAddingComponentToPrefabElementEntity(PrefabTree* element)
 {
 	static bool sprite = false;
 	static bool anim_sprite = false;
+	static bool position = false;
 
 	std::string name = "Adding Components to \"" + element->m_name +"\"";
 	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
@@ -3207,11 +3320,15 @@ void GameEditor::DisplayAddingComponentToPrefabElementEntity(PrefabTree* element
 	ImGui::Checkbox("Static Sprite", &sprite);
 	ImGui::SameLine();
 	ImGui::Checkbox("Animated Sprite", &anim_sprite);
+	ImGui::SameLine();
+	ImGui::Checkbox("Position", &position);
+
 
 	if (ImGui::SmallButton("Cancel"))
 	{
 		anim_sprite = false;
 		sprite = false;
+		position = false;
 		g_bAddingComponentToPrefabElement = false;
 		element = nullptr;
 	}
@@ -3227,10 +3344,15 @@ void GameEditor::DisplayAddingComponentToPrefabElementEntity(PrefabTree* element
 		{
 			AddComponentToPrefabElement(element, "AnimatedSprite");
 		}
+		if(position)
+		{
+			AddComponentToPrefabElement(element, "Position");
+		}
 
 		// End Batch adding.
 		anim_sprite = false;
 		sprite = false;
+		position = false;
 		g_bAddingComponentToPrefabElement = false;
 	}
 
