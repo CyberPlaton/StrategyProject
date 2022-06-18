@@ -2969,6 +2969,15 @@ void GameEditor::DisplayUnitEditorSelectedPrefabElementEditor(Prefab* prefab, fl
 				{
 					DisplayPrefabPositionComponent(prefab_tree->m_positionData);
 				}
+				else if (component.compare("StaticSprite") == 0)
+				{
+					DisplayPrefabStaticSpriteComponent(prefab_tree->m_staticSpriteData);
+				}
+				else if (component.compare("AnimatedSprite") == 0)
+				{
+					DisplayPrefabAnimatedSpriteComponent(prefab_tree->m_animatedSpritenData);
+				}
+
 			}
 		}
 	}
@@ -2985,6 +2994,61 @@ void GameEditor::DisplayPrefabPositionComponent(PrefabTree::Position* component)
 	ImGui::SliderFloat("Y", &y, -256.0f, 256.0f, "%.4f", 1.0f);
 	component->m_xpos = x;
 	component->m_ypos = y;
+}
+
+void GameEditor::DisplayPrefabStaticSpriteComponent(PrefabTree::StaticSprite* component)
+{
+	// Create an array for the imgui combo
+	std::string combo_preview_value = "##none";
+	std::vector< std::string > decal_vec;
+	for (auto& d : m_decalDatabase) decal_vec.push_back(d.first);
+	
+	int current_item_index = 0;
+	bool changed = false;
+
+	if(component->m_decal.compare("none") != 0)
+	{
+		// We have a decal.
+		for(int i = 0; i < decal_vec.size(); i++)
+		{
+			if (decal_vec[i].compare(component->m_decal) == 0)
+			{
+				combo_preview_value = component->m_decal;
+				current_item_index = i; break;
+			}
+		}
+	}
+
+	if(ImGui::BeginCombo("Static Decal", combo_preview_value.c_str()))
+	{
+		for(int i = 0; i < decal_vec.size(); i++)
+		{
+			const bool is_selected = (current_item_index == i);
+
+			if(ImGui::Selectable(decal_vec[i].c_str(), is_selected))
+			{
+				current_item_index = i;
+				changed = true;
+			}
+
+			if (is_selected) ImGui::SetItemDefaultFocus();
+		}
+		ImGui::EndCombo();
+	}
+	HelpMarkerWithoutQuestion("Change the Sprite of the Prefab Element. The preview will be exported to the final prefab.");
+
+
+	// Apply Change.
+	if(changed)
+	{
+		component->m_decal = decal_vec[current_item_index];
+		LOG_DBG_INFO("[{:.4f}][DisplayPrefabStaticSpriteComponent] StaticSprite set to \"{}\"", APP_RUN_TIME, component->m_decal);
+	}
+}
+
+void GameEditor::DisplayPrefabAnimatedSpriteComponent(PrefabTree::AnimatedSprite* component)
+{
+
 }
 
 void GameEditor::AddComponentToPrefabElement(PrefabTree* element, const std::string& component_name)

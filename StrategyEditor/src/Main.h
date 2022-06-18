@@ -342,11 +342,13 @@ struct PrefabTree : public Tree
 	};
 	struct StaticSprite
 	{
-
+		/// @brief Visual representation of the Prefab Element. Overwrites the debug representation.
+		std::string m_decal = "none";
 	};
 	struct AnimatedSprite
 	{
-
+		/// @brief Visual representation of the Prefab Element. Overwrites the debug representation. Animated.
+		std::string m_decal = "none";
 	};
 
 
@@ -661,6 +663,9 @@ private:
 	void DisplayAddingComponentToPrefabElementEntity(PrefabTree* element);
 	// GUI UNIT ELEMENT EDITOR COMPONENT DISPLAY UTIL
 	void DisplayPrefabPositionComponent(PrefabTree::Position* component);
+	void DisplayPrefabStaticSpriteComponent(PrefabTree::StaticSprite* component);
+	void DisplayPrefabAnimatedSpriteComponent(PrefabTree::AnimatedSprite* component);
+
 
 	// GUI UNIT EDITOR HELPER
 	void AddComponentToPrefabElement(PrefabTree* element, const std::string& component_name);
