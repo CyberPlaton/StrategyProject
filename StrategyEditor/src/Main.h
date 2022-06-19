@@ -527,27 +527,7 @@ public:
 		return loaded;
 	}
 
-	bool OnUserUpdate(float fElapsedTime) override
-	{
-		Clear(olc::BLANK);
-		SetDrawTarget((uint8_t)m_GUILayer);
-
-
-		SoundSystem::get()->SetListenerPositionVector(m_camerax, m_cameray, -m_cameraHeigth);
-		SoundSystem::get()->Update();
-
-
-		HandleInput();
-		UpdateVisibleRect();
-
-		UpdateEntities();
-
-		RenderMainFrame();
-
-		DrawStringDecal(olc::vf2d(5, 25), "FPS: " + std::to_string(GetFPS()));
-
-		return true;
-	}
+	bool OnUserUpdate(float fElapsedTime) override;
 
 	bool OnUserDestroy() override final
 	{
@@ -672,7 +652,7 @@ private:
 	void AddComponentToPrefabElement(PrefabTree* element, const std::string& component_name);
 	void RemoveComponentFromPrefabElement(PrefabTree* element, const std::string& component_name);
 
-	
+	void RenderMainFrameForUnitEditor();
 	void RenderMainFrame();
 	void UpdateEntities();
 
