@@ -7,7 +7,8 @@ static bool g_bEntityEditorOpen = false;
 
 static int g_iCurrentSelectedShape = 0;
 static bool g_bShapeWindowOpen = true;
-static bool g_bShapePropertyWindowOpen = true;
+static bool g_bShapePropertyWindowOpen = false;
+static SShape* g_pCurrentDisplayedShape = nullptr;
 static bool g_bLayoutTemplateEditorOpen = false;
 static bool g_bUnitEditorOpen = false;
 static Prefab* g_pCurrentEditedPrefab = nullptr;
@@ -91,7 +92,7 @@ void GameEditor::RenderGUI()
 		// Show chooseable shapes
 		DisplayShapesWindow();
 		// Show chosen shape properties
-		DisplayShapePropertiesEditor();
+		if(g_bShapePropertyWindowOpen) DisplayShapePropertiesEditor(g_pCurrentDisplayedShape);
 	}
 	else
 	{
@@ -1165,13 +1166,13 @@ void GameEditor::HandleInput()
 				case 0:
 				{
 					// Circle.
-					CreateShapeAtMousePosition(0, mousex, mousey);
+					CreateShapeAtMousePosition(0, (uint64_t)mousex, (uint64_t)mousey);
 					break;
 				}
 				case 1:
 				{
 					// Rectangle.
-					CreateShapeAtMousePosition(1, mousex, mousey);
+					CreateShapeAtMousePosition(1, (uint64_t)mousex, (uint64_t)mousey);
 					break;
 				}
 				default:
@@ -1186,6 +1187,25 @@ void GameEditor::HandleInput()
 			{
 				// Remove shape at current mouse position.
 				DeleteShapeAtMousePosition(mousex, mousey);
+				g_bShapePropertyWindowOpen = false;
+				g_pCurrentDisplayedShape = nullptr;
+			}
+			if(g_iCurrentSelectedShape == -1)
+			{
+				if(GetMouse(0).bReleased)
+				{
+					auto shape = GetShapeAtMousePosition(mousex, mousey);
+					if(shape)
+					{
+						g_pCurrentDisplayedShape = shape;
+						g_bShapePropertyWindowOpen = true;
+					}
+					else
+					{
+						g_bShapePropertyWindowOpen = false;
+						g_pCurrentDisplayedShape = nullptr;
+					}
+				}
 			}
 		}
 	}
@@ -3376,9 +3396,112 @@ void GameEditor::DisplayShapesWindow()
 	ImGui::End();
 }
 
-void GameEditor::DisplayShapePropertiesEditor()
+void GameEditor::DisplayShapePropertiesEditor(SShape* shape)
+{
+	if (!shape)
+	{
+		g_bShapePropertyWindowOpen = false;
+		return;
+	}
+
+
+	SCircle* circle = nullptr;
+	SRectangle* rect = nullptr;
+
+	ImGui::Begin("Shape Properties", &g_bShapePropertyWindowOpen);
+	if (shape->Type() == 0)
+	{
+		circle = reinterpret_cast<SCircle*>(shape);
+
+		// Display Position
+		DisplayShapePosition(circle);
+		// Display Dimension
+		DisplayShapeDimension(circle);
+		// Display Type
+		DisplayShapeType(circle);
+	}
+	else if (shape->Type() == 1)
+	{
+		rect = reinterpret_cast<SRectangle*>(shape);
+
+		// Display Position
+		DisplayShapePosition(rect);
+		// Display Dimension
+		DisplayShapeDimension(rect);
+		// Display Type
+		DisplayShapeType(rect);
+	}
+	ImGui::End();
+}
+
+void GameEditor::DisplayShapePosition(SCircle* circle)
+{
+	int x = circle->x, y = circle->y;
+	ImGui::SliderInt("X", &x, 1.0f, 256.0f, "%d", ImGuiSliderFlags_Logarithmic);
+	ImGui::SliderInt("Y", &y, 1.0f, 256.0f, "%d", ImGuiSliderFlags_Logarithmic);
+	circle->x = x;
+	circle->y = y;
+}
+
+void GameEditor::DisplayShapePosition(SRectangle* rect)
+{
+	int x = rect->x, y = rect->y;
+	ImGui::SliderInt("X", &x, 1.0f, 256.0f, "%d", ImGuiSliderFlags_Logarithmic);
+	ImGui::SliderInt("Y", &y, 1.0f, 256.0f, "%d", ImGuiSliderFlags_Logarithmic);
+	rect->x = x;
+	rect->y = y;
+}
+
+void GameEditor::DisplayShapeDimension(SCircle* circle)
+{
+	int r = circle->r;
+	ImGui::SliderInt("R", &r, 1.0f, 256.0f, "%d", ImGuiSliderFlags_Logarithmic);
+	circle->r = r;
+}
+
+void GameEditor::DisplayShapeDimension(SRectangle* rect)
+{
+	int w = rect->w, h = rect->h;
+	ImGui::SliderInt("W", &w, 1.0f, 256.0f, "%d", ImGuiSliderFlags_Logarithmic);
+	ImGui::SliderInt("H", &h, 1.0f, 256.0f, "%d", ImGuiSliderFlags_Logarithmic);
+	rect->w = w;
+	rect->h = h;
+}
+
+void GameEditor::DisplayShapeType(SCircle* circle)
 {
 
+}
+
+void GameEditor::DisplayShapeType(SRectangle* rect)
+{
+
+}
+
+SShape* GameEditor::GetShapeAtMousePosition(float x, float y)
+{
+	for (auto& shape : m_currentLayoutTemplateVec)
+	{
+		if (shape->Type() == 0)
+		{
+			// Circle.
+			auto circle = reinterpret_cast<SCircle*>(shape);
+			if (PointCircleCollision(x, y, circle->x, circle->y, circle->r))
+			{
+				return shape;
+			}
+		}
+		else if (shape->Type() == 1)
+		{
+			// Rectangle.
+			auto rect = reinterpret_cast<SRectangle*>(shape);
+			if (PointRectangleCollision(x, y, rect->x, rect->y, rect->w, rect->h))
+			{
+				return shape;
+			}
+		}
+	}
+	return nullptr;
 }
 
 void GameEditor::CreateShapeAtMousePosition(int shape_index, float x, float y)

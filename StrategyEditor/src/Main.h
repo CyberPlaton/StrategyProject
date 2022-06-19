@@ -690,7 +690,14 @@ private:
 
 	// GUI UNIT TEMPLATE LAYOUT EDITOR
 	void DisplayShapesWindow();
-	void DisplayShapePropertiesEditor();
+	void DisplayShapePropertiesEditor(SShape* shape);
+	void DisplayShapePosition(SCircle* circle);
+	void DisplayShapePosition(SRectangle* rect);
+	void DisplayShapeDimension(SCircle* circle);
+	void DisplayShapeDimension(SRectangle* rect);
+	void DisplayShapeType(SCircle* circle);
+	void DisplayShapeType(SRectangle* rect);
+	SShape* GetShapeAtMousePosition(float x, float y);
 	void CreateShapeAtMousePosition(int shape_index, float x, float y);
 	void DeleteShapeAtMousePosition(float x, float y);
 	bool PointRectangleCollision(float p1, float p2, float x, float y, float w, float h);
