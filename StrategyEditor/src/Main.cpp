@@ -5,6 +5,9 @@ static bool g_bDecalDatabaseOpen = true;
 static bool g_bEntityDatabaseOpen = true;
 static bool g_bEntityEditorOpen = false;
 
+static int g_iCurrentSelectedShape = 0;
+static bool g_bShapeWindowOpen = true;
+static bool g_bShapePropertyWindowOpen = true;
 static bool g_bLayoutTemplateEditorOpen = false;
 static bool g_bUnitEditorOpen = false;
 static Prefab* g_pCurrentEditedPrefab = nullptr;
@@ -85,7 +88,10 @@ void GameEditor::RenderGUI()
 	// Unit Editor
 	if (g_bLayoutTemplateEditorOpen)
 	{
-		
+		// Show chooseable shapes
+		DisplayShapesWindow();
+		// Show chosen shape properties
+		DisplayShapePropertiesEditor();
 	}
 	else
 	{
@@ -170,6 +176,17 @@ bool GameEditor::LoadEditorGraphicalData()
 	decal = new olc::Decal(sprite);
 	m_editorDecalDatabase.try_emplace("Rect", decal);
 	m_editorSpriteDatabase.push_back(sprite);
+
+	sprite = new olc::Sprite("assets/Editor/Circle.png");
+	decal = new olc::Decal(sprite);
+	m_editorDecalDatabase.try_emplace("Circle", decal);
+	m_editorSpriteDatabase.push_back(sprite);
+
+	sprite = new olc::Sprite("assets/Editor/Triangle.png");
+	decal = new olc::Decal(sprite);
+	m_editorDecalDatabase.try_emplace("Triangle", decal);
+	m_editorSpriteDatabase.push_back(sprite);
+
 
 	sprite = new olc::Sprite("assets/Editor/FilledRect.png");
 	decal = new olc::Decal(sprite);
@@ -429,12 +446,30 @@ void GameEditor::RenderMainMenu()
 
 		if (ImGui::BeginMenu("Unit"))
 		{
-			if (ImGui::MenuItem("Layout Template Editor"))
+			if(ImGui::BeginMenu("Unit Layout"))
 			{
-				ToggleMenuItem(g_bLayoutTemplateEditorOpen);
+				if (ImGui::MenuItem("Layout Template Editor"))
+				{
+					ToggleMenuItem(g_bLayoutTemplateEditorOpen);
+				}
+
+				if(ImGui::MenuItem("Shape Window"))
+				{
+					ToggleMenuItem(g_bShapeWindowOpen);
+				}
+				ImGui::SameLine();
+				ImGui::Checkbox("Open", &g_bShapeWindowOpen);
+				if (ImGui::MenuItem("Shape Properties Window"))
+				{
+					ToggleMenuItem(g_bShapePropertyWindowOpen);
+				}
+				ImGui::SameLine();
+				ImGui::Checkbox("Open", &g_bShapePropertyWindowOpen);
+
+				ImGui::EndMenu();
 			}
 
-			if (ImGui::MenuItem("Unit Editor"))
+			if (ImGui::MenuItem("Unit Prefab Editor"))
 			{
 				ToggleMenuItem(g_bUnitEditorOpen);
 			}
@@ -581,8 +616,33 @@ bool GameEditor::OnUserUpdate(float fElapsedTime)
 
 void GameEditor::RenderMainFrameForUnitEditor()
 {
+	olc::vi2d topleft = tv.GetTopLeftTile().max({ 0, 0 });
+	olc::vi2d bottomright = tv.GetBottomRightTile().min({ MAX_MAPSIZE_X, MAX_MAPSIZE_Y });
+	olc::vi2d tile;
+	olc::vi2d upLeft = m_visiblePointLeftUp;
+	olc::vi2d downRight = m_visiblePointDownRight;
 
+	// Render Current Added Shapes.
+	for(auto& shape: m_currentLayoutTemplateVec)
+	{
+		shape->Draw(this);
+	}
+
+	// Render the grid on top of all.
+	if (g_bRenderGrid)
+	{
+		olc::Pixel color = { 255, 255, 255, 50 };
+		for (tile.y = topleft.y; tile.y < downRight.y; tile.y++)
+		{
+			for (tile.x = topleft.x; tile.x < downRight.x; tile.x++)
+			{
+				tv.DrawLineDecal(tile, tile + olc::vf2d(0.0f, 1.0f), color);
+				tv.DrawLineDecal(tile, tile + olc::vf2d(1.0f, 0.0f), color);
+			}
+		}
+	}
 }
+
 
 
 
@@ -1040,6 +1100,7 @@ void GameEditor::HandleInput()
 	}
 
 
+	// Sound Editing.
 	// Handle input despite Imgui having focus.
 	// Unfortunately, this is a limitation of ImGui which cannot be circumvented.
 	if (g_bAddingSoundSource)
@@ -1089,6 +1150,46 @@ void GameEditor::HandleInput()
 		}
 
 	}
+
+
+	// Unit Template Layout Editing.
+	if(g_bLayoutTemplateEditorOpen)
+	{
+		if(!g_bImguiHasFocus)
+		{
+			if (GetMouse(0).bReleased && g_iCurrentSelectedShape > -1)
+			{
+				// Create new shape at mouse position.
+				switch (g_iCurrentSelectedShape)
+				{
+				case 0:
+				{
+					// Circle.
+					CreateShapeAtMousePosition(0, mousex, mousey);
+					break;
+				}
+				case 1:
+				{
+					// Rectangle.
+					CreateShapeAtMousePosition(1, mousex, mousey);
+					break;
+				}
+				default:
+				{
+					// Error.
+					LOG_DBG_ERROR("[{:.4f}][HandleInput] Could not create unrecognized Shape for Layout Template Editor: Shape index \"{}\"!", APP_RUN_TIME, g_iCurrentSelectedShape);
+					LOG_FILE_ERROR("[{:.4f}][HandleInput] Could not create unrecognized Shape for Layout Template Editor: Shape index \"{}\"!", APP_RUN_TIME, g_iCurrentSelectedShape);
+				}
+				}
+			}
+			if (GetMouse(1).bReleased)
+			{
+				// Remove shape at current mouse position.
+				DeleteShapeAtMousePosition(mousex, mousey);
+			}
+		}
+	}
+
 }
 void GameEditor::UpdateVisibleRect()
 {
@@ -3256,6 +3357,119 @@ void GameEditor::RemoveComponentFromPrefabElement(PrefabTree* element, const std
 	}
 }
 
+void GameEditor::DisplayShapesWindow()
+{
+	ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+	ImGui::SetNextWindowPos(ImVec2(0.0f, 40.0f), ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize(ImVec2(230.0f, ScreenHeight() - 100.0f), ImGuiCond_Appearing);
+	ImGui::Begin("Shapes", &g_bShapeWindowOpen, flags);
+
+	ImGui::RadioButton("None", &g_iCurrentSelectedShape, -1);
+	HelpMarkerWithoutQuestion("De-Select any shapes from being placed");
+
+	ImGui::RadioButton("Circle", &g_iCurrentSelectedShape, 0);
+	HelpMarkerWithoutQuestion("Select a circle to be placed as layout element");
+
+	ImGui::RadioButton("Rectangle", &g_iCurrentSelectedShape, 1);
+	HelpMarkerWithoutQuestion("Select a rectangle to be placed as layout element");
+
+	ImGui::End();
+}
+
+void GameEditor::DisplayShapePropertiesEditor()
+{
+
+}
+
+void GameEditor::CreateShapeAtMousePosition(int shape_index, float x, float y)
+{
+	SShape* shape = nullptr;
+	switch (shape_index)
+	{
+	case 0:
+	{
+		shape = new SCircle(x, y, 1);
+		break;
+	}
+	case 1:
+	{
+		shape = new SRectangle(x, y, 1, 1);
+		break;
+	}
+	default:
+		return;
+	}
+
+	m_currentLayoutTemplateVec.push_back(shape);
+	g_iCurrentSelectedShape = -1;
+}
+
+void GameEditor::DeleteShapeAtMousePosition(float x, float y)
+{
+	// Find Any shape at position.
+	int index = 0;
+	for(auto& shape: m_currentLayoutTemplateVec)
+	{
+		if(shape->Type() == 0)
+		{
+			// Circle.
+			auto circle = reinterpret_cast<SCircle*>(shape);
+			if(PointCircleCollision(x, y, circle->x, circle->y, circle->r))
+			{
+				// Delete Shape.
+				delete shape;
+				circle = nullptr;
+				m_currentLayoutTemplateVec.erase(m_currentLayoutTemplateVec.begin() + index);
+				return;
+			}
+		}
+		else if(shape->Type() == 1)
+		{
+			// Rectangle.
+			auto rect = reinterpret_cast<SRectangle*>(shape);
+			if (PointRectangleCollision(x, y, rect->x, rect->y, rect->w, rect->h))
+			{
+				// Delete Rect.
+				delete shape;
+				rect = nullptr;
+				m_currentLayoutTemplateVec.erase(m_currentLayoutTemplateVec.begin() + index);
+				return;
+			}
+		}
+
+
+		index++;
+	}
+}
+
+bool GameEditor::PointRectangleCollision(float p1, float p2, float x, float y, float w, float h)
+{
+	 if(p1 > x && p1 < x + w &&
+		p2 > y && p2 < y + h)
+	 {
+		 return true;
+	 }
+
+	 return false;
+}
+
+bool GameEditor::PointCircleCollision(float p1, float p2, float x, float y, float r)
+{	
+	// Adjust circle position
+	float xx = x + r;
+	float yy = y + r;
+
+	// Compute Euclidian distance.
+	float dist = std::sqrt((xx - p1) * (xx - p1) + (yy - p2) * (yy - p2));
+
+	// If distance is smaller than radius, then point inside circle.
+	if(dist <= r)
+	{
+		return true;
+	}
+	return false;
+}
+
 void GameEditor::DisplayUnitEditorPrefabPreview(Prefab* prefab, float x, float y, float w, float h)
 {
 	ImGui::SetCursorPosX(x);
@@ -3490,4 +3704,14 @@ Tree* PrefabTree::Node(const std::string& name)
 	auto node = new PrefabTree(name);
 	m_children.push_back(node);
 	return node;
+}
+
+void SRectangle::Draw(GameEditor* editor)
+{
+	editor->tv.DrawDecal(olc::vf2d(x, y), editor->m_editorDecalDatabase["Rect"], olc::vf2d(w, h));
+}
+
+void SCircle::Draw(GameEditor* editor)
+{
+	editor->tv.DrawDecal(olc::vf2d(x, y), editor->m_editorDecalDatabase["Circle"], olc::vf2d(r, r));
 }

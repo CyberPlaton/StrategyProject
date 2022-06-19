@@ -167,6 +167,10 @@ STRING(major) \
 // COMMON
 #include "Mapobject.h"
 using LayeredGameworld = std::map< std::string, std::vector< std::vector< Entity* > > >;
+class GameEditor;
+
+
+
 
 // COMMON USED DATASTRUCTURES
 struct Tree
@@ -406,10 +410,36 @@ struct Prefab
 	std::string m_prefabName;
 };
 
+/// @brief Commonly used shapes in the Unit Layout Template editor.
+struct SShape
+{
+	virtual int Type() = 0;
+	virtual void Draw(GameEditor* editor) = 0;
+};
 
+struct SCircle : public SShape
+{
+	SCircle(float x, float y, float r) : x(x), y(y), r(r){}
 
+	void Draw(GameEditor* editor) override final;
+	int Type() override final { return type; }
 
+	int type = 0;
+	float x, y;
+	float r;
+};
 
+struct SRectangle : public SShape
+{
+	SRectangle(float x, float y, float w, float h) : x(x), y(y), w(w), h(h) {}
+
+	void Draw(GameEditor* editor) override final;
+	int Type() override final { return type; }
+
+	int type = 1;
+	float x, y;
+	float w, h;
+};
 
 
 
@@ -417,11 +447,13 @@ struct Prefab
 
 
 // Utility. Create a hook function to actually call the GameEditors OnUserUpdate function.
-class GameEditor;
 void MainRender(GameEditor* editor);
 
 class GameEditor : public olc::PixelGameEngine
 {
+	friend class SRectangle;
+	friend class SCircle;
+
 public:
 	GameEditor() : pge_imgui(false)
 	{
@@ -594,6 +626,11 @@ private:
 	// Permanent Editor specific layers which cannot be altered.
 	std::vector< int > m_PermanentLayersVec;
 
+
+	// Unit Layout Template Editor.
+	/// @brief Current in work layout template. On creating a new one this one is deleted.
+	std::vector< SShape* > m_currentLayoutTemplateVec;
+
 private:
 
 	// GUI
@@ -647,10 +684,18 @@ private:
 	void DisplayPrefabStaticSpriteComponent(PrefabTree::StaticSprite* component);
 	void DisplayPrefabAnimatedSpriteComponent(PrefabTree::AnimatedSprite* component);
 
-
 	// GUI UNIT EDITOR HELPER
 	void AddComponentToPrefabElement(PrefabTree* element, const std::string& component_name);
 	void RemoveComponentFromPrefabElement(PrefabTree* element, const std::string& component_name);
+
+	// GUI UNIT TEMPLATE LAYOUT EDITOR
+	void DisplayShapesWindow();
+	void DisplayShapePropertiesEditor();
+	void CreateShapeAtMousePosition(int shape_index, float x, float y);
+	void DeleteShapeAtMousePosition(float x, float y);
+	bool PointRectangleCollision(float p1, float p2, float x, float y, float w, float h);
+	bool PointCircleCollision(float p1, float p2, float x, float y, float r);
+
 
 	void RenderMainFrameForUnitEditor();
 	void RenderMainFrame();
