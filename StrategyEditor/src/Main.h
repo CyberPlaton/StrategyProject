@@ -612,6 +612,10 @@ private:
 	bool PointCircleCollision(float p1, float p2, float x, float y, float r);
 	void DisplayAddingPrefabElementType();
 	bool TryAddingPrefabElementType(const std::string& name);
+	bool DisplaySavingPrefabLayoutElement();
+	bool ExportPrefabLayoutTemplate(const std::string& filepath);
+	bool DisplayLoadingPrefabLayoutElement();
+	bool ImportPrefabLayoutTemplate(const std::string& filepath);
 
 	void RenderMainFrameForUnitEditor();
 	void RenderMainFrame();

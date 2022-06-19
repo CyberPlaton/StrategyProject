@@ -5,6 +5,8 @@ static bool g_bDecalDatabaseOpen = true;
 static bool g_bEntityDatabaseOpen = true;
 static bool g_bEntityEditorOpen = false;
 
+static bool g_bSavingPrefabLayoutTemplate = false;
+static bool g_bLoadPrefabLayoutTemplate = false;
 static bool g_bAddingPrefabElementType = false;
 static std::vector< std::string > g_PrefabElementTypeVec;
 static int g_iCurrentSelectedShape = 0;
@@ -97,6 +99,9 @@ void GameEditor::RenderGUI()
 		if(g_bShapePropertyWindowOpen) DisplayShapePropertiesEditor(g_pCurrentDisplayedShape);
 		// Prefab Element Type Adding
 		if (g_bAddingPrefabElementType) DisplayAddingPrefabElementType();
+		// Saving/Loading Prefab Layout Template
+		if (g_bSavingPrefabLayoutTemplate) DisplaySavingPrefabLayoutElement();
+		if (g_bLoadPrefabLayoutTemplate) DisplayLoadingPrefabLayoutElement();
 	}
 	else
 	{
@@ -3481,6 +3486,19 @@ void GameEditor::DisplayShapesWindow()
 	ImGui::SetNextWindowSize(ImVec2(230.0f, ScreenHeight() - 100.0f), ImGuiCond_Appearing);
 	ImGui::Begin("Shapes", &g_bShapeWindowOpen, flags);
 
+	// Show a small menu for Layout Editor.
+	if(ImGui::SmallButton("Save As..."))
+	{
+		g_bSavingPrefabLayoutTemplate = true;
+	}
+	if(ImGui::SmallButton("Load From..."))
+	{
+		g_bLoadPrefabLayoutTemplate = true;
+	}
+
+
+
+
 	ImGui::RadioButton("None", &g_iCurrentSelectedShape, -1);
 	HelpMarkerWithoutQuestion("De-Select any shapes from being placed");
 
@@ -3792,6 +3810,78 @@ bool GameEditor::TryAddingPrefabElementType(const std::string& name)
 	LOG_DBG_INFO("[{:.4f}][TryAddingPrefabElementType] Successfully added Prefab Element Type \"{}\"!", APP_RUN_TIME, name);
 	LOG_FILE_INFO("[{:.4f}][TryAddingPrefabElementType]  Successfully added Prefab Element Type \"{}\"!", APP_RUN_TIME, name);
 	return true;
+}
+
+bool GameEditor::DisplaySavingPrefabLayoutElement()
+{
+	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
+
+	bool success = false;
+
+	ImGui::Begin("Save As...", &g_bSavingPrefabLayoutTemplate);
+
+	static char prefab_layout_template_name[64] = "";
+	ImGui::InputText("|", prefab_layout_template_name, 64);
+	ImGui::SameLine();
+	if (ImGui::SmallButton("OK"))
+	{
+		// Check for sanity.
+		std::string name = std::string(prefab_layout_template_name);
+
+		bool length = name.length() > 0;
+		if (length)
+		{
+			success = ExportPrefabLayoutTemplate(name);
+		}
+		memset(&prefab_layout_template_name, 0, sizeof(prefab_layout_template_name));
+		g_bSavingPrefabLayoutTemplate = false;
+	}
+
+	ImGui::End();
+
+	return success;
+}
+
+bool GameEditor::ExportPrefabLayoutTemplate(const std::string& filepath)
+{
+	return false;
+}
+
+bool GameEditor::DisplayLoadingPrefabLayoutElement()
+{
+	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
+
+	bool success = false;
+
+	ImGui::Begin("Load From...", &g_bLoadPrefabLayoutTemplate);
+
+	static char load_prefab_layout_template_name[64] = "";
+	ImGui::InputText("|", load_prefab_layout_template_name, 64);
+	ImGui::SameLine();
+	if (ImGui::SmallButton("OK"))
+	{
+		// Check for sanity.
+		std::string name = std::string(load_prefab_layout_template_name);
+
+		bool length = name.length() > 0;
+		if (length)
+		{
+			success = ImportPrefabLayoutTemplate(name);
+		}
+		memset(&load_prefab_layout_template_name, 0, sizeof(load_prefab_layout_template_name));
+		g_bLoadPrefabLayoutTemplate = false;
+	}
+
+	ImGui::End();
+
+	return success;
+}
+
+bool GameEditor::ImportPrefabLayoutTemplate(const std::string& filepath)
+{
+	return false;
 }
 
 void GameEditor::DisplayUnitEditorPrefabPreview(Prefab* prefab, float x, float y, float w, float h)
