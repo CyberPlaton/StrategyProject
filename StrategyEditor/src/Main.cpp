@@ -5,6 +5,8 @@ static bool g_bDecalDatabaseOpen = true;
 static bool g_bEntityDatabaseOpen = true;
 static bool g_bEntityEditorOpen = false;
 
+static bool g_bAddingPrefabElementType = false;
+static std::vector< std::string > g_PrefabElementTypeVec;
 static int g_iCurrentSelectedShape = 0;
 static bool g_bShapeWindowOpen = true;
 static bool g_bShapePropertyWindowOpen = false;
@@ -93,6 +95,8 @@ void GameEditor::RenderGUI()
 		DisplayShapesWindow();
 		// Show chosen shape properties
 		if(g_bShapePropertyWindowOpen) DisplayShapePropertiesEditor(g_pCurrentDisplayedShape);
+		// Prefab Element Type Adding
+		if (g_bAddingPrefabElementType) DisplayAddingPrefabElementType();
 	}
 	else
 	{
@@ -123,6 +127,99 @@ void GameEditor::RenderGUI()
 		}
 	}
 }
+
+
+bool GameEditor::OnUserCreate()
+{
+#ifdef DISTR
+	// Remove console in distribution build (Windows only).
+	ShowWindow(GetConsoleWindow(), SW_HIDE);
+#endif
+
+	// Initialize Random.
+	srand(time(0));
+
+	// Initialize Logging.
+	if (!Logger::Initialize()) return false;
+
+	// FMOD
+	SoundSystem::get()->Initialize();
+	
+	// Initialize Layered rendering.
+	m_GUILayer = CreateLayer();
+	EnableLayer(m_GUILayer, true);
+	SetLayerCustomRenderFunction(0, std::bind(&GameEditor::DrawUI, this));
+
+	// Initialize renderer
+	tv = olc::TileTransformedView({ ScreenWidth(), ScreenHeight() }, { DEFAULT_DECAL_SIZE_X, DEFAULT_DECAL_SIZE_Y });
+
+	m_visibleLayers.resize(256);
+	CreateRenderingLayer("Default", 0);
+	m_currentLayer = "Default";
+	m_visibleLayers[0] = 1;
+
+	// Create the default audio source layer.
+	CreateRenderingLayer("AudioSourceLayer", 99);
+	m_visibleLayers[99] = 0;
+	m_PermanentLayersVec.push_back(99);
+
+	UpdateLayerSorting();
+
+
+
+
+	// Load Assets
+	bool loaded = LoadTilesetData("Forest", "assets/Tileset/Forest", "assets/TilesetData/Forest.json");
+	loaded &= LoadTilesetData("Ground", "assets/Tileset/Ground", "assets/TilesetData/Ground.json");
+	loaded &= LoadTilesetData("Mountain", "assets/Tileset/Mountain", "assets/TilesetData/Mountain.json");
+	loaded &= LoadTilesetData("Road", "assets/Tileset/Road", "assets/TilesetData/Road.json");
+	loaded &= LoadTilesetData("Sea", "assets/Tileset/Sea", "assets/TilesetData/Sea.json");
+	loaded &= LoadTilesetData("Bridge", "assets/Tileset/Bridge", "assets/TilesetData/Bridge.json");
+	loaded &= LoadTilesetData("River", "assets/Tileset/River", "assets/TilesetData/River.json");
+	loaded &= LoadTilesetData("Structure", "assets/Tileset/Structure", "assets/TilesetData/Structure.json");
+	loaded &= LoadTilesetData("Wall", "assets/Tileset/Wall", "assets/TilesetData/Wall.json");
+	loaded &= LoadTilesetData("Hill", "assets/Tileset/Hill", "assets/TilesetData/Hill.json");
+	loaded &= LoadTilesetData("Unit", "assets/Tileset/Unit", "assets/TilesetData/Unit.json");
+
+	loaded &= LoadEditorGraphicalData();
+
+	// Load special Asset data.
+	auto sprite = new olc::Sprite("assets/Tileset/Structure/Fort.png");
+	auto decal = new olc::Decal(sprite);
+	m_structureDecalDatabase.emplace("Fort", decal);
+	m_decalDatabase.emplace("Fort", decal);
+	m_spriteDatabase.push_back(sprite);
+
+	sprite = new olc::Sprite("assets/Tileset/Structure/Fort_2.png");
+	decal = new olc::Decal(sprite);
+	m_structureDecalDatabase.emplace("Fort_2", decal);
+	m_decalDatabase.emplace("Fort_2", decal);
+	m_spriteDatabase.push_back(sprite);
+
+	sprite = new olc::Sprite("assets/Editor/speaker_audio_sound_loud.png");
+	decal = new olc::Decal(sprite);
+	m_editorDecalDatabase.try_emplace("AudioOn", decal);
+	m_editorSpriteDatabase.push_back(sprite);
+	m_decalDatabase.emplace("AudioOn", decal);
+	m_spriteDatabase.push_back(sprite);
+
+	sprite = new olc::Sprite("assets/Editor/speaker_audio_sound_off.png");
+	decal = new olc::Decal(sprite);
+	m_editorDecalDatabase.try_emplace("AudioOff", decal);
+	m_editorSpriteDatabase.push_back(sprite);
+	m_decalDatabase.emplace("AudioOff", decal);
+	m_spriteDatabase.push_back(sprite);
+
+
+
+
+	// Load Audio assets
+	loaded &= LoadAudioData("assets/Audio/LoadDefinition.xml");
+
+	return loaded;
+}
+
+
 bool GameEditor::LoadEditorGraphicalData()
 {
 	auto sprite = new olc::Sprite("assets/Editor/pencil.png");
@@ -3408,6 +3505,10 @@ void GameEditor::DisplayShapePropertiesEditor(SShape* shape)
 	SCircle* circle = nullptr;
 	SRectangle* rect = nullptr;
 
+
+	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() - 600, 25.0f), ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
+
 	ImGui::Begin("Shape Properties", &g_bShapePropertyWindowOpen);
 	if (shape->Type() == 0)
 	{
@@ -3418,7 +3519,7 @@ void GameEditor::DisplayShapePropertiesEditor(SShape* shape)
 		// Display Dimension
 		DisplayShapeDimension(circle);
 		// Display Type
-		DisplayShapeType(circle);
+		DisplayShapeElementType(circle);
 	}
 	else if (shape->Type() == 1)
 	{
@@ -3429,7 +3530,7 @@ void GameEditor::DisplayShapePropertiesEditor(SShape* shape)
 		// Display Dimension
 		DisplayShapeDimension(rect);
 		// Display Type
-		DisplayShapeType(rect);
+		DisplayShapeElementType(rect);
 	}
 	ImGui::End();
 }
@@ -3468,13 +3569,59 @@ void GameEditor::DisplayShapeDimension(SRectangle* rect)
 	rect->h = h;
 }
 
-void GameEditor::DisplayShapeType(SCircle* circle)
+void GameEditor::DisplayShapeElementType(SCircle* circle)
 {
+	if (g_PrefabElementTypeVec.size() == 0) g_PrefabElementTypeVec.push_back("none");
 
+	int current_item_index = 0;
+	bool changed = false;
+	for (int i = 0; i < g_PrefabElementTypeVec.size(); i++)
+	{
+		if (g_PrefabElementTypeVec[i].compare(circle->ElementType()) == 0)
+		{
+			current_item_index = i;
+			break;
+		}
+	}
+
+	// Create the Combo window.
+	if (ImGui::BeginCombo("Element Type", circle->ElementType().c_str()))
+	{
+		for (int i = 0; i < g_PrefabElementTypeVec.size(); i++)
+		{
+			const bool is_selected = (current_item_index == i);
+
+			if (ImGui::Selectable(g_PrefabElementTypeVec[i].c_str(), is_selected))
+			{
+				current_item_index = i;
+				LOG_DBG_INFO("[{:.4f}][DisplayShapeElementType] Changed Prefab Element Type to \"{}\"", APP_RUN_TIME, g_PrefabElementTypeVec[current_item_index]);
+				changed = true;
+			}
+
+			if (is_selected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+		}
+		ImGui::EndCombo();
+	}
+	HelpMarkerWithoutQuestion("Change the Element Type of the Prefab Layout Element");
+
+	ImGui::SameLine();
+	if (ImGui::SmallButton("+"))
+	{
+		g_bAddingPrefabElementType = true;
+	}
+	HelpMarkerWithoutQuestion("Add a new Prefab Element Type");
+
+
+	// Apply the change.
+	if (changed)  circle->element_type  = g_PrefabElementTypeVec[current_item_index];
 }
 
-void GameEditor::DisplayShapeType(SRectangle* rect)
+void GameEditor::DisplayShapeElementType(SRectangle* rect)
 {
+	if (g_PrefabElementTypeVec.size() == 0) g_PrefabElementTypeVec.push_back("none");
 
 }
 
@@ -3591,6 +3738,60 @@ bool GameEditor::PointCircleCollision(float p1, float p2, float x, float y, floa
 		return true;
 	}
 	return false;
+}
+
+void GameEditor::DisplayAddingPrefabElementType()
+{
+	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenWidth() / 4.0f), ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
+	ImGui::Begin("Adding Prefab Element Type", &g_bAddingPrefabElementType);
+
+	static char new_prefab_element_type_name[64] = "";
+	ImGui::InputText("|", new_prefab_element_type_name, 64);
+	ImGui::SameLine();
+	if (ImGui::SmallButton("OK"))
+	{
+		// Check for sanity.
+		std::string name = std::string(new_prefab_element_type_name);
+
+		if(TryAddingPrefabElementType(name))
+		{
+			memset(&new_prefab_element_type_name, 0, sizeof(new_prefab_element_type_name));
+			g_bAddingPrefabElementType = false;
+		}
+	}
+
+	ImGui::End();
+}
+
+bool GameEditor::TryAddingPrefabElementType(const std::string& name)
+{
+	bool length = name.length() > 0;
+	bool duplicate = std::find(g_PrefabElementTypeVec.begin(), g_PrefabElementTypeVec.end(), name) != g_PrefabElementTypeVec.end();
+
+	if (length && !duplicate)
+	{
+		g_PrefabElementTypeVec.push_back(name);
+	}
+
+	if (!length)
+	{
+		LOG_DBG_ERROR("[{:.4f}][TryAddingPrefabElementType] Error adding Prefab Element Type \"{}\": Name has 0 length!", APP_RUN_TIME, name);
+		LOG_FILE_ERROR("[{:.4f}][TryAddingPrefabElementType]  Error adding Prefab Element Type \"{}\": Name has 0 length!", APP_RUN_TIME, name);
+	}
+	if (duplicate)
+	{
+		LOG_DBG_ERROR("[{:.4f}][TryAddingPrefabElementType] Error adding Prefab Element Type \"{}\": Name is duplicate!", APP_RUN_TIME, name);
+		LOG_FILE_ERROR("[{:.4f}][TryAddingPrefabElementType]  Error adding Prefab Element Type \"{}\": Name is duplicate!", APP_RUN_TIME, name);
+	}
+
+
+	if (duplicate || !length) return false;
+
+
+	LOG_DBG_INFO("[{:.4f}][TryAddingPrefabElementType] Successfully added Prefab Element Type \"{}\"!", APP_RUN_TIME, name);
+	LOG_FILE_INFO("[{:.4f}][TryAddingPrefabElementType]  Successfully added Prefab Element Type \"{}\"!", APP_RUN_TIME, name);
+	return true;
 }
 
 void GameEditor::DisplayUnitEditorPrefabPreview(Prefab* prefab, float x, float y, float w, float h)

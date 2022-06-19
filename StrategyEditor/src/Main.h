@@ -415,6 +415,7 @@ struct SShape
 {
 	virtual int Type() = 0;
 	virtual void Draw(GameEditor* editor) = 0;
+	virtual std::string ElementType() = 0;
 };
 
 struct SCircle : public SShape
@@ -423,10 +424,13 @@ struct SCircle : public SShape
 
 	void Draw(GameEditor* editor) override final;
 	int Type() override final { return type; }
+	std::string ElementType() override final { return element_type; }
+
 
 	int type = 0;
 	float x, y;
 	float r;
+	std::string element_type = "none";
 };
 
 struct SRectangle : public SShape
@@ -435,10 +439,12 @@ struct SRectangle : public SShape
 
 	void Draw(GameEditor* editor) override final;
 	int Type() override final { return type; }
+	std::string ElementType() override final { return element_type; }
 
 	int type = 1;
 	float x, y;
 	float w, h;
+	std::string element_type = "none";
 };
 
 
@@ -461,106 +467,8 @@ public:
 	}
 
 public:
-	bool OnUserCreate() override
-	{
-#ifdef DISTR
-		// Remove console in distribution build (Windows only).
-		ShowWindow(GetConsoleWindow(), SW_HIDE);
-#endif
-
-		// Initialize Random.
-		srand(time(0));
-
-		// Initialize Logging.
-		if (!Logger::Initialize()) return false;
-
-		// FMOD
-		SoundSystem::get()->Initialize();
-		/*
-		SoundSystem::get()->CreateChannelGroup("SFX");
-		SoundSystem::get()->CreateChannelGroup("Music");
-
-		auto tilex = 15.0f;
-		auto tiley = 5.0f;
-		SoundSystem::get()->CreateSoundOnChannel("assets/Audio/main_theme_battle.wav", "BattleTheme", "Music", false, { tilex, tiley, 0.0f});
-		*/
-
-		// Initialize Layered rendering.
-		m_GUILayer = CreateLayer();
-		EnableLayer(m_GUILayer, true);
-		SetLayerCustomRenderFunction(0, std::bind(&GameEditor::DrawUI, this));
-
-		// Initialize renderer
-		tv = olc::TileTransformedView({ ScreenWidth(), ScreenHeight() }, { DEFAULT_DECAL_SIZE_X, DEFAULT_DECAL_SIZE_Y });
-
-		m_visibleLayers.resize(256);
-		CreateRenderingLayer("Default", 0);
-		m_currentLayer = "Default";
-		m_visibleLayers[0] = 1;
-		
-		// Create the default audio source layer.
-		CreateRenderingLayer("AudioSourceLayer", 99);
-		m_visibleLayers[99] = 0;
-		m_PermanentLayersVec.push_back(99);
-
-		UpdateLayerSorting();
-
-
-
-
-		// Load Assets
-		bool loaded = LoadTilesetData("Forest", "assets/Tileset/Forest", "assets/TilesetData/Forest.json");
-		loaded &= LoadTilesetData("Ground","assets/Tileset/Ground", "assets/TilesetData/Ground.json");
-		loaded &= LoadTilesetData("Mountain","assets/Tileset/Mountain", "assets/TilesetData/Mountain.json");
-		loaded &= LoadTilesetData("Road","assets/Tileset/Road", "assets/TilesetData/Road.json");
-		loaded &= LoadTilesetData("Sea","assets/Tileset/Sea", "assets/TilesetData/Sea.json");
-		loaded &= LoadTilesetData("Bridge","assets/Tileset/Bridge", "assets/TilesetData/Bridge.json");
-		loaded &= LoadTilesetData("River", "assets/Tileset/River", "assets/TilesetData/River.json");
-		loaded &= LoadTilesetData("Structure", "assets/Tileset/Structure", "assets/TilesetData/Structure.json");
-		loaded &= LoadTilesetData("Wall", "assets/Tileset/Wall", "assets/TilesetData/Wall.json");
-		loaded &= LoadTilesetData("Hill", "assets/Tileset/Hill", "assets/TilesetData/Hill.json");
-		loaded &= LoadTilesetData("Unit", "assets/Tileset/Unit", "assets/TilesetData/Unit.json");
-
-		loaded &= LoadEditorGraphicalData();
-
-		// Load special Asset data.
-		auto sprite = new olc::Sprite("assets/Tileset/Structure/Fort.png");
-		auto decal = new olc::Decal(sprite);
-		m_structureDecalDatabase.emplace("Fort", decal);
-		m_decalDatabase.emplace("Fort", decal);
-		m_spriteDatabase.push_back(sprite);
-
-		sprite = new olc::Sprite("assets/Tileset/Structure/Fort_2.png");
-		decal = new olc::Decal(sprite);
-		m_structureDecalDatabase.emplace("Fort_2", decal);
-		m_decalDatabase.emplace("Fort_2", decal);
-		m_spriteDatabase.push_back(sprite);
-
-		sprite = new olc::Sprite("assets/Editor/speaker_audio_sound_loud.png");
-		decal = new olc::Decal(sprite);
-		m_editorDecalDatabase.try_emplace("AudioOn", decal);
-		m_editorSpriteDatabase.push_back(sprite);
-		m_decalDatabase.emplace("AudioOn", decal);
-		m_spriteDatabase.push_back(sprite);
-
-		sprite = new olc::Sprite("assets/Editor/speaker_audio_sound_off.png");
-		decal = new olc::Decal(sprite);
-		m_editorDecalDatabase.try_emplace("AudioOff", decal);
-		m_editorSpriteDatabase.push_back(sprite);
-		m_decalDatabase.emplace("AudioOff", decal);
-		m_spriteDatabase.push_back(sprite);
-
-
-
-
-		// Load Audio assets
-		loaded &= LoadAudioData("assets/Audio/LoadDefinition.xml");
-
-		return loaded;
-	}
-
+	bool OnUserCreate() override;
 	bool OnUserUpdate(float fElapsedTime) override;
-
 	bool OnUserDestroy() override final
 	{
 		SoundSystem::get()->Terminate();
@@ -695,14 +603,15 @@ private:
 	void DisplayShapePosition(SRectangle* rect);
 	void DisplayShapeDimension(SCircle* circle);
 	void DisplayShapeDimension(SRectangle* rect);
-	void DisplayShapeType(SCircle* circle);
-	void DisplayShapeType(SRectangle* rect);
+	void DisplayShapeElementType(SCircle* circle);
+	void DisplayShapeElementType(SRectangle* rect);
 	SShape* GetShapeAtMousePosition(float x, float y);
 	void CreateShapeAtMousePosition(int shape_index, float x, float y);
 	void DeleteShapeAtMousePosition(float x, float y);
 	bool PointRectangleCollision(float p1, float p2, float x, float y, float w, float h);
 	bool PointCircleCollision(float p1, float p2, float x, float y, float r);
-
+	void DisplayAddingPrefabElementType();
+	bool TryAddingPrefabElementType(const std::string& name);
 
 	void RenderMainFrameForUnitEditor();
 	void RenderMainFrame();
