@@ -216,6 +216,13 @@ bool GameEditor::OnUserCreate()
 	m_spriteDatabase.push_back(sprite);
 
 
+	// Load a 180x260 unit sprite for testing.
+	sprite = new olc::Sprite("assets/Tileset/Unit/figure_180x_260_framed_standard_96_spartan.png");
+	decal = new olc::Decal(sprite);
+	m_unitDecalDatabase.try_emplace("Spartan", decal);
+	m_decalDatabase.emplace("Spartan", decal);
+	m_spriteDatabase.push_back(sprite);
+	m_decalSizeDatabase["Spartan"] = { 180, 260 };
 
 
 	// Load Audio assets
@@ -914,13 +921,32 @@ void GameEditor::RenderMapobject(Entity* object)
 {
 	if (auto c = object->Get< ComponentSprite >("Sprite"); c)
 	{
-		// Offset for Units which are 180x180.
+		// Get the correct offset.
 		float offx = 0.0f, offy = 0.0f;
 		float scalex = 1.0f, scaley = 1.0f;
 		if (object->Get< ComponentUnit >("Unit"))
 		{
-			offy = DEFAULT_UNIT_DECAL_OFFSET_Y;
-			offx = DEFAULT_UNIT_DECAL_OFFSET_X;
+			bool normal_180x_180 = true;
+
+			auto sprite_name = c->m_decal;
+			auto sprite_dim = m_decalSizeDatabase[sprite_name];
+			if(sprite_dim.second > 180)
+			{
+				normal_180x_180 = false;
+			}
+
+			// Offset for Units which are 180x180.
+			if(normal_180x_180)
+			{
+				offy = DEFAULT_UNIT_DECAL_OFFSET_Y;
+				offx = DEFAULT_UNIT_DECAL_OFFSET_X;
+			}
+			// Offset for Units which are 180x260.
+			else
+			{
+				offy = BIGGER_UNIT_DECAL_OFFSET_Y;
+				offx = BIGGER_UNIT_DECAL_OFFSET_X;
+			}
 		}
 
 		tv.DrawDecal({ object->m_positionx + offx, object->m_positiony + offy }, m_decalDatabase[c->m_decal], { scalex, scaley });
@@ -3528,9 +3554,14 @@ void GameEditor::DisplayShapePropertiesEditor(SShape* shape)
 	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
 
 	ImGui::Begin("Shape Properties", &g_bShapePropertyWindowOpen);
+
+	bool root = shape->IsRootElement();
+	ImGui::Checkbox("Root Element", &root);
+
 	if (shape->Type() == 0)
 	{
 		circle = reinterpret_cast<SCircle*>(shape);
+		circle->root_element = root;
 
 		// Display Position
 		DisplayShapePosition(circle);
@@ -3542,6 +3573,7 @@ void GameEditor::DisplayShapePropertiesEditor(SShape* shape)
 	else if (shape->Type() == 1)
 	{
 		rect = reinterpret_cast<SRectangle*>(shape);
+		rect->root_element = root;
 
 		// Display Position
 		DisplayShapePosition(rect);

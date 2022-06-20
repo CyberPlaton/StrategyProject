@@ -154,6 +154,8 @@ STRING(major) \
 #define DEFAULT_DECAL_SIZE_Y 128
 #define DEFAULT_UNIT_DECAL_OFFSET_X -0.2f
 #define DEFAULT_UNIT_DECAL_OFFSET_Y -0.4f
+#define BIGGER_UNIT_DECAL_OFFSET_X -0.2f
+#define BIGGER_UNIT_DECAL_OFFSET_Y -1.0f
 
 
 #define DEFAULT_WIDGET_IMAGE_SIZE_X 16
@@ -416,6 +418,7 @@ struct SShape
 	virtual int Type() = 0;
 	virtual void Draw(GameEditor* editor) = 0;
 	virtual std::string ElementType() = 0;
+	virtual bool IsRootElement() = 0;
 };
 
 struct SCircle : public SShape
@@ -425,11 +428,14 @@ struct SCircle : public SShape
 	void Draw(GameEditor* editor) override final;
 	int Type() override final { return type; }
 	std::string ElementType() override final { return element_type; }
+	bool IsRootElement() override final { return root_element; }
 
 
 	int type = 0;
 	float x, y;
 	float r;
+
+	bool root_element = false;
 	std::string element_type = "none";
 };
 
@@ -440,10 +446,14 @@ struct SRectangle : public SShape
 	void Draw(GameEditor* editor) override final;
 	int Type() override final { return type; }
 	std::string ElementType() override final { return element_type; }
+	bool IsRootElement() override final { return root_element; }
+
 
 	int type = 1;
 	float x, y;
 	float w, h;
+
+	bool root_element = false;
 	std::string element_type = "none";
 };
 
