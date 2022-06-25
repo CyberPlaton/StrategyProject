@@ -216,15 +216,6 @@ bool GameEditor::OnUserCreate()
 	m_spriteDatabase.push_back(sprite);
 
 
-	// Load a 180x260 unit sprite for testing.
-	sprite = new olc::Sprite("assets/Tileset/Unit/figure_180x_260_framed_standard_96_spartan.png");
-	decal = new olc::Decal(sprite);
-	m_unitDecalDatabase.try_emplace("Spartan", decal);
-	m_decalDatabase.emplace("Spartan", decal);
-	m_spriteDatabase.push_back(sprite);
-	m_decalSizeDatabase["Spartan"] = { 180, 260 };
-
-
 	// Load Audio assets
 	loaded &= LoadAudioData("assets/Audio/LoadDefinition.xml");
 
@@ -1015,7 +1006,7 @@ bool GameEditor::LoadTilesetData(const std::string& database, const std::string&
 			{
 				m_riverDecalDatabase.try_emplace(name, decal);
 			}
-			else if (database.compare("Hill") == 0)
+			else if (database.compare("Hill") == 0)	
 			{
 				m_hillDecalDatabase.try_emplace(name, decal);
 			}
@@ -1027,6 +1018,7 @@ bool GameEditor::LoadTilesetData(const std::string& database, const std::string&
 
 			m_decalDatabase.try_emplace(name, decal);
 			m_spriteDatabase.push_back(sprite);
+			m_decalSizeDatabase.try_emplace(name, std::make_pair(sprite->width, sprite->height));
 		}
 	}
 	return true;
@@ -1293,8 +1285,7 @@ void GameEditor::HandleInput()
 				{
 				case 0:
 				{
-					// Circle.
-					CreateShapeAtMousePosition(0, (uint64_t)mousex, (uint64_t)mousey);
+					// Circle. Removed
 					break;
 				}
 				case 1:
@@ -3528,9 +3519,6 @@ void GameEditor::DisplayShapesWindow()
 	ImGui::RadioButton("None", &g_iCurrentSelectedShape, -1);
 	HelpMarkerWithoutQuestion("De-Select any shapes from being placed");
 
-	ImGui::RadioButton("Circle", &g_iCurrentSelectedShape, 0);
-	HelpMarkerWithoutQuestion("Select a circle to be placed as layout element");
-
 	ImGui::RadioButton("Rectangle", &g_iCurrentSelectedShape, 1);
 	HelpMarkerWithoutQuestion("Select a rectangle to be placed as layout element");
 
@@ -3545,8 +3533,6 @@ void GameEditor::DisplayShapePropertiesEditor(SShape* shape)
 		return;
 	}
 
-
-	SCircle* circle = nullptr;
 	SRectangle* rect = nullptr;
 
 
@@ -3560,20 +3546,12 @@ void GameEditor::DisplayShapePropertiesEditor(SShape* shape)
 
 	if (shape->Type() == 0)
 	{
-		circle = reinterpret_cast<SCircle*>(shape);
-		circle->root_element = root;
-
-		// Display Position
-		DisplayShapePosition(circle);
-		// Display Dimension
-		DisplayShapeDimension(circle);
-		// Display Type
-		DisplayShapeElementType(circle);
+		// Circle Removed.
 	}
 	else if (shape->Type() == 1)
 	{
 		rect = reinterpret_cast<SRectangle*>(shape);
-		rect->root_element = root;
+		rect->SetAsRoot(root);
 
 		// Display Position
 		DisplayShapePosition(rect);
@@ -3585,14 +3563,7 @@ void GameEditor::DisplayShapePropertiesEditor(SShape* shape)
 	ImGui::End();
 }
 
-void GameEditor::DisplayShapePosition(SCircle* circle)
-{
-	int x = circle->x, y = circle->y;
-	ImGui::SliderInt("X", &x, 1.0f, 256.0f, "%d", ImGuiSliderFlags_Logarithmic);
-	ImGui::SliderInt("Y", &y, 1.0f, 256.0f, "%d", ImGuiSliderFlags_Logarithmic);
-	circle->x = x;
-	circle->y = y;
-}
+
 
 void GameEditor::DisplayShapePosition(SRectangle* rect)
 {
@@ -3603,12 +3574,7 @@ void GameEditor::DisplayShapePosition(SRectangle* rect)
 	rect->y = y;
 }
 
-void GameEditor::DisplayShapeDimension(SCircle* circle)
-{
-	int r = circle->r;
-	ImGui::SliderInt("R", &r, 1.0f, 256.0f, "%d", ImGuiSliderFlags_Logarithmic);
-	circle->r = r;
-}
+
 
 void GameEditor::DisplayShapeDimension(SRectangle* rect)
 {
@@ -3619,15 +3585,16 @@ void GameEditor::DisplayShapeDimension(SRectangle* rect)
 	rect->h = h;
 }
 
-void GameEditor::DisplayShapeElementType(SCircle* circle)
+void GameEditor::DisplayShapeElementType(SRectangle* rect)
 {
 	if (g_PrefabElementTypeVec.size() == 0) g_PrefabElementTypeVec.push_back("none");
+
 
 	int current_item_index = 0;
 	bool changed = false;
 	for (int i = 0; i < g_PrefabElementTypeVec.size(); i++)
 	{
-		if (g_PrefabElementTypeVec[i].compare(circle->ElementType()) == 0)
+		if (g_PrefabElementTypeVec[i].compare(rect->ElementType()) == 0)
 		{
 			current_item_index = i;
 			break;
@@ -3635,7 +3602,7 @@ void GameEditor::DisplayShapeElementType(SCircle* circle)
 	}
 
 	// Create the Combo window.
-	if (ImGui::BeginCombo("Element Type", circle->ElementType().c_str()))
+	if (ImGui::BeginCombo("Element Type", rect->ElementType().c_str()))
 	{
 		for (int i = 0; i < g_PrefabElementTypeVec.size(); i++)
 		{
@@ -3666,13 +3633,7 @@ void GameEditor::DisplayShapeElementType(SCircle* circle)
 
 
 	// Apply the change.
-	if (changed)  circle->element_type  = g_PrefabElementTypeVec[current_item_index];
-}
-
-void GameEditor::DisplayShapeElementType(SRectangle* rect)
-{
-	if (g_PrefabElementTypeVec.size() == 0) g_PrefabElementTypeVec.push_back("none");
-
+	if (changed)  rect->element_type = g_PrefabElementTypeVec[current_item_index];
 }
 
 SShape* GameEditor::GetShapeAtMousePosition(float x, float y)
@@ -3681,12 +3642,7 @@ SShape* GameEditor::GetShapeAtMousePosition(float x, float y)
 	{
 		if (shape->Type() == 0)
 		{
-			// Circle.
-			auto circle = reinterpret_cast<SCircle*>(shape);
-			if (PointCircleCollision(x, y, circle->x, circle->y, circle->r))
-			{
-				return shape;
-			}
+			// Circle. Removed.
 		}
 		else if (shape->Type() == 1)
 		{
@@ -3708,7 +3664,7 @@ void GameEditor::CreateShapeAtMousePosition(int shape_index, float x, float y)
 	{
 	case 0:
 	{
-		shape = new SCircle(x, y, 1);
+		// Circle removed.
 		break;
 	}
 	case 1:
@@ -3732,16 +3688,7 @@ void GameEditor::DeleteShapeAtMousePosition(float x, float y)
 	{
 		if(shape->Type() == 0)
 		{
-			// Circle.
-			auto circle = reinterpret_cast<SCircle*>(shape);
-			if(PointCircleCollision(x, y, circle->x, circle->y, circle->r))
-			{
-				// Delete Shape.
-				delete shape;
-				circle = nullptr;
-				m_currentLayoutTemplateVec.erase(m_currentLayoutTemplateVec.begin() + index);
-				return;
-			}
+			// Circle. Removed.
 		}
 		else if(shape->Type() == 1)
 		{
@@ -3877,7 +3824,55 @@ bool GameEditor::DisplaySavingPrefabLayoutElement()
 
 bool GameEditor::ExportPrefabLayoutTemplate(const std::string& filepath)
 {
-	return false;
+	tinyxml2::XMLDocument doc;
+	auto root = doc.NewElement("PrefabLayoutTemplate");
+	doc.InsertEndChild(root);
+
+	// Find the Root.
+	SShape* root_element = nullptr;
+	for(auto & s: m_currentLayoutTemplateVec)
+	{
+		if(s->IsRootElement())
+		{
+			root_element = s;
+			break;
+		}
+	}
+
+	// Add Root to XML.
+	auto root_element_xml = root->InsertNewChildElement("Root");
+	root_element_xml->SetAttribute("name", root_element->ElementType().c_str());
+	root_element_xml->SetAttribute("x", root_element->PositionX());
+	root_element_xml->SetAttribute("y", root_element->PositionY());
+	root_element_xml->SetAttribute("w", root_element->WidthX());
+	root_element_xml->SetAttribute("h", root_element->WidthY());
+
+
+	// Add all other elements to XML.
+	for(auto& s: m_currentLayoutTemplateVec)
+	{
+		if(!s->IsRootElement())
+		{
+			float offsetx = s->PositionX() - root_element->PositionX();
+			float offsety = s->PositionY() - root_element->PositionY();
+
+			auto element = root_element_xml->InsertNewChildElement("LayoutElement");
+
+			element->SetAttribute("name", s->ElementType().c_str());
+			element->SetAttribute("offsetx", offsetx);
+			element->SetAttribute("offsety", offsety);
+			element->SetAttribute("w", s->WidthX());
+			element->SetAttribute("h", s->WidthY());
+
+		}
+	}
+
+
+
+	std::string path = "assets/TilesetData/" + filepath + ".xml";
+	doc.SaveFile(path.c_str());
+
+	return true;
 }
 
 bool GameEditor::DisplayLoadingPrefabLayoutElement()
@@ -3892,6 +3887,7 @@ bool GameEditor::DisplayLoadingPrefabLayoutElement()
 	static char load_prefab_layout_template_name[64] = "";
 	ImGui::InputText("|", load_prefab_layout_template_name, 64);
 	ImGui::SameLine();
+	std::string name;
 	if (ImGui::SmallButton("OK"))
 	{
 		// Check for sanity.
@@ -3901,6 +3897,22 @@ bool GameEditor::DisplayLoadingPrefabLayoutElement()
 		if (length)
 		{
 			success = ImportPrefabLayoutTemplate(name);
+		}
+		else
+		{
+			LOG_DBG_ERROR("[{:.4f}][ImportPrefabLayoutTemplate] Invalid Filepath to import PrefabLayoutTemplate: \"{}\"!", APP_RUN_TIME, name);
+			LOG_FILE_ERROR("[{:.4f}][ImportPrefabLayoutTemplate] Invalid Filepath to import PrefabLayoutTemplate: \"{}\"!", APP_RUN_TIME, name);
+		}
+
+		if (!success)
+		{
+			LOG_DBG_ERROR("[{:.4f}][ImportPrefabLayoutTemplate] Could not import PrefabLayoutTemplate \"{}\"!", APP_RUN_TIME, name);
+			LOG_FILE_ERROR("[{:.4f}][ImportPrefabLayoutTemplate] Could not import PrefabLayoutTemplate \"{}\"!", APP_RUN_TIME, name);
+		}
+		else
+		{
+			LOG_DBG_INFO("[{:.4f}][ImportPrefabLayoutTemplate] Successfully imported PrefabLayoutTemplate \"{}\"!", APP_RUN_TIME, name);
+			LOG_FILE_INFO("[{:.4f}][ImportPrefabLayoutTemplate] Successfully imported PrefabLayoutTemplate \"{}\"!", APP_RUN_TIME, name);
 		}
 		memset(&load_prefab_layout_template_name, 0, sizeof(load_prefab_layout_template_name));
 		g_bLoadPrefabLayoutTemplate = false;
@@ -3913,7 +3925,56 @@ bool GameEditor::DisplayLoadingPrefabLayoutElement()
 
 bool GameEditor::ImportPrefabLayoutTemplate(const std::string& filepath)
 {
-	return false;
+	std::string path = "assets/TilesetData/" + filepath + ".xml";
+
+
+	tinyxml2::XMLDocument doc;
+	if (doc.LoadFile(path.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		doc.Clear();
+		return false;
+	}
+
+	auto root = doc.RootElement();
+
+	auto root_element = root->FirstChildElement("Root");
+	auto x = root_element->FloatAttribute("x");
+	auto y = root_element->FloatAttribute("y");
+	auto w = root_element->FloatAttribute("w");
+	auto h = root_element->FloatAttribute("h");
+	auto type = root_element->Attribute("name");
+
+
+	// Add Root element.
+	auto root_shape = new SRectangle(x, y, w, h);
+	root_shape->SetAsRoot(true);
+	root_shape->SetElementType(type);
+
+	m_currentLayoutTemplateVec.push_back(root_shape);
+	g_PrefabElementTypeVec.push_back(std::string(type));
+
+	auto layout_element = root_element->FirstChildElement("LayoutElement");
+	while(layout_element)
+	{
+		// Add all other elements.
+		auto offsetx = layout_element->FloatAttribute("offsetx") + x;
+		auto offsety = layout_element->FloatAttribute("offsety") + y;
+		auto w = layout_element->FloatAttribute("w");
+		auto h = layout_element->FloatAttribute("h");
+		auto type = layout_element->Attribute("name");
+
+		auto shape = new SRectangle(offsetx, offsety, w, h);
+		shape->SetAsRoot(false);
+		shape->SetElementType(std::string(type));
+
+		m_currentLayoutTemplateVec.push_back(shape);
+		g_PrefabElementTypeVec.push_back(std::string(type));
+
+		layout_element = layout_element->NextSiblingElement("LayoutElement");
+	}
+
+
+	return true;
 }
 
 void GameEditor::DisplayUnitEditorPrefabPreview(Prefab* prefab, float x, float y, float w, float h)
@@ -4155,9 +4216,4 @@ Tree* PrefabTree::Node(const std::string& name)
 void SRectangle::Draw(GameEditor* editor)
 {
 	editor->tv.DrawDecal(olc::vf2d(x, y), editor->m_editorDecalDatabase["Rect"], olc::vf2d(w, h));
-}
-
-void SCircle::Draw(GameEditor* editor)
-{
-	editor->tv.DrawDecal(olc::vf2d(x, y), editor->m_editorDecalDatabase["Circle"], olc::vf2d(r, r));
 }

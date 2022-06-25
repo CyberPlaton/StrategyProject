@@ -75,6 +75,7 @@
 *				 - Increased the draw distance by 10 map tiles.
 *			 o ChannelGroup Control now creates an FMOD representation and allows for volume customization.
 * 
+*
 * TODO: Ambient Audio "Editor" has to be update to be based on FMOD,
 *		as soon as the Audio Engine with FMOD is completed.
 *		After this the "Editor" can be extended based on FMOD to utilize 
@@ -419,25 +420,16 @@ struct SShape
 	virtual void Draw(GameEditor* editor) = 0;
 	virtual std::string ElementType() = 0;
 	virtual bool IsRootElement() = 0;
+
+	virtual float PositionX() = 0;
+	virtual float PositionY() = 0;
+	virtual float WidthX() = 0;
+	virtual float WidthY() = 0;
+	virtual void SetElementType(const std::string&) = 0;
+
+	virtual void SetAsRoot(bool) = 0;
 };
 
-struct SCircle : public SShape
-{
-	SCircle(float x, float y, float r) : x(x), y(y), r(r){}
-
-	void Draw(GameEditor* editor) override final;
-	int Type() override final { return type; }
-	std::string ElementType() override final { return element_type; }
-	bool IsRootElement() override final { return root_element; }
-
-
-	int type = 0;
-	float x, y;
-	float r;
-
-	bool root_element = false;
-	std::string element_type = "none";
-};
 
 struct SRectangle : public SShape
 {
@@ -447,6 +439,12 @@ struct SRectangle : public SShape
 	int Type() override final { return type; }
 	std::string ElementType() override final { return element_type; }
 	bool IsRootElement() override final { return root_element; }
+	float PositionX() { return x; }
+	float PositionY() { return y; }
+	void SetAsRoot(bool v) { root_element = v; }
+	float WidthX() {return w;}
+	float WidthY() { return h; }
+	void SetElementType(const std::string& name) { element_type = name;}
 
 
 	int type = 1;
@@ -459,17 +457,12 @@ struct SRectangle : public SShape
 
 
 
-
-
-
 // Utility. Create a hook function to actually call the GameEditors OnUserUpdate function.
 void MainRender(GameEditor* editor);
 
 class GameEditor : public olc::PixelGameEngine
 {
 	friend class SRectangle;
-	friend class SCircle;
-
 public:
 	GameEditor() : pge_imgui(false)
 	{
@@ -609,11 +602,8 @@ private:
 	// GUI UNIT TEMPLATE LAYOUT EDITOR
 	void DisplayShapesWindow();
 	void DisplayShapePropertiesEditor(SShape* shape);
-	void DisplayShapePosition(SCircle* circle);
 	void DisplayShapePosition(SRectangle* rect);
-	void DisplayShapeDimension(SCircle* circle);
 	void DisplayShapeDimension(SRectangle* rect);
-	void DisplayShapeElementType(SCircle* circle);
 	void DisplayShapeElementType(SRectangle* rect);
 	SShape* GetShapeAtMousePosition(float x, float y);
 	void CreateShapeAtMousePosition(int shape_index, float x, float y);
