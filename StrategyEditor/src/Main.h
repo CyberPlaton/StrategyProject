@@ -581,15 +581,6 @@ private:
 
 	// GUI UNIT EDITOR UTIL
 	void DisplayUnitEditor();
-	void DisplaySceneEditingTree(Prefab* prefab);
-	void DisplaySceneEditingNode(PrefabTree* node);
-	void DisplayUnitEditorMainMenu();
-	void DisplayUnitEditorSelectedPrefabElementEditor(Prefab* prefab, float x, float y, float w, float h);
-	void DisplayUnitEditorPrefabPreview(Prefab* prefab, float x, float y, float w, float h);
-	void DisplayAddRemovePrefabElementOptions(PrefabTree* node, bool root = false);
-	void DisplayAddingPrefabElementToPrefabTree(Prefab* prefab, PrefabTree* node);
-	void RemovePrefabElementFromPrefabTree(Prefab* prefab, PrefabTree* node);
-	void DisplayAddingComponentToPrefabElementEntity(PrefabTree* element);
 	// GUI UNIT ELEMENT EDITOR COMPONENT DISPLAY UTIL
 	void DisplayPrefabPositionComponent(PrefabTree::Position* component);
 	void DisplayPrefabStaticSpriteComponent(PrefabTree::StaticSprite* component);
