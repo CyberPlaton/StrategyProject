@@ -15,12 +15,13 @@ static bool g_bShapePropertyWindowOpen = false;
 static SShape* g_pCurrentDisplayedShape = nullptr;
 static bool g_bLayoutTemplateEditorOpen = false;
 static bool g_bUnitEditorOpen = false;
-static Prefab* g_pCurrentEditedPrefab = nullptr;
-static std::string g_sSelectedPrefabElement = "none";
-static bool g_bAddingChildToPrefabTreeNode = false;
-static PrefabTree* g_pAddingChildToPrefabTreeNode = nullptr;
-static bool g_bAddingComponentToPrefabElement = false;
-static PrefabTree* g_pAddingComponentToPrefabElement = nullptr;
+static std::string g_sUnitEditorCurrentUnitSprite = "none";
+//static Prefab* g_pCurrentEditedPrefab = nullptr;
+//static std::string g_sSelectedPrefabElement = "none";
+//static bool g_bAddingChildToPrefabTreeNode = false;
+//static PrefabTree* g_pAddingChildToPrefabTreeNode = nullptr;
+//static bool g_bAddingComponentToPrefabElement = false;
+//static PrefabTree* g_pAddingComponentToPrefabElement = nullptr;
 
 static bool g_bBackgroundAudioEditorOpen = false;
 static bool g_bAudioSoundChannelEditorOpen = false;
@@ -211,7 +212,14 @@ bool GameEditor::OnUserCreate()
 	m_decalDatabase.emplace("AudioOff", decal);
 	m_spriteDatabase.push_back(sprite);
 
-
+	// Load Testing Decal.
+	sprite = new olc::Sprite("assets/Tileset/Unit/figure_180x260_framed_standard_112_mounted_knight.png");
+	decal = new olc::Decal(sprite);
+	m_unitDecalDatabase.try_emplace("Human_Mounted_Knight", decal);
+	m_spriteDatabase.push_back(sprite);
+	m_decalDatabase.emplace("Human_Mounted_Knight", decal);
+	m_decalSizeDatabase.try_emplace("Human_Mounted_Knight", std::make_pair(180, 260));
+	
 	// Load Audio assets
 	loaded &= LoadAudioData("assets/Audio/LoadDefinition.xml");
 
@@ -3097,141 +3105,219 @@ void GameEditor::DisplayUnitEditor()
 	auto prefab_element_window_width = 300.f;
 	auto main_window_height = ScreenHeight() - 50.0f;
 
+	ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDecoration;
+
 	ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Appearing);
 	ImGui::SetNextWindowSize(ImVec2(scene_edit_window_width + prefab_preview_window_width + prefab_element_window_width + 35.0f, main_window_height), ImGuiCond_Appearing);
-	ImGui::Begin(name.c_str(), &g_bUnitEditorOpen);
+	ImGui::Begin(name.c_str(), &g_bUnitEditorOpen, flags);
+
+	// Display all editing windows.
+	
+	ImGui::BeginChild("Stats", ImVec2(scene_edit_window_width, main_window_height - 1.0f), true);
+	DisplayUnitEditorMainMenu();
+	DisplayUnitEditorNameEdit();
+	DisplayUnitEditorHealthEdit();
+	DisplayUnitEditorActionPointsEdit();
+	DisplayUnitEditorLevelEdit();
+	DisplayUnitEditorArmorEdit();
+	DisplayUnitEditorAttackEdit();
+	DisplayUnitEditorDefenseEdit();
+	DisplayUnitEditorMovementTypeEdit();
+	DisplayUnitEditorRaceEdit();
+	DisplayUnitEditorBuildingRequirementsEdit();
+	DisplayUnitEditorGoldCostEdit();
+	DisplayUnitEditorStartingStatusEdit();
+	DisplayUnitEditorAbilitiesEdit();
+	DisplayUnitEditorUnitSpriteEdit();
+	ImGui::EndChild();
+
+	DisplayUnitEditorUnitSprite();
+
 	ImGui::End();
 }
 
 
-void GameEditor::DisplayPrefabPositionComponent(PrefabTree::Position* component)
+void GameEditor::DisplayUnitEditorMainMenu()
 {
-	if (!component) return;
+	if (ImGui::SmallButton("New"))
+	{
 
-	float x, y;
-	x = component->m_xpos;
-	y = component->m_ypos;
-	ImGui::SliderFloat("X", &x, -256.0f, 256.0f, "%.4f", 1.0f);
-	ImGui::SliderFloat("Y", &y, -256.0f, 256.0f, "%.4f", 1.0f);
-	component->m_xpos = x;
-	component->m_ypos = y;
+	}
+	ImGui::SameLine();
+	if(ImGui::SmallButton("Save As..."))
+	{
+
+	}
+	ImGui::SameLine();
+	if (ImGui::SmallButton("Load From..."))
+	{
+
+	}
+	ImGui::SameLine();
+	ImGui::SetCursorPosX(ImGui::GetWindowSize().x - 25.0f);
+	if (ImGui::SmallButton("X"))
+	{
+		ToggleMenuItem(g_bUnitEditorOpen);
+	}
+	ImGui::Separator();
+	ImGui::Separator();
 }
 
-void GameEditor::DisplayPrefabStaticSpriteComponent(PrefabTree::StaticSprite* component)
+void GameEditor::DisplayUnitEditorNameEdit()
 {
-	if (!component) return;
-
-	// Create an array for the imgui combo
-	std::string combo_preview_value = "##none";
-	std::vector< std::string > decal_vec;
-
-	// Add Allowed sprite databases here.
-	// Units.
-	for (auto& d : m_unitDecalDatabase) decal_vec.push_back(d.first);
-	// Banners.
-	// Status Indicators.
-	// Unit UI.
-
-
-	int current_item_index = 0;
-	bool changed = false;
-
-	if(component->m_decal.compare("none") != 0)
+	if(ImGui::SmallButton("Name"))
 	{
-		// We have a decal.
-		for(int i = 0; i < decal_vec.size(); i++)
-		{
-			if (decal_vec[i].compare(component->m_decal) == 0)
-			{
-				combo_preview_value = component->m_decal;
-				current_item_index = i; break;
-			}
-		}
-	}
-
-	if(ImGui::BeginCombo("Sprite", combo_preview_value.c_str()))
-	{
-		for(int i = 0; i < decal_vec.size(); i++)
-		{
-			const bool is_selected = (current_item_index == i);
-
-			if(ImGui::Selectable(decal_vec[i].c_str(), is_selected))
-			{
-				current_item_index = i;
-				changed = true;
-			}
-
-			if (is_selected) ImGui::SetItemDefaultFocus();
-		}
-		ImGui::EndCombo();
-	}
-	HelpMarkerWithoutQuestion("Change the Sprite of the Prefab Element. The preview will be exported to the final prefab.");
-
-
-	// Apply Change.
-	if(changed)
-	{
-		component->m_decal = decal_vec[current_item_index];
-		LOG_DBG_INFO("[{:.4f}][DisplayPrefabStaticSpriteComponent] StaticSprite set to \"{}\"", APP_RUN_TIME, component->m_decal);
 	}
 }
 
-void GameEditor::DisplayPrefabAnimatedSpriteComponent(PrefabTree::AnimatedSprite* component)
+void GameEditor::DisplayUnitEditorHealthEdit()
 {
-	if (!component) return;
-
-	// Create an array for the imgui combo
-	std::string combo_preview_value = "##none";
-	std::vector< std::string > anim_decal_vec;
-
-	// Add Allowed sprite databases here.
-	// Units.
-	// Banners.
-	// Status Indicators.
-	// Unit UI.
-
-
-	int current_item_index = 0;
-	bool changed = false;
-
-	if (component->m_decal.compare("none") != 0)
+	if (ImGui::SmallButton("Health"))
 	{
-		// We have a decal.
-		for (int i = 0; i < anim_decal_vec.size(); i++)
+	}
+}
+
+void GameEditor::DisplayUnitEditorActionPointsEdit()
+{
+	if (ImGui::SmallButton("Action Points"))
+	{
+	}
+}
+
+void GameEditor::DisplayUnitEditorLevelEdit()
+{
+	if (ImGui::SmallButton("Level"))
+	{
+	}
+}
+
+void GameEditor::DisplayUnitEditorArmorEdit()
+{
+	if (ImGui::SmallButton("Armor"))
+	{
+	}
+}
+
+void GameEditor::DisplayUnitEditorAttackEdit()
+{
+	if (ImGui::SmallButton("Attack"))
+	{
+	}
+}
+
+void GameEditor::DisplayUnitEditorDefenseEdit()
+{
+	if (ImGui::SmallButton("Defense"))
+	{
+	}
+}
+
+void GameEditor::DisplayUnitEditorMovementTypeEdit()
+{
+	if (ImGui::SmallButton("Movement Type"))
+	{
+	}
+}
+
+void GameEditor::DisplayUnitEditorRaceEdit()
+{
+	if (ImGui::SmallButton("Race"))
+	{
+	}
+}
+
+void GameEditor::DisplayUnitEditorBuildingRequirementsEdit()
+{
+	if (ImGui::SmallButton("Building Requirements"))
+	{
+	}
+}
+
+void GameEditor::DisplayUnitEditorGoldCostEdit()
+{
+	if (ImGui::SmallButton("Gold Cost"))
+	{
+	}
+}
+
+void GameEditor::DisplayUnitEditorStartingStatusEdit()
+{
+	if (ImGui::SmallButton("Starting Status"))
+	{
+	}
+}
+
+void GameEditor::DisplayUnitEditorAbilitiesEdit()
+{
+	if (ImGui::SmallButton("Abilities"))
+	{
+	}
+}
+
+void GameEditor::DisplayUnitEditorUnitSpriteEdit()
+{
+	// Display Drop-Down button to select a sprite.
+	std::vector< std::string > unit_sprite_vec; // TODO Doing this every time is costly...
+
+	// Find our current item index in the vector.
+	int current_item_index = 0;
+	int index = 0;
+	bool changed = false;
+	for (auto& pair : m_unitDecalDatabase)
+	{
+		unit_sprite_vec.push_back(pair.first);
+	}
+	for (int i = 0; i < unit_sprite_vec.size(); i++)
+	{
+		if (unit_sprite_vec[i].compare(g_sUnitEditorCurrentUnitSprite) == 0)
 		{
-			if (anim_decal_vec[i].compare(component->m_decal) == 0)
-			{
-				combo_preview_value = component->m_decal;
-				current_item_index = i; break;
-			}
+			current_item_index = i;
+			break;
 		}
 	}
 
-	if (ImGui::BeginCombo("Sprite", combo_preview_value.c_str()))
+	// Create the Combo window.
+	if (ImGui::BeginCombo("Unit Sprite", g_sUnitEditorCurrentUnitSprite.c_str()))
 	{
-		for (int i = 0; i < anim_decal_vec.size(); i++)
+		for (int i = 0; i < unit_sprite_vec.size(); i++)
 		{
 			const bool is_selected = (current_item_index == i);
 
-			if (ImGui::Selectable(anim_decal_vec[i].c_str(), is_selected))
+			if (ImGui::Selectable(unit_sprite_vec[i].c_str(), is_selected))
 			{
 				current_item_index = i;
+				//LOG_DBG_INFO("[{:.4f}][DisplayChannelGroupChanger] Changed Sound Channel Group to \"{}\"", APP_RUN_TIME, sound_channel_group_vec[current_item_index]);
 				changed = true;
 			}
 
-			if (is_selected) ImGui::SetItemDefaultFocus();
+			if (is_selected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
 		}
 		ImGui::EndCombo();
 	}
-	HelpMarkerWithoutQuestion("Change the Animated Sprite of the Prefab Element. The preview will be exported to the final prefab.");
+	HelpMarkerWithoutQuestion("TODO");
 
+	// Apply the change.
+	if (changed) g_sUnitEditorCurrentUnitSprite = unit_sprite_vec[current_item_index];
 
-	// Apply Change.
-	if (changed)
+}
+
+void GameEditor::DisplayUnitEditorUnitSprite()
+{
+	// Do not render if we have not selected still.
+	if (g_sUnitEditorCurrentUnitSprite.compare("none") == 0)
 	{
-		component->m_decal = anim_decal_vec[current_item_index];
-		LOG_DBG_INFO("[{:.4f}][DisplayPrefabAnimatedSpriteComponent] AnimatedSprite set to \"{}\"", APP_RUN_TIME, component->m_decal);
+		return;
 	}
+
+	float spite_width = m_decalSizeDatabase[g_sUnitEditorCurrentUnitSprite].first;
+	float spite_height = m_decalSizeDatabase[g_sUnitEditorCurrentUnitSprite].second;
+	auto wnd_size = ImGui::GetWindowSize();
+	auto position = ImVec2( (wnd_size.x - spite_width) * 0.5f, (wnd_size.y - spite_height) * 0.25f);
+	ImGui::SetCursorPos(position);
+	ImGui::Image((ImTextureID)m_unitDecalDatabase[g_sUnitEditorCurrentUnitSprite]->id, ImVec2(spite_width * 2, spite_height * 2));
 }
 
 void GameEditor::AddComponentToPrefabElement(PrefabTree* element, const std::string& component_name)

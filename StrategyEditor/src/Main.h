@@ -581,10 +581,23 @@ private:
 
 	// GUI UNIT EDITOR UTIL
 	void DisplayUnitEditor();
-	// GUI UNIT ELEMENT EDITOR COMPONENT DISPLAY UTIL
-	void DisplayPrefabPositionComponent(PrefabTree::Position* component);
-	void DisplayPrefabStaticSpriteComponent(PrefabTree::StaticSprite* component);
-	void DisplayPrefabAnimatedSpriteComponent(PrefabTree::AnimatedSprite* component);
+	void DisplayUnitEditorMainMenu();
+	void DisplayUnitEditorNameEdit();
+	void DisplayUnitEditorHealthEdit();
+	void DisplayUnitEditorActionPointsEdit();
+	void DisplayUnitEditorLevelEdit();
+	void DisplayUnitEditorArmorEdit();
+	void DisplayUnitEditorAttackEdit();
+	void DisplayUnitEditorDefenseEdit();
+	void DisplayUnitEditorMovementTypeEdit();
+	void DisplayUnitEditorRaceEdit();
+	void DisplayUnitEditorBuildingRequirementsEdit();
+	void DisplayUnitEditorGoldCostEdit();
+	void DisplayUnitEditorStartingStatusEdit();
+	void DisplayUnitEditorAbilitiesEdit();
+	void DisplayUnitEditorUnitSpriteEdit();
+	void DisplayUnitEditorUnitSprite();
+
 
 	// GUI UNIT EDITOR HELPER
 	void AddComponentToPrefabElement(PrefabTree* element, const std::string& component_name);
