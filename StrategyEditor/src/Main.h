@@ -526,6 +526,10 @@ private:
 	bool CreateAndSubmitSoundChannelTree(Tree* tree);
 
 	// GUI UNIT EDITOR UTIL
+	bool ExportUnitPrefab(const std::string& filepath, SPrefab* prefab);
+	bool ImportUnitPrefab(const std::string& filepath, SPrefab* prefab);
+	void DisplayUnitPrefabExportWindow(SPrefab* prefab);
+
 	void DisplayUnitEditor();
 	void DisplayUnitEditorMainMenu();
 	void DisplayUnitEditorNameEdit();
@@ -569,7 +573,7 @@ private:
 	void UpdateEntities();
 
 	// UTIL
-	bool LoadTilesetData(const std::string& database, const std::string& tilesetpath, const std::string& datapath);
+	bool LoadTilesetData(const std::string& database, const std::string& tilesetpath, const std::string& datapath, bool verbose = false);
 	bool LoadEditorGraphicalData();
 	bool LoadAudioData(const std::string& filepath);
 	void ToggleMenuItem(bool& item);

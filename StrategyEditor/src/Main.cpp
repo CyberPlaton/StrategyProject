@@ -5,7 +5,9 @@ static bool g_bDecalDatabaseOpen = true;
 static bool g_bEntityDatabaseOpen = true;
 static bool g_bEntityEditorOpen = false;
 
+static bool g_bExportingUnitPrefab = false;
 static SPrefab* g_pCurrentEditedPrefab = nullptr;
+static SPrefab* g_pExportedPrefab = nullptr;
 static ImGuiID g_idUnitEditorElementID = 20000;
 static const ImU32 u32_one = 1;
 static bool g_bSavingPrefabLayoutTemplate = false;
@@ -124,6 +126,8 @@ void GameEditor::RenderGUI()
 		if(g_bUnitEditorOpen)
 		{
 			DisplayUnitEditor();
+			// Prefab Export Menu.
+			if (g_bExportingUnitPrefab)  DisplayUnitPrefabExportWindow(g_pExportedPrefab);
 		}
 	}
 }
@@ -179,7 +183,7 @@ bool GameEditor::OnUserCreate()
 	loaded &= LoadTilesetData("Structure", "assets/Tileset/Structure", "assets/TilesetData/Structure.json");
 	loaded &= LoadTilesetData("Wall", "assets/Tileset/Wall", "assets/TilesetData/Wall.json");
 	loaded &= LoadTilesetData("Hill", "assets/Tileset/Hill", "assets/TilesetData/Hill.json");
-	loaded &= LoadTilesetData("Unit", "assets/Tileset/Unit", "assets/TilesetData/Unit.json");
+	loaded &= LoadTilesetData("Unit", "assets/Tileset/Unit", "assets/TilesetData/Unit.json", true);
 
 	loaded &= LoadEditorGraphicalData();
 
@@ -949,12 +953,18 @@ void GameEditor::RenderMapobject(Entity* object)
 		tv.DrawStringDecal({ object->m_positionx, object->m_positiony }, object->m_name, olc::WHITE, { 1.0f, 1.0f });
 	}
 }
-bool GameEditor::LoadTilesetData(const std::string& database, const std::string& tilesetpath, const std::string& datapath)
+bool GameEditor::LoadTilesetData(const std::string& database, const std::string& tilesetpath, const std::string& datapath, bool verbose)
 {
 	rapidjson::Document doc;
 	std::ifstream ifs(datapath.c_str());
 	rapidjson::IStreamWrapper isw(ifs);
 	doc.ParseStream(isw);
+
+	if(verbose)
+	{
+		LOG_DBG_INFO("[{:.4f}][LoadTilesetData] Loading Tileset \"{}\"!", APP_RUN_TIME, tilesetpath);
+		LOG_FILE_INFO("[{:.4f}][LoadTilesetData] Loading Tileset \"{}\"!", APP_RUN_TIME, tilesetpath);
+	}
 
 	const auto& at = doc["textures"];
 	for (const auto& tex : at.GetArray())
@@ -967,7 +977,17 @@ bool GameEditor::LoadTilesetData(const std::string& database, const std::string&
 			// Here we only need the Name and the path in order to load the image
 			// as an OLC sprite and create a decal...
 			auto sprite = new olc::Sprite(tilesetpath + "/" + name + ".png");
-			if (sprite->width == 0 && sprite->height == 0) continue;
+			if (sprite->width == 0 && sprite->height == 0)
+			{
+				if(verbose)
+				{
+					LOG_DBG_ERROR("[{:.4f}][LoadTilesetData] Error loading sprite \"{}\" at \"{}\"!", APP_RUN_TIME, name, tilesetpath + "/" + name + ".png");
+					LOG_FILE_ERROR("[{:.4f}][LoadTilesetData] Error loading sprite \"{}\" at \"{}\"!", APP_RUN_TIME, name, tilesetpath + "/" + name + ".png");
+				}
+				continue;
+			}
+
+
 			auto decal = new olc::Decal(sprite);
 
 			SetDecalSize(name, sprite->width, sprite->height);
@@ -1021,6 +1041,12 @@ bool GameEditor::LoadTilesetData(const std::string& database, const std::string&
 			m_decalDatabase.try_emplace(name, decal);
 			m_spriteDatabase.push_back(sprite);
 			m_decalSizeDatabase.try_emplace(name, std::make_pair(sprite->width, sprite->height));
+
+			if(verbose)
+			{
+				LOG_DBG_INFO("[{:.4f}][LoadTilesetData] Success loading sprite \"{}\" at \"{}\"!", APP_RUN_TIME, name, tilesetpath + "/" + name + ".png");
+				LOG_FILE_INFO("[{:.4f}][LoadTilesetData] Success loading sprite \"{}\" at \"{}\"!", APP_RUN_TIME, name, tilesetpath + "/" + name + ".png");
+			}
 		}
 	}
 	return true;
@@ -3095,6 +3121,174 @@ bool GameEditor::CreateAndSubmitSoundChannelTree(Tree* tree)
 	return result;
 }
 
+bool GameEditor::ExportUnitPrefab(const std::string& filepath, SPrefab* prefab)
+{
+	tinyxml2::XMLDocument doc;
+	auto xmlRoot = doc.NewElement("UnitPrefab");
+	doc.InsertEndChild(xmlRoot);
+
+	auto data = xmlRoot->InsertNewChildElement("Data");
+
+
+	data->SetAttribute("name", prefab->prefab_name.c_str());
+	data->SetAttribute("layout_template", prefab->layout_template_name.c_str());
+	data->SetAttribute("health", prefab->health);
+	data->SetAttribute("action_points", prefab->action_points);
+	data->SetAttribute("level", prefab->level);
+	data->SetAttribute("armor", prefab->armor);
+	data->SetAttribute("defense", prefab->defense);
+	data->SetAttribute("attack_min", prefab->attack_min);
+	data->SetAttribute("attack_max", prefab->attack_max);
+	data->SetAttribute("movement_type", prefab->movement_type);
+	data->SetAttribute("race", prefab->race);
+	data->SetAttribute("building_name", prefab->building_name.c_str());
+	data->SetAttribute("building_level", prefab->building_level);
+	data->SetAttribute("gold_cost", prefab->gold_cost);
+	data->SetAttribute("sprite", prefab->sprite.c_str());
+
+	// Add starting statuses.
+	auto xmlStatus = data->InsertNewChildElement("StartingStatus");
+	for(auto& s: prefab->starting_status_vec)
+	{
+		auto element = xmlStatus->InsertNewChildElement("Status");
+		element->SetAttribute("name", s.c_str());
+	}
+	// Add abilities.
+	auto xmlAbility = data->InsertNewChildElement("Abilities");
+	for (auto& ab : prefab->abilities_vec)
+	{
+		auto element = xmlAbility->InsertNewChildElement("Ability");
+		element->SetAttribute("name", ab.c_str());
+	}
+
+	std::string path = "assets/TilesetData/UnitPrefab/" + filepath + ".xml";
+	if(doc.SaveFile(path.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		return false;
+	}
+	return true;
+}
+
+bool GameEditor::ImportUnitPrefab(const std::string& filepath, SPrefab* prefab)
+{
+	tinyxml2::XMLDocument doc;
+	if (doc.LoadFile(filepath.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		doc.Clear();
+		return false;
+	}
+
+	if(!prefab)
+	{
+		prefab = new SPrefab();
+	}
+
+	auto xmlRoot = doc.RootElement();
+	auto data = xmlRoot->FirstChildElement("Data");
+
+	auto prefab_name = data->Attribute("name");
+	auto layout_template_name = data->Attribute("layout_template");
+	auto health = data->Int64Attribute("health");
+	auto action_points = data->Int64Attribute("action_points");
+	auto level = data->Int64Attribute("level");
+	auto armor = data->Int64Attribute("armor");
+	auto defense = data->Int64Attribute("defense");
+	auto attack_min = data->Int64Attribute("attack_min");
+	auto attack_max = data->Int64Attribute("attack_max");
+	auto movement_type = data->Int64Attribute("movement_type");
+	auto race = data->Int64Attribute("race");
+	auto building_name = data->Attribute("building_name");
+	auto building_level = data->Int64Attribute("building_level");
+	auto gold_cost = data->Int64Attribute("gold_cost");
+
+	prefab->prefab_name = prefab_name;
+	prefab->layout_template_name = layout_template_name;
+	prefab->health = health;
+	prefab->action_points = action_points;
+	prefab->level = level;
+	prefab->armor = armor;
+	prefab->defense = defense;
+	prefab->attack_min = attack_min;
+	prefab->attack_max = attack_max;
+	prefab->movement_type = movement_type;
+	prefab->race = race;
+	prefab->building_name = building_name;
+	prefab->building_level = building_level;
+	prefab->gold_cost = gold_cost;
+
+	auto statuses = data->FirstChildElement("StartingStatus");
+	auto abilities = data->FirstChildElement("Abilities");
+
+	auto stat = statuses->FirstChildElement("Status");
+	while(stat)
+	{
+		auto status_name = stat->Attribute("name");
+		prefab->starting_status_vec.push_back(status_name);
+
+		stat = stat->NextSiblingElement("Status");
+	}
+
+	auto abl = abilities->FirstChildElement("Ability");
+	while (abl)
+	{
+		auto ability_name = abl->Attribute("name");
+		prefab->abilities_vec.push_back(ability_name);
+
+		abl = abl->NextSiblingElement("Ability");
+	}
+
+	return true;
+}
+
+void GameEditor::DisplayUnitPrefabExportWindow(SPrefab* prefab)
+{
+	static char prefab_filepath_name[64] = "";
+	if (prefab)
+	{
+		ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
+		ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
+
+		ImGui::Begin("Prefab Export", &g_bExportingUnitPrefab);
+		ImGui::InputText("|", prefab_filepath_name, 64);
+		HelpMarkerWithoutQuestion("Name of the file that will be created. The file will be saved in \"assets/TilesetData/UnitPrefab\". It is not necessary to add the XML extension");
+		ImGui::SameLine();
+		if (ImGui::SmallButton("OK"))
+		{
+			// Check for sanity.
+			std::string name = std::string(prefab_filepath_name);
+
+			bool length = name.length() > 0;
+			bool result = false;
+			if (length)
+			{
+				result = ExportUnitPrefab(name, prefab);
+			}
+
+			if (!length)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayUnitPrefabExportWindow] Error exporting Unit Prefab \"{}\": Filepath has 0 length!", APP_RUN_TIME, prefab->prefab_name);
+				LOG_FILE_ERROR("[{:.4f}][DisplayUnitPrefabExportWindow]  Error exporting Unit Prefab \"{}\": Filepath has 0 length!", APP_RUN_TIME, prefab->prefab_name);
+			}
+			if(result)
+			{
+				LOG_DBG_INFO("[{:.4f}][DisplayUnitPrefabExportWindow] Success exporting Unit Prefab \"{}\"!", APP_RUN_TIME, prefab->prefab_name);
+				LOG_FILE_INFO("[{:.4f}][DisplayUnitPrefabExportWindow]  Success exporting Unit Prefab \"{}\"!", APP_RUN_TIME, prefab->prefab_name);
+			}
+			else 
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayUnitPrefabExportWindow] Error exporting Unit Prefab \"{}\"!", APP_RUN_TIME, prefab->prefab_name);
+				LOG_FILE_ERROR("[{:.4f}][DisplayUnitPrefabExportWindow]  Error exporting Unit Prefab \"{}\"!", APP_RUN_TIME, prefab->prefab_name);
+			}
+
+			memset(&prefab_filepath_name, 0, sizeof(prefab_filepath_name));
+			g_bExportingUnitPrefab = false;
+			g_pExportedPrefab = nullptr;
+		}
+
+		ImGui::End();
+	}
+}
+
 void GameEditor::DisplayUnitEditor()
 {
 	std::string name = "Unit Editor";
@@ -3146,6 +3340,8 @@ void GameEditor::DisplayUnitEditorMainMenu()
 	if(ImGui::SmallButton("Save As..."))
 	{
 		// Export from g_pCurrentEditedPrefab into XML.
+		g_bExportingUnitPrefab = true;
+		g_pExportedPrefab = g_pCurrentEditedPrefab;
 	}
 	ImGui::SameLine();
 	if (ImGui::SmallButton("Load From..."))
@@ -4104,7 +4300,10 @@ bool GameEditor::ExportPrefabLayoutTemplate(const std::string& filepath)
 
 
 	std::string path = "assets/TilesetData/" + filepath + ".xml";
-	doc.SaveFile(path.c_str());
+	if(doc.SaveFile(path.c_str()) != tinyxml2::XML_SUCCESS)
+	{
+		return false;
+	}
 
 	return true;
 }
