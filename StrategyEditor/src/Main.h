@@ -403,6 +403,7 @@ struct SPrefab
 	uint64_t gold_cost;
 	std::vector< std::string > starting_status_vec;
 	std::vector< std::string > abilities_vec;
+	std::string sprite;
 };
 
 
@@ -422,12 +423,7 @@ public:
 public:
 	bool OnUserCreate() override;
 	bool OnUserUpdate(float fElapsedTime) override;
-	bool OnUserDestroy() override final
-	{
-		SoundSystem::get()->Terminate();
-		Logger::Terminate();
-		return true;
-	}
+	bool OnUserDestroy() override final;
 
 	void DrawUI(void)
 	{		

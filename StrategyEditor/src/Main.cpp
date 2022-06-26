@@ -3204,14 +3204,20 @@ void GameEditor::DisplayUnitEditorNameEdit()
 
 void GameEditor::DisplayUnitEditorLayoutTemplateNameEdit()
 {
+	ImGuiID input_text_id = g_idUnitEditorElementID + 100;
+	ImGuiID input_text_ok_id = g_idUnitEditorElementID + 101;
+
 	static char prefab_layout_template_name[64] = "";
 
 	if (ImGui::CollapsingHeader("Layout Template Name"))
 	{
-		ImGui::InputText("||", prefab_layout_template_name, 64);
+		ImGui::PushID(input_text_id);
+		ImGui::InputText("|", prefab_layout_template_name, 64);
+		ImGui::PopID();
 		HelpMarkerWithoutQuestion("Set the Layout Template for the unit");
 		ImGui::SameLine();
-		if (ImGui::SmallButton("OK2"))
+		ImGui::PushID(input_text_ok_id);
+		if (ImGui::SmallButton("OK"))
 		{
 			// Check for sanity.
 			std::string name = std::string(prefab_layout_template_name);
@@ -3239,6 +3245,7 @@ void GameEditor::DisplayUnitEditorLayoutTemplateNameEdit()
 				LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorNameEdit] Could not set Layout Template Name: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
 			}
 		}
+		ImGui::PopID();
 	}
 }
 
@@ -3458,16 +3465,21 @@ void GameEditor::DisplayUnitEditorRaceEdit()
 
 void GameEditor::DisplayUnitEditorBuildingRequirementsEdit()
 {
+	ImGuiID input_text_id = g_idUnitEditorElementID + 200;
+	ImGuiID input_text_ok_id = g_idUnitEditorElementID + 201;
 	static char required_building_name[64] = "";
 
 	if (ImGui::CollapsingHeader("Building Requirements"))
 	{
 		if (ImGui::CollapsingHeader("Building Name"))
 		{
-			ImGui::InputText("|||", required_building_name, 64);
+			ImGui::PushID(input_text_id);
+			ImGui::InputText("|", required_building_name, 64);
+			ImGui::PopID();
 			HelpMarkerWithoutQuestion("Set the required building name. The building name will be searched for in-game and has to match. In that building this unit will be produced");
 			ImGui::SameLine();
-			if (ImGui::SmallButton("OK3"))
+			ImGui::PushID(input_text_ok_id);
+			if (ImGui::SmallButton("OK"))
 			{
 				// Check for sanity.
 				std::string name = std::string(required_building_name);
@@ -3495,6 +3507,7 @@ void GameEditor::DisplayUnitEditorBuildingRequirementsEdit()
 					LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorBuildingRequirementsEdit] Could not set required building name: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
 				}
 			}
+			ImGui::PopID();
 		}
 		if (ImGui::CollapsingHeader("Building Level"))
 		{
@@ -3547,14 +3560,19 @@ void GameEditor::DisplayUnitEditorGoldCostEdit()
 
 void GameEditor::DisplayUnitEditorStartingStatusEdit()
 {
+	ImGuiID input_text_id = g_idUnitEditorElementID + 300;
+	ImGuiID input_text_ok_id = g_idUnitEditorElementID + 301;
 	static char starting_status_name[64] = "";
 
 	if (ImGui::CollapsingHeader("Starting Status"))
 	{
-		ImGui::InputText("|||||", starting_status_name, 64);
+		ImGui::PushID(input_text_id);
+		ImGui::InputText("|", starting_status_name, 64);
+		ImGui::PopID();
 		HelpMarkerWithoutQuestion("Add a starting status to the unit. The unit will start with the given status and the name must match an existing status name in DB. A status can be e.g. \"Poison\" or \"Levitate\"");
 		ImGui::SameLine();
-		if (ImGui::SmallButton("OK5"))
+		ImGui::PushID(input_text_ok_id);
+		if (ImGui::SmallButton("OK"))
 		{
 			// Check for sanity.
 			std::string name = std::string(starting_status_name);
@@ -3582,19 +3600,25 @@ void GameEditor::DisplayUnitEditorStartingStatusEdit()
 				LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Could not add starting status: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
 			}
 		}
+		ImGui::PopID();
 	}
 }
 
 void GameEditor::DisplayUnitEditorAbilitiesEdit()
 {
+	ImGuiID input_text_id = g_idUnitEditorElementID + 400;
+	ImGuiID input_text_ok_id = g_idUnitEditorElementID + 401;
 	static char ability_name[64] = "";
 
 	if (ImGui::CollapsingHeader("Abilities"))
 	{
-		ImGui::InputText("||||||", ability_name, 64);
+		ImGui::PushID(input_text_id);
+		ImGui::InputText("|", ability_name, 64);
+		ImGui::PopID();
 		HelpMarkerWithoutQuestion("Add an ability to the unit. The unit will be able to execute the ability and it has to match the name of the ability in-game. An ability can be e.g. \"Heal\" or \"AttackMeele\"");
 		ImGui::SameLine();
-		if (ImGui::SmallButton("OK6"))
+		ImGui::PushID(input_text_ok_id);
+		if (ImGui::SmallButton("OK"))
 		{
 			// Check for sanity.
 			std::string name = std::string(ability_name);
@@ -3622,6 +3646,7 @@ void GameEditor::DisplayUnitEditorAbilitiesEdit()
 				LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Could not add ability: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
 			}
 		}
+		ImGui::PopID();
 	}
 }
 
@@ -3657,7 +3682,6 @@ void GameEditor::DisplayUnitEditorUnitSpriteEdit()
 			if (ImGui::Selectable(unit_sprite_vec[i].c_str(), is_selected))
 			{
 				current_item_index = i;
-				//LOG_DBG_INFO("[{:.4f}][DisplayChannelGroupChanger] Changed Sound Channel Group to \"{}\"", APP_RUN_TIME, sound_channel_group_vec[current_item_index]);
 				changed = true;
 			}
 
@@ -3668,11 +3692,25 @@ void GameEditor::DisplayUnitEditorUnitSpriteEdit()
 		}
 		ImGui::EndCombo();
 	}
-	HelpMarkerWithoutQuestion("TODO");
+	HelpMarkerWithoutQuestion("Change the sprite of the unit. This is the main representation of the unit in-game, without additional indicators and banner");
 
 	// Apply the change.
-	if (changed) g_sUnitEditorCurrentUnitSprite = unit_sprite_vec[current_item_index];
+	if (changed)
+	{
+		if(g_pCurrentEditedPrefab)
+		{
+			g_sUnitEditorCurrentUnitSprite = unit_sprite_vec[current_item_index];
+			g_pCurrentEditedPrefab->sprite = unit_sprite_vec[current_item_index];
 
+			LOG_DBG_INFO("[{:.4f}][DisplayUnitEditorUnitSpriteEdit] Unit Sprite changed to \"{}\"", APP_RUN_TIME, unit_sprite_vec[current_item_index]);
+			LOG_FILE_INFO("[{:.4f}][DisplayUnitEditorUnitSpriteEdit] Unit Sprite changed to \"{}\"", APP_RUN_TIME, unit_sprite_vec[current_item_index]);
+		}
+		else
+		{
+			LOG_DBG_ERROR("[{:.4f}][DisplayUnitEditorUnitSpriteEdit] Could not change sprite: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
+			LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorUnitSpriteEdit] Could not change sprite: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
+		}
+	}
 }
 
 void GameEditor::DisplayUnitEditorUnitSprite()
@@ -4195,7 +4233,16 @@ void SRectangle::Draw(GameEditor* editor)
 
 
 
+bool GameEditor::OnUserDestroy()
+{
+	delete g_pCurrentEditedPrefab;
+	g_pCurrentEditedPrefab = nullptr;
+	g_PrefabElementTypeVec.clear();
 
+	SoundSystem::get()->Terminate();
+	Logger::Terminate();
+	return true;
+}
 
 int main()
 {
