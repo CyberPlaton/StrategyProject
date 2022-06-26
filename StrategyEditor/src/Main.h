@@ -340,78 +340,6 @@ struct ChannelGroupData
 };
 
 
-/// @brief Tree extended with relevant data to be used for prefab creation.
-struct PrefabTree : public Tree
-{
-	struct Position
-	{
-		/// @brief Relative position of this node.
-		float m_xpos = 0.0f, m_ypos = 0.0f;
-	};
-	struct StaticSprite
-	{
-		/// @brief Visual representation of the Prefab Element. Overwrites the debug representation.
-		std::string m_decal = "none";
-	};
-	struct AnimatedSprite
-	{
-		/// @brief Visual representation of the Prefab Element. Overwrites the debug representation. Animated.
-		std::string m_decal = "none";
-	};
-
-
-
-	PrefabTree(const std::string& name = "Root") : Tree(name), m_debugDecal("none")
-	{
-		m_positionData = new Position();
-		m_positionData->m_xpos = 0;
-		m_positionData->m_ypos = 0;
-		m_elementComponents.push_back("Position");
-	};
-
-	Tree* Node(const std::string& name) override final;
-
-
-	/// @brief Just as an entity we have a number of components.
-	std::vector< std::string > m_elementComponents;
-
-	/// @brief Whether this element is a "Status Element" or "Banner" etc.
-	std::string m_elementType;
-
-	/// @brief Current visual representation solely for debugging/visualization purposes.
-	std::string m_debugDecal;
-
-	/// @brief Collection of possible components for the PrefabElement.
-	Position* m_positionData = nullptr;
-	StaticSprite* m_staticSpriteData = nullptr;
-	AnimatedSprite* m_animatedSpriteData = nullptr;
-
-};
-
-/// @brief 
-struct Prefab
-{
-	Prefab(const std::string& name) : m_prefabName(name)
-	{
-		// Create Root.
-		m_sceneTree["Root"];
-	}
-
-	std::string GetElementType(const std::string& name);
-	void SetElementType(const std::string& name, const std::string& element_type);
-
-	std::string GetDecal(const std::string& name);
-	void SetDecal(const std::string& name, const std::string& decal);
-
-	float GetPositionX(const std::string& name);
-	float GetPositionY(const std::string& name);
-
-	void SetPositionX(const std::string& name, float v);
-	void SetPositionY(const std::string& name, float v);
-
-	PrefabTree m_sceneTree;
-	std::string m_prefabName;
-};
 
 /// @brief Commonly used shapes in the Unit Layout Template editor.
 struct SShape
@@ -453,6 +381,28 @@ struct SRectangle : public SShape
 
 	bool root_element = false;
 	std::string element_type = "none";
+};
+
+
+/// @brief Datastructure holding information required to export a Prefab.
+struct SPrefab
+{
+	std::string layout_template_name;
+	std::string prefab_name;
+	uint64_t health;
+	uint64_t action_points;
+	uint64_t level;
+	uint64_t armor;
+	uint64_t defense;
+	uint64_t attack_min;
+	uint64_t attack_max;
+	uint64_t movement_type;
+	uint64_t race;
+	std::string building_name;
+	uint64_t building_level;
+	uint64_t gold_cost;
+	std::vector< std::string > starting_status_vec;
+	std::vector< std::string > abilities_vec;
 };
 
 
@@ -583,6 +533,7 @@ private:
 	void DisplayUnitEditor();
 	void DisplayUnitEditorMainMenu();
 	void DisplayUnitEditorNameEdit();
+	void DisplayUnitEditorLayoutTemplateNameEdit();
 	void DisplayUnitEditorHealthEdit();
 	void DisplayUnitEditorActionPointsEdit();
 	void DisplayUnitEditorLevelEdit();
@@ -598,10 +549,6 @@ private:
 	void DisplayUnitEditorUnitSpriteEdit();
 	void DisplayUnitEditorUnitSprite();
 
-
-	// GUI UNIT EDITOR HELPER
-	void AddComponentToPrefabElement(PrefabTree* element, const std::string& component_name);
-	void RemoveComponentFromPrefabElement(PrefabTree* element, const std::string& component_name);
 
 	// GUI UNIT TEMPLATE LAYOUT EDITOR
 	void DisplayShapesWindow();

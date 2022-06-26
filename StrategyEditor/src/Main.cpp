@@ -5,6 +5,9 @@ static bool g_bDecalDatabaseOpen = true;
 static bool g_bEntityDatabaseOpen = true;
 static bool g_bEntityEditorOpen = false;
 
+static SPrefab* g_pCurrentEditedPrefab = nullptr;
+static ImGuiID g_idUnitEditorElementID = 20000;
+static const ImU32 u32_one = 1;
 static bool g_bSavingPrefabLayoutTemplate = false;
 static bool g_bLoadPrefabLayoutTemplate = false;
 static bool g_bAddingPrefabElementType = false;
@@ -16,12 +19,7 @@ static SShape* g_pCurrentDisplayedShape = nullptr;
 static bool g_bLayoutTemplateEditorOpen = false;
 static bool g_bUnitEditorOpen = false;
 static std::string g_sUnitEditorCurrentUnitSprite = "none";
-//static Prefab* g_pCurrentEditedPrefab = nullptr;
-//static std::string g_sSelectedPrefabElement = "none";
-//static bool g_bAddingChildToPrefabTreeNode = false;
-//static PrefabTree* g_pAddingChildToPrefabTreeNode = nullptr;
-//static bool g_bAddingComponentToPrefabElement = false;
-//static PrefabTree* g_pAddingComponentToPrefabElement = nullptr;
+
 
 static bool g_bBackgroundAudioEditorOpen = false;
 static bool g_bAudioSoundChannelEditorOpen = false;
@@ -3116,6 +3114,7 @@ void GameEditor::DisplayUnitEditor()
 	ImGui::BeginChild("Stats", ImVec2(scene_edit_window_width, main_window_height - 1.0f), true);
 	DisplayUnitEditorMainMenu();
 	DisplayUnitEditorNameEdit();
+	DisplayUnitEditorLayoutTemplateNameEdit();
 	DisplayUnitEditorHealthEdit();
 	DisplayUnitEditorActionPointsEdit();
 	DisplayUnitEditorLevelEdit();
@@ -3141,17 +3140,17 @@ void GameEditor::DisplayUnitEditorMainMenu()
 {
 	if (ImGui::SmallButton("New"))
 	{
-
+		g_pCurrentEditedPrefab = new SPrefab();
 	}
 	ImGui::SameLine();
 	if(ImGui::SmallButton("Save As..."))
 	{
-
+		// Export from g_pCurrentEditedPrefab into XML.
 	}
 	ImGui::SameLine();
 	if (ImGui::SmallButton("Load From..."))
 	{
-
+		// Import from XML into g_pCurrentEditedPrefab.
 	}
 	ImGui::SameLine();
 	ImGui::SetCursorPosX(ImGui::GetWindowSize().x - 25.0f);
@@ -3165,92 +3164,464 @@ void GameEditor::DisplayUnitEditorMainMenu()
 
 void GameEditor::DisplayUnitEditorNameEdit()
 {
-	if(ImGui::SmallButton("Name"))
+	static char prefab_name[64] = "";
+
+	if(ImGui::CollapsingHeader("Name"))
 	{
+		ImGui::InputText("|", prefab_name, 64);
+		HelpMarkerWithoutQuestion("Set the Name of the unit. This name will be displayed to the player in-game. This is not the exported file name");
+		ImGui::SameLine();
+		if (ImGui::SmallButton("OK"))
+		{
+			// Check for sanity.
+			std::string name = std::string(prefab_name);
+
+			auto length = name.size() > 0;
+
+			if (length && g_pCurrentEditedPrefab != nullptr)
+			{
+				LOG_DBG_INFO("[{:.4f}][DisplayUnitEditorNameEdit] Set prefab name to \"{}\"!", APP_RUN_TIME, name);
+				LOG_FILE_INFO("[{:.4f}][DisplayUnitEditorNameEdit] Set prefab name to \"{}\"!", APP_RUN_TIME, name);
+			
+				// Set the name.
+				g_pCurrentEditedPrefab->prefab_name = name;
+
+				memset(&prefab_name, 0, sizeof(prefab_name));
+			}
+			else if(!length)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayUnitEditorNameEdit] Could not set prefab name: Empty name!", APP_RUN_TIME);
+				LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorNameEdit] Could not set prefab name: Empty name!", APP_RUN_TIME);
+			}
+			else if(!g_pCurrentEditedPrefab)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayUnitEditorNameEdit] Could not set prefab name: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
+				LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorNameEdit] Could not set prefab name: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
+			}
+		}
+	}
+}
+
+void GameEditor::DisplayUnitEditorLayoutTemplateNameEdit()
+{
+	static char prefab_layout_template_name[64] = "";
+
+	if (ImGui::CollapsingHeader("Layout Template Name"))
+	{
+		ImGui::InputText("||", prefab_layout_template_name, 64);
+		HelpMarkerWithoutQuestion("Set the Layout Template for the unit");
+		ImGui::SameLine();
+		if (ImGui::SmallButton("OK2"))
+		{
+			// Check for sanity.
+			std::string name = std::string(prefab_layout_template_name);
+
+			auto length = name.size() > 0;
+
+			if (length && g_pCurrentEditedPrefab != nullptr)
+			{
+				LOG_DBG_INFO("[{:.4f}][DisplayUnitEditorLayoutTemplateNameEdit] Set Layout Template Name to \"{}\"!", APP_RUN_TIME, name);
+				LOG_FILE_INFO("[{:.4f}][DisplayUnitEditorLayoutTemplateNameEdit] Set Layout Template Name to \"{}\"!", APP_RUN_TIME, name);
+
+				// Set the layout template name for the prefab.
+				g_pCurrentEditedPrefab->layout_template_name = name;
+
+				memset(&prefab_layout_template_name, 0, sizeof(prefab_layout_template_name));
+			}
+			else if(!length)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayUnitEditorLayoutTemplateNameEdit] Could not set Layout Template Name: Empty name!", APP_RUN_TIME);
+				LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorLayoutTemplateNameEdit] Could not set Layout Template Name: Empty name!", APP_RUN_TIME);
+			}
+			else if(!g_pCurrentEditedPrefab)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayUnitEditorNameEdit] Could not set Layout Template Name: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
+				LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorNameEdit] Could not set Layout Template Name: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
+			}
+		}
 	}
 }
 
 void GameEditor::DisplayUnitEditorHealthEdit()
 {
-	if (ImGui::SmallButton("Health"))
+	ImGuiID health_id = g_idUnitEditorElementID;
+	ImGuiID health_scalar_id = g_idUnitEditorElementID + 1;
+
+	if (ImGui::CollapsingHeader("Health"))
 	{
+		if(g_pCurrentEditedPrefab)
+		{
+			int health = g_pCurrentEditedPrefab->health;
+			ImGui::PushID(health_id);
+			ImGui::SliderInt("Int", &health, 1, 500, "%d");
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The Health amount of the unit. Defines how much damage the unit can take before dying");
+			ImGui::SameLine();
+			ImGui::PushID(health_scalar_id);
+			ImGui::InputScalar("ScalarInt", ImGuiDataType_U32, &health, &u32_one);
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The Health amount of the unit.  Defines how much damage the unit can take before dying");
+
+			g_pCurrentEditedPrefab->health = health;
+		}
 	}
 }
 
 void GameEditor::DisplayUnitEditorActionPointsEdit()
 {
-	if (ImGui::SmallButton("Action Points"))
+	ImGuiID ap_id = g_idUnitEditorElementID + 2;
+	ImGuiID ap_scalar_id = g_idUnitEditorElementID + 3;
+
+	if (ImGui::CollapsingHeader("Action Points"))
 	{
+		if (g_pCurrentEditedPrefab)
+		{
+			int ap = g_pCurrentEditedPrefab->action_points;
+			ImGui::PushID(ap_id);
+			ImGui::SliderInt("Int", &ap, 1, 500, "%d");
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The Action Points of the unit. Defines how many actions the unit can take, like moving and attacking or casting a spell or healing etc.");
+			ImGui::SameLine();
+			ImGui::PushID(ap_scalar_id);
+			ImGui::InputScalar("ScalarInt", ImGuiDataType_U32, &ap, &u32_one);
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The Action Points of the unit. Defines how many actions the unit can take, like moving and attacking or casting a spell or healing etc.");
+
+			g_pCurrentEditedPrefab->action_points = ap;
+		}
 	}
 }
 
 void GameEditor::DisplayUnitEditorLevelEdit()
 {
-	if (ImGui::SmallButton("Level"))
+	ImGuiID lvl_id = g_idUnitEditorElementID + 4;
+	ImGuiID lvl_scalar_id = g_idUnitEditorElementID + 5;
+
+	if (ImGui::CollapsingHeader("Level"))
 	{
+		if (g_pCurrentEditedPrefab)
+		{
+			int lvl = g_pCurrentEditedPrefab->level;
+			ImGui::PushID(lvl_id);
+			ImGui::SliderInt("Int", &lvl, 1, 500, "%d");
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The starting level of the unit. The unit will have this level on instancing in-game");
+			ImGui::SameLine();
+			ImGui::PushID(lvl_scalar_id);
+			ImGui::InputScalar("ScalarInt", ImGuiDataType_U32, &lvl, &u32_one);
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The starting level of the unit. The unit will have this level on instancing in-game");
+
+			g_pCurrentEditedPrefab->level = lvl;
+		}
 	}
 }
 
 void GameEditor::DisplayUnitEditorArmorEdit()
 {
-	if (ImGui::SmallButton("Armor"))
+	ImGuiID arm_id = g_idUnitEditorElementID + 6;
+	ImGuiID arm_scalar_id = g_idUnitEditorElementID + 7;
+
+	if (ImGui::CollapsingHeader("Armor"))
 	{
+		if (g_pCurrentEditedPrefab)
+		{
+			int arm = g_pCurrentEditedPrefab->armor;
+			ImGui::PushID(arm_id);
+			ImGui::SliderInt("Int", &arm, 1, 500, "%d");
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The Armor value of the unit. This affects how much damage the unit will take on being attacked");
+			ImGui::SameLine();
+			ImGui::PushID(arm_scalar_id);
+			ImGui::InputScalar("ScalarInt", ImGuiDataType_U32, &arm, &u32_one);
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The Armor value of the unit. This affects how much damage the unit will take on being attacked");
+
+			g_pCurrentEditedPrefab->armor = arm;
+		}
 	}
 }
 
 void GameEditor::DisplayUnitEditorAttackEdit()
 {
-	if (ImGui::SmallButton("Attack"))
+	ImGuiID attack_id = g_idUnitEditorElementID + 8;
+	ImGuiID attack_scalar_id = g_idUnitEditorElementID + 9;
+
+	if (ImGui::CollapsingHeader("Attack"))
 	{
+		if (g_pCurrentEditedPrefab)
+		{
+			int attack_min = g_pCurrentEditedPrefab->attack_min;
+			int attack_max = g_pCurrentEditedPrefab->attack_max;
+
+			ImGui::PushID(attack_id);
+			ImGui::SliderInt("Min", &attack_min, 1, 500, "%d");
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The Minimal Attack Value that this unit can do");
+			ImGui::SameLine();
+			ImGui::PushID(attack_scalar_id);
+			ImGui::InputScalar("ScalarIntMin", ImGuiDataType_U32, &attack_min, &u32_one);
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The Minimal Attack Value that this unit can do");
+
+			ImGui::PushID(attack_id + 1);
+			ImGui::SliderInt("Max", &attack_max, 1, 500, "%d");
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The Maximal Attack Value that this unit can do");
+			ImGui::SameLine();
+			ImGui::PushID(attack_scalar_id + 1);
+			ImGui::InputScalar("ScalarIntMax", ImGuiDataType_U32, &attack_max, &u32_one);
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The Maximal Attack Value that this unit can do");
+
+
+			g_pCurrentEditedPrefab->attack_min = attack_min;
+			g_pCurrentEditedPrefab->attack_max = attack_max;
+		}
 	}
 }
 
 void GameEditor::DisplayUnitEditorDefenseEdit()
 {
-	if (ImGui::SmallButton("Defense"))
+	ImGuiID def_id = g_idUnitEditorElementID + 10;
+	ImGuiID def_scalar_id = g_idUnitEditorElementID + 11;
+
+	if (ImGui::CollapsingHeader("Defense"))
 	{
+		if (g_pCurrentEditedPrefab)
+		{
+			int def = g_pCurrentEditedPrefab->defense;
+			ImGui::PushID(def_id);
+			ImGui::SliderInt("Int", &def, 1, 500, "%d");
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The Defense value of the unit. This affects how much damage the unit will take on being attacked");
+			ImGui::SameLine();
+			ImGui::PushID(def_scalar_id);
+			ImGui::InputScalar("ScalarInt", ImGuiDataType_U32, &def, &u32_one);
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The Defense value of the unit. This affects how much damage the unit will take on being attacked");
+
+			g_pCurrentEditedPrefab->defense = def;
+		}
 	}
 }
 
 void GameEditor::DisplayUnitEditorMovementTypeEdit()
 {
-	if (ImGui::SmallButton("Movement Type"))
+	ImGuiID mov_id = g_idUnitEditorElementID + 12;
+	ImGuiID mov_scalar_id = g_idUnitEditorElementID + 13;
+
+	if (ImGui::CollapsingHeader("Movement Type"))
 	{
+		if (g_pCurrentEditedPrefab)
+		{
+			int mov = g_pCurrentEditedPrefab->movement_type;
+			ImGui::PushID(mov_id);
+			ImGui::SliderInt("Int", &mov, 1, 3, "%d");
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The Movement Type of the unit. 1=Ground, 2=Flying, 3=Swimming");
+			ImGui::SameLine();
+			ImGui::PushID(mov_scalar_id);
+			ImGui::InputScalar("ScalarInt", ImGuiDataType_U32, &mov, &u32_one);
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The Movement Type of the unit. 1=Ground, 2=Flying, 3=Swimming");
+
+			g_pCurrentEditedPrefab->movement_type = mov;
+		}
 	}
 }
 
 void GameEditor::DisplayUnitEditorRaceEdit()
 {
-	if (ImGui::SmallButton("Race"))
+	ImGuiID race_id = g_idUnitEditorElementID + 14;
+	ImGuiID race_scalar_id = g_idUnitEditorElementID + 15;
+
+	if (ImGui::CollapsingHeader("Race"))
 	{
+		if (g_pCurrentEditedPrefab)
+		{
+			int race = g_pCurrentEditedPrefab->race;
+			ImGui::PushID(race_id);
+			ImGui::SliderInt("Int", &race, 1, 4, "%d");
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The Race of the unit. 1=Human, 2=High Elf, 3=Dark Elf, 4=Orc");
+			ImGui::SameLine();
+			ImGui::PushID(race_scalar_id);
+			ImGui::InputScalar("ScalarInt", ImGuiDataType_U32, &race, &u32_one);
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The Race of the unit. 1=Human, 2=High Elf, 3=Dark Elf, 4=Orc");
+
+			g_pCurrentEditedPrefab->race = race;
+		}
 	}
 }
 
 void GameEditor::DisplayUnitEditorBuildingRequirementsEdit()
 {
-	if (ImGui::SmallButton("Building Requirements"))
+	static char required_building_name[64] = "";
+
+	if (ImGui::CollapsingHeader("Building Requirements"))
 	{
+		if (ImGui::CollapsingHeader("Building Name"))
+		{
+			ImGui::InputText("|||", required_building_name, 64);
+			HelpMarkerWithoutQuestion("Set the required building name. The building name will be searched for in-game and has to match. In that building this unit will be produced");
+			ImGui::SameLine();
+			if (ImGui::SmallButton("OK3"))
+			{
+				// Check for sanity.
+				std::string name = std::string(required_building_name);
+
+				auto length = name.size() > 0;
+
+				if (length && g_pCurrentEditedPrefab != nullptr)
+				{
+					LOG_DBG_INFO("[{:.4f}][DisplayUnitEditorBuildingRequirementsEdit] Set required building name to \"{}\"!", APP_RUN_TIME, name);
+					LOG_FILE_INFO("[{:.4f}][DisplayUnitEditorBuildingRequirementsEdit] Set required building name to \"{}\"!", APP_RUN_TIME, name);
+
+					// Set the layout template name for the prefab.
+					g_pCurrentEditedPrefab->building_name = name;
+
+					memset(&required_building_name, 0, sizeof(required_building_name));
+				}
+				else if (!length)
+				{
+					LOG_DBG_ERROR("[{:.4f}][DisplayUnitEditorBuildingRequirementsEdit] Could not set required building name: Empty name!", APP_RUN_TIME);
+					LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorBuildingRequirementsEdit] Could not set required building name: Empty name!", APP_RUN_TIME);
+				}
+				else if (!g_pCurrentEditedPrefab)
+				{
+					LOG_DBG_ERROR("[{:.4f}][DisplayUnitEditorBuildingRequirementsEdit] Could not set required building name: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
+					LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorBuildingRequirementsEdit] Could not set required building name: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
+				}
+			}
+		}
+		if (ImGui::CollapsingHeader("Building Level"))
+		{
+			ImGuiID build_id = g_iImguiImageButtonID + strlen("BuildingLevelInt") + 1;
+			ImGuiID build_scalar_id = g_iImguiImageButtonID + strlen("BuildingLevelScalarInt") + 1;
+
+			if (g_pCurrentEditedPrefab)
+			{
+				int build = g_pCurrentEditedPrefab->building_level;
+				ImGui::PushID(build_id);
+				ImGui::SliderInt("Int", &build, 1, 10, "%d");
+				ImGui::PopID();
+				HelpMarkerWithoutQuestion("The required building level. The building has to be of that level in order for the unit to be able to be produced");
+				ImGui::SameLine();
+				ImGui::PushID(build_scalar_id);
+				ImGui::InputScalar("ScalarInt", ImGuiDataType_U32, &build, &u32_one);
+				ImGui::PopID();
+				HelpMarkerWithoutQuestion("The required building level. The building has to be of that level in order for the unit to be able to be produced");
+
+				g_pCurrentEditedPrefab->building_level = build;
+			}
+		}
 	}
 }
 
 void GameEditor::DisplayUnitEditorGoldCostEdit()
 {
-	if (ImGui::SmallButton("Gold Cost"))
+	if (ImGui::CollapsingHeader("Gold Cost"))
 	{
+		ImGuiID gold_id = g_idUnitEditorElementID + 16;
+		ImGuiID gold_scalar_id = g_idUnitEditorElementID + 17;
+
+		if (g_pCurrentEditedPrefab)
+		{
+			int gold = g_pCurrentEditedPrefab->gold_cost;
+			ImGui::PushID(gold_id);
+			ImGui::SliderInt("Int", &gold, 1, 1000, "%d");
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The required gold to produce this unit. The player has to spend the specified amount of gold in-game to create this unit");
+			ImGui::SameLine();
+			ImGui::PushID(gold_scalar_id);
+			ImGui::InputScalar("ScalarInt", ImGuiDataType_U32, &gold, &u32_one);
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The required gold to produce this unit. The player has to spend the specified amount of gold in-game to create this unit");
+
+			g_pCurrentEditedPrefab->gold_cost = gold;
+		}
 	}
 }
 
 void GameEditor::DisplayUnitEditorStartingStatusEdit()
 {
-	if (ImGui::SmallButton("Starting Status"))
+	static char starting_status_name[64] = "";
+
+	if (ImGui::CollapsingHeader("Starting Status"))
 	{
+		ImGui::InputText("|||||", starting_status_name, 64);
+		HelpMarkerWithoutQuestion("Add a starting status to the unit. The unit will start with the given status and the name must match an existing status name in DB. A status can be e.g. \"Poison\" or \"Levitate\"");
+		ImGui::SameLine();
+		if (ImGui::SmallButton("OK5"))
+		{
+			// Check for sanity.
+			std::string name = std::string(starting_status_name);
+
+			auto length = name.size() > 0;
+
+			if (length && g_pCurrentEditedPrefab != nullptr)
+			{
+				LOG_DBG_INFO("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Add starting status \"{}\"!", APP_RUN_TIME, name);
+				LOG_FILE_INFO("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Add starting status \"{}\"!", APP_RUN_TIME, name);
+
+				// Set the layout template name for the prefab.
+				g_pCurrentEditedPrefab->starting_status_vec.push_back(name);
+
+				memset(&starting_status_name, 0, sizeof(starting_status_name));
+			}
+			else if (!length)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Could not add starting status: Empty name!", APP_RUN_TIME);
+				LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Could not add starting status: Empty name!", APP_RUN_TIME);
+			}
+			else if (!g_pCurrentEditedPrefab)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Could not add starting status: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
+				LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Could not add starting status: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
+			}
+		}
 	}
 }
 
 void GameEditor::DisplayUnitEditorAbilitiesEdit()
 {
-	if (ImGui::SmallButton("Abilities"))
+	static char ability_name[64] = "";
+
+	if (ImGui::CollapsingHeader("Abilities"))
 	{
+		ImGui::InputText("||||||", ability_name, 64);
+		HelpMarkerWithoutQuestion("Add an ability to the unit. The unit will be able to execute the ability and it has to match the name of the ability in-game. An ability can be e.g. \"Heal\" or \"AttackMeele\"");
+		ImGui::SameLine();
+		if (ImGui::SmallButton("OK6"))
+		{
+			// Check for sanity.
+			std::string name = std::string(ability_name);
+
+			auto length = name.size() > 0;
+
+			if (length && g_pCurrentEditedPrefab != nullptr)
+			{
+				LOG_DBG_INFO("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Add ability \"{}\"!", APP_RUN_TIME, name);
+				LOG_FILE_INFO("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Add ability \"{}\"!", APP_RUN_TIME, name);
+
+				// Set the layout template name for the prefab.
+				g_pCurrentEditedPrefab->abilities_vec.push_back(name);
+
+				memset(&ability_name, 0, sizeof(ability_name));
+			}
+			else if (!length)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Could not add ability: Empty name!", APP_RUN_TIME);
+				LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Could not add ability: Empty name!", APP_RUN_TIME);
+			}
+			else if (!g_pCurrentEditedPrefab)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Could not add ability: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
+				LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Could not add ability: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
+			}
+		}
 	}
 }
 
@@ -3320,96 +3691,6 @@ void GameEditor::DisplayUnitEditorUnitSprite()
 	ImGui::Image((ImTextureID)m_unitDecalDatabase[g_sUnitEditorCurrentUnitSprite]->id, ImVec2(spite_width * 2, spite_height * 2));
 }
 
-void GameEditor::AddComponentToPrefabElement(PrefabTree* element, const std::string& component_name)
-{
-	bool component_added = false;
-	bool duplicate = false;
-	if (component_name.compare("StaticSprite") == 0)
-	{
-		if(element->m_staticSpriteData == nullptr)
-		{
-			element->m_staticSpriteData = new PrefabTree::StaticSprite();
-			component_added = true;
-		}
-		else
-		{
-			duplicate = true;
-		}
-	}
-	else if (component_name.compare("AnimatedSprite") == 0)
-	{
-		if (element->m_animatedSpriteData == nullptr)
-		{
-			element->m_animatedSpriteData = new PrefabTree::AnimatedSprite();
-			component_added = true;
-		}
-		else
-		{
-			duplicate = true;
-		}
-	}
-	else if(component_name.compare("Position") == 0)
-	{
-		if (element->m_positionData == nullptr)
-		{
-			element->m_positionData = new PrefabTree::Position();
-			component_added = true;
-		}
-		else
-		{
-			duplicate = true;
-		}
-	}
-	else
-	{
-		LOG_DBG_ERROR("[{:.4f}][AddComponentToPrefabElement] Error adding Component \"{}\" to PrefabElement \"{}\": Component not recognized!", APP_RUN_TIME, component_name, element->m_name);
-		LOG_FILE_ERROR("[{:.4f}][AddComponentToPrefabElement]  Error adding Component \"{}\" to PrefabElement \"{}\": Component not recognized!", APP_RUN_TIME, component_name, element->m_name);
-	}
-
-
-	if(duplicate)
-	{
-		LOG_DBG_ERROR("[{:.4f}][AddComponentToPrefabElement] Error adding Component \"{}\" to PrefabElement \"{}\": Component already added!", APP_RUN_TIME, component_name, element->m_name);
-		LOG_FILE_ERROR("[{:.4f}][AddComponentToPrefabElement]  Error adding Component \"{}\" to PrefabElement \"{}\": Component already added!", APP_RUN_TIME, component_name, element->m_name);
-	}
-	if(component_added)
-	{
-		element->m_elementComponents.push_back(component_name);
-		LOG_DBG_INFO("[{:.4f}][AddComponentToPrefabElement] Add Component \"{}\" tp Prefab Element \"{}\"!", APP_RUN_TIME, component_name, element->m_name);
-		LOG_FILE_INFO("[{:.4f}][AddComponentToPrefabElement] Add Component \"{}\" tp Prefab Element \"{}\"!", APP_RUN_TIME, component_name, element->m_name);
-	}
-}
-
-void GameEditor::RemoveComponentFromPrefabElement(PrefabTree* element, const std::string& component_name)
-{
-	// Find and remove the component.
-	std::vector< std::string >::iterator it = std::find(element->m_elementComponents.begin(), element->m_elementComponents.end(), component_name);
-	if(it != element->m_elementComponents.end())
-	{
-		element->m_elementComponents.erase(it);
-	}
-
-	// Delete the component object.
-	if(component_name.compare("Position") == 0)
-	{
-		delete element->m_positionData;
-		element->m_positionData = nullptr;
-	}
-	else if (component_name.compare("StaticSprite") == 0)
-	{
-		delete element->m_staticSpriteData;
-		element->m_staticSpriteData = nullptr;
-	}
-	else if (component_name.compare("AnimatedSprite") == 0)
-	{
-		delete element->m_animatedSpriteData;
-		element->m_animatedSpriteData = nullptr;
-	}
-	else
-	{
-		LOG_DBG_ERROR("[{:.4f}][RemoveComponentFromPrefabElement] Prefab Element Component not recognized \"{}\"!", APP_RUN_TIME, component_name);
-	}
-}
 
 void GameEditor::DisplayShapesWindow()
 {
@@ -3907,6 +4188,14 @@ bool GameEditor::CreateAndSubmitSoundChannelNode(Tree* tree, const std::string& 
 	return result;
 }
 
+void SRectangle::Draw(GameEditor* editor)
+{
+	editor->tv.DrawDecal(olc::vf2d(x, y), editor->m_editorDecalDatabase["Rect"], olc::vf2d(w, h));
+}
+
+
+
+
 
 int main()
 {
@@ -3914,74 +4203,4 @@ int main()
 		editor.Start();
 
 	return 0;
-}
-
-std::string Prefab::GetElementType(const std::string& name)
-{
-	auto node = m_sceneTree.Node(name);
-	return reinterpret_cast<PrefabTree*>(node)->m_elementType;
-}
-
-void Prefab::SetElementType(const std::string& name, const std::string& element_type)
-{
-	auto node = m_sceneTree.Node(name);
-	reinterpret_cast<PrefabTree*>(node)->m_elementType = element_type;
-}
-
-std::string Prefab::GetDecal(const std::string& name)
-{
-	auto node = m_sceneTree.Node(name);
-	return reinterpret_cast<PrefabTree*>(node)->m_debugDecal;
-}
-
-void Prefab::SetDecal(const std::string& name, const std::string& decal)
-{
-	auto node = m_sceneTree.Node(name);
-	reinterpret_cast<PrefabTree*>(node)->m_debugDecal = decal;
-}
-
-float Prefab::GetPositionX(const std::string& name)
-{
-	auto node = m_sceneTree.Node(name);
-	return reinterpret_cast<PrefabTree*>(node)->m_positionData->m_xpos;
-}
-
-float Prefab::GetPositionY(const std::string& name)
-{
-	auto node = m_sceneTree.Node(name);
-	return reinterpret_cast<PrefabTree*>(node)->m_positionData->m_ypos;
-}
-
-void Prefab::SetPositionX(const std::string& name, float v)
-{
-	auto node = m_sceneTree.Node(name);
-	reinterpret_cast<PrefabTree*>(node)->m_positionData->m_xpos = v;
-}
-
-void Prefab::SetPositionY(const std::string& name, float v)
-{
-	auto node = m_sceneTree.Node(name);
-	reinterpret_cast<PrefabTree*>(node)->m_positionData->m_ypos = v;
-}
-
-Tree* PrefabTree::Node(const std::string& name)
-{
-	if (m_name.compare(name) == 0)
-	{
-		return this;
-	}
-
-	for (auto& kid : m_children)
-	{
-		if (kid->m_name.compare(name) == 0) return kid;
-	}
-
-	auto node = new PrefabTree(name);
-	m_children.push_back(node);
-	return node;
-}
-
-void SRectangle::Draw(GameEditor* editor)
-{
-	editor->tv.DrawDecal(olc::vf2d(x, y), editor->m_editorDecalDatabase["Rect"], olc::vf2d(w, h));
 }
