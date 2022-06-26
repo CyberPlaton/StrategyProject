@@ -527,8 +527,9 @@ private:
 
 	// GUI UNIT EDITOR UTIL
 	bool ExportUnitPrefab(const std::string& filepath, SPrefab* prefab);
-	bool ImportUnitPrefab(const std::string& filepath, SPrefab* prefab);
+	SPrefab* ImportUnitPrefab(const std::string& filepath);
 	void DisplayUnitPrefabExportWindow(SPrefab* prefab);
+	void DisplayUnitPrefabImportWindow();
 
 	void DisplayUnitEditor();
 	void DisplayUnitEditorMainMenu();
@@ -618,7 +619,8 @@ private:
 	// UTIL ALGORITHM
 	std::multimap< int, std::string, std::greater<int> > SortDescending(std::map< std::string, int >& map);
 	std::map< int, std::string > SortAscending(std::map< std::string, int >& map);
-	
+	void CopyStringToCharArray(const std::string& s, char arr[], uint64_t arr_size);
+
 	// UTIL SERIALIZATION/DESERIALIZATION
 	bool ExportMapData(const std::string& filepath);
 	bool ImportMapData(const std::string& filepath);

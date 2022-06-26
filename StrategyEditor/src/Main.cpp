@@ -6,6 +6,7 @@ static bool g_bEntityDatabaseOpen = true;
 static bool g_bEntityEditorOpen = false;
 
 static bool g_bExportingUnitPrefab = false;
+static bool g_bImportingUnitPrefab = false;
 static SPrefab* g_pCurrentEditedPrefab = nullptr;
 static SPrefab* g_pExportedPrefab = nullptr;
 static ImGuiID g_idUnitEditorElementID = 20000;
@@ -128,6 +129,8 @@ void GameEditor::RenderGUI()
 			DisplayUnitEditor();
 			// Prefab Export Menu.
 			if (g_bExportingUnitPrefab)  DisplayUnitPrefabExportWindow(g_pExportedPrefab);
+			// Prefab Import Menu.
+			if (g_bImportingUnitPrefab) DisplayUnitPrefabImportWindow();
 		}
 	}
 }
@@ -2581,6 +2584,19 @@ std::map< int, std::string > GameEditor::SortAscending(std::map< std::string, in
 
 	return m;
 }
+
+void GameEditor::CopyStringToCharArray(const std::string& s, char arr[], uint64_t arr_size)
+{
+	if(s.size() < arr_size)
+	{
+		for(int i = 0; i < s.size(); i++)
+		{
+			char c = s[i];
+			arr[i] = c;
+		}
+	}
+}
+
 void GameEditor::DeleteRenderingLayer(std::string layer_name)
 {
 	auto entry = m_layerOrder.find(layer_name);
@@ -3169,19 +3185,18 @@ bool GameEditor::ExportUnitPrefab(const std::string& filepath, SPrefab* prefab)
 	return true;
 }
 
-bool GameEditor::ImportUnitPrefab(const std::string& filepath, SPrefab* prefab)
+SPrefab* GameEditor::ImportUnitPrefab(const std::string& filepath)
 {
+	std::string path = "assets/TilesetData/UnitPrefab/" + filepath + ".xml";
+
 	tinyxml2::XMLDocument doc;
-	if (doc.LoadFile(filepath.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	if (doc.LoadFile(path.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
 	{
 		doc.Clear();
-		return false;
+		return nullptr;
 	}
 
-	if(!prefab)
-	{
-		prefab = new SPrefab();
-	}
+	SPrefab* prefab = new SPrefab();
 
 	auto xmlRoot = doc.RootElement();
 	auto data = xmlRoot->FirstChildElement("Data");
@@ -3200,6 +3215,7 @@ bool GameEditor::ImportUnitPrefab(const std::string& filepath, SPrefab* prefab)
 	auto building_name = data->Attribute("building_name");
 	auto building_level = data->Int64Attribute("building_level");
 	auto gold_cost = data->Int64Attribute("gold_cost");
+	auto sprite = data->Attribute("sprite");
 
 	prefab->prefab_name = prefab_name;
 	prefab->layout_template_name = layout_template_name;
@@ -3215,6 +3231,7 @@ bool GameEditor::ImportUnitPrefab(const std::string& filepath, SPrefab* prefab)
 	prefab->building_name = building_name;
 	prefab->building_level = building_level;
 	prefab->gold_cost = gold_cost;
+	prefab->sprite = sprite;
 
 	auto statuses = data->FirstChildElement("StartingStatus");
 	auto abilities = data->FirstChildElement("Abilities");
@@ -3237,7 +3254,7 @@ bool GameEditor::ImportUnitPrefab(const std::string& filepath, SPrefab* prefab)
 		abl = abl->NextSiblingElement("Ability");
 	}
 
-	return true;
+	return prefab;
 }
 
 void GameEditor::DisplayUnitPrefabExportWindow(SPrefab* prefab)
@@ -3287,6 +3304,55 @@ void GameEditor::DisplayUnitPrefabExportWindow(SPrefab* prefab)
 
 		ImGui::End();
 	}
+}
+
+void GameEditor::DisplayUnitPrefabImportWindow()
+{
+	static char prefab_import_filepath_name[256] = "";
+	
+	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
+
+	ImGui::Begin("Prefab Import", &g_bImportingUnitPrefab);
+	ImGui::InputText("|", prefab_import_filepath_name, 64);
+	HelpMarkerWithoutQuestion("Name of the file that will be imported. The file will be loaded from \"assets/TilesetData/UnitPrefab\". It is not necessary to add the XML extension");
+	ImGui::SameLine();
+	if (ImGui::SmallButton("OK"))
+	{
+		// Check for sanity.
+		std::string name = std::string(prefab_import_filepath_name);
+
+		bool length = name.length() > 0;
+		bool result = false;
+		if (length)
+		{
+			g_pCurrentEditedPrefab = ImportUnitPrefab(name);
+			result = (g_pCurrentEditedPrefab != nullptr);
+		}
+
+		if (!length)
+		{
+			LOG_DBG_ERROR("[{:.4f}][DisplayUnitPrefabImportWindow] Error importing Unit Prefab: Filepath has 0 length!", APP_RUN_TIME);
+			LOG_FILE_ERROR("[{:.4f}][DisplayUnitPrefabImportWindow]  Error importing Unit Prefab: Filepath has 0 length!", APP_RUN_TIME);
+		}
+		if (result)
+		{
+			g_sUnitEditorCurrentUnitSprite = g_pCurrentEditedPrefab->sprite;
+
+			LOG_DBG_INFO("[{:.4f}][DisplayUnitPrefabImportWindow] Success importing Unit Prefab \"{}\"!", APP_RUN_TIME, g_pCurrentEditedPrefab->prefab_name);
+			LOG_FILE_INFO("[{:.4f}][DisplayUnitPrefabImportWindow]  Success importing Unit Prefab \"{}\"!", APP_RUN_TIME, g_pCurrentEditedPrefab->prefab_name);
+		}
+		else
+		{
+			LOG_DBG_ERROR("[{:.4f}][DisplayUnitPrefabImportWindow] Error importing Unit Prefab \"{}\"!", APP_RUN_TIME, name);
+			LOG_FILE_ERROR("[{:.4f}][DisplayUnitPrefabImportWindow]  Error importing Unit Prefab \"{}\"!", APP_RUN_TIME, name);
+		}
+
+		memset(&prefab_import_filepath_name, 0, sizeof(prefab_import_filepath_name));
+		g_bImportingUnitPrefab = false;
+	}
+
+	ImGui::End();
 }
 
 void GameEditor::DisplayUnitEditor()
@@ -3347,6 +3413,7 @@ void GameEditor::DisplayUnitEditorMainMenu()
 	if (ImGui::SmallButton("Load From..."))
 	{
 		// Import from XML into g_pCurrentEditedPrefab.
+		g_bImportingUnitPrefab = true;
 	}
 	ImGui::SameLine();
 	ImGui::SetCursorPosX(ImGui::GetWindowSize().x - 25.0f);
@@ -3361,6 +3428,14 @@ void GameEditor::DisplayUnitEditorMainMenu()
 void GameEditor::DisplayUnitEditorNameEdit()
 {
 	static char prefab_name[64] = "";
+
+	if (g_pCurrentEditedPrefab)
+	{
+		if (g_pCurrentEditedPrefab->prefab_name.size() > 0)
+		{
+			CopyStringToCharArray(g_pCurrentEditedPrefab->prefab_name, prefab_name, sizeof(prefab_name));
+		}
+	}
 
 	if(ImGui::CollapsingHeader("Name"))
 	{
@@ -3404,6 +3479,14 @@ void GameEditor::DisplayUnitEditorLayoutTemplateNameEdit()
 	ImGuiID input_text_ok_id = g_idUnitEditorElementID + 101;
 
 	static char prefab_layout_template_name[64] = "";
+
+	if(g_pCurrentEditedPrefab)
+	{
+		if(g_pCurrentEditedPrefab->prefab_name.size() > 0)
+		{
+			CopyStringToCharArray(g_pCurrentEditedPrefab->layout_template_name, prefab_layout_template_name, sizeof(prefab_layout_template_name));
+		}
+	}
 
 	if (ImGui::CollapsingHeader("Layout Template Name"))
 	{
@@ -3664,6 +3747,14 @@ void GameEditor::DisplayUnitEditorBuildingRequirementsEdit()
 	ImGuiID input_text_id = g_idUnitEditorElementID + 200;
 	ImGuiID input_text_ok_id = g_idUnitEditorElementID + 201;
 	static char required_building_name[64] = "";
+
+	if (g_pCurrentEditedPrefab)
+	{
+		if (g_pCurrentEditedPrefab->prefab_name.size() > 0)
+		{
+			CopyStringToCharArray(g_pCurrentEditedPrefab->building_name, required_building_name, sizeof(required_building_name));
+		}
+	}
 
 	if (ImGui::CollapsingHeader("Building Requirements"))
 	{
