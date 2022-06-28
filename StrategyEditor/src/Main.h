@@ -76,7 +76,11 @@
 *			 o ChannelGroup Control now creates an FMOD representation and allows for volume customization.
 * 
 * 28.06.2022 - Version 0.4.0 complete:
-* 
+*			 o Layout Template Editor for unit layout template creation
+*			 o Unit Prefab Editor:
+*				 - Editing stats of a unit like Attack values and Gold cost
+*				 - Adding starting statuses and abilities
+*			 o Exporting / Importing allows for quick editing and creation
 *
 * TODO: Ambient Audio "Editor" has to be update to be based on FMOD,
 *		as soon as the Audio Engine with FMOD is completed.
