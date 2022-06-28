@@ -193,7 +193,7 @@ bool GameEditor::OnUserCreate()
 	loaded &= LoadTilesetData("Structure", "assets/Tileset/Structure", "assets/TilesetData/Structure.json");
 	loaded &= LoadTilesetData("Wall", "assets/Tileset/Wall", "assets/TilesetData/Wall.json");
 	loaded &= LoadTilesetData("Hill", "assets/Tileset/Hill", "assets/TilesetData/Hill.json");
-	loaded &= LoadTilesetData("Unit", "assets/Tileset/Unit", "assets/TilesetData/Unit.json", true);
+	loaded &= LoadTilesetData("Unit", "assets/Tileset/Unit", "assets/TilesetData/Unit.json");
 
 	loaded &= LoadEditorGraphicalData();
 
@@ -1046,6 +1046,7 @@ bool GameEditor::LoadTilesetData(const std::string& database, const std::string&
 			{
 				m_unitDecalDatabase.try_emplace(name, decal);
 			}
+
 
 
 			m_decalDatabase.try_emplace(name, decal);

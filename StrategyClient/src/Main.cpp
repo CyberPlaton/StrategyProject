@@ -768,7 +768,6 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 	entity->Get< Sprite >()->CenterOrigin();
 	entity->Depth(0);
 
-
 	// Camera control
 	entity = factory->Begin(this)
 		.Add(new CameraController(camera))
