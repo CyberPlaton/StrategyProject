@@ -5,6 +5,13 @@ static bool g_bDecalDatabaseOpen = true;
 static bool g_bEntityDatabaseOpen = true;
 static bool g_bEntityEditorOpen = false;
 
+// Prefab Static Data
+static char g_cPrefabName[64] = "";
+static char g_cPrefabLayoutTemplateName[128] = "";
+static char g_cPrefabRequiredBuildingName[64] = "";
+static char g_cPrefabStartingStatusName[128] = "";
+static char g_cPrefabAbilityName[128] = "";
+
 static bool g_bExportingUnitPrefab = false;
 static bool g_bImportingUnitPrefab = false;
 static SPrefab* g_pCurrentEditedPrefab = nullptr;
@@ -3358,7 +3365,7 @@ void GameEditor::DisplayUnitPrefabImportWindow()
 void GameEditor::DisplayUnitEditor()
 {
 	std::string name = "Unit Editor";
-	auto scene_edit_window_width = 300.f;
+	auto scene_edit_window_width = 400.f;
 	auto prefab_preview_window_width = 700.0f;
 	auto prefab_element_window_width = 300.f;
 	auto main_window_height = ScreenHeight() - 50.0f;
@@ -3401,6 +3408,16 @@ void GameEditor::DisplayUnitEditorMainMenu()
 	if (ImGui::SmallButton("New"))
 	{
 		g_pCurrentEditedPrefab = new SPrefab();
+
+		// Reset static data.
+		// Prefab Name.
+		memset(&g_cPrefabName, 0, sizeof(g_cPrefabName));
+		// Layout Template Name.
+		memset(&g_cPrefabLayoutTemplateName, 0, sizeof(g_cPrefabLayoutTemplateName));
+		// Building Name.
+		memset(&g_cPrefabRequiredBuildingName, 0, sizeof(g_cPrefabRequiredBuildingName));
+		// Current Prefab Sprite.
+		g_sUnitEditorCurrentUnitSprite = "none";
 	}
 	ImGui::SameLine();
 	if(ImGui::SmallButton("Save As..."))
@@ -3427,25 +3444,23 @@ void GameEditor::DisplayUnitEditorMainMenu()
 
 void GameEditor::DisplayUnitEditorNameEdit()
 {
-	static char prefab_name[64] = "";
-
 	if (g_pCurrentEditedPrefab)
 	{
 		if (g_pCurrentEditedPrefab->prefab_name.size() > 0)
 		{
-			CopyStringToCharArray(g_pCurrentEditedPrefab->prefab_name, prefab_name, sizeof(prefab_name));
+			CopyStringToCharArray(g_pCurrentEditedPrefab->prefab_name, g_cPrefabName, sizeof(g_cPrefabName));
 		}
 	}
 
 	if(ImGui::CollapsingHeader("Name"))
 	{
-		ImGui::InputText("|", prefab_name, 64);
+		ImGui::InputText("|", g_cPrefabName, sizeof(g_cPrefabName));
 		HelpMarkerWithoutQuestion("Set the Name of the unit. This name will be displayed to the player in-game. This is not the exported file name");
 		ImGui::SameLine();
 		if (ImGui::SmallButton("OK"))
 		{
 			// Check for sanity.
-			std::string name = std::string(prefab_name);
+			std::string name = std::string(g_cPrefabName);
 
 			auto length = name.size() > 0;
 
@@ -3457,7 +3472,7 @@ void GameEditor::DisplayUnitEditorNameEdit()
 				// Set the name.
 				g_pCurrentEditedPrefab->prefab_name = name;
 
-				memset(&prefab_name, 0, sizeof(prefab_name));
+				memset(&g_cPrefabName, 0, sizeof(g_cPrefabName));
 			}
 			else if(!length)
 			{
@@ -3478,20 +3493,18 @@ void GameEditor::DisplayUnitEditorLayoutTemplateNameEdit()
 	ImGuiID input_text_id = g_idUnitEditorElementID + 100;
 	ImGuiID input_text_ok_id = g_idUnitEditorElementID + 101;
 
-	static char prefab_layout_template_name[64] = "";
-
 	if(g_pCurrentEditedPrefab)
 	{
 		if(g_pCurrentEditedPrefab->prefab_name.size() > 0)
 		{
-			CopyStringToCharArray(g_pCurrentEditedPrefab->layout_template_name, prefab_layout_template_name, sizeof(prefab_layout_template_name));
+			CopyStringToCharArray(g_pCurrentEditedPrefab->layout_template_name, g_cPrefabLayoutTemplateName, sizeof(g_cPrefabLayoutTemplateName));
 		}
 	}
 
 	if (ImGui::CollapsingHeader("Layout Template Name"))
 	{
 		ImGui::PushID(input_text_id);
-		ImGui::InputText("|", prefab_layout_template_name, 64);
+		ImGui::InputText("|", g_cPrefabLayoutTemplateName, sizeof(g_cPrefabLayoutTemplateName));
 		ImGui::PopID();
 		HelpMarkerWithoutQuestion("Set the Layout Template for the unit");
 		ImGui::SameLine();
@@ -3499,7 +3512,7 @@ void GameEditor::DisplayUnitEditorLayoutTemplateNameEdit()
 		if (ImGui::SmallButton("OK"))
 		{
 			// Check for sanity.
-			std::string name = std::string(prefab_layout_template_name);
+			std::string name = std::string(g_cPrefabLayoutTemplateName);
 
 			auto length = name.size() > 0;
 
@@ -3511,7 +3524,7 @@ void GameEditor::DisplayUnitEditorLayoutTemplateNameEdit()
 				// Set the layout template name for the prefab.
 				g_pCurrentEditedPrefab->layout_template_name = name;
 
-				memset(&prefab_layout_template_name, 0, sizeof(prefab_layout_template_name));
+				memset(&g_cPrefabLayoutTemplateName, 0, sizeof(g_cPrefabLayoutTemplateName));
 			}
 			else if(!length)
 			{
@@ -3746,13 +3759,12 @@ void GameEditor::DisplayUnitEditorBuildingRequirementsEdit()
 {
 	ImGuiID input_text_id = g_idUnitEditorElementID + 200;
 	ImGuiID input_text_ok_id = g_idUnitEditorElementID + 201;
-	static char required_building_name[64] = "";
 
 	if (g_pCurrentEditedPrefab)
 	{
 		if (g_pCurrentEditedPrefab->prefab_name.size() > 0)
 		{
-			CopyStringToCharArray(g_pCurrentEditedPrefab->building_name, required_building_name, sizeof(required_building_name));
+			CopyStringToCharArray(g_pCurrentEditedPrefab->building_name, g_cPrefabRequiredBuildingName, sizeof(g_cPrefabRequiredBuildingName));
 		}
 	}
 
@@ -3761,7 +3773,7 @@ void GameEditor::DisplayUnitEditorBuildingRequirementsEdit()
 		if (ImGui::CollapsingHeader("Building Name"))
 		{
 			ImGui::PushID(input_text_id);
-			ImGui::InputText("|", required_building_name, 64);
+			ImGui::InputText("|", g_cPrefabRequiredBuildingName, sizeof(g_cPrefabRequiredBuildingName));
 			ImGui::PopID();
 			HelpMarkerWithoutQuestion("Set the required building name. The building name will be searched for in-game and has to match. In that building this unit will be produced");
 			ImGui::SameLine();
@@ -3769,7 +3781,7 @@ void GameEditor::DisplayUnitEditorBuildingRequirementsEdit()
 			if (ImGui::SmallButton("OK"))
 			{
 				// Check for sanity.
-				std::string name = std::string(required_building_name);
+				std::string name = std::string(g_cPrefabRequiredBuildingName);
 
 				auto length = name.size() > 0;
 
@@ -3781,7 +3793,7 @@ void GameEditor::DisplayUnitEditorBuildingRequirementsEdit()
 					// Set the layout template name for the prefab.
 					g_pCurrentEditedPrefab->building_name = name;
 
-					memset(&required_building_name, 0, sizeof(required_building_name));
+					memset(&g_cPrefabRequiredBuildingName, 0, sizeof(g_cPrefabRequiredBuildingName));
 				}
 				else if (!length)
 				{
@@ -3849,12 +3861,22 @@ void GameEditor::DisplayUnitEditorStartingStatusEdit()
 {
 	ImGuiID input_text_id = g_idUnitEditorElementID + 300;
 	ImGuiID input_text_ok_id = g_idUnitEditorElementID + 301;
-	static char starting_status_name[64] = "";
-
+	
 	if (ImGui::CollapsingHeader("Starting Status"))
 	{
+		// Show all already added starting statuses.
+		if(g_pCurrentEditedPrefab)
+		{
+			// Assume there are not duplicate statuses.
+			for (auto& status : g_pCurrentEditedPrefab->starting_status_vec)
+			{
+				ImGui::BulletText(status.c_str());
+			}
+		}
+
+
 		ImGui::PushID(input_text_id);
-		ImGui::InputText("|", starting_status_name, 64);
+		ImGui::InputText("|", g_cPrefabStartingStatusName, sizeof(g_cPrefabStartingStatusName));
 		ImGui::PopID();
 		HelpMarkerWithoutQuestion("Add a starting status to the unit. The unit will start with the given status and the name must match an existing status name in DB. A status can be e.g. \"Poison\" or \"Levitate\"");
 		ImGui::SameLine();
@@ -3862,24 +3884,38 @@ void GameEditor::DisplayUnitEditorStartingStatusEdit()
 		if (ImGui::SmallButton("OK"))
 		{
 			// Check for sanity.
-			std::string name = std::string(starting_status_name);
+			std::string name = std::string(g_cPrefabStartingStatusName);
 
 			auto length = name.size() > 0;
-
+			auto duplicate = false;
+			
 			if (length && g_pCurrentEditedPrefab != nullptr)
 			{
-				LOG_DBG_INFO("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Add starting status \"{}\"!", APP_RUN_TIME, name);
-				LOG_FILE_INFO("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Add starting status \"{}\"!", APP_RUN_TIME, name);
 
-				// Set the layout template name for the prefab.
-				g_pCurrentEditedPrefab->starting_status_vec.push_back(name);
+				duplicate = std::find(g_pCurrentEditedPrefab->starting_status_vec.begin(), g_pCurrentEditedPrefab->starting_status_vec.end(), name) != g_pCurrentEditedPrefab->starting_status_vec.end();
 
-				memset(&starting_status_name, 0, sizeof(starting_status_name));
+				if(!duplicate)
+				{
+					LOG_DBG_INFO("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Add starting status \"{}\"!", APP_RUN_TIME, name);
+					LOG_FILE_INFO("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Add starting status \"{}\"!", APP_RUN_TIME, name);
+
+					// Set the layout template name for the prefab.
+					g_pCurrentEditedPrefab->starting_status_vec.push_back(name);
+				}
+
+				memset(&g_cPrefabStartingStatusName, 0, sizeof(g_cPrefabStartingStatusName));
 			}
-			else if (!length)
+			
+			// Error messages.
+			if (!length)
 			{
 				LOG_DBG_ERROR("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Could not add starting status: Empty name!", APP_RUN_TIME);
 				LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Could not add starting status: Empty name!", APP_RUN_TIME);
+			}
+			else if(duplicate)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Could not add starting status: Duplicate!", APP_RUN_TIME);
+				LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Could not add starting status: Duplicate!", APP_RUN_TIME);
 			}
 			else if (!g_pCurrentEditedPrefab)
 			{
@@ -3895,12 +3931,23 @@ void GameEditor::DisplayUnitEditorAbilitiesEdit()
 {
 	ImGuiID input_text_id = g_idUnitEditorElementID + 400;
 	ImGuiID input_text_ok_id = g_idUnitEditorElementID + 401;
-	static char ability_name[64] = "";
+	
 
 	if (ImGui::CollapsingHeader("Abilities"))
 	{
+		// Show all already added abilities.
+		if (g_pCurrentEditedPrefab)
+		{
+			// Assume there are not duplicate abilities.
+			for (auto& abl : g_pCurrentEditedPrefab->abilities_vec)
+			{
+				ImGui::BulletText(abl.c_str());
+			}
+		}
+
+
 		ImGui::PushID(input_text_id);
-		ImGui::InputText("|", ability_name, 64);
+		ImGui::InputText("|", g_cPrefabAbilityName, sizeof(g_cPrefabAbilityName));
 		ImGui::PopID();
 		HelpMarkerWithoutQuestion("Add an ability to the unit. The unit will be able to execute the ability and it has to match the name of the ability in-game. An ability can be e.g. \"Heal\" or \"AttackMeele\"");
 		ImGui::SameLine();
@@ -3908,29 +3955,42 @@ void GameEditor::DisplayUnitEditorAbilitiesEdit()
 		if (ImGui::SmallButton("OK"))
 		{
 			// Check for sanity.
-			std::string name = std::string(ability_name);
+			std::string name = std::string(g_cPrefabAbilityName);
 
 			auto length = name.size() > 0;
+			auto duplicate = false;
 
 			if (length && g_pCurrentEditedPrefab != nullptr)
 			{
-				LOG_DBG_INFO("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Add ability \"{}\"!", APP_RUN_TIME, name);
-				LOG_FILE_INFO("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Add ability \"{}\"!", APP_RUN_TIME, name);
+				duplicate = std::find(g_pCurrentEditedPrefab->abilities_vec.begin(), g_pCurrentEditedPrefab->abilities_vec.end(), name) != g_pCurrentEditedPrefab->abilities_vec.end();
 
-				// Set the layout template name for the prefab.
-				g_pCurrentEditedPrefab->abilities_vec.push_back(name);
+				if(!duplicate)
+				{
+					LOG_DBG_INFO("[{:.4f}][DisplayUnitEditorAbilitiesEdit] Add ability \"{}\"!", APP_RUN_TIME, name);
+					LOG_FILE_INFO("[{:.4f}][DisplayUnitEditorAbilitiesEdit] Add ability \"{}\"!", APP_RUN_TIME, name);
 
-				memset(&ability_name, 0, sizeof(ability_name));
+					// Set the layout template name for the prefab.
+					g_pCurrentEditedPrefab->abilities_vec.push_back(name);
+				}
+
+				memset(&g_cPrefabAbilityName, 0, sizeof(g_cPrefabAbilityName));
 			}
-			else if (!length)
+			
+			// Error messages.
+			if (!length)
 			{
-				LOG_DBG_ERROR("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Could not add ability: Empty name!", APP_RUN_TIME);
-				LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Could not add ability: Empty name!", APP_RUN_TIME);
+				LOG_DBG_ERROR("[{:.4f}][DisplayUnitEditorAbilitiesEdit] Could not add ability: Empty name!", APP_RUN_TIME);
+				LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorAbilitiesEdit] Could not add ability: Empty name!", APP_RUN_TIME);
+			}
+			else if (duplicate)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayUnitEditorAbilitiesEdit] Could not add starting status: Duplicate!", APP_RUN_TIME);
+				LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorAbilitiesEdit] Could not add starting status: Duplicate!", APP_RUN_TIME);
 			}
 			else if (!g_pCurrentEditedPrefab)
 			{
-				LOG_DBG_ERROR("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Could not add ability: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
-				LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorStartingStatusEdit] Could not add ability: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
+				LOG_DBG_ERROR("[{:.4f}][DisplayUnitEditorAbilitiesEdit] Could not add ability: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
+				LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorAbilitiesEdit] Could not add ability: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
 			}
 		}
 		ImGui::PopID();

@@ -75,6 +75,8 @@
 *				 - Increased the draw distance by 10 map tiles.
 *			 o ChannelGroup Control now creates an FMOD representation and allows for volume customization.
 * 
+* 28.06.2022 - Version 0.4.0 complete:
+* 
 *
 * TODO: Ambient Audio "Editor" has to be update to be based on FMOD,
 *		as soon as the Audio Engine with FMOD is completed.
@@ -103,8 +105,8 @@
 #include "SoundSystem.h"
 
 #define EDITOR_MAJOR_VERSION 0
-#define EDITOR_MINOR_VERSION 3
-#define EDITOR_PATCH_VERSION 2
+#define EDITOR_MINOR_VERSION 4
+#define EDITOR_PATCH_VERSION 0
 
 
 
