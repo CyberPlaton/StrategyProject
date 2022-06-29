@@ -24,7 +24,8 @@
 #include "SelectableUnit.h"
 #include "Observable.h"
 #include "Observer.h"
-#include "ScriptComponent.h"
+#include "AbilitiesDataMap.h"
+#include "StatusEffectsDataMap.h"
 
 // SOUND
 

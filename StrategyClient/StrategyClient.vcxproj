@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\AbilitiesDataMap.h" />
     <ClInclude Include="src\Ability.h" />
     <ClInclude Include="src\AppCommands.h" />
     <ClInclude Include="src\AttackAbility.h" />
@@ -171,10 +172,13 @@
     <ClInclude Include="src\SelectableUnit.h" />
     <ClInclude Include="src\SplashScreenScene.h" />
     <ClInclude Include="src\StateMachine.h" />
+    <ClInclude Include="src\Status.h" />
+    <ClInclude Include="src\StatusEffectsDataMap.h" />
     <ClInclude Include="src\TrainAbility.h" />
     <ClInclude Include="src\Unit.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\AbilitiesDataMap.cpp" />
     <ClCompile Include="src\Ability.cpp" />
     <ClCompile Include="src\AppCommands.cpp" />
     <ClCompile Include="src\Building.cpp" />
@@ -194,6 +198,7 @@
     <ClCompile Include="src\SelectableEntity.cpp" />
     <ClCompile Include="src\SplashScreenScene.cpp" />
     <ClCompile Include="src\StateMachine.cpp" />
+    <ClCompile Include="src\StatusEffectsDataMap.cpp" />
     <ClCompile Include="src\Unit.cpp" />
   </ItemGroup>
   <ItemGroup>

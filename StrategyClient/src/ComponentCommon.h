@@ -5,6 +5,10 @@
 #include <CherrySoda/Util/String.h>
 #include <CherrySoda/Util/STL.h>
 
+#include <map>
+#include <vector>
+
+
 #define CONCAT_STRING(a, b) a##b
 
 

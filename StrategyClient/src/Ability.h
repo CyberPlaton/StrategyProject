@@ -2,10 +2,11 @@
 
 #include "ComponentCommon.h"
 
-#include <map>
-
 namespace cherrysoda
 {
+	// Forward decl.
+	struct SAbilityData;
+
 
 	/*
 	* EntityAbility defines different actions available for a unit or a building.
@@ -21,8 +22,17 @@ namespace cherrysoda
 	class EntityAbility
 	{
 	public:
+		/// @brief Pointer to the entity this ability belongs to.
+		/// @return Entity Pointer.
+		virtual Entity* Self() = 0;
 
+		/// @brief Use this ability on the target. The ability will the execute its functionality on it.
+		/// @param target The target entity. Can be self too.
 		virtual void Use(cherrysoda::Entity* target) = 0;
+
+		/// @brief Set the data for the Ability.
+		/// @param The Ability data from SAbilityData.
+		virtual void Data(SAbilityData*) = 0;
 	};
 
 

@@ -1,5 +1,28 @@
 ﻿#include "Main.h"
 
+/*
+// The scripting interface for the client will be removed.
+// This is a merely example of how to use functionality created previously,
+// so it will be easier to port it to the game server.
+void cherrysoda::LuaFactory::InitializeBinding(cherrysoda::Lua* lua)
+{
+	using namespace cherrysoda;
+	using namespace luabridge;
+
+	auto state = lua->m_luaState;
+
+	REGISTER_CLASS_FUNCTION_TO_LUA(state, "Engine", App, SetTitle);
+	REGISTER_CLASS_FUNCTION_TO_LUA(state, "Engine", App, GetWindowHeight);
+	REGISTER_CLASS_FUNCTION_TO_LUA(state, "Engine", App, GetWindowWidth);
+	REGISTER_CLASS_FUNCTION_TO_LUA(state, "Engine", App, SetFullscreen);
+	REGISTER_CLASS_FUNCTION_TO_LUA(state, "Engine", App, SetWindowed);
+	REGISTER_CLASS_FUNCTION_TO_LUA(state, "Engine", App, FPS);
+	REGISTER_CLASS_FUNCTION_TO_LUA(state, "Engine", App, DeltaTime);
+
+}
+*/
+
+
 void App::OnConnected(RakNet::Packet* packet)
 {
 	// Do nothing for Application.
@@ -707,7 +730,6 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 		.Add(new  SelectableBuilding(1))
 		.Add(new  CollidableComponent(true, false, true))
 		.Add(new  Building("Townhall", 1, 500, 1, 1, 250.0f, 250.0f))
-		.Add(new ScriptComponent("assets/testing_script.lua"))
 		.Add(new EntityAbilityMap())
 		.End();
 	entity->Get< Sprite >()->AddLoop("Idle", "Human_Townhall_III_Winter");
@@ -777,39 +799,6 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 		.End();
 
 }
-
-
-struct Test
-{
-	int h;
-	int w;
-	std::string name;
-};
-
-Test oTest;
-bool bTest = false;
-
-
-// SCRIPTING
-// BIND ANY SCRIPTRING RELEVANT FUNCTIONS AND DATASTRUCTURES TO LUA
-void cherrysoda::LuaFactory::InitializeBinding(cherrysoda::Lua* lua)
-{
-	using namespace cherrysoda;
-	using namespace luabridge;
-
-	auto state = lua->m_luaState;
-
-	REGISTER_CLASS_FUNCTION_TO_LUA(state, "Engine", App, SetTitle);
-	REGISTER_CLASS_FUNCTION_TO_LUA(state, "Engine", App, GetWindowHeight);
-	REGISTER_CLASS_FUNCTION_TO_LUA(state, "Engine", App, GetWindowWidth);
-	REGISTER_CLASS_FUNCTION_TO_LUA(state, "Engine", App, SetFullscreen);
-	REGISTER_CLASS_FUNCTION_TO_LUA(state, "Engine", App, SetWindowed);
-	REGISTER_CLASS_FUNCTION_TO_LUA(state, "Engine", App, FPS);
-	REGISTER_CLASS_FUNCTION_TO_LUA(state, "Engine", App, DeltaTime);
-
-}
-
-
 
 
 using GameApp = App;

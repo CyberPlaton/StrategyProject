@@ -81,9 +81,10 @@ namespace dbms
 		/// @param effect_name Name of the effect to be retrieved.
 		/// @param effect Object which to fill with data.
 		/// @return True on success.
-		static bool GetStatusEffect(const std::string& effect_name, net::SStatusEffect* effect);
+		static bool GetStatusEffect(const std::string& effect_name, net::SStatusEffectData* effect);
 
-
+		// TODO
+		static bool GetAbility(const std::string& ability_name, net::SAbilityData* ability);
 
 		
 		/*

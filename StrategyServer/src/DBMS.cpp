@@ -232,6 +232,17 @@ namespace dbms
 	}
 
 
+	bool DBMS::GetAbility(const std::string& ability_name, net::SAbilityData* ability)
+	{
+		return false;
+	}
+
+	bool DBMS::GetStatusEffect(const std::string& effect_name, net::SStatusEffectData* effect)
+	{
+		return false;
+	}
+
+
 	uint32_t DBMS::CreateUser()
 	{
 		if (!m_initialized) return -1;
@@ -506,6 +517,7 @@ namespace dbms
 			}
 		}
 	}
+
 
 	bool DBMS::TryEmplaceNetGameobjectUnit(net::SUnitGameobject* object, mongocxx::collection& game, bool update)
 	{

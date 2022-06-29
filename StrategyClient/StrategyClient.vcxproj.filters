@@ -59,6 +59,12 @@
     <ClCompile Include="src\ScriptComponent.cpp">
       <Filter>Components\Scriptable</Filter>
     </ClCompile>
+    <ClCompile Include="src\AbilitiesDataMap.cpp">
+      <Filter>Components\Game\Ability</Filter>
+    </ClCompile>
+    <ClCompile Include="src\StatusEffectsDataMap.cpp">
+      <Filter>Components\Game\Status</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Main.h" />
@@ -160,6 +166,15 @@
     </ClInclude>
     <ClInclude Include="src\ScriptInterface.h">
       <Filter>Scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Status.h">
+      <Filter>Components\Game\Status</Filter>
+    </ClInclude>
+    <ClInclude Include="src\AbilitiesDataMap.h">
+      <Filter>Components\Game\Ability</Filter>
+    </ClInclude>
+    <ClInclude Include="src\StatusEffectsDataMap.h">
+      <Filter>Components\Game\Status</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

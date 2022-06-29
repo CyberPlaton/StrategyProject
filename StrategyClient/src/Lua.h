@@ -24,7 +24,7 @@ namespace cherrysoda
 	public:
 		static Lua* InstantiateLua();
 		static void TerminateLua(Lua* lua);
-		static void InitializeBinding(Lua* lua);
+		static void InitializeBinding(Lua* lua) {};
 		static bool LoadScript(ScriptInterface* script, Lua* lua);
 
 	private:
