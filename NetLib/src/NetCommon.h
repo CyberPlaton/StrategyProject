@@ -29,7 +29,8 @@ namespace net
 	struct SUnitGameobject;
 	struct SMaptileGameobject;
 	struct SMapobjectGameobject;
-	struct SStatusEffect;
+	struct SStatusEffectData;
+	struct SAbilityData;
 
 	FORCE_INLINE static uint64_t CreateGameobjectNetworkUUID()
 	{
@@ -425,19 +426,31 @@ RakNet::BitStream stream(packet->data, packet->length, false) \
 
 	/// @brief Status effects define changes in properties for an Entity: Unit, Building etc.
 	// E.g. a poison effect damages a unit each turn.
-	struct SStatusEffect
+	struct SStatusEffectData
 	{
-		/// @brief 
+		/// @brief The name of the Effect. NOT for the user.
 		RakNet::RakString m_effectName;
 		
+		/// @brief Name of the Effect. Displayed to the user.
+		RakNet::RakString m_effectDisplayName;
+
 		/// @brief Whether this Effect does 'Damage' or 'Heal' etc.
 		RakNet::RakString m_effectType;
 		
-		/// @brief How much to apply. Whether healing or damaging or other effect type.
-		uint64_t m_effectValue;
+		/// @brief How much minimally to apply. Whether healing or damaging or other effect type.
+		// The Applied value lies between m_effectValueMin and m_effectValueMax.
+		uint64_t m_effectValueMin;
 
-		/// @brief To what kind of entity the effect is applicable. E.g. 'Unit' or 'Townhall'.
-		RakNet::RakString m_effectApplicableTo;
+		/// @brief How much maximally to apply. Whether healing or damaging or other effect type.
+		// The Applied value lies between m_effectValueMin and m_effectValueMax.
+		uint64_t m_effectValueMax;
+
+		/// @brief How probable it is, that the effect will be applied to the target.
+		// Number between 1 and 100, where 100 means that the effect is applied in all cases, i.e. 100% probability.
+		uint64_t m_effectApplicationProbability;
+
+		/// @brief To what kind of entity the effect is applicable. E.g. 'Unit' or 'Townhall' (Building).
+		EGameobjectType m_effectApplicableTo;
 
 		/// @brief Either 'Turn' (meaning is applied for a number of turns) or ... .
 		RakNet::RakString m_effectTimerType;
@@ -449,7 +462,38 @@ RakNet::BitStream stream(packet->data, packet->length, false) \
 		RakNet::RakString m_effectDesc;
 	};
 
+	/// @brief An Ability defines what a unit or a building can do. Those options can be selected in-game
+	// by the player and applied to self or other units/buildings.
+	// The SAbilityData structure specifies needed data for an Ability. Operating with that data and relevant
+	// data in-game (unit race or maptile type etc.) the Ability executes its function.
+	struct SAbilityData
+	{
+		/// @brief Name of the Ability. NOT for the user.
+		RakNet::RakString m_abilityName;
 
+		/// @brief Name of the Ability. Displayed to the user.
+		RakNet::RakString m_abilityDisplayName;
+
+		/// @brief On what kind of Game Objects the ability can be used. E.g. "Attack" can be used on NET_GO_UNIT and
+		// "Move" can be used on NET_GO_MAPTILE.
+		EGameobjectType m_abilityApplicableTo;
+
+		/// @brief Whether the Ability can be used on the one unit or building using it = self.
+		bool m_abilityUsableOnSelf;
+
+		/// @brief Whether the Ability can be used on players friendly units or buildings.
+		bool m_abilityUsableOnFriendlies;
+
+		/// @brief Whether the Ability can be used on enemy players units or buildings.
+		bool m_abilityUsableOnEnemies;
+
+		/// @brief Holds all the Status Effects that will be applied to the target on use of this Ability.
+		// E.g. "AbilitySlash" used on an enemy unit not only takes away his health, but also applies "StatusEffectBleeding" to him.
+		std::vector< RakNet::RakString > m_appliedStatusEffectsOnUse;
+
+		/// @brief Description of the Ability. Intended for user.
+		RakNet::RakString m_abilityDesc;
+	};
 
 
 

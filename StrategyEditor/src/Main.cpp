@@ -3719,12 +3719,12 @@ void GameEditor::DisplayUnitEditorMovementTypeEdit()
 			ImGui::PushID(mov_id);
 			ImGui::SliderInt("Int", &mov, 1, 3, "%d");
 			ImGui::PopID();
-			HelpMarkerWithoutQuestion("The Movement Type of the unit. 1=Ground, 2=Flying, 3=Swimming");
+			HelpMarkerWithoutQuestion("The Movement Type of the unit. 1=Walk, 2=Flying, 3=Swimming, 4=Mounted"); // TODO Add Mounted to slider, export and import.
 			ImGui::SameLine();
 			ImGui::PushID(mov_scalar_id);
 			ImGui::InputScalar("ScalarInt", ImGuiDataType_U32, &mov, &u32_one);
 			ImGui::PopID();
-			HelpMarkerWithoutQuestion("The Movement Type of the unit. 1=Ground, 2=Flying, 3=Swimming");
+			HelpMarkerWithoutQuestion("The Movement Type of the unit. 1=Walk, 2=Flying, 3=Swimming, 4=Mounted");
 
 			g_pCurrentEditedPrefab->movement_type = mov;
 		}

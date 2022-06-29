@@ -1,6 +1,12 @@
 
 #include "ComponentCommon.h"
+
+// Selectable allows for defining actions to be taken on hovering/selecting/clicking on a unit
 #include "SelectableUnit.h"
+
+// Abilities definition and implementation for Unit and Building entities.
+#include "Ability.h"
+
 
 namespace cherrysoda
 {
@@ -10,7 +16,8 @@ namespace cherrysoda
 
 		enum EMovementType
 		{
-			MT_WALK,
+			MT_INVALID = 0,
+			MT_WALK = 1,
 			MT_FLY,
 			MT_SWIM,
 			MT_RIDE
@@ -34,7 +41,7 @@ namespace cherrysoda
 						  float position_y);
 
 		// GETTER/SETTER
-		DECLARE_GET_SET(const String&,  UnitName,		m_unitName);
+		DECLARE_GET_SET(const String&,  UnitName,			m_unitName);
 		DECLARE_GET_SET(size_t,			PlayerId,			m_playerId);
 		DECLARE_GET_SET(size_t,			Health,				m_health);
 		DECLARE_GET_SET(size_t,			Armor,				m_armor);
@@ -56,6 +63,8 @@ namespace cherrysoda
 	private:
 		String m_unitName;
 		size_t m_playerId = 0;
+
+		/// @brief Amount of damage the unit can take before dying.
 		size_t m_health = 0;
 		size_t m_armor = 0;
 		size_t m_defense = 0;
@@ -67,8 +76,10 @@ namespace cherrysoda
 		size_t m_tilePositionY = 0;
 		float  m_positionX = 0.0f;
 		float  m_positionY = 0.0f;
-		EMovementType m_movementType;
-		size_t m_movementPoints;
+		EMovementType m_movementType = EMovementType(0);
+
+		/// @brief Basically the Action Points of the unit. Define how many actions it can perform in one round.
+		size_t m_movementPoints = 0;
 
 		bool m_isDirty = false;
 

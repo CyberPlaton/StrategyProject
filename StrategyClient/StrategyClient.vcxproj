@@ -145,7 +145,6 @@
     <ClInclude Include="src\BuildAbility.h" />
     <ClInclude Include="src\Building.h" />
     <ClInclude Include="src\CameraController.h" />
-    <ClInclude Include="src\ChopForestAbility.h" />
     <ClInclude Include="src\CommonDefines.h" />
     <ClInclude Include="src\ComponentCommon.h" />
     <ClInclude Include="src\CustomRenderer.h" />
@@ -163,7 +162,6 @@
     <ClInclude Include="src\Observable.h" />
     <ClInclude Include="src\Observer.h" />
     <ClInclude Include="src\PlatformClient.h" />
-    <ClInclude Include="src\RaiseForestAbility.h" />
     <ClInclude Include="src\RestAbility.h" />
     <ClInclude Include="src\SceneCommon.h" />
     <ClInclude Include="src\ScriptComponent.h" />

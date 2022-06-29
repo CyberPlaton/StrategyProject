@@ -137,13 +137,7 @@
     <ClInclude Include="src\RestAbility.h">
       <Filter>Components\Game\Ability\ActiveAbility</Filter>
     </ClInclude>
-    <ClInclude Include="src\RaiseForestAbility.h">
-      <Filter>Components\Game\Ability\ActiveAbility</Filter>
-    </ClInclude>
     <ClInclude Include="src\DefendAbility.h">
-      <Filter>Components\Game\Ability\ActiveAbility</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ChopForestAbility.h">
       <Filter>Components\Game\Ability\ActiveAbility</Filter>
     </ClInclude>
     <ClInclude Include="src\BuildAbility.h">
@@ -207,6 +201,9 @@
     </Filter>
     <Filter Include="Scripting">
       <UniqueIdentifier>{1f545368-9ef8-4bb4-b7a0-5005991c7ce0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Game\Status">
+      <UniqueIdentifier>{e45be3cc-30b9-4030-8dd8-07c7cc1bce85}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

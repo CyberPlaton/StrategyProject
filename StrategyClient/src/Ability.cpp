@@ -2,17 +2,7 @@
 
 namespace cherrysoda
 {
-	void Ability::Added(const cherrysoda::String& name, Ability* ability, cherrysoda::Entity* entity)
-	{
-		CHERRYSODA_ASSERT(entity->Get< EntityAbilityMap >() != nullptr, "Entity holding abilities requires an \"EntityAbilityMap\" component!");
-		ADD_ABILITY(name, ability, entity);
-	}
-	void Ability::Removed(const cherrysoda::String& name, cherrysoda::Entity* entity)
-	{
-		CHERRYSODA_ASSERT(entity->Get< EntityAbilityMap >() != nullptr, "Entity holding abilities requires an \"EntityAbilityMap\" component!");
-		REMOVE_ABILITY(name, entity);
-	}
-	void EntityAbilityMap::Add(const cherrysoda::String& name, Ability* ability)
+	void EntityAbilityMap::Add(const cherrysoda::String& name, EntityAbility* ability)
 	{
 		m_abilities.try_emplace(name, ability);
 	}
