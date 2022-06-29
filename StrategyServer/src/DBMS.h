@@ -120,6 +120,8 @@ namespace dbms
 		static const std::string m_database;
 		static const std::string m_userDataCollection;
 		static const std::string m_leaderboardCollection;
+		static const std::string m_abilitiesCollection;
+		static const std::string m_statusEffectsCollection;
 		static size_t m_nextUUID;
 
 		mongocxx::instance m_mongoInstance{};

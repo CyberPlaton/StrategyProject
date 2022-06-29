@@ -18,6 +18,9 @@ namespace dbms
 	const std::string DBMS::m_database = "test_database";
 	const std::string DBMS::m_userDataCollection = "test_collection_user_data";
 	const std::string DBMS::m_leaderboardCollection = "test_collection_leaderboard";
+	const std::string DBMS::m_abilitiesCollection = "test_collection_abilities";
+	const std::string DBMS::m_statusEffectsCollection = "test_collection_status_effects";
+
 	size_t DBMS::m_nextUUID = 0;
 	bool DBMS::m_initialized = false;
 
@@ -234,11 +237,104 @@ namespace dbms
 
 	bool DBMS::GetAbility(const std::string& ability_name, net::SAbilityData* ability)
 	{
+		if (!m_initialized || !ability) return false;
+
+
+		// Get Database and relevant collection.
+		mongocxx::database db = DBMS::get()->m_mongoClient[m_database];
+		mongocxx::collection abilityCollection = db[m_abilitiesCollection];
+
+		boost::optional<bsoncxx::v_noabi::document::value> doc;
+
+		// Find Ability.
+		if (_findOneByKeyValuePair(abilityCollection, doc, "Name", ability_name.c_str()))
+		{
+			auto view = doc->view();
+
+			// Retrieve data.
+			std::string name = view["Name"].get_utf8().value.to_string().c_str();
+			std::string display_name = view["DisplayName"].get_utf8().value.to_string().c_str();
+			std::string desc = view["Desc"].get_utf8().value.to_string().c_str();
+			bool useable_on_enemy = view["UsableOnEnemy"].get_bool();
+			bool useable_on_self = view["UsableOnSelf"].get_bool();
+			bool useable_on_friendly = view["UsableOnFriendly"].get_bool();
+			size_t applicable_to = view["ApplicableTo"].get_int64();
+			std::vector< std::string > applied_status_effects;
+
+			auto array_of_status_effects = view["AppliedStatusEffectsOnUse"].get_array().value;
+
+			if (!array_of_status_effects.empty())
+			{
+				
+				for (const bsoncxx::array::element& subdocument : array_of_status_effects) 
+				{
+					std::string elem = subdocument.get_utf8().value.to_string().c_str();
+					applied_status_effects.push_back(elem);
+				}
+			}
+
+			// Fill SAbilityData.
+			ability->m_abilityName = name.c_str();
+			ability->m_abilityDisplayName = display_name.c_str();
+			ability->m_abilityDesc = desc.c_str();
+			ability->m_abilityUsableOnEnemies = useable_on_enemy;
+			ability->m_abilityUsableOnSelf = useable_on_self;
+			ability->m_abilityUsableOnFriendlies = useable_on_friendly;
+			ability->m_abilityApplicableTo = net::EGameobjectType(applicable_to);
+			for(auto& e: applied_status_effects)
+			{
+				ability->m_appliedStatusEffectsOnUse.push_back(e.c_str());
+			}
+
+
+			return true;
+		}
 		return false;
 	}
 
 	bool DBMS::GetStatusEffect(const std::string& effect_name, net::SStatusEffectData* effect)
 	{
+		if (!m_initialized || !effect) return false;
+
+
+		// Get Database and relevant collection.
+		mongocxx::database db = DBMS::get()->m_mongoClient[m_database];
+		mongocxx::collection effectCollection = db[m_statusEffectsCollection];
+
+		boost::optional<bsoncxx::v_noabi::document::value> doc;
+
+		// Find Ability.
+		if (_findOneByKeyValuePair(effectCollection, doc, "Name", effect_name.c_str()))
+		{
+			auto view = doc->view();
+
+			// Retrieve data.
+			std::string name = view["Name"].get_utf8().value.to_string().c_str();
+			std::string display_name = view["DisplayName"].get_utf8().value.to_string().c_str();
+			std::string desc = view["Desc"].get_utf8().value.to_string().c_str();
+			std::string effect_type = view["Type"].get_utf8().value.to_string().c_str();
+			size_t appl_to = view["ApplicableTo"].get_int64();
+			std::string timer_type = view["TimerType"].get_utf8().value.to_string().c_str();
+			size_t apl_prob = view["ApplicationProbability"].get_int64();
+			size_t val_max = view["ValueMax"].get_int64();
+			size_t val_min = view["ValueMin"].get_int64();
+			size_t timer_val = view["TimerValue"].get_int64();
+
+
+			// Fill SStatusEffectData.
+			effect->m_effectName = name.c_str();
+			effect->m_effectDisplayName = display_name.c_str();
+			effect->m_effectDesc = desc.c_str();
+			effect->m_effectType = effect_type.c_str();
+			effect->m_effectTimerType = effect_type.c_str();
+			effect->m_effectTimerValue = timer_val;
+			effect->m_effectApplicableTo = net::EGameobjectType(appl_to);
+			effect->m_effectApplicationProbability = apl_prob;
+			effect->m_effectValueMax = val_max;
+			effect->m_effectValueMax = val_min;
+			
+			return true;
+		}
 		return false;
 	}
 
