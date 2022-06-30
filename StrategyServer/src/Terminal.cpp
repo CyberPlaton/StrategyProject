@@ -278,7 +278,7 @@ void Terminal::AddCommandToMS(std::string& s)
 		}
 		catch (const std::exception& e)
 		{
-			LOG_TERMINAL_ERROR("[MASTERSERVER] Exception adding command:\n\t>> %s", e.what());
+			LOG_TERMINAL_ERROR("[MASTERSERVER] Exception adding command:\n\t>> \"%s\"", e.what());
 		}
 	}
 }

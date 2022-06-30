@@ -116,8 +116,8 @@ private:
 #define LOG_TERMINAL_CRITICAL(...)  Terminal::get()->LogTerminal(__VA_ARGS__); Terminal::get()->LogTerminal("[critical]")
 #define LOG_TERMINAL_FMT(color, ...)  Terminal::get()->LogTerminal(__VA_ARGS__); Terminal::get()->LogTerminal( "[" ##color "]" )
 
-#define LOG_MS_INFO(...)		Terminal::get()->LogMasterServer(__VA_ARGS__); Terminal::get()->LogMasterServer("[info]")
-#define LOG_MS_WARN(...)		Terminal::get()->LogMasterServer(__VA_ARGS__); Terminal::get()->LogMasterServer("[warn]")
-#define LOG_MS_ERROR(...)		Terminal::get()->LogMasterServer(__VA_ARGS__); Terminal::get()->LogMasterServer("[error]")
-#define LOG_MS_CRITICAL(...)	Terminal::get()->LogMasterServer(__VA_ARGS__); Terminal::get()->LogMasterServer("[critical]")
-#define LOG_MS_FMT(color, ...)	Terminal::get()->LogMasterServer(__VA_ARGS__); Terminal::get()->LogMasterServer( "[" ##color "]" )
+#define LOG_TERMINAL_MS_INFO(...)		Terminal::get()->LogMasterServer(__VA_ARGS__); Terminal::get()->LogMasterServer("[info]")
+#define LOG_TERMINAL_MS_WARN(...)		Terminal::get()->LogMasterServer(__VA_ARGS__); Terminal::get()->LogMasterServer("[warn]")
+#define LOG_TERMINAL_MS_ERROR(...)		Terminal::get()->LogMasterServer(__VA_ARGS__); Terminal::get()->LogMasterServer("[error]")
+#define LOG_TERMINAL_MS_CRITICAL(...)	Terminal::get()->LogMasterServer(__VA_ARGS__); Terminal::get()->LogMasterServer("[critical]")
+#define LOG_TERMINAL_MS_FMT(color, ...)	Terminal::get()->LogMasterServer(__VA_ARGS__); Terminal::get()->LogMasterServer( "[" ##color "]" )

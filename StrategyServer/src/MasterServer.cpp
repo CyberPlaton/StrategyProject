@@ -13,6 +13,7 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 	auto id = (RakNet::MessageID)packet->data[0];
 	LOG_DBG_INFO("[{:.4f}][OnMessage] Message \"{}\" from Client \"{}\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(), addr.ToString());
 	LOG_FILE_INFO("[{:.4f}][OnMessage] Message \"{}\" from Client \"{}\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(), addr.ToString());
+	LOG_MS_INFO("[%.4f][OnMessage] Failed to retrieve Ability Data for Client \"%s\"!", APP_RUN_TIME(), addr.ToString());
 
 	switch (id)
 	{
@@ -20,6 +21,7 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 	{
 		LOG_DBG_INFO("[{:.4f}][OnMessage] Received User Data from Client \"{}\".", APP_RUN_TIME(), addr.ToString());
 		LOG_FILE_INFO("[{:.4f}][OnMessage] Received User Data from Client \"{}\".", APP_RUN_TIME(), addr.ToString());
+		LOG_MS_INFO("[%.4f][OnMessage] Received User Data from Client \"%s\".", APP_RUN_TIME(), addr.ToString());
 
 		net::SClientDescription clientDesc;
 
@@ -31,6 +33,8 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 		{
 			LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Client \"{}\" out of date!", APP_RUN_TIME(), addr.ToString());
 			LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Client \"{}\" out of date!", APP_RUN_TIME(), addr.ToString());
+			LOG_MS_CRITICAL("[%.4f][OnMessage] Client \"%s\" out of date!", APP_RUN_TIME(), addr.ToString());
+
 
 			// Disconnect client.
 			CREATE_MESSAGE(out, net::EMessageId::NET_MSG_CLIENT_REJECT);
@@ -41,12 +45,16 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 		{
 			LOG_DBG_WARN("[{:.4f}][OnMessage] Client \"{}\" without DB entry! Attempt to create one!", APP_RUN_TIME(), addr.ToString());
 			LOG_FILE_WARN("[{:.4f}][OnMessage] Client \"{}\" without DB entry! Attempt to create one!", APP_RUN_TIME(), addr.ToString());
+			LOG_MS_WARN("[%.4f][OnMessage] Client \"%s\" without DB entry! Attempt to create one!", APP_RUN_TIME(), addr.ToString());
+
 
 			clientDesc.m_uuid = dbms::DBMS::CreateUser();
 			if (!dbms::DBMS::UpdateUser(clientDesc))
 			{
-				LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Failed to update DB user entry! UUID: \"{}\"", APP_RUN_TIME(), addr.ToString(), clientDesc.m_uuid);
-				LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Failed to update DB user entry! UUID: \"{}\"", APP_RUN_TIME(), addr.ToString(), clientDesc.m_uuid);
+				LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Failed to update DB user entry! UUID: \"{}\"!", APP_RUN_TIME(), addr.ToString(), clientDesc.m_uuid);
+				LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Failed to update DB user entry! UUID: \"{}\"!", APP_RUN_TIME(), addr.ToString(), clientDesc.m_uuid);
+				LOG_MS_CRITICAL("[%.4f][OnMessage] Failed to update DB user entry! UUID: \"%zu\"!", APP_RUN_TIME(), addr.ToString(), clientDesc.m_uuid);
+
 
 				// Disconnect client.
 				CREATE_MESSAGE(out, net::EMessageId::NET_MSG_CLIENT_REJECT);
@@ -77,12 +85,14 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 		{
 			LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve StatusEffect Data for Client \"{}\"!", APP_RUN_TIME(), addr.ToString());
 			LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve StatusEffect Data for Client \"{}\"!", APP_RUN_TIME(), addr.ToString());
+			LOG_MS_CRITICAL("[%.4f][OnMessage] Failed to retrieve StatusEffect Data for Client \"%s\"!", APP_RUN_TIME(), addr.ToString());
 			error = true;
 		}
 		if(!dbms::DBMS::GetAllAbilityData(ability_storage))
 		{
 			LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve Ability Data for Client \"{}\"!", APP_RUN_TIME(), addr.ToString());
 			LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve Ability Data for Client \"{}\"!", APP_RUN_TIME(), addr.ToString());
+			LOG_MS_CRITICAL("[%.4f][OnMessage] Failed to retrieve Ability Data for Client \"%s\"!", APP_RUN_TIME(), addr.ToString());
 			error = true;
 		}
 		if(!error)
@@ -101,6 +111,7 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 	{
 		LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Unrecognized Message: \"{}\" from \"{}\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(), addr.ToString());
 		LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Unrecognized Message: \"{}\" from \"{}\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(),  addr.ToString());
+		LOG_MS_CRITICAL("[%.4f][OnMessage] Unrecognized Message: \"%s\" from \"%s\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(), addr.ToString());
 		break;
 	}
 	}

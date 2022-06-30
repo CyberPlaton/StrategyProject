@@ -1,5 +1,9 @@
 #include "Main.h"
 
+void MasterServer::LogToTerminal(const char* fmt, ...) IM_FMTARGS(2)
+{
+	Terminal::get()->LogMasterServer(fmt);
+}
 
 int main()
 {	

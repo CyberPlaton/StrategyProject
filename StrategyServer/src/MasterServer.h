@@ -12,6 +12,8 @@
 #include "ICommand.h"
 #include "ThreadSafeQueue.h"
 
+class Terminal;
+
 class MasterServer : public net::ServerInterface
 {
 public:
@@ -40,6 +42,7 @@ public:
 	uint64_t GetVersion();
 	void AddCommand(ICommand* cmd);
 	std::string RetrieveNextOutput();
+	void LogToTerminal(const char* fmt, ...);
 
 private:
 	static MasterServer* g_MasterServer;
@@ -53,6 +56,8 @@ private:
 	tsqueue< std::string > m_outputQueue;
 	tsqueue< ICommand* > m_commandQueue;
 
+	// MasterServer Log Messages Output
+
 
 private:
 	MasterServer() : net::ServerInterface()
@@ -63,3 +68,10 @@ private:
 	void BackupClientCount(uint32_t seconds);
 	void ExecuteTerminalCommands();
 };
+
+
+#define LOG_MS_INFO(...)		MasterServer::get()->LogToTerminal(__VA_ARGS__); MasterServer::get()->LogToTerminal("[info]")
+#define LOG_MS_WARN(...)		MasterServer::get()->LogToTerminal(__VA_ARGS__); MasterServer::get()->LogToTerminal("[warn]")
+#define LOG_MS_ERROR(...)		MasterServer::get()->LogToTerminal(__VA_ARGS__); MasterServer::get()->LogToTerminal("[error]")
+#define LOG_MS_CRITICAL(...)	MasterServer::get()->LogToTerminal(__VA_ARGS__); MasterServer::get()->LogToTerminal("[critical]")
+#define LOG_MS_FMT(color, ...)	MasterServer::get()->LogToTerminal(__VA_ARGS__); MasterServer::get()->LogToTerminal( "[" ##color "]" )
