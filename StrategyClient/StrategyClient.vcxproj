@@ -175,6 +175,7 @@
     <ClInclude Include="src\Status.h" />
     <ClInclude Include="src\StatusEffectsDataMap.h" />
     <ClInclude Include="src\TrainAbility.h" />
+    <ClInclude Include="src\TurnStepMngr.h" />
     <ClInclude Include="src\Unit.h" />
   </ItemGroup>
   <ItemGroup>
@@ -199,6 +200,7 @@
     <ClCompile Include="src\SplashScreenScene.cpp" />
     <ClCompile Include="src\StateMachine.cpp" />
     <ClCompile Include="src\StatusEffectsDataMap.cpp" />
+    <ClCompile Include="src\TurnStepMngr.cpp" />
     <ClCompile Include="src\Unit.cpp" />
   </ItemGroup>
   <ItemGroup>

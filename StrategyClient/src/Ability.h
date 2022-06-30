@@ -33,6 +33,10 @@ namespace cherrysoda
 		/// @brief Set the data for the Ability.
 		/// @param The Ability data from SAbilityData.
 		virtual void Data(SAbilityData*) = 0;
+
+		/// @brief Retrieve the Ability Name.
+		/// @return Name.
+		virtual String Name() = 0;
 	};
 
 
@@ -71,9 +75,9 @@ namespace cherrysoda
 	};
 
 
-#define ENTITY_ADD_ABILITY(ability_name, ability, entity) \
+#define ENTITY_ADD_ABILITY(ability, entity) \
 auto map = entity->Get< EntityAbilityMap >(); \
-map->Add(ability_name, ability) \
+map->Add(ability->Name(), ability) \
 
 #define ENTITY_REMOVE_ABILITY(ability_name, entity) \
 auto map = entity->Get< EntityAbilityMap >(); \

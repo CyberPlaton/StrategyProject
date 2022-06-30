@@ -2,6 +2,7 @@
 
 #include "Observable.h"
 #include "NetCommMngr.h"
+#include "Logging.h"
 
 namespace cherrysoda
 {
@@ -42,7 +43,8 @@ namespace cherrysoda
 
 		void operator()(Event* evnt) override final
 		{
-			printf("Observer::operator()\n");
+			LOG_DBG_INFO("[{:.4f}][Observer::operator()] Processing: \"{}\".", APP_RUN_TIME(), evnt->m_eventType);
+			LOG_GAME_INFO("[%.4f][Observer::operator()] Processing: \"%s\".", APP_RUN_TIME(), evnt->m_eventType.c_str());
 
 			if (evnt->m_eventType.compare("NetGameobjectUpdate") == 0)
 			{
@@ -50,12 +52,14 @@ namespace cherrysoda
 
 				if (net_event->m_object->m_networkId == m_netIdToListenTo)
 				{
-					printf("\tUpdate net gameobject\n");
+					LOG_DBG_INFO("[{:.4f}][Observer::operator()] Update net::SGameobject: \"{}\".", APP_RUN_TIME(), net_event->m_object->m_networkId);
+					LOG_GAME_INFO("[%.4f][Observer::operator()] Update net::SGameobject: \"%z\".", APP_RUN_TIME(), net_event->m_object->m_networkId);
 					
 					// Transmit data over network.
 					NetCommMngr::get()->UpdateNetGameobject(net_event->m_object);
 
 					// Release the object from memory after sending over network.
+
 				}
 			}
 		}

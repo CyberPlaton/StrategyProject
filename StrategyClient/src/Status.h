@@ -25,6 +25,10 @@ namespace cherrysoda
 		/// @brief Set the data for the status effect.
 		/// @param The status effect data from SStatusEffectData.
 		virtual void Data(SStatusEffectData*) = 0;
+
+		/// @brief Retrieve the Status Effect Name.
+		/// @return Name.
+		virtual String Name() = 0;
 	};
 
 
@@ -36,6 +40,26 @@ namespace cherrysoda
 	{
 	public:
 		CEntityStatusEffectMngr() : EventListener("TurnEnd") {}
+
+
+		void Add(EntityStatusEffect* effect)
+		{
+			m_statusEffectsVec.push_back(effect);
+		}
+		void Remove(EntityStatusEffect* effect)
+		{
+			int i = 0;
+			for(auto& e: m_statusEffectsVec)
+			{
+				if(effect->Name().compare(e->Name()) == 0)
+				{
+					m_statusEffectsVec.erase(m_statusEffectsVec.begin() + i);
+					return;
+				}
+
+				i++;
+			}
+		}
 
 		/// @brief Execute all status effects update function on Turn End. Removes those that are not needed anymore and remain those that should stay.
 		/// @param evnt Event to be processed.
@@ -75,4 +99,15 @@ namespace cherrysoda
 	private:
 		std::vector< EntityStatusEffect* > m_statusEffectsVec;
 	};
+
+
+#define ENTITY_ADD_STATUS_EFFECT(effect, entity) \
+auto mngr = entity->Get< CEntityStatusEffectMngr >(); \
+mngr->Add(effect) \
+
+#define ENTITY_REMOVE_STATUS_EFFECT() \
+auto mngr = entity->Get< CEntityStatusEffectMngr >(); \
+mngr->Remove(effect) \
+
+
 }

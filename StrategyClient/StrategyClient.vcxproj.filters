@@ -65,6 +65,9 @@
     <ClCompile Include="src\StatusEffectsDataMap.cpp">
       <Filter>Components\Game\Status</Filter>
     </ClCompile>
+    <ClCompile Include="src\TurnStepMngr.cpp">
+      <Filter>Components\Game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Main.h" />
@@ -175,6 +178,9 @@
     </ClInclude>
     <ClInclude Include="src\StatusEffectsDataMap.h">
       <Filter>Components\Game\Status</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TurnStepMngr.h">
+      <Filter>Components\Game</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
