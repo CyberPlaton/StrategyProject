@@ -10,6 +10,7 @@
 #include <MessageIdentifiers.h>
 
 #include <vector>
+#include <string>
 
 namespace net
 {
@@ -61,7 +62,8 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 		NET_MSG_CLIENT_REJECT,																	// Client was rejected.
 
 		NET_MSG_REQUEST_ABILITY_AND_STATUS_EFFECTS_DATA,
-		NET_MSG_ABILITY_AND_STATUS_EFFECTS_DATA,
+		NET_MSG_ABILITY_DATA,
+		NET_MSG_STATUS_EFFECTS_DATA,
 
 		NET_MSG_DELETE_GAME,
 		NET_MSG_CREATE_GAME,
@@ -183,26 +185,26 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 
 
 		// GENERAL INFORMATION
-		uint64_t m_networkId = 0;
+		int64_t m_networkId = 0;
 		EClientPlatform m_platform = EClientPlatform::UP_INVALID;
 
 		// DATABASE INFORMATION
-		uint64_t m_uuid = 0;
+		int64_t m_uuid = 0;
 		RakNet::RakString m_steamName = "";
-		uint64_t m_steamId = 0;
+		int64_t m_steamId = 0;
 		RakNet::RakString m_nintendoName = "";
-		uint64_t m_nintendoId = 0;
+		int64_t m_nintendoId = 0;
 		RakNet::RakString m_xboxLiveName = "";
-		uint64_t m_xboxLiveId = 0;
+		int64_t m_xboxLiveId = 0;
 		RakNet::RakString m_psnName = "";
-		uint64_t m_psnId = 0;
+		int64_t m_psnId = 0;
 
-		uint64_t m_currencyAmount = 0;
+		int64_t m_currencyAmount = 0;
 		std::vector< EAchievement > m_achievements;
 		std::vector< EServiceItem > m_serviceItems;
 
 		// APP INFORMATION
-		uint64_t m_version = 0;
+		int64_t m_version = 0;
 	};
 
 	struct SGameServerDescription : public SSerializable
@@ -241,7 +243,7 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 
 		RakNet::RakString m_gameId;
 		RakNet::RakString m_gameData;
-		std::vector< uint64_t > m_players;
+		std::vector< int64_t > m_players;
 	};
 
 
@@ -254,8 +256,8 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 
 
 		RakNet::RakString m_name;
-		uint64_t m_networkId;
-		uint64_t m_playerId;
+		int64_t m_networkId;
+		int64_t m_playerId;
 		EGameobjectType m_gameobjectType;
 
 		// GENERAL INFORMATION
@@ -297,8 +299,8 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 		}
 
 		RakNet::RakString m_buildingName;
-		uint64_t m_buildingHealth;
-		uint64_t m_buildingLevel;
+		int64_t m_buildingHealth;
+		int64_t m_buildingLevel;
 	};
 	struct SUnitGameobject : public SGameobject, public SSerializable
 	{
@@ -348,15 +350,15 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 		}
 
 		RakNet::RakString m_unitName;
-		uint64_t m_unitHealth;
-		uint64_t m_unitArmor;
-		uint64_t m_unitAttack;
-		uint64_t m_unitDefense;
-		uint64_t m_unitLevel;
-		uint64_t m_unitExperience;
-		uint64_t m_unitSightRadius;
-		uint64_t m_unitMovementType;
-		uint64_t m_unitMovementPoints;
+		int64_t m_unitHealth;
+		int64_t m_unitArmor;
+		int64_t m_unitAttack;
+		int64_t m_unitDefense;
+		int64_t m_unitLevel;
+		int64_t m_unitExperience;
+		int64_t m_unitSightRadius;
+		int64_t m_unitMovementType;
+		int64_t m_unitMovementPoints;
 	};
 	struct SMaptileGameobject : public SGameobject, public SSerializable
 	{
@@ -446,15 +448,15 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 		
 		/// @brief How much minimally to apply. Whether healing or damaging or other effect type.
 		// The Applied value lies between m_effectValueMin and m_effectValueMax.
-		uint64_t m_effectValueMin;
+		int64_t m_effectValueMin;
 
 		/// @brief How much maximally to apply. Whether healing or damaging or other effect type.
 		// The Applied value lies between m_effectValueMin and m_effectValueMax.
-		uint64_t m_effectValueMax;
+		int64_t m_effectValueMax;
 
 		/// @brief How probable it is, that the effect will be applied to the target.
 		// Number between 1 and 100, where 100 means that the effect is applied in all cases, i.e. 100% probability.
-		uint64_t m_effectApplicationProbability;
+		int64_t m_effectApplicationProbability;
 
 		/// @brief To what kind of entity the effect is applicable. E.g. 'Unit' or 'Townhall' (Building).
 		EGameobjectType m_effectApplicableTo;
@@ -463,7 +465,7 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 		RakNet::RakString m_effectTimerType;
 
 		/// @brief For how many turns the effect persists.
-		uint64_t m_effectTimerValue;
+		int64_t m_effectTimerValue;
 
 		/// @brief Description of the Effect. Intended for user.
 		RakNet::RakString m_effectDesc;
@@ -475,7 +477,7 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 
 		void Serialize(RakNet::BitStream& stream) override final
 		{
-			stream.Write(m_data.size());
+			stream.Write((int64_t)m_data.size());
 			for (auto& effect : m_data)
 			{
 				stream.Write(effect.m_effectName);
@@ -500,9 +502,9 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 		{
 			if (ignore_id) stream.IgnoreBytes(sizeof(RakNet::MessageID));
 
-			int vector_size = 0;
+			int64_t vector_size = 0;
 			stream.Read(vector_size);
-			for (int i = 0; i < vector_size; i++)
+			for (int64_t i = 0; i < vector_size; i++)
 			{
 				SStatusEffectData data;
 
@@ -572,7 +574,7 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 
 		void Serialize(RakNet::BitStream& stream) override final
 		{
-			stream.Write(m_data.size());
+			stream.Write((int64_t)m_data.size());
 			for (auto& effect : m_data)
 			{
 				// Serialize Default data.
@@ -588,7 +590,7 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 				stream.Write(effect.m_abilityDesc);
 
 				// Serialize the applied effect vector.
-				stream.Write(effect.m_appliedStatusEffectsOnUse.size());
+				stream.Write((int64_t)effect.m_appliedStatusEffectsOnUse.size());
 				for (auto& status : effect.m_appliedStatusEffectsOnUse)
 				{
 					stream.Write(status);
@@ -600,9 +602,9 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 		{
 			if (ignore_id) stream.IgnoreBytes(sizeof(RakNet::MessageID));
 
-			int vector_size = 0;
+			int64_t vector_size = 0;
 			stream.Read(vector_size);
-			for (int i = 0; i < vector_size; i++)
+			for (int64_t i = 0; i < vector_size; i++)
 			{
 				SAbilityData data;
 
@@ -617,9 +619,9 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 
 				stream.Read(data.m_abilityDesc);
 
-				int vector_size = 0;
+				int64_t vector_size = 0;
 				stream.Read(vector_size);
-				for (int i = 0; i < vector_size; i++)
+				for (int64_t i = 0; i < vector_size; i++)
 				{
 					SAbilityData data;
 
@@ -667,8 +669,14 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 			return "id_client_accept";
 		case EMessageId::NET_MSG_CLIENT_REJECT:
 			return "id_client_reject";
+		case EMessageId::NET_MSG_REQUEST_ABILITY_AND_STATUS_EFFECTS_DATA:
+			return "id_request_ability_and_status_effects_data";
+		case EMessageId::NET_MSG_ABILITY_DATA:
+			return "id_ability_data";
+		case EMessageId::NET_MSG_STATUS_EFFECTS_DATA:
+			return "id_status_effects_data";
 		default:
-			return "";
+			return std::to_string((int)id).c_str();
 		}
 	}
 }

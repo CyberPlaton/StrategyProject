@@ -351,30 +351,33 @@ bool App::InitializeMasterConnection()
 	{
 		LOG_GAME_INFO("[App::InitializeMasterConnection] Connecting...");
 
-#ifndef OFFLINE_GAME_CLIENT_TEST
-		if (!ClientInterface::Initialize(MASTER_SERVER_PORT, MASTER_SERVER_IP))
+		if(!OFFLINE_GAME_CLIENT_TEST)
 		{
-			LOG_GAME_CRITICAL("[InitializationScene::InitializeMasterConnection] Could not initialize ClientInterface!");
-			LOG_DBG_CRITICAL("[InitializationScene::InitializeMasterConnection] Could not initialize ClientInterface!");
-			return false;
-		}
+			if (!ClientInterface::Initialize(MASTER_SERVER_PORT, MASTER_SERVER_IP))
+			{
+				LOG_GAME_CRITICAL("[InitializationScene::InitializeMasterConnection] Could not initialize ClientInterface!");
+				LOG_DBG_CRITICAL("[InitializationScene::InitializeMasterConnection] Could not initialize ClientInterface!");
+				return false;
+			}
 
-		LOG_GAME_INFO("[App::InitializeMasterConnection] ClientInterface initialized!"); 
+			LOG_GAME_INFO("[App::InitializeMasterConnection] ClientInterface initialized!");
 
-		Timer timeout_timer;
-		timeout_timer.StartTimer();
+			Timer timeout_timer;
+			timeout_timer.StartTimer();
 
-		while (!ClientInterface::Connected() && timeout_timer.SecondsElapsed() < CONNECTION_TIMEOUT_TIMER_SECONDS)
+			while (!ClientInterface::Connected() && timeout_timer.SecondsElapsed() < CONNECTION_TIMEOUT_TIMER_SECONDS)
+			{
+				ClientInterface::Update();
+			}
+
+			return ClientInterface::Connected();
+		}	
+		else
 		{
-			ClientInterface::Update();
+			LOG_GAME_WARN("[%.4f][InitializeMasterConnection] Connection skipped due to offline test!", APP_RUN_TIME());
+			LOG_DBG_WARN("[{:.4f}][InitializeMasterConnection] Connection skipped due to offline test!", APP_RUN_TIME());
+			return true;
 		}
-
-		return ClientInterface::Connected();
-#else
-		LOG_GAME_WARN("[%.4f][InitializeMasterConnection] Connection skipped due to offline test!", APP_RUN_TIME());
-		LOG_DBG_WARN("[{:.4f}][InitializeMasterConnection] Connection skipped due to offline test!", APP_RUN_TIME());
-		return true;
-#endif
 	}
 
 	return false;
@@ -447,12 +450,15 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 	static bool show_demo;
 	ImGui::ShowDemoWindow(&show_demo);
 
-#if OFFLINE_GAME_CLIENT_TEST
-	LOG_GAME_WARN("[InitializationScene::Update] Debug: Transit to DebugGameScene");
-	LOG_DBG_WARN("[InitializationScene::Update] Debug: Transit to DebugGameScene");
-	m_stateMachine->Transit("DebugGame");
-	return;
-#endif
+	if(OFFLINE_GAME_CLIENT_TEST)
+	{
+		LOG_GAME_WARN("[InitializationScene::Update] Debug: Transit to DebugGameScene");
+		LOG_DBG_WARN("[InitializationScene::Update] Debug: Transit to DebugGameScene");
+		m_stateMachine->Transit("DebugGame");
+		return;
+	}
+
+	InitializationScene* initialization_scene = reinterpret_cast<InitializationScene*>(GetState());
 
 	if (m_application->Connected() && m_initializationComplete == false)
 	{
@@ -561,7 +567,7 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 			m_application->DeallocateMessage(packet);
 		}
 	}
-	if (m_application->Connected() && m_initializationComplete && m_abilityAndStatusEffectsDataDownloadComplete == false)
+	if (m_application->Connected() && m_initializationComplete && (initialization_scene->m_statusEffectsDataDownloadComplete && initialization_scene->m_abilityDataDownloadComplete) == false)
 	{
 		auto packet = m_application->PopNextMessage();
 		if (packet)
@@ -571,21 +577,40 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 			switch(id)
 			{
 				// Retrieve Data and store it.
-			case net::EMessageId::NET_MSG_ABILITY_AND_STATUS_EFFECTS_DATA:
+			case net::EMessageId::NET_MSG_ABILITY_DATA:
 			{
 				READ_MESSAGE(stream, packet);
-				// We expect first the Ability Data and then StatusEffects Data.
+
 				net::SAbilityDataStorageObject ability_data_storage;
 				ability_data_storage.Deserialize(stream, true);
+
+				EntityAbilitiesDataMap::get()->Data(ability_data_storage);
+
+				initialization_scene->m_abilityDataDownloadComplete = true;
+
+				for(auto& abl: ability_data_storage.m_data)
+				{
+					LOG_GAME_WARN("[%.4f][InitializationScene::Update] EntityAbility: \"%s\"", APP_RUN_TIME(), abl.m_abilityName.C_String());
+				}
+				break;
+			}
+
+			case net::EMessageId::NET_MSG_STATUS_EFFECTS_DATA:
+			{
+				READ_MESSAGE(stream, packet);
 
 				net::SStatusEffectDataStorageObject status_effect_data_storage;
 				status_effect_data_storage.Deserialize(stream, true);
 
-
-				EntityAbilitiesDataMap::get()->Data(ability_data_storage);
 				EntityStatusEffectsDataMap::get()->Data(status_effect_data_storage);
 
-				m_abilityAndStatusEffectsDataDownloadComplete = true;
+				initialization_scene->m_statusEffectsDataDownloadComplete = true;
+
+				for (auto& eff : status_effect_data_storage.m_data)
+				{
+					LOG_GAME_WARN("[%.4f][InitializationScene::Update] EntityStatusEffect: \"%s\"", APP_RUN_TIME(), eff.m_effectName.C_String());
+				}
+				break;
 			}
 			}
 
@@ -598,13 +623,13 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 		LOG_GAME_INFO("[%.4f][InitializationScene] Initialization complete", APP_RUN_TIME());
 		LOG_DBG_INFO("[{:.4f}][InitializationScene] Initialization complete", APP_RUN_TIME());
 	}
-	if (m_abilityAndStatusEffectsDataDownloadComplete)
+	if (initialization_scene->m_abilityDataDownloadComplete && initialization_scene->m_statusEffectsDataDownloadComplete)
 	{
-		LOG_GAME_INFO("[%.4f][InitializationScene] Data download complete", APP_RUN_TIME());
-		LOG_DBG_INFO("[{:.4f}][InitializationScene] Data download complete", APP_RUN_TIME());
+		LOG_GAME_INFO("[%.4f][InitializationScene] Ability and Status Effects Data download complete", APP_RUN_TIME());
+		LOG_DBG_INFO("[{:.4f}][InitializationScene] Ability and Status Effects Data download complete", APP_RUN_TIME());
 	}
 
-	if (m_initializationComplete && m_abilityAndStatusEffectsDataDownloadComplete)
+	if (m_initializationComplete && initialization_scene->m_statusEffectsDataDownloadComplete && initialization_scene->m_abilityDataDownloadComplete)
 	{
 		m_stateMachine->Transit("SplashScreen");
 	}

@@ -12,5 +12,7 @@ namespace cherrysoda
 
 
 	private:
+		bool m_abilityDataDownloadComplete = false;
+		bool m_statusEffectsDataDownloadComplete = false;
 	};
 }

@@ -97,11 +97,18 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 		}
 		if(!error)
 		{
-			CREATE_MESSAGE(out, net::EMessageId::NET_MSG_ABILITY_AND_STATUS_EFFECTS_DATA);
-			// Expected is first the Ability Data and then the Status Effect Data.
-			ability_storage.Serialize(out);
-			status_effect_storage.Serialize(out);
-			Send(out, packet->systemAddress);
+			// Send Ability Data.
+			{
+				CREATE_MESSAGE(out, net::EMessageId::NET_MSG_ABILITY_DATA);
+				ability_storage.Serialize(out);
+				Send(out, packet->systemAddress);
+			}
+			// Send StatusEffects Data.
+			{
+				CREATE_MESSAGE(out, net::EMessageId::NET_MSG_STATUS_EFFECTS_DATA);
+				status_effect_storage.Serialize(out);
+				Send(out, packet->systemAddress);
+			}
 		}
 		break;
 	}
@@ -115,8 +122,6 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 		break;
 	}
 	}
-
-	m_instance->DeallocatePacket(packet);
 }
 void MasterServer::OnClientConnect(RakNet::Packet* packet)
 {

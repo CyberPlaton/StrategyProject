@@ -377,7 +377,7 @@ namespace dbms
 		{
 			if (db.has_collection(m_statusEffectsCollection))
 			{
-				mongocxx::collection effects_collection = db[m_statusEffectsCollection];
+				mongocxx::collection effects_collection = db[m_abilitiesCollection];
 
 				// Get cursor to all Documents in Collection.
 				auto cursor = effects_collection.find({});
