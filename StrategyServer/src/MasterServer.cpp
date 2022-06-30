@@ -11,13 +11,15 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 {
 	auto addr = packet->systemAddress;
 	auto id = (RakNet::MessageID)packet->data[0];
-	LOG_DBG_INFO("[{:.4f}][OnMessage] Message Received: {} from client {}", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(), addr.ToString());
+	LOG_DBG_INFO("[{:.4f}][OnMessage] Message \"{}\" from Client \"{}\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(), addr.ToString());
+	LOG_FILE_INFO("[{:.4f}][OnMessage] Message \"{}\" from Client \"{}\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(), addr.ToString());
 
 	switch (id)
 	{
 	case net::EMessageId::NET_MSG_USER_VALIDATION_DATA:
 	{
-		LOG_DBG_INFO("[{:.4f}][OnMessage] Received User Data", APP_RUN_TIME());
+		LOG_DBG_INFO("[{:.4f}][OnMessage] Received User Data from Client \"{}\".", APP_RUN_TIME(), addr.ToString());
+		LOG_FILE_INFO("[{:.4f}][OnMessage] Received User Data from Client \"{}\".", APP_RUN_TIME(), addr.ToString());
 
 		net::SClientDescription clientDesc;
 
@@ -27,7 +29,9 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 		// Verify Client Version.
 		if (!CheckClientVersion(clientDesc))
 		{
-			LOG_DBG_ERROR("[{:.4f}][OnMessage] ... client {} out of date!", APP_RUN_TIME(), addr.ToString());
+			LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Client \"{}\" out of date!", APP_RUN_TIME(), addr.ToString());
+			LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Client \"{}\" out of date!", APP_RUN_TIME(), addr.ToString());
+
 			// Disconnect client.
 			CREATE_MESSAGE(out, net::EMessageId::NET_MSG_CLIENT_REJECT);
 			Send(out, packet->systemAddress);
@@ -35,11 +39,15 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 
 		if (!dbms::DBMS::GetUserDesc(clientDesc))
 		{
-			LOG_DBG_WARN("[{:.4f}][OnMessage] ... client {} without DB entry! Attempt to create one...", APP_RUN_TIME(), addr.ToString());
+			LOG_DBG_WARN("[{:.4f}][OnMessage] Client \"{}\" without DB entry! Attempt to create one!", APP_RUN_TIME(), addr.ToString());
+			LOG_FILE_WARN("[{:.4f}][OnMessage] Client \"{}\" without DB entry! Attempt to create one!", APP_RUN_TIME(), addr.ToString());
+
 			clientDesc.m_uuid = dbms::DBMS::CreateUser();
 			if (!dbms::DBMS::UpdateUser(clientDesc))
 			{
-				LOG_DBG_CRITICAL("[{:.4f}][OnMessage] ... Failed to update DB user entry! UUID: {}", APP_RUN_TIME(), addr.ToString(), clientDesc.m_uuid);
+				LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Failed to update DB user entry! UUID: \"{}\"", APP_RUN_TIME(), addr.ToString(), clientDesc.m_uuid);
+				LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Failed to update DB user entry! UUID: \"{}\"", APP_RUN_TIME(), addr.ToString(), clientDesc.m_uuid);
+
 				// Disconnect client.
 				CREATE_MESSAGE(out, net::EMessageId::NET_MSG_CLIENT_REJECT);
 				Send(out, packet->systemAddress);
@@ -55,9 +63,6 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 			clientDesc.Serialize(out);
 			Send(out, packet->systemAddress);
 		}
-
-
-
 		break;
 	}
 
@@ -70,10 +75,14 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 		bool error = false;
 		if(!dbms::DBMS::GetAllStatusEffectData(status_effect_storage))
 		{
+			LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve StatusEffect Data for Client \"{}\"!", APP_RUN_TIME(), addr.ToString());
+			LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve StatusEffect Data for Client \"{}\"!", APP_RUN_TIME(), addr.ToString());
 			error = true;
 		}
 		if(!dbms::DBMS::GetAllAbilityData(ability_storage))
 		{
+			LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve Ability Data for Client \"{}\"!", APP_RUN_TIME(), addr.ToString());
+			LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve Ability Data for Client \"{}\"!", APP_RUN_TIME(), addr.ToString());
 			error = true;
 		}
 		if(!error)
@@ -84,16 +93,26 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 			status_effect_storage.Serialize(out);
 			Send(out, packet->systemAddress);
 		}
+		break;
 	}
 
+
+	default:
+	{
+		LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Unrecognized Message: \"{}\" from \"{}\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(), addr.ToString());
+		LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Unrecognized Message: \"{}\" from \"{}\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(),  addr.ToString());
+		break;
+	}
 	}
 
+	m_instance->DeallocatePacket(packet);
 }
 void MasterServer::OnClientConnect(RakNet::Packet* packet)
 {
 	auto addr = packet->systemAddress;
-	LOG_DBG_INFO("[{:.4f}][OnClientConnect] Client connected: {}", APP_RUN_TIME(), addr.ToString());
-	
+	LOG_DBG_INFO("[{:.4f}][OnClientConnect] Client connected: \"{}\".", APP_RUN_TIME(), addr.ToString());
+	LOG_FILE_INFO("[{:.4f}][OnClientConnect] Client connected: \"{}\".", APP_RUN_TIME(), addr.ToString());
+
 	// RakNet and ServerInterface Validation steps successfully passed.
 	// Remote system has successfully connected...
 	auto client_id = AssignClientId();
@@ -107,7 +126,8 @@ void MasterServer::OnClientConnect(RakNet::Packet* packet)
 void MasterServer::OnClientDisconnect(RakNet::Packet* packet)
 {
 	auto addr = packet->systemAddress;
-	LOG_DBG_INFO("[{:.4f}][OnClientDisconnect] Client disconnected: {}", APP_RUN_TIME(), addr.ToString());
+	LOG_DBG_WARN("[{:.4f}][OnClientDisconnect] Client disconnected: \"{}\".", APP_RUN_TIME(), addr.ToString());
+	LOG_FILE_WARN("[{:.4f}][OnClientConnect] Client disconnected: \"{}\".", APP_RUN_TIME(), addr.ToString());
 
 	// Remote system was disconnected.
 	// Remove from storage.
@@ -118,7 +138,9 @@ bool MasterServer::OnClientValidated(RakNet::Packet* packet)
 	// RakNet validation was successful. ServerInterface validation 
 	// was successful too, this is our turn.
 	auto addr = packet->systemAddress;
-	LOG_DBG_INFO("[{:.4f}][OnClientValidated] Client validated: {}", APP_RUN_TIME(), addr.ToString());
+	LOG_DBG_INFO("[{:.4f}][OnClientValidated] Client validated: \"{}\"", APP_RUN_TIME(), addr.ToString());
+	LOG_FILE_INFO("[{:.4f}][OnClientValidated] Client validated: \"{}\".", APP_RUN_TIME(), addr.ToString());
+
 	return true;
 }
 bool MasterServer::CheckClientVersion(net::SClientDescription& desc)
