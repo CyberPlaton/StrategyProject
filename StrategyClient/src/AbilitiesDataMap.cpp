@@ -7,10 +7,15 @@ namespace cherrysoda
 
 	bool EntityAbilitiesDataMap::Initialize()
 	{
-		return false;
+		return true;
 	}
 
 	void EntityAbilitiesDataMap::Terminate()
+	{
+
+	}
+
+	void EntityAbilitiesDataMap::Data(cherrysoda::STL::Vector< SAbilityData* >& data)
 	{
 
 	}

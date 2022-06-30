@@ -58,6 +58,8 @@ RakNet::BitStream stream(packet->data, packet->length, false) \
 		NET_MSG_CLIENT_ACCEPT,																	// Client was accepted.
 		NET_MSG_CLIENT_REJECT,																	// Client was rejected.
 
+		NET_MSG_ABILITY_AND_STATUS_EFFECTS_DATA,
+
 		NET_MSG_DELETE_GAME,
 		NET_MSG_CREATE_GAME,
 		NET_MSG_GAMEOBJECT_UPDATE,

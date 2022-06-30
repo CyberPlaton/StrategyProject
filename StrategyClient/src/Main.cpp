@@ -555,10 +555,39 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 			m_application->DeallocateMessage(packet);
 		}
 	}
+	if (m_application->Connected() && m_abilityAndStatusEffectsDataDownloadComplete == false)
+	{
+		auto packet = m_application->PopNextMessage();
+		if (packet)
+		{
+			RakNet::MessageID id = (RakNet::MessageID)packet->data[0];
+
+			switch(id)
+			{
+				// Retrieve Data and store it.
+			case net::EMessageId::NET_MSG_ABILITY_AND_STATUS_EFFECTS_DATA:
+			{
+				// TODO
+			}
+			}
+
+			m_application->DeallocateMessage(packet);
+		}
+	}
+
 	if (m_initializationComplete)
 	{
 		LOG_GAME_INFO("[%.4f][InitializationScene] Initialization complete", APP_RUN_TIME());
-		LOG_DBG_WARN("[{:.4f}][InitializationScene] Initialization complete", APP_RUN_TIME());
+		LOG_DBG_INFO("[{:.4f}][InitializationScene] Initialization complete", APP_RUN_TIME());
+	}
+	if (m_abilityAndStatusEffectsDataDownloadComplete)
+	{
+		LOG_GAME_INFO("[%.4f][InitializationScene] Data download complete", APP_RUN_TIME());
+		LOG_DBG_INFO("[{:.4f}][InitializationScene] Data download complete", APP_RUN_TIME());
+	}
+
+	if (m_initializationComplete && m_abilityAndStatusEffectsDataDownloadComplete)
+	{
 		m_stateMachine->Transit("SplashScreen");
 	}
 }
@@ -799,7 +828,6 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 		.End();
 
 }
-
 
 using GameApp = App;
 CHERRYSODA_DEFAULT_MAIN(1280, 720)

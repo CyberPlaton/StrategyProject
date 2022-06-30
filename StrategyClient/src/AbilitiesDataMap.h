@@ -2,8 +2,8 @@
 
 #include "NetCommon.h"
 #include "CommonDefines.h"
-
 #include "Ability.h"
+
 
 namespace cherrysoda
 {
@@ -14,14 +14,16 @@ namespace cherrysoda
 	public:
 		STATIC_GET_DEL_WITH_INIT_AND_SHUTDOWN(EntityAbilitiesDataMap, g_EntityAbilitiesDataMap);
 
-		/// @brief Fill the Datastructure with EntityAbility data. This requires a connection with the MasterServer to be
-		// already established.
-		/// @return True, if filling was successful. False, if could not retrieve ANY data, if only a part of the data
-		// is retrieved, then error messages are reported but function still returns True.
+		/// @brief
+		/// @return
 		bool Initialize();
 
 		/// @brief Free data.
 		void Terminate();
+
+		/// @brief Store given data of each Ability.
+		/// @param data Data vector.
+		void Data(cherrysoda::STL::Vector< SAbilityData* >& data);
 
 	private:
 		static EntityAbilitiesDataMap* g_EntityAbilitiesDataMap;

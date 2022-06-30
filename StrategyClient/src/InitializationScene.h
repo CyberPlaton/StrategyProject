@@ -10,6 +10,7 @@ namespace cherrysoda
 	public:
 		DECLARE_SCENE_COMMON(InitializationScene);
 
+
 	private:
 	};
 }

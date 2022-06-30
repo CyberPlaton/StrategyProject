@@ -23,6 +23,7 @@ CLASS(const char* name, CStateMachine* state_machine, App* app) : State(name) \
 	m_impl = new SceneImpl();	   \
 	m_impl->m_application = app;   \
 	m_impl->m_initializationComplete = false; \
+	m_impl->m_abilityAndStatusEffectsDataDownloadComplete = false; \
 	m_impl->m_stateMachine = state_machine; \
 } \
 void OnUpdate() override final { m_impl->Update(); } \
@@ -36,6 +37,7 @@ struct SceneImpl : public cherrysoda::Scene \
 	void End() override; \
 	App* m_application = nullptr; \
 	bool m_initializationComplete; \
+	bool m_abilityAndStatusEffectsDataDownloadComplete; \
 	CStateMachine* m_stateMachine = nullptr; \
 }; \
 private: \
