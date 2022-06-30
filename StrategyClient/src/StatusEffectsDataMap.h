@@ -23,7 +23,7 @@ namespace cherrysoda
 
 		/// @brief Store given data of each Status Effect.
 		/// @param data Data vector.
-		void Data(cherrysoda::STL::Vector< SStatusEffectData* >& data);
+		void Data(net::SStatusEffectDataStorageObject& data);
 
 	private:
 		static EntityStatusEffectsDataMap* g_EntityStatusEffectsDataMap;

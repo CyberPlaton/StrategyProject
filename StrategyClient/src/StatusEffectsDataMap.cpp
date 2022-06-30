@@ -15,7 +15,7 @@ namespace cherrysoda
 
 	}
 
-	void EntityStatusEffectsDataMap::Data(cherrysoda::STL::Vector< SStatusEffectData* >& data)
+	void EntityStatusEffectsDataMap::Data(net::SStatusEffectDataStorageObject& data)
 	{
 
 	}

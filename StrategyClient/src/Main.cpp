@@ -502,9 +502,9 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 
 				clientDesc.m_version = m_application->GetVersion();
 
-				CREATE_MESSAGE(net::EMessageId::NET_MSG_USER_VALIDATION_DATA);
-				clientDesc.Serialize(stream);
-				m_application->Send(stream, packet->systemAddress);
+				CREATE_MESSAGE(out, net::EMessageId::NET_MSG_USER_VALIDATION_DATA);
+				clientDesc.Serialize(out);
+				m_application->Send(out, packet->systemAddress);
 				break;
 			}
 			
@@ -528,11 +528,17 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 				LOG_GAME_WARN("[InitializationScene::Update] User Data received!");
 				LOG_DBG_WARN("[InitializationScene::Update] User Data received!");
 
-				READ_MESSAGE(packet);
+				READ_MESSAGE(in, packet);
 				m_application->m_localClientDesc = new net::SClientDescription();
-				m_application->m_localClientDesc->Deserialize(stream, true);
+				m_application->m_localClientDesc->Deserialize(in, true);
 
 				m_initializationComplete = true;
+
+
+				// Request the Ability and Status Effects Data.
+				CREATE_MESSAGE(out, net::EMessageId::NET_MSG_REQUEST_ABILITY_AND_STATUS_EFFECTS_DATA);
+				m_application->Send(out, packet->systemAddress);
+
 			break;
 			}
 
@@ -555,7 +561,7 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 			m_application->DeallocateMessage(packet);
 		}
 	}
-	if (m_application->Connected() && m_abilityAndStatusEffectsDataDownloadComplete == false)
+	if (m_application->Connected() && m_initializationComplete && m_abilityAndStatusEffectsDataDownloadComplete == false)
 	{
 		auto packet = m_application->PopNextMessage();
 		if (packet)
@@ -567,7 +573,19 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 				// Retrieve Data and store it.
 			case net::EMessageId::NET_MSG_ABILITY_AND_STATUS_EFFECTS_DATA:
 			{
-				// TODO
+				READ_MESSAGE(stream, packet);
+				// We expect first the Ability Data and then StatusEffects Data.
+				net::SAbilityDataStorageObject ability_data_storage;
+				ability_data_storage.Deserialize(stream, true);
+
+				net::SStatusEffectDataStorageObject status_effect_data_storage;
+				status_effect_data_storage.Deserialize(stream, true);
+
+
+				EntityAbilitiesDataMap::get()->Data(ability_data_storage);
+				EntityStatusEffectsDataMap::get()->Data(status_effect_data_storage);
+
+				m_abilityAndStatusEffectsDataDownloadComplete = true;
 			}
 			}
 

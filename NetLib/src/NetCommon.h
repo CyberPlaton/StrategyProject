@@ -3,7 +3,7 @@
 #include "Random.h"
 
 // CONSIDER DEFINING _BITSTREAM_NATIVE_END
-// if we need Byteendian swapping.
+// if we need Byte Endian swapping.
 
 #include <RakString.h>
 #include <BitStream.h>
@@ -31,6 +31,8 @@ namespace net
 	struct SMapobjectGameobject;
 	struct SStatusEffectData;
 	struct SAbilityData;
+	struct SStatusEffectDataStorageObject;
+	struct SAbilityDataStorageObject;
 
 	FORCE_INLINE static uint64_t CreateGameobjectNetworkUUID()
 	{
@@ -40,12 +42,12 @@ namespace net
 
 	FORCE_INLINE static RakNet::RakString MessageIDTypeToString(RakNet::MessageID id);
 
-#define CREATE_MESSAGE(id) \
-RakNet::BitStream stream; \
-stream.Write((RakNet::MessageID)id) \
+#define CREATE_MESSAGE(var, id) \
+RakNet::BitStream var; \
+var.Write((RakNet::MessageID)id) \
 
-#define READ_MESSAGE(packet) \
-RakNet::BitStream stream(packet->data, packet->length, false) \
+#define READ_MESSAGE(var, packet) \
+RakNet::BitStream var(packet->data, packet->length, false) \
 
 	enum EMessageId
 	{
@@ -58,6 +60,7 @@ RakNet::BitStream stream(packet->data, packet->length, false) \
 		NET_MSG_CLIENT_ACCEPT,																	// Client was accepted.
 		NET_MSG_CLIENT_REJECT,																	// Client was rejected.
 
+		NET_MSG_REQUEST_ABILITY_AND_STATUS_EFFECTS_DATA,
 		NET_MSG_ABILITY_AND_STATUS_EFFECTS_DATA,
 
 		NET_MSG_DELETE_GAME,
@@ -430,6 +433,8 @@ RakNet::BitStream stream(packet->data, packet->length, false) \
 	// E.g. a poison effect damages a unit each turn.
 	struct SStatusEffectData
 	{
+		SStatusEffectData() = default;
+
 		/// @brief The name of the Effect. NOT for the user.
 		RakNet::RakString m_effectName;
 		
@@ -464,12 +469,75 @@ RakNet::BitStream stream(packet->data, packet->length, false) \
 		RakNet::RakString m_effectDesc;
 	};
 
+	struct SStatusEffectDataStorageObject : public SSerializable
+	{
+		SStatusEffectDataStorageObject() = default;
+
+		void Serialize(RakNet::BitStream& stream) override final
+		{
+			stream.Write(m_data.size());
+			for (auto& effect : m_data)
+			{
+				stream.Write(effect.m_effectName);
+				stream.Write(effect.m_effectDisplayName);
+				stream.Write(effect.m_effectType);
+
+				stream.Write(effect.m_effectValueMin);
+				stream.Write(effect.m_effectValueMax);
+				stream.Write(effect.m_effectApplicationProbability);
+
+				stream.Write(effect.m_effectApplicableTo);
+
+				stream.Write(effect.m_effectTimerType);
+
+				stream.Write(effect.m_effectTimerValue);
+
+				stream.Write(effect.m_effectDesc);
+			}
+		}
+
+		void Deserialize(RakNet::BitStream& stream, bool ignore_id = false)  override final
+		{
+			if (ignore_id) stream.IgnoreBytes(sizeof(RakNet::MessageID));
+
+			int vector_size = 0;
+			stream.Read(vector_size);
+			for (int i = 0; i < vector_size; i++)
+			{
+				SStatusEffectData data;
+
+				stream.Read(data.m_effectName);
+				stream.Read(data.m_effectDisplayName);
+				stream.Read(data.m_effectType);
+
+				stream.Read(data.m_effectValueMin);
+				stream.Read(data.m_effectValueMax);
+				stream.Read(data.m_effectApplicationProbability);
+
+				stream.Read(data.m_effectApplicableTo);
+
+				stream.Read(data.m_effectTimerType);
+
+				stream.Read(data.m_effectTimerValue);
+
+				stream.Read(data.m_effectDesc);
+				
+				m_data.push_back(std::move(data));
+			}
+		}
+
+		std::vector< SStatusEffectData > m_data;
+	};
+
+
 	/// @brief An Ability defines what a unit or a building can do. Those options can be selected in-game
 	// by the player and applied to self or other units/buildings.
 	// The SAbilityData structure specifies needed data for an Ability. Operating with that data and relevant
 	// data in-game (unit race or maptile type etc.) the Ability executes its function.
 	struct SAbilityData
 	{
+		SAbilityData() = default;
+
 		/// @brief Name of the Ability. NOT for the user.
 		RakNet::RakString m_abilityName;
 
@@ -497,7 +565,77 @@ RakNet::BitStream stream(packet->data, packet->length, false) \
 		RakNet::RakString m_abilityDesc;
 	};
 
+	struct SAbilityDataStorageObject : public SSerializable
+	{
+		SAbilityDataStorageObject() = default;
 
+
+		void Serialize(RakNet::BitStream& stream) override final
+		{
+			stream.Write(m_data.size());
+			for (auto& effect : m_data)
+			{
+				// Serialize Default data.
+				stream.Write(effect.m_abilityName);
+				stream.Write(effect.m_abilityDisplayName);
+
+				stream.Write(effect.m_abilityApplicableTo);
+
+				stream.Write(effect.m_abilityUsableOnSelf);
+				stream.Write(effect.m_abilityUsableOnFriendlies);
+				stream.Write(effect.m_abilityUsableOnEnemies);
+
+				stream.Write(effect.m_abilityDesc);
+
+				// Serialize the applied effect vector.
+				stream.Write(effect.m_appliedStatusEffectsOnUse.size());
+				for (auto& status : effect.m_appliedStatusEffectsOnUse)
+				{
+					stream.Write(status);
+				}
+			}
+		}
+
+		void Deserialize(RakNet::BitStream& stream, bool ignore_id = false)  override final
+		{
+			if (ignore_id) stream.IgnoreBytes(sizeof(RakNet::MessageID));
+
+			int vector_size = 0;
+			stream.Read(vector_size);
+			for (int i = 0; i < vector_size; i++)
+			{
+				SAbilityData data;
+
+				stream.Read(data.m_abilityName);
+				stream.Read(data.m_abilityDisplayName);
+
+				stream.Read(data.m_abilityApplicableTo);
+
+				stream.Read(data.m_abilityUsableOnSelf);
+				stream.Read(data.m_abilityUsableOnFriendlies);
+				stream.Read(data.m_abilityUsableOnEnemies);
+
+				stream.Read(data.m_abilityDesc);
+
+				int vector_size = 0;
+				stream.Read(vector_size);
+				for (int i = 0; i < vector_size; i++)
+				{
+					SAbilityData data;
+
+					RakNet::RakString status;
+					stream.Read(status);
+
+					data.m_appliedStatusEffectsOnUse.push_back(status);
+				}
+
+				m_data.push_back(std::move(data));
+			}
+		}
+
+
+		std::vector< SAbilityData > m_data;
+	};
 
 
 

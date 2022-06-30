@@ -21,16 +21,16 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 
 		net::SClientDescription clientDesc;
 
-		READ_MESSAGE(packet);
-		clientDesc.Deserialize(stream, true);
+		READ_MESSAGE(in, packet);
+		clientDesc.Deserialize(in, true);
 
 		// Verify Client Version.
 		if (!CheckClientVersion(clientDesc))
 		{
 			LOG_DBG_ERROR("[{:.4f}][OnMessage] ... client {} out of date!", APP_RUN_TIME(), addr.ToString());
 			// Disconnect client.
-			CREATE_MESSAGE(net::EMessageId::NET_MSG_CLIENT_REJECT);
-			Send(stream, packet->systemAddress);
+			CREATE_MESSAGE(out, net::EMessageId::NET_MSG_CLIENT_REJECT);
+			Send(out, packet->systemAddress);
 		}
 
 		if (!dbms::DBMS::GetUserDesc(clientDesc))
@@ -41,25 +41,51 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 			{
 				LOG_DBG_CRITICAL("[{:.4f}][OnMessage] ... Failed to update DB user entry! UUID: {}", APP_RUN_TIME(), addr.ToString(), clientDesc.m_uuid);
 				// Disconnect client.
-				CREATE_MESSAGE(net::EMessageId::NET_MSG_CLIENT_REJECT);
-				Send(stream, packet->systemAddress);
+				CREATE_MESSAGE(out, net::EMessageId::NET_MSG_CLIENT_REJECT);
+				Send(out, packet->systemAddress);
 			}
 		}
 
 		{
-			CREATE_MESSAGE(net::EMessageId::NET_MSG_CLIENT_ACCEPT);
-			Send(stream, packet->systemAddress);
+			CREATE_MESSAGE(out, net::EMessageId::NET_MSG_CLIENT_ACCEPT);
+			Send(out, packet->systemAddress);
 		}
 		{
-			CREATE_MESSAGE(net::EMessageId::NET_MSG_USER_DATA);
-			clientDesc.Serialize(stream);
-			Send(stream, packet->systemAddress);
+			CREATE_MESSAGE(out, net::EMessageId::NET_MSG_USER_DATA);
+			clientDesc.Serialize(out);
+			Send(out, packet->systemAddress);
 		}
 
 
 
 		break;
 	}
+
+	case net::EMessageId::NET_MSG_REQUEST_ABILITY_AND_STATUS_EFFECTS_DATA:
+	{
+		// Get all the Abilities and Status Effects from DBMS and send back to requester.
+		net::SStatusEffectDataStorageObject status_effect_storage;
+		net::SAbilityDataStorageObject ability_storage;
+
+		bool error = false;
+		if(!dbms::DBMS::GetAllStatusEffectData(status_effect_storage))
+		{
+			error = true;
+		}
+		if(!dbms::DBMS::GetAllAbilityData(ability_storage))
+		{
+			error = true;
+		}
+		if(!error)
+		{
+			CREATE_MESSAGE(out, net::EMessageId::NET_MSG_ABILITY_AND_STATUS_EFFECTS_DATA);
+			// Expected is first the Ability Data and then the Status Effect Data.
+			ability_storage.Serialize(out);
+			status_effect_storage.Serialize(out);
+			Send(out, packet->systemAddress);
+		}
+	}
+
 	}
 
 }
@@ -75,8 +101,8 @@ void MasterServer::OnClientConnect(RakNet::Packet* packet)
 	m_clients.try_emplace(client_addr, client_id);
 
 	// Request client and platform data for last validation step.
-	CREATE_MESSAGE(net::EMessageId::NET_MSG_REQUEST_USER_VALIDATION_DATA);
-	Send(stream, packet->systemAddress);
+	CREATE_MESSAGE(out, net::EMessageId::NET_MSG_REQUEST_USER_VALIDATION_DATA);
+	Send(out, packet->systemAddress);
 }
 void MasterServer::OnClientDisconnect(RakNet::Packet* packet)
 {
@@ -89,7 +115,7 @@ void MasterServer::OnClientDisconnect(RakNet::Packet* packet)
 }
 bool MasterServer::OnClientValidated(RakNet::Packet* packet)
 {
-	// Raknet validation was successful. ServerInterface validation 
+	// RakNet validation was successful. ServerInterface validation 
 	// was successful too, this is our turn.
 	auto addr = packet->systemAddress;
 	LOG_DBG_INFO("[{:.4f}][OnClientValidated] Client validated: {}", APP_RUN_TIME(), addr.ToString());

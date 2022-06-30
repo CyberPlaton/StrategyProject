@@ -89,6 +89,16 @@ namespace dbms
 		/// @return True on success. False if net::SAbilityData* is nullptr or we couldnt find the Ability by name.
 		static bool GetAbility(const std::string& ability_name, net::SAbilityData* ability);
 
+		/// @brief Retrieve all Status Effects.
+		/// @param storage Storage object where to store the Status Effects.
+		/// @return True on success. False if could not retrieve any.
+		static bool GetAllStatusEffectData(net::SStatusEffectDataStorageObject& storage);
+
+		/// @brief Retrieve all Abilities.
+		/// @param storage Storage object where to store the Abilities.
+		/// @return True on success. False if could not retrieve any.
+		static bool GetAllAbilityData(net::SAbilityDataStorageObject& storage);
+
 		
 		/*
 		* USER MANAGEMENT

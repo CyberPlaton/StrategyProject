@@ -307,6 +307,16 @@ namespace dbms
 		return false;
 	}
 
+	bool DBMS::GetAllStatusEffectData(net::SStatusEffectDataStorageObject& storage)
+	{
+
+	}
+
+	bool DBMS::GetAllAbilityData(net::SAbilityDataStorageObject& storage)
+	{
+
+	}
+
 	bool DBMS::GetStatusEffect(const std::string& effect_name, net::SStatusEffectData* effect)
 	{
 		if (!m_initialized || !effect) return false;

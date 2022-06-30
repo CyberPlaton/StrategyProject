@@ -23,7 +23,7 @@ namespace cherrysoda
 
 		/// @brief Store given data of each Ability.
 		/// @param data Data vector.
-		void Data(cherrysoda::STL::Vector< SAbilityData* >& data);
+		void Data(net::SAbilityDataStorageObject& data);
 
 	private:
 		static EntityAbilitiesDataMap* g_EntityAbilitiesDataMap;
