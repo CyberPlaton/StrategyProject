@@ -193,6 +193,8 @@ void Terminal::RenderTerminalLog()
 		else if (strstr(color_item, "[magenta]")) { m_TerColor = ImVec4(0.92f, 0.05f, 1.0f, 1.0f); }// Magenta
 		else if (strstr(color_item, "[blue]")) { m_TerColor = ImVec4(0.1f, 0.375f, 1.0f, 1.0f); }	// Blue
 		else if (strstr(color_item, "[white]")) { m_TerColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); }	// White
+		else if (strstr(color_item, "[green]")) { m_TerColor = ImVec4(0.05f, 1.0f, 0.05f, 1.0f); }	// Green
+
 
 
 		const char* item = m_TerItems[i];

@@ -309,12 +309,135 @@ namespace dbms
 
 	bool DBMS::GetAllStatusEffectData(net::SStatusEffectDataStorageObject& storage)
 	{
+		mongocxx::database db = DBMS::get()->m_mongoClient[m_database];
 
+		try
+		{
+			if (db.has_collection(m_statusEffectsCollection))
+			{
+				mongocxx::collection effects_collection = db[m_statusEffectsCollection];
+
+				// Get cursor to all Documents in Collection.
+				auto cursor = effects_collection.find({});
+
+				for (auto&& view : cursor)
+				{
+					net::SStatusEffectData effect;
+
+					// Retrieve data.
+					std::string name = view["Name"].get_utf8().value.to_string().c_str();
+					std::string display_name = view["DisplayName"].get_utf8().value.to_string().c_str();
+					std::string desc = view["Desc"].get_utf8().value.to_string().c_str();
+					std::string effect_type = view["Type"].get_utf8().value.to_string().c_str();
+					size_t appl_to = view["ApplicableTo"].get_int64();
+					std::string timer_type = view["TimerType"].get_utf8().value.to_string().c_str();
+					size_t apl_prob = view["ApplicationProbability"].get_int64();
+					size_t val_max = view["ValueMax"].get_int64();
+					size_t val_min = view["ValueMin"].get_int64();
+					size_t timer_val = view["TimerValue"].get_int64();
+
+
+					// Fill SStatusEffectData.
+					effect.m_effectName = name.c_str();
+					effect.m_effectDisplayName = display_name.c_str();
+					effect.m_effectDesc = desc.c_str();
+					effect.m_effectType = effect_type.c_str();
+					effect.m_effectTimerType = effect_type.c_str();
+					effect.m_effectTimerValue = timer_val;
+					effect.m_effectApplicableTo = net::EGameobjectType(appl_to);
+					effect.m_effectApplicationProbability = apl_prob;
+					effect.m_effectValueMax = val_max;
+					effect.m_effectValueMax = val_min;
+
+					storage.m_data.push_back(std::move(effect));
+				}
+
+				return true;
+			}
+		}
+		catch(const mongocxx::v_noabi::logic_error& e)
+		{
+			LOG_DBG_ERROR("[{:.4f}][DBMS::GetAllStatusEffectData] bsoncxx::v_noabi::logic_error: \"{}\"!", Logger::AppRunningTime(), e.what());
+			LOG_FILE_ERROR("[{:.4f}][DBMS::GetAllStatusEffectData] bsoncxx::v_noabi::logic_error: \"{}\"!", APP_RUN_TIME, e.what());
+		}
+		catch(const bsoncxx::v_noabi::exception& e)
+		{
+			LOG_DBG_ERROR("[{:.4f}][DBMS::GetAllStatusEffectData] bsoncxx::v_noabi::exception: \"{}\"!", Logger::AppRunningTime(), e.what());
+			LOG_FILE_ERROR("[{:.4f}][DBMS::GetAllStatusEffectData] bsoncxx::v_noabi::exception: \"{}\"!", APP_RUN_TIME, e.what());
+		}
+
+		return false;
 	}
 
 	bool DBMS::GetAllAbilityData(net::SAbilityDataStorageObject& storage)
 	{
+		mongocxx::database db = DBMS::get()->m_mongoClient[m_database];
 
+		try
+		{
+			if (db.has_collection(m_statusEffectsCollection))
+			{
+				mongocxx::collection effects_collection = db[m_statusEffectsCollection];
+
+				// Get cursor to all Documents in Collection.
+				auto cursor = effects_collection.find({});
+
+				for (auto&& view : cursor)
+				{
+					net::SAbilityData ability;
+
+					// Retrieve data.
+					std::string name = view["Name"].get_utf8().value.to_string().c_str();
+					std::string display_name = view["DisplayName"].get_utf8().value.to_string().c_str();
+					std::string desc = view["Desc"].get_utf8().value.to_string().c_str();
+					bool useable_on_enemy = view["UsableOnEnemy"].get_bool();
+					bool useable_on_self = view["UsableOnSelf"].get_bool();
+					bool useable_on_friendly = view["UsableOnFriendly"].get_bool();
+					size_t applicable_to = view["ApplicableTo"].get_int64();
+					std::vector< std::string > applied_status_effects;
+
+					auto array_of_status_effects = view["AppliedStatusEffectsOnUse"].get_array().value;
+
+					if (!array_of_status_effects.empty())
+					{
+
+						for (const bsoncxx::array::element& subdocument : array_of_status_effects)
+						{
+							std::string elem = subdocument.get_utf8().value.to_string().c_str();
+							applied_status_effects.push_back(elem);
+						}
+					}
+
+					// Fill SAbilityData.
+					ability.m_abilityName = name.c_str();
+					ability.m_abilityDisplayName = display_name.c_str();
+					ability.m_abilityDesc = desc.c_str();
+					ability.m_abilityUsableOnEnemies = useable_on_enemy;
+					ability.m_abilityUsableOnSelf = useable_on_self;
+					ability.m_abilityUsableOnFriendlies = useable_on_friendly;
+					ability.m_abilityApplicableTo = net::EGameobjectType(applicable_to);
+					for (auto& e : applied_status_effects)
+					{
+						ability.m_appliedStatusEffectsOnUse.push_back(e.c_str());
+					}
+
+					storage.m_data.push_back(std::move(ability));
+				}
+				return true;
+			}
+		}
+		catch (const mongocxx::v_noabi::logic_error& e)
+		{
+			LOG_DBG_ERROR("[{:.4f}][DBMS::GetAllAbilityData] bsoncxx::v_noabi::logic_error: \"{}\"!", Logger::AppRunningTime(), e.what());
+			LOG_FILE_ERROR("[{:.4f}][DBMS::GetAllAbilityData] bsoncxx::v_noabi::logic_error: \"{}\"!", APP_RUN_TIME, e.what());
+		}
+		catch (const bsoncxx::v_noabi::exception& e)
+		{
+			LOG_DBG_ERROR("[{:.4f}][DBMS::GetAllAbilityData] bsoncxx::v_noabi::exception: \"{}\"!", Logger::AppRunningTime(), e.what());
+			LOG_FILE_ERROR("[{:.4f}][DBMS::GetAllAbilityData] bsoncxx::v_noabi::exception: \"{}\"!", APP_RUN_TIME, e.what());
+		}
+
+		return false;
 	}
 
 	bool DBMS::GetStatusEffect(const std::string& effect_name, net::SStatusEffectData* effect)

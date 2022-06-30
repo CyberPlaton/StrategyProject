@@ -70,7 +70,8 @@ private:
 };
 
 
-#define LOG_MS_INFO(...)		MasterServer::get()->LogToTerminal(__VA_ARGS__); MasterServer::get()->LogToTerminal("[info]")
+#define LOG_MS_INFO(...)		MasterServer::get()->LogToTerminal(__VA_ARGS__); MasterServer::get()->LogToTerminal("[blue]")
+#define LOG_MS_SUCCESS(...)		MasterServer::get()->LogToTerminal(__VA_ARGS__); MasterServer::get()->LogToTerminal("[green]")
 #define LOG_MS_WARN(...)		MasterServer::get()->LogToTerminal(__VA_ARGS__); MasterServer::get()->LogToTerminal("[warn]")
 #define LOG_MS_ERROR(...)		MasterServer::get()->LogToTerminal(__VA_ARGS__); MasterServer::get()->LogToTerminal("[error]")
 #define LOG_MS_CRITICAL(...)	MasterServer::get()->LogToTerminal(__VA_ARGS__); MasterServer::get()->LogToTerminal("[critical]")
