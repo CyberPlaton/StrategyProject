@@ -43,7 +43,7 @@ namespace cherrysoda
 
 			if (m_timer.SecondsElapsed() > 10)
 			{
-				printf("\t...60 seconds elapsed\n");
+				printf("\t...10 seconds elapsed\n");
 				m_timer.StartTimer();
 				return true;
 			}
