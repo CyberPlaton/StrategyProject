@@ -1,13 +1,13 @@
 #pragma once
 
+#include "NetLib.h"
+#include "Logging.h"
+
 #include <memory>
 #include <sstream>
 
-
-#include "NetLib.h"
 #include <tinyxml2.h>
 #include <steam_api.h>
-#include "Logging.h"
 
 
 #define STATIC_GET_DEL_WITH_INIT_AND_SHUTDOWN(CLASS, STATIC_MEMBER) \
@@ -80,10 +80,13 @@ namespace dbms
 		/// @brief Retrieve the requested effect and fill given effect object.
 		/// @param effect_name Name of the effect to be retrieved.
 		/// @param effect Object which to fill with data.
-		/// @return True on success.
+		/// @return True on success. False if net::SStatusEffectData* is nullptr or we couldnt find the Status Effect by name.
 		static bool GetStatusEffect(const std::string& effect_name, net::SStatusEffectData* effect);
 
-		// TODO
+		/// @brief Retrieve the requested Entity Ability and fill given object with data.
+		/// @param ability_name Name of the Ability to be retrieved.
+		/// @param ability Object to be filled with data.
+		/// @return True on success. False if net::SAbilityData* is nullptr or we couldnt find the Ability by name.
 		static bool GetAbility(const std::string& ability_name, net::SAbilityData* ability);
 
 		
@@ -144,7 +147,8 @@ namespace dbms
 			}
 			catch (const mongocxx::query_exception& e)
 			{
-				printf("DBMS::_findOneByKeyValuePair - mongocxx::query_exception - Message: \n\t\t \"%s\"\n", e.what());
+				LOG_DBG_INFO("[{:.4f}][DBMS::_findOneByKeyValuePair] mongocxx::query_exception: \"{}\"! Searched for kvp(\"{}\", \"{}\").", Logger::AppRunningTime(), e.what(), key, value);
+				LOG_FILE_INFO("[{:.4f}][DBMS::_findOneByKeyValuePair] mongocxx::query_exception: \"{}\"! Searched for kvp(\"{}\", \"{}\").", APP_RUN_TIME, e.what(), key, value);
 			}
 
 			return doc.has_value();

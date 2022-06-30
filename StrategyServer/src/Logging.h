@@ -9,6 +9,8 @@
 
 #include "CommonDefines.h"
 
+/// @brief Logging errors and occurances in Strategy Server project.
+// Outputs to console or File in predefined format. Console only in Debug. File only in Release and Distr.
 class Logger
 {
 public:
@@ -23,13 +25,10 @@ public:
 
 
 	// UTIL
-	static double AppRunningTime() { return g_AppTimer.SecondsElapsed(); }
+	static double AppRunningTime() noexcept { return g_AppTimer.SecondsElapsed(); }
 
 private:
 	static Logger* g_Logger;
-	static bool g_LimitMessages;
-	static size_t g_MessageLimit;
-	static bool g_GamelogOpen;
 
 	static Timer g_AppTimer;
 	
@@ -42,13 +41,15 @@ private:
 private:
 	Logger() = default;
 };
+
 #define APP_RUN_TIME() Logger::AppRunningTime()
+
 #ifdef DEBUG
 // Stdout in DEBUG
-#define LOG_DBG_INFO(...) Logger::ConsoleLog()->info(__VA_ARGS__)
-#define LOG_DBG_WARN(...) Logger::ConsoleLog()->warn(__VA_ARGS__)
-#define LOG_DBG_ERROR(...) Logger::ConsoleLog()->error(__VA_ARGS__)
-#define LOG_DBG_CRITICAL(...) Logger::ConsoleLog()->critical(__VA_ARGS__)
+#define LOG_DBG_INFO(...)		Logger::ConsoleLog()->info(__VA_ARGS__)
+#define LOG_DBG_WARN(...)		Logger::ConsoleLog()->warn(__VA_ARGS__)
+#define LOG_DBG_ERROR(...)		Logger::ConsoleLog()->error(__VA_ARGS__)
+#define LOG_DBG_CRITICAL(...)	Logger::ConsoleLog()->critical(__VA_ARGS__)
 // No File output in DEBUG.
 #define LOG_FILE_INFO(...)
 #define LOG_FILE_WARN(...)
@@ -56,24 +57,24 @@ private:
 #define LOG_FILE_CRITICAL(...)
 #elif RELEASE
 // No Stdout in RELEASE
-#define LOG_DBG_INFO(...)
+#define LOG_DBG_INFO(...)		
 #define LOG_DBG_WARN(...)
 #define LOG_DBG_ERROR(...)
 #define LOG_DBG_CRITICAL(...)
-// No File output in RELEASE
-#define LOG_FILE_INFO(...)
-#define LOG_FILE_WARN(...)
-#define LOG_FILE_ERROR(...)
-#define LOG_FILE_CRITICAL(...)
+// File output in RELEASE
+#define LOG_FILE_INFO(...)		Logger::FileLog()->info(__VA_ARGS__)
+#define LOG_FILE_WARN(...)		Logger::FileLog()->warn(__VA_ARGS__)
+#define LOG_FILE_ERROR(...)		Logger::FileLog()->error(__VA_ARGS__)
+#define LOG_FILE_CRITICAL(...)	Logger::FileLog()->critical(__VA_ARGS__)
 #elif DISTR
-// No Stdout in RELEASE
-#define LOG_DBG_INFO(...)
-#define LOG_DBG_WARN(...)
-#define LOG_DBG_ERROR(...)
+// Stdout in DISTR
+#define LOG_DBG_INFO(...)	
+#define LOG_DBG_WARN(...)	
+#define LOG_DBG_ERROR(...)	
 #define LOG_DBG_CRITICAL(...)
 // Only File output in DISTR
-#define LOG_FILE_INFO(...)	   Logger::FileLog()->info(__VA_ARGS__)
-#define LOG_FILE_WARN(...)	   Logger::FileLog()->warn(__VA_ARGS__)
-#define LOG_FILE_ERROR(...)	   Logger::FileLog()->error(__VA_ARGS__)
-#define LOG_FILE_CRITICAL(...) Logger::FileLog()->critical(__VA_ARGS__)
+#define LOG_FILE_INFO(...)		Logger::FileLog()->info(__VA_ARGS__)
+#define LOG_FILE_WARN(...)		Logger::FileLog()->warn(__VA_ARGS__)
+#define LOG_FILE_ERROR(...)		Logger::FileLog()->error(__VA_ARGS__)
+#define LOG_FILE_CRITICAL(...)	Logger::FileLog()->critical(__VA_ARGS__)
 #endif
