@@ -136,7 +136,7 @@ public:
 	// UTIL
 	void RegisterCommands();
 	inline bool IsInitialized() { return m_initialized; }
-	uint64_t GetVersion();
+	inline int64_t GetVersion() { return 1000; }
 
 private:
 

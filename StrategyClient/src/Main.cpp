@@ -38,10 +38,6 @@ void App::OnMessage(RakNet::Packet* packet)
 	// Do nothing for Application.
 	// Scenes handle the networking traffic.
 }
-uint64_t App::GetVersion()
-{
-	return 1000;
-}
 
 
 bool cherrysoda::SceneGraphFactory::LoadSceneGraph(const cherrysoda::String& filename, App* app)

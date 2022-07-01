@@ -10,18 +10,20 @@ bool MasterServer::MasterServerCreated()
 void MasterServer::OnMessage(RakNet::Packet* packet)
 {
 	auto addr = packet->systemAddress;
+	std::string addr_string = addr.ToString(true, '|');
 	auto id = (RakNet::MessageID)packet->data[0];
-	LOG_DBG_INFO("[{:.4f}][OnMessage] Message \"{}\" from Client \"{}\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(), addr.ToString());
-	LOG_FILE_INFO("[{:.4f}][OnMessage] Message \"{}\" from Client \"{}\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(), addr.ToString());
-	LOG_MS_INFO("[%.4f][OnMessage] Message \"%s\" from Client \"%s\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(), addr.ToString());
+	
+	LOG_DBG_INFO("[{:.4f}][OnMessage] Message \"{}\" from Client \"{}\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(),	addr_string.c_str());
+	LOG_FILE_INFO("[{:.4f}][OnMessage] Message \"{}\" from Client \"{}\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(),	addr_string.c_str());
+	LOG_MS_INFO("[%.4f][OnMessage] Message \"%s\" from Client \"%s\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(),		addr_string.c_str());
 
 	switch (id)
 	{
 	case net::EMessageId::NET_MSG_USER_VALIDATION_DATA:
 	{
-		LOG_DBG_INFO("[{:.4f}][OnMessage] Received User Data from Client \"{}\".", APP_RUN_TIME(), addr.ToString());
-		LOG_FILE_INFO("[{:.4f}][OnMessage] Received User Data from Client \"{}\".", APP_RUN_TIME(), addr.ToString());
-		LOG_MS_INFO("[%.4f][OnMessage] Received User Data from Client \"%s\".", APP_RUN_TIME(), addr.ToString());
+		LOG_DBG_INFO("[{:.4f}][OnMessage] Received User Data from Client \"{}\".", APP_RUN_TIME(),	addr_string.c_str());
+		LOG_FILE_INFO("[{:.4f}][OnMessage] Received User Data from Client \"{}\".", APP_RUN_TIME(), addr_string.c_str());
+		LOG_MS_INFO("[%.4f][OnMessage] Received User Data from Client \"%s\".", APP_RUN_TIME(),		addr_string.c_str());
 
 		net::SClientDescription clientDesc;
 
@@ -31,9 +33,9 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 		// Verify Client Version.
 		if (!CheckClientVersion(clientDesc))
 		{
-			LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Client \"{}\" out of date!", APP_RUN_TIME(), addr.ToString());
-			LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Client \"{}\" out of date!", APP_RUN_TIME(), addr.ToString());
-			LOG_MS_CRITICAL("[%.4f][OnMessage] Client \"%s\" out of date!", APP_RUN_TIME(), addr.ToString());
+			LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Client \"{}\" out of date!", APP_RUN_TIME(),	addr_string.c_str());
+			LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Client \"{}\" out of date!", APP_RUN_TIME(), addr_string.c_str());
+			LOG_MS_CRITICAL("[%.4f][OnMessage] Client \"%s\" out of date!", APP_RUN_TIME(),		addr_string.c_str());
 
 
 			// Disconnect client.
@@ -43,17 +45,17 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 
 		if (!dbms::DBMS::GetUserDesc(clientDesc))
 		{
-			LOG_DBG_WARN("[{:.4f}][OnMessage] Client \"{}\" without DB entry! Attempt to create one!", APP_RUN_TIME(), addr.ToString());
-			LOG_FILE_WARN("[{:.4f}][OnMessage] Client \"{}\" without DB entry! Attempt to create one!", APP_RUN_TIME(), addr.ToString());
-			LOG_MS_WARN("[%.4f][OnMessage] Client \"%s\" without DB entry! Attempt to create one!", APP_RUN_TIME(), addr.ToString());
+			LOG_DBG_WARN("[{:.4f}][OnMessage] Client \"{}\" without DB entry! Attempt to create one!", APP_RUN_TIME(),	addr_string.c_str());
+			LOG_FILE_WARN("[{:.4f}][OnMessage] Client \"{}\" without DB entry! Attempt to create one!", APP_RUN_TIME(), addr_string.c_str());
+			LOG_MS_WARN("[%.4f][OnMessage] Client \"%s\" without DB entry! Attempt to create one!", APP_RUN_TIME(),		addr_string.c_str());
 
 
 			clientDesc.m_uuid = dbms::DBMS::CreateUser();
 			if (!dbms::DBMS::UpdateUser(clientDesc))
 			{
-				LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Failed to update DB user entry! UUID: \"{}\"!", APP_RUN_TIME(), addr.ToString(), clientDesc.m_uuid);
-				LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Failed to update DB user entry! UUID: \"{}\"!", APP_RUN_TIME(), addr.ToString(), clientDesc.m_uuid);
-				LOG_MS_CRITICAL("[%.4f][OnMessage] Failed to update DB user entry! UUID: \"%zu\"!", APP_RUN_TIME(), addr.ToString(), clientDesc.m_uuid);
+				LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Failed to update DB user entry! UUID: \"{}\" for Client \"{}\"!", APP_RUN_TIME(),		clientDesc.m_uuid, addr_string.c_str());
+				LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Failed to update DB user entry! UUID: \"{}\" for Client \"{}\"!", APP_RUN_TIME(), clientDesc.m_uuid, addr_string.c_str());
+				LOG_MS_CRITICAL("[%.4f][OnMessage] Failed to update DB user entry! UUID: \"%zu\" for Client \"%s\"!", APP_RUN_TIME(), clientDesc.m_uuid, addr_string.c_str());
 
 
 				// Disconnect client.
@@ -84,24 +86,24 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 		bool error = false;
 		if(!dbms::DBMS::GetAllStatusEffectData(status_effect_storage))
 		{
-			LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve StatusEffect Data for Client \"{}\"!", APP_RUN_TIME(), addr.ToString());
-			LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve StatusEffect Data for Client \"{}\"!", APP_RUN_TIME(), addr.ToString());
-			LOG_MS_CRITICAL("[%.4f][OnMessage] Failed to retrieve StatusEffect Data for Client \"%s\"!", APP_RUN_TIME(), addr.ToString());
+			LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve StatusEffect Data for Client \"{}\"!", APP_RUN_TIME(),	 addr_string.c_str());
+			LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve StatusEffect Data for Client \"{}\"!", APP_RUN_TIME(), addr_string.c_str());
+			LOG_MS_CRITICAL("[%.4f][OnMessage] Failed to retrieve StatusEffect Data for Client \"%s\"!", APP_RUN_TIME(),	 addr_string.c_str());
 			error = true;
 		}
 		if(!dbms::DBMS::GetAllAbilityData(ability_storage))
 		{
-			LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve Ability Data for Client \"{}\"!", APP_RUN_TIME(), addr.ToString());
-			LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve Ability Data for Client \"{}\"!", APP_RUN_TIME(), addr.ToString());
-			LOG_MS_CRITICAL("[%.4f][OnMessage] Failed to retrieve Ability Data for Client \"%s\"!", APP_RUN_TIME(), addr.ToString());
+			LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve Ability Data for Client \"{}\"!", APP_RUN_TIME(),	addr_string.c_str());
+			LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve Ability Data for Client \"{}\"!", APP_RUN_TIME(), addr_string.c_str());
+			LOG_MS_CRITICAL("[%.4f][OnMessage] Failed to retrieve Ability Data for Client \"%s\"!", APP_RUN_TIME(),		addr_string.c_str());
 			error = true;
 		}
 		if(!error)
 		{
 
-			LOG_DBG_INFO("[{:.4f}][OnMessage] Successfully retrieved {} Abilities for Client \"{}\"! Sending Now...", APP_RUN_TIME(), ability_storage.size(), addr.ToString());
-			LOG_FILE_INFO("[{:.4f}][OnMessage]  Successfully retrieved {} Abilities for Client \"{}\"! Sending Now...", APP_RUN_TIME(), ability_storage.size(), addr.ToString());
-			LOG_MS_SUCCESS("[%.4f][OnMessage] Successfully retrieved %d Abilities for Client \"%s\"! Sending Now...", APP_RUN_TIME(), ability_storage.size(), addr.ToString());
+			LOG_DBG_INFO("[{:.4f}][OnMessage] Successfully retrieved \"{}\" Abilities for Client \"{}\"! Sending Now...", APP_RUN_TIME(), ability_storage.size(),	addr_string.c_str());
+			LOG_FILE_INFO("[{:.4f}][OnMessage]  Successfully retrieved \"{}\" Abilities for Client \"{}\"! Sending Now...", APP_RUN_TIME(), ability_storage.size(), addr_string.c_str());
+			LOG_MS_SUCCESS("[%.4f][OnMessage] Successfully retrieved \"%d\" Abilities for Client \"%s\"! Sending Now...", APP_RUN_TIME(), ability_storage.size(),	addr_string.c_str());
 			// Send Ability Data.
 			{
 				for(auto& ability : ability_storage)
@@ -113,12 +115,12 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 			}
 
 
-			LOG_DBG_INFO("[{:.4f}][OnMessage] Successfully retrieved {} StatusEffects for Client \"{}\"! Sending Now...", APP_RUN_TIME(), status_effect_storage.size(), addr.ToString());
-			LOG_FILE_INFO("[{:.4f}][OnMessage]  Successfully retrieved {} StatusEffects for Client \"{}\"! Sending Now...", APP_RUN_TIME(), status_effect_storage.size(), addr.ToString());
-			LOG_MS_SUCCESS("[%.4f][OnMessage] Successfully retrieved %d StatusEffects for Client \"%s\"! Sending Now...", APP_RUN_TIME(), status_effect_storage.size(), addr.ToString());
+			LOG_DBG_INFO("[{:.4f}][OnMessage] Successfully retrieved \"{}\" StatusEffects for Client \"{}\"! Sending Now...", APP_RUN_TIME(), status_effect_storage.size(),		addr_string.c_str());
+			LOG_FILE_INFO("[{:.4f}][OnMessage]  Successfully retrieved \"{}\" StatusEffects for Client \"{}\"! Sending Now...", APP_RUN_TIME(), status_effect_storage.size(),	addr_string.c_str());
+			LOG_MS_SUCCESS("[%.4f][OnMessage] Successfully retrieved \"%d\" StatusEffects for Client \"%s\"! Sending Now...", APP_RUN_TIME(), status_effect_storage.size(),		addr_string.c_str());
 			// Send StatusEffects Data.
 			{
-				for(auto& effect: status_effect_storage)
+				for (auto& effect : status_effect_storage)
 				{
 					CREATE_MESSAGE(out, net::EMessageId::NET_MSG_STATUS_EFFECTS_DATA);
 					effect.Serialize(out);
@@ -139,9 +141,9 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 
 	default:
 	{
-		LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Unrecognized Message: \"{}\" from \"{}\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(), addr.ToString());
-		LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Unrecognized Message: \"{}\" from \"{}\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(),  addr.ToString());
-		LOG_MS_CRITICAL("[%.4f][OnMessage] Unrecognized Message: \"%s\" from \"%s\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(), addr.ToString());
+		LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Unrecognized Message: \"{}\" from Client \"{}\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(),		addr_string.c_str());
+		LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Unrecognized Message: \"{}\" from Client \"{}\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(),	addr_string.c_str());
+		LOG_MS_CRITICAL("[%.4f][OnMessage] Unrecognized Message: \"%s\" from Client \"%s\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(),		addr_string.c_str());
 		break;
 	}
 	}
@@ -149,8 +151,12 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 void MasterServer::OnClientConnect(RakNet::Packet* packet)
 {
 	auto addr = packet->systemAddress;
-	LOG_DBG_INFO("[{:.4f}][OnClientConnect] Client connected: \"{}\".", APP_RUN_TIME(), addr.ToString());
-	LOG_FILE_INFO("[{:.4f}][OnClientConnect] Client connected: \"{}\".", APP_RUN_TIME(), addr.ToString());
+	std::string addr_string = addr.ToString(true, ':');
+
+	LOG_DBG_INFO("[{:.4f}][OnClientConnect] Client connected: \"{}\".", APP_RUN_TIME(),		addr_string.c_str());
+	LOG_FILE_INFO("[{:.4f}][OnClientConnect] Client connected: \"{}\".", APP_RUN_TIME(),	addr_string.c_str());
+	LOG_MS_INFO("[%.4f][OnClientConnect] Client connected: \"%s\".", APP_RUN_TIME(),		addr_string.c_str());
+
 
 	// RakNet and ServerInterface Validation steps successfully passed.
 	// Remote system has successfully connected...
@@ -165,8 +171,11 @@ void MasterServer::OnClientConnect(RakNet::Packet* packet)
 void MasterServer::OnClientDisconnect(RakNet::Packet* packet)
 {
 	auto addr = packet->systemAddress;
-	LOG_DBG_WARN("[{:.4f}][OnClientDisconnect] Client disconnected: \"{}\".", APP_RUN_TIME(), addr.ToString());
-	LOG_FILE_WARN("[{:.4f}][OnClientConnect] Client disconnected: \"{}\".", APP_RUN_TIME(), addr.ToString());
+	std::string addr_string = addr.ToString(true, ':');
+
+	LOG_DBG_WARN("[{:.4f}][OnClientDisconnect] Client disconnected: \"{}\".", APP_RUN_TIME(),	addr_string.c_str());
+	LOG_FILE_WARN("[{:.4f}][OnClientConnect] Client disconnected: \"{}\".", APP_RUN_TIME(),		addr_string.c_str());
+	LOG_MS_WARN("[%.4f][OnClientConnect] Client disconnected: \"%s\".", APP_RUN_TIME(),		addr_string.c_str());
 
 	// Remote system was disconnected.
 	// Remove from storage.
@@ -177,8 +186,12 @@ bool MasterServer::OnClientValidated(RakNet::Packet* packet)
 	// RakNet validation was successful. ServerInterface validation 
 	// was successful too, this is our turn.
 	auto addr = packet->systemAddress;
-	LOG_DBG_INFO("[{:.4f}][OnClientValidated] Client validated: \"{}\"", APP_RUN_TIME(), addr.ToString());
-	LOG_FILE_INFO("[{:.4f}][OnClientValidated] Client validated: \"{}\".", APP_RUN_TIME(), addr.ToString());
+	std::string addr_string = addr.ToString(true, ':');
+
+	LOG_DBG_INFO("[{:.4f}][OnClientValidated] Client validated: \"{}\"", APP_RUN_TIME(),	addr_string.c_str());
+	LOG_FILE_INFO("[{:.4f}][OnClientValidated] Client validated: \"{}\".", APP_RUN_TIME(),	addr_string.c_str());
+	LOG_MS_SUCCESS("[%.4f][OnClientConnect] Client validated: \"%s\".", APP_RUN_TIME(),	addr_string.c_str());
+
 
 	return true;
 }
@@ -186,13 +199,10 @@ bool MasterServer::CheckClientVersion(net::SClientDescription& desc)
 {
 	return CheckClientVersion(desc.m_version);
 }
-bool MasterServer::CheckClientVersion(uint64_t v)
+
+bool MasterServer::CheckClientVersion(int64_t v)
 {
 	return (GetVersion() == v);
-}
-uint64_t MasterServer::GetVersion()
-{
-	return 1000;
 }
 
 void MasterServer::AddCommand(ICommand* cmd)
@@ -215,7 +225,7 @@ void MasterServer::OnUpdate()
 	BackupClientCount(10);
 	ExecuteTerminalCommands();
 }
-void MasterServer::BackupClientCount(uint32_t seconds)
+void MasterServer::BackupClientCount(int64_t seconds)
 {
 	if (m_timer.SecondsElapsed() > seconds)
 	{
@@ -244,209 +254,6 @@ void MasterServer::ExecuteTerminalCommands()
 		m_commandQueue.push_back(reoccurring.pop_front());
 	}
 }
-
-
-uint32_t MasterServer::AssignClientId()
-{
-	return m_nextId++;
-}
-/*
-void MasterServer::OnClientValidated(std::shared_ptr<olc::net::connection<net::Message>> client)
-{
-	using namespace olc::net;
-	using namespace net;
-
-	printf("[MasterServer::OnClientValidated] Client \"%d\" Validated!\n", client->GetID());
-
-	message< Message > msg;
-	msg.header.id = Message::NET_MSG_REQUEST_USER_VALIDATION_DATA;	
-	client->Send(msg);
-}
-void MasterServer::OnMessage(std::shared_ptr<olc::net::connection<net::Message>> client, olc::net::message<net::Message>& msg)
-{
-	using namespace olc::net;
-	using namespace dbms;
-	using namespace net;
-
-	switch (msg.header.id)
-	{
-	// Validation of Client.
-	case Message::NET_MSG_USER_VALIDATION_DATA:
-	{
-		printf("[MasterServer::OnMessage] Received user validation data! Validating...\n");
-
-		UserDesc user_desc;
-		ClientAppDesc client_desc;
-
-		msg >> user_desc;
-		msg >> client_desc;
-
-		DecryptMessage(user_desc);
-		DecryptMessage(client_desc);
-
-		// Verify client version.
-		bool uptodate = CheckClientVersion(client_desc.m_majorVersion, client_desc.m_majorVersion, client_desc.m_majorVersion);
-
-
-		// Try getting user data.
-		if (!DBMS::GetUserDesc(user_desc))
-		{
-			// Try creating new user entry.
-			size_t uuid = DBMS::CreateUser();
-			user_desc.m_uuid = uuid;
-			if (!DBMS::UpdateUser(user_desc))
-			{
-				// Something is really wrong. Reject the client.
-				olc::net::message< net::Message > message;
-				message.header.id = net::NET_MSG_CLIENT_REJECT;
-				MessageClient(client, message);
-			}
-		}
-
-		// Assign the Network id.
-		user_desc.m_netId = GetLastConnectedClientId();
-
-		EncryptMessage(user_desc);
-
-		olc::net::message< net::Message > message;
-		message.header.id = net::NET_MSG_USER_DATA;
-		message << user_desc;
-
-
-		MessageClient(client, message);
-
-
-	}
-	break;
-
-
-
-
-	// If a client requests to update his data in the database we trust him
-	// and transfer this to the DB. For this the Client must be connected to us.
-	// Probably blindly trusting is not the best solution...
-	case Message::NET_MSG_REQUEST_USER_DATA_UPDATE:
-	{
-		printf("[MasterServer::OnMessage] Client requesting update of user data!\n");
-
-		// Get the User desc to be updated.
-		UserDesc desc;
-		msg >> desc;
-
-
-		// Update user in own storage.
-		if (auto user = std::find(m_userVec.begin(), m_userVec.end(), &desc); user != m_userVec.end())
-		{
-			UserDesc store = desc;
-
-			// Request to update the user from Database.
-			DBMS::UpdateUser(desc);
-		}
-
-	}
-		break;
-
-
-
-
-
-	case net::Message::NET_MSG_GAMEOBJECT_UPDATE:
-	{
-		printf("[MasterServer::OnMessage] Received Gameobject\n");
-
-		// Get Gameobject.
-		net::GameDesc game;
-		net::NetGameobject entity;
-		msg >> entity;
-		msg >> game;
-
-		// Store/Update object in appropriate Game in MongoDB
-		// and redirect update to all other connected clients...
-		if (!dbms::DBMS::TryEmplaceNetGameobject(entity, game.m_id))
-		{
-			printf("[MasterServer::OnMessage] Failed to update Gameobject:\n");
-			printf("\tGame: \"%s\", Gameobject: name - \"%s\", netId - \"%zu\"\n", game.m_id.c_str(), entity.m_name.c_str(), entity.m_netId);
-		}
-		else
-		{
-			// Redirect to clients...
-			olc::net::message< net::Message > message;
-			message.header.id = net::Message::NET_MSG_GAMEOBJECT_UPDATE;
-			message << entity;
-			MessageAllClients(message, client);
-		}
-	}
-	break;
-
-	case net::Message::NET_MSG_MAPDATA:
-	{
-		printf("[MasterServer::OnMessage] Client requests Mapdata\n");
-
-		// FOR EACH stored game entity in appropriate MongoDB collection entry
-		// create a Netgameobject with according data and send to requesting client.
-		net::GameDesc game;
-		msg >> game;
-
-		std::vector< std::shared_ptr< net::NetGameobject > > entities;
-		if (dbms::DBMS::GetNetGameobjects(game.m_id, entities))
-		{
-			for (auto& e : entities)
-			{
-				olc::net::message< net::Message > message;
-				message.header.id = net::Message::NET_MSG_MAPDATA;
-				message << e;
-				MessageClient(client, message);
-			}
-
-			// As we go out of scope,
-			// Gameobjects should be released by smart pointer.
-		}
-		else
-		{
-			printf("[MasterServer::OnMessage] Failed to retrieve Gameobjects for Game:\n");
-			printf("\tGame: \"%s\"\n", game.m_id.c_str());
-		}
-	}
-	break;
-
-	case net::Message::NET_MSG_CREATE_GAME:
-	{
-		// Create a Game in DB.
-		// Send an acknowledgement to client to inform of the success.
-		net::GameDesc game;
-		msg >> game;
-
-		dbms::DBMS::CreateGame(game.m_id);
-
-		olc::net::message< net::Message > message;
-		message.header.id = net::Message::NET_MSG_CREATE_GAME;
-
-		MessageClient(client, message);
-	}
-	break;
-
-	case net::Message::NET_MSG_DELETE_GAME:
-	{
-		// Delete a Game from DB.
-		// Send an acknowledgement to client to inform of the success.
-		net::GameDesc game;
-		msg >> game;
-
-		dbms::DBMS::DeleteGame(game.m_id);
-
-		olc::net::message< net::Message > message;
-		message.header.id = net::Message::NET_MSG_DELETE_GAME;
-
-		MessageClient(client, message);
-	}
-	break;
-
-	default:
-		printf("[MasterServer::OnMessage] Unrecognized Client Message: MsgId=\"%d\", ClientId=\"%d\"! \n", (int)msg.header.id, client->GetID());
-		return;
-	}
-}
-*/
 
 std::string MasterServer::MapdataToText(tinyxml2::XMLDocument& doc)
 {

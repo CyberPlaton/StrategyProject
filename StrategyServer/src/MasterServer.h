@@ -12,7 +12,7 @@
 #include "ICommand.h"
 #include "ThreadSafeQueue.h"
 
-class Terminal;
+#include "Terminal.h"
 
 class MasterServer : public net::ServerInterface
 {
@@ -22,9 +22,10 @@ public:
 	static bool MasterServerCreated();
 
 
-
+	//////////////////////////////
 	// SERVER INTERFACE OVERRIDES
-	
+	//////////////////////////////
+
 	/// @brief Process incoming messages from clients. Note: You must NOT deallocate the packets, this is done in Interface.
 	/// @param packet The next message to be processed.
 	void OnMessage(RakNet::Packet* packet) override final;
@@ -34,49 +35,54 @@ public:
 	bool OnClientValidated(RakNet::Packet* packet) override final;
 	void OnUpdate() override final;
 
+
+	//////////////////////////
 	// COMMON SERVER FUNCTIONS
+	//////////////////////////
+
+
 	bool ShouldExit() { return !Running(); }
-	bool CheckClientVersion(uint64_t v);
+	bool CheckClientVersion(int64_t v);
 	bool CheckClientVersion(net::SClientDescription& desc);
 
-
+	//////////////////////////
 	// UTIL
+	//////////////////////////
+
 	std::string MapdataToText(tinyxml2::XMLDocument& doc);
 	tinyxml2::XMLDocument& MapdataFromText(std::string& maptext);
-	uint64_t GetVersion();
+	inline int64_t GetVersion() { return 1000; }
 	void AddCommand(ICommand* cmd);
 	std::string RetrieveNextOutput();
-	void LogToTerminal(const char* fmt, ...);
+
 
 private:
 	static MasterServer* g_MasterServer;
 
 	Timer m_timer;
 
-	std::map< RakNet::RakString, uint32_t > m_clients;
-	uint32_t m_nextId = 10000;
+	std::map< RakNet::RakString, int64_t > m_clients;
+	int64_t m_nextId = 10000;
 
 	// Terminal Command Handling
 	tsqueue< std::string > m_outputQueue;
 	tsqueue< ICommand* > m_commandQueue;
-
-	// MasterServer Log Messages Output
-
 
 private:
 	MasterServer() : net::ServerInterface()
 	{
 		m_timer.StartTimer();
 	}
-	uint32_t AssignClientId();
-	void BackupClientCount(uint32_t seconds);
+
+	inline int64_t AssignClientId() { return m_nextId++; }
+	void BackupClientCount(int64_t seconds);
 	void ExecuteTerminalCommands();
 };
 
 
-#define LOG_MS_INFO(...)		MasterServer::get()->LogToTerminal(__VA_ARGS__); MasterServer::get()->LogToTerminal("[blue]")
-#define LOG_MS_SUCCESS(...)		MasterServer::get()->LogToTerminal(__VA_ARGS__); MasterServer::get()->LogToTerminal("[green]")
-#define LOG_MS_WARN(...)		MasterServer::get()->LogToTerminal(__VA_ARGS__); MasterServer::get()->LogToTerminal("[warn]")
-#define LOG_MS_ERROR(...)		MasterServer::get()->LogToTerminal(__VA_ARGS__); MasterServer::get()->LogToTerminal("[error]")
-#define LOG_MS_CRITICAL(...)	MasterServer::get()->LogToTerminal(__VA_ARGS__); MasterServer::get()->LogToTerminal("[critical]")
-#define LOG_MS_FMT(color, ...)	MasterServer::get()->LogToTerminal(__VA_ARGS__); MasterServer::get()->LogToTerminal( "[" ##color "]" )
+#define LOG_MS_INFO(...)		Terminal::get()->LogMasterServer(__VA_ARGS__); Terminal::get()->LogMasterServer("[blue]")
+#define LOG_MS_SUCCESS(...)		Terminal::get()->LogMasterServer(__VA_ARGS__); Terminal::get()->LogMasterServer("[green]")
+#define LOG_MS_WARN(...)		Terminal::get()->LogMasterServer(__VA_ARGS__); Terminal::get()->LogMasterServer("[warn]")
+#define LOG_MS_ERROR(...)		Terminal::get()->LogMasterServer(__VA_ARGS__); Terminal::get()->LogMasterServer("[error]")
+#define LOG_MS_CRITICAL(...)	Terminal::get()->LogMasterServer(__VA_ARGS__); Terminal::get()->LogMasterServer("[critical]")
+#define LOG_MS_FMT(color, ...)	Terminal::get()->LogMasterServer(__VA_ARGS__); Terminal::get()->LogMasterServer( "[" ##color "]" )

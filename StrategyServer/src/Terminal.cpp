@@ -97,8 +97,8 @@ void Terminal::RenderMasterServerLog()
 	int w, h;
 	glfwGetWindowSize(m_window, &w, &h);
 
-	ImGui::SetNextWindowSize(ImVec2(w/2, h), ImGuiCond_Always);
-	ImGui::SetNextWindowPos(ImVec2(w/2 + 1, 20), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(w/2 + w/4, h), ImGuiCond_Always);
+	ImGui::SetNextWindowPos(ImVec2(w/2 - w/4 + 1, 20), ImGuiCond_Always);
 
 	ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.1f);
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1));
@@ -158,7 +158,7 @@ void Terminal::RenderTerminalLog()
 	int w, h;
 	glfwGetWindowSize(m_window, &w, &h);
 
-	ImGui::SetNextWindowSize(ImVec2(w/2, h), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(w/2 - w/4, h), ImGuiCond_Always);
 	ImGui::SetNextWindowPos(ImVec2(0, 20), ImGuiCond_Always);
 
 	ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.1f);
@@ -329,16 +329,16 @@ void Terminal::OutputColoredCommandOutput(const char* color, const char* fmt, ..
 {
 	ImVec4 col;
 
-	if (strstr(color, "green"))				{ col = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); }			// Green
-	else if (strstr(color, "yellow"))		{ col = ImVec4(1.0f, 1.0f, 0.0f, 1.0f); }			// Yellow
-	else if (strstr(color, "orange"))		{ col = ImVec4(1.0f, 0.3f, 0.0f, 1.0f); }			// Orange
-	else if (strstr(color, "red"))			{ col = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); }			// Red
-											  
-	else if (strstr(color, "cyan"))			{ col = ImVec4(0.12f, 0.99f, 1.0f, 1.0f); }			// Cyan
-	else if (strstr(color, "magenta"))		{ col = ImVec4(0.92f, 0.05f, 1.0f, 1.0f); }			// Magenta
-	else if (strstr(color, "blue"))			{ col = ImVec4(0.1f, 0.375f, 1.0f, 1.0f); }			// Blue
-	else if (strstr(color, "white"))		{ col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); }			// White
+	if (strstr(color, "[info]")) {			col = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); }			// Green
+	else if (strstr(color, "[warn]")) {		col = ImVec4(1.0f, 1.0f, 0.0f, 1.0f); }			// Yellow
+	else if (strstr(color, "[error]")) {	col = ImVec4(1.0f, 0.3f, 0.0f, 1.0f); }			// Orange
+	else if (strstr(color, "[critical]")) { col = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); }			// Red
 
+	else if (strstr(color, "[cyan]")) {		col = ImVec4(0.12f, 0.99f, 1.0f, 1.0f); }		// Cyan
+	else if (strstr(color, "[magenta]")) {	col = ImVec4(0.92f, 0.05f, 1.0f, 1.0f); }		// Magenta
+	else if (strstr(color, "[blue]")) {		col = ImVec4(0.68f, 0.85f, 1.0f, 1.0f); }		// Blue
+	else if (strstr(color, "[white]")) {	col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); }			// White
+	else if (strstr(color, "[green]")) {	col = ImVec4(0.05f, 1.0f, 0.05f, 1.0f); }		// Green
 
 	char buf[1024];
 	va_list args;
@@ -383,7 +383,7 @@ void Terminal::MainMenuBar()
 						std::thread t(&MasterServer::Start, ms);
 						m_masterServerThread = std::move(t);
 						m_masterServerThread.detach();
-						LOG_TERMINAL_INFO("[MASTERSERVER] Successfully start up Masterserver!");
+						LOG_TERMINAL_SUCCESS("[MASTERSERVER] Successfully start up Masterserver!");
 					}
 					else
 					{
@@ -407,7 +407,7 @@ void Terminal::MainMenuBar()
 					ms->Terminate();
 					MasterServer::del();
 				}
-				LOG_TERMINAL_INFO("[MASTERSERVER] Successfully shut down Masterserver!");
+				LOG_TERMINAL_SUCCESS("[MASTERSERVER] Successfully shut down Masterserver!");
 			}
 
 			ImGui::EndMenu();
@@ -425,7 +425,7 @@ void Terminal::MainMenuBar()
 			{
 				if (DBMS::get()->Initialized())
 				{
-					LOG_TERMINAL_INFO("[DBMS] Successfully start up DBMS!");
+					LOG_TERMINAL_SUCCESS("[DBMS] Successfully start up DBMS!");
 				}
 				else
 				{
@@ -436,7 +436,7 @@ void Terminal::MainMenuBar()
 			if (ImGui::MenuItem("Shutdown"))
 			{
 				DBMS::del();
-				LOG_TERMINAL_INFO("[DBMS] Successfully shut down DBMS!");
+				LOG_TERMINAL_SUCCESS("[DBMS] Successfully shut down DBMS!");
 			}
 
 			ImGui::EndMenu();
@@ -602,6 +602,7 @@ void Terminal::LogTerminal(const char* fmt, ...) IM_FMTARGS(2)
 void Terminal::LogMasterServer(const char* fmt, ...) IM_FMTARGS(2)
 {
 	char buf[1024];
+	memset(&buf, 0, IM_ARRAYSIZE(buf));
 	va_list args;
 	va_start(args, fmt);
 	vsnprintf(buf, IM_ARRAYSIZE(buf), fmt, args);
@@ -609,6 +610,7 @@ void Terminal::LogMasterServer(const char* fmt, ...) IM_FMTARGS(2)
 	va_end(args);
 	m_MSItems.push_front(Strdup(buf));
 }
+
 
 Terminal::Terminal()
 {
