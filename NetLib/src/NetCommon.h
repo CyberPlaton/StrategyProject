@@ -460,6 +460,8 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 
 		void Deserialize(RakNet::BitStream& stream, bool ignore_id = false)  override final
 		{
+			if (ignore_id) stream.IgnoreBytes(sizeof(RakNet::MessageID));
+
 			stream.Read(m_effectName);
 			stream.Read(m_effectDisplayName);
 			stream.Read(m_effectType);

@@ -342,12 +342,12 @@ namespace dbms
 					effect.m_effectDisplayName = display_name.c_str();
 					effect.m_effectDesc = desc.c_str();
 					effect.m_effectType = effect_type.c_str();
-					effect.m_effectTimerType = effect_type.c_str();
+					effect.m_effectTimerType = timer_type.c_str();
 					effect.m_effectTimerValue = timer_val;
 					effect.m_effectApplicableTo = net::EGameobjectType(appl_to);
 					effect.m_effectApplicationProbability = apl_prob;
 					effect.m_effectValueMax = val_max;
-					effect.m_effectValueMax = val_min;
+					effect.m_effectValueMin = val_min;
 
 					storage.push_back(std::move(effect));
 				}
