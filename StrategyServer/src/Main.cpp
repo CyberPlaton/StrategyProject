@@ -32,7 +32,6 @@ int main()
 			return 0;
 		}
 
-
 		while (terminal->Update())
 		{
 		}

@@ -13,7 +13,7 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 	auto id = (RakNet::MessageID)packet->data[0];
 	LOG_DBG_INFO("[{:.4f}][OnMessage] Message \"{}\" from Client \"{}\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(), addr.ToString());
 	LOG_FILE_INFO("[{:.4f}][OnMessage] Message \"{}\" from Client \"{}\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(), addr.ToString());
-	LOG_MS_INFO("[%.4f][OnMessage] Failed to retrieve Ability Data for Client \"%s\"!", APP_RUN_TIME(), addr.ToString());
+	LOG_MS_INFO("[%.4f][OnMessage] Message \"%s\" from Client \"%s\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(), addr.ToString());
 
 	switch (id)
 	{
@@ -76,9 +76,10 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 
 	case net::EMessageId::NET_MSG_REQUEST_ABILITY_AND_STATUS_EFFECTS_DATA:
 	{
-		// Get all the Abilities and Status Effects from DBMS and send back to requester.
-		net::SStatusEffectDataStorageObject status_effect_storage;
-		net::SAbilityDataStorageObject ability_storage;
+		// Get all the Abilities and Status Effects from DBMS and send back to requester
+		// in sequence, one after another.
+		std::vector< net::SStatusEffectData > status_effect_storage;
+		std::vector< net::SAbilityData > ability_storage;
 
 		bool error = false;
 		if(!dbms::DBMS::GetAllStatusEffectData(status_effect_storage))
@@ -97,20 +98,42 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 		}
 		if(!error)
 		{
+
+			LOG_DBG_INFO("[{:.4f}][OnMessage] Successfully retrieved {} Abilities for Client \"{}\"! Sending Now...", APP_RUN_TIME(), ability_storage.size(), addr.ToString());
+			LOG_FILE_INFO("[{:.4f}][OnMessage]  Successfully retrieved {} Abilities for Client \"{}\"! Sending Now...", APP_RUN_TIME(), ability_storage.size(), addr.ToString());
+			LOG_MS_SUCCESS("[%.4f][OnMessage] Successfully retrieved %d Abilities for Client \"%s\"! Sending Now...", APP_RUN_TIME(), ability_storage.size(), addr.ToString());
 			// Send Ability Data.
 			{
-				CREATE_MESSAGE(out, net::EMessageId::NET_MSG_ABILITY_DATA);
-				ability_storage.Serialize(out);
-				Send(out, packet->systemAddress);
+				for(auto& ability : ability_storage)
+				{
+					CREATE_MESSAGE(out, net::EMessageId::NET_MSG_ABILITY_DATA);
+					ability.Serialize(out);
+					Send(out, packet->systemAddress);
+				}
 			}
+
+
+			LOG_DBG_INFO("[{:.4f}][OnMessage] Successfully retrieved {} StatusEffects for Client \"{}\"! Sending Now...", APP_RUN_TIME(), status_effect_storage.size(), addr.ToString());
+			LOG_FILE_INFO("[{:.4f}][OnMessage]  Successfully retrieved {} StatusEffects for Client \"{}\"! Sending Now...", APP_RUN_TIME(), status_effect_storage.size(), addr.ToString());
+			LOG_MS_SUCCESS("[%.4f][OnMessage] Successfully retrieved %d StatusEffects for Client \"%s\"! Sending Now...", APP_RUN_TIME(), status_effect_storage.size(), addr.ToString());
 			// Send StatusEffects Data.
 			{
-				CREATE_MESSAGE(out, net::EMessageId::NET_MSG_STATUS_EFFECTS_DATA);
-				status_effect_storage.Serialize(out);
+				for(auto& effect: status_effect_storage)
+				{
+					CREATE_MESSAGE(out, net::EMessageId::NET_MSG_STATUS_EFFECTS_DATA);
+					effect.Serialize(out);
+					Send(out, packet->systemAddress);
+				}
+			}
+
+			// Inform about end of data stream!
+			{
+				CREATE_MESSAGE(out, net::EMessageId::NET_MSG_ABILITY_AND_STATUS_EFFECT_DATA_COMPLETE);
 				Send(out, packet->systemAddress);
 			}
+
+			break;
 		}
-		break;
 	}
 
 

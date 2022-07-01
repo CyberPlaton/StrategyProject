@@ -124,15 +124,16 @@ void Terminal::RenderMasterServerLog()
 	{
 		const char* color_item = m_MSItems[i - 1];
 
-		if (strstr(color_item, "[info]")) { m_MSColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); }
-		else if (strstr(color_item, "[warn]")) { m_MSColor = ImVec4(1.0f, 1.0f, 0.0f, 1.0f); }
-		else if (strstr(color_item, "[error]")) { m_MSColor = ImVec4(1.0f, 0.3f, 0.0f, 1.0f); }
-		else if (strstr(color_item, "[critical]")) { m_MSColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); }
+		if (strstr(color_item, "[info]")) { m_MSColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); }				// Green
+		else if (strstr(color_item, "[warn]")) { m_MSColor = ImVec4(1.0f, 1.0f, 0.0f, 1.0f); }			// Yellow
+		else if (strstr(color_item, "[error]")) { m_MSColor = ImVec4(1.0f, 0.3f, 0.0f, 1.0f); }			// Orange
+		else if (strstr(color_item, "[critical]")) { m_MSColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); }		// Red
 
-		else if (strstr(color_item, "[cyan]")) { m_TerColor = ImVec4(0.12f, 0.99f, 1.0f, 1.0f); }	// Cyan
-		else if (strstr(color_item, "[magenta]")) { m_TerColor = ImVec4(0.92f, 0.05f, 1.0f, 1.0f); }// Magenta
-		else if (strstr(color_item, "[blue]")) { m_TerColor = ImVec4(0.1f, 0.375f, 1.0f, 1.0f); }	// Blue
-		else if (strstr(color_item, "[white]")) { m_TerColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); }	// White
+		else if (strstr(color_item, "[cyan]")) { m_MSColor = ImVec4(0.12f, 0.99f, 1.0f, 1.0f); }		// Cyan
+		else if (strstr(color_item, "[magenta]")) { m_MSColor = ImVec4(0.92f, 0.05f, 1.0f, 1.0f); }		// Magenta
+		else if (strstr(color_item, "[blue]")) { m_MSColor = ImVec4(0.68f, 0.85f, 1.0f, 1.0f); }		// Blue
+		else if (strstr(color_item, "[white]")) { m_MSColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); }			// White
+		else if (strstr(color_item, "[green]")) { m_MSColor = ImVec4(0.05f, 1.0f, 0.05f, 1.0f); }		// Green
 
 
 		const char* item = m_MSItems[i];
@@ -184,18 +185,16 @@ void Terminal::RenderTerminalLog()
 	{
 		const char* color_item = m_TerItems[i - 1];
 
-		if (strstr(color_item, "[info]")) { m_TerColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); }			// Green
-		else if (strstr(color_item, "[warn]")) { m_TerColor = ImVec4(1.0f, 1.0f, 0.0f, 1.0f); }		// Yellow
-		else if (strstr(color_item, "[error]")) { m_TerColor = ImVec4(1.0f, 0.3f, 0.0f, 1.0f); }	// Orange
-		else if (strstr(color_item, "[critical]")) { m_TerColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); } // Red
-		
-		else if (strstr(color_item, "[cyan]")) { m_TerColor = ImVec4(0.12f, 0.99f, 1.0f, 1.0f); }	// Cyan
-		else if (strstr(color_item, "[magenta]")) { m_TerColor = ImVec4(0.92f, 0.05f, 1.0f, 1.0f); }// Magenta
-		else if (strstr(color_item, "[blue]")) { m_TerColor = ImVec4(0.1f, 0.375f, 1.0f, 1.0f); }	// Blue
-		else if (strstr(color_item, "[white]")) { m_TerColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); }	// White
-		else if (strstr(color_item, "[green]")) { m_TerColor = ImVec4(0.05f, 1.0f, 0.05f, 1.0f); }	// Green
+		if (strstr(color_item, "[info]")) { m_TerColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); }				// Green
+		else if (strstr(color_item, "[warn]")) { m_TerColor = ImVec4(1.0f, 1.0f, 0.0f, 1.0f); }			// Yellow
+		else if (strstr(color_item, "[error]")) { m_TerColor = ImVec4(1.0f, 0.3f, 0.0f, 1.0f); }		// Orange
+		else if (strstr(color_item, "[critical]")) { m_TerColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); }		// Red
 
-
+		else if (strstr(color_item, "[cyan]")) { m_TerColor = ImVec4(0.12f, 0.99f, 1.0f, 1.0f); }		// Cyan
+		else if (strstr(color_item, "[magenta]")) { m_TerColor = ImVec4(0.92f, 0.05f, 1.0f, 1.0f); }	// Magenta
+		else if (strstr(color_item, "[blue]")) { m_TerColor = ImVec4(0.68f, 0.85f, 1.0f, 1.0f); }		// Blue
+		else if (strstr(color_item, "[white]")) { m_TerColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); }		// White
+		else if (strstr(color_item, "[green]")) { m_TerColor = ImVec4(0.05f, 1.0f, 0.05f, 1.0f); }		// Green
 
 		const char* item = m_TerItems[i];
 

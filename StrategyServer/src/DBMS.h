@@ -92,12 +92,12 @@ namespace dbms
 		/// @brief Retrieve all Status Effects.
 		/// @param storage Storage object where to store the Status Effects.
 		/// @return True on success. False if could not retrieve any.
-		static bool GetAllStatusEffectData(net::SStatusEffectDataStorageObject& storage);
+		static bool GetAllStatusEffectData(std::vector< net::SStatusEffectData >& storage);
 
 		/// @brief Retrieve all Abilities.
 		/// @param storage Storage object where to store the Abilities.
 		/// @return True on success. False if could not retrieve any.
-		static bool GetAllAbilityData(net::SAbilityDataStorageObject& storage);
+		static bool GetAllAbilityData(std::vector< net::SAbilityData >& storage);
 
 		
 		/*

@@ -15,7 +15,7 @@ namespace cherrysoda
 
 	}
 
-	void EntityAbilitiesDataMap::Data(net::SAbilityDataStorageObject& data)
+	void EntityAbilitiesDataMap::Data(net::SAbilityData& data)
 	{
 
 	}

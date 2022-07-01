@@ -581,17 +581,14 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 			{
 				READ_MESSAGE(stream, packet);
 
-				net::SAbilityDataStorageObject ability_data_storage;
-				ability_data_storage.Deserialize(stream, true);
+				// We received one (=1) ability data definition.
 
-				EntityAbilitiesDataMap::get()->Data(ability_data_storage);
+				net::SAbilityData ability;
+				ability.Deserialize(stream, true);
 
-				initialization_scene->m_abilityDataDownloadComplete = true;
+				LOG_GAME_WARN("[%.4f][InitializationScene::Update] EntityAbility: \"%s\"", APP_RUN_TIME(), ability.m_abilityName.C_String());
 
-				for(auto& abl: ability_data_storage.m_data)
-				{
-					LOG_GAME_WARN("[%.4f][InitializationScene::Update] EntityAbility: \"%s\"", APP_RUN_TIME(), abl.m_abilityName.C_String());
-				}
+				EntityAbilitiesDataMap::get()->Data(ability);
 				break;
 			}
 
@@ -599,17 +596,22 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 			{
 				READ_MESSAGE(stream, packet);
 
-				net::SStatusEffectDataStorageObject status_effect_data_storage;
-				status_effect_data_storage.Deserialize(stream, true);
+				// We received one (=1) status effect data definition.
 
-				EntityStatusEffectsDataMap::get()->Data(status_effect_data_storage);
+				net::SStatusEffectData status_effect;
+				status_effect.Deserialize(stream, true);
 
+				LOG_GAME_WARN("[%.4f][InitializationScene::Update] EntityStatusEffect: \"%s\"", APP_RUN_TIME(), status_effect.m_effectName.C_String());
+
+				EntityStatusEffectsDataMap::get()->Data(status_effect);
+				break;
+			}
+
+			case net::EMessageId::NET_MSG_ABILITY_AND_STATUS_EFFECT_DATA_COMPLETE:
+			{
+				// Ability and Status Effect Data transfer complete.
+				initialization_scene->m_abilityDataDownloadComplete = true;
 				initialization_scene->m_statusEffectsDataDownloadComplete = true;
-
-				for (auto& eff : status_effect_data_storage.m_data)
-				{
-					LOG_GAME_WARN("[%.4f][InitializationScene::Update] EntityStatusEffect: \"%s\"", APP_RUN_TIME(), eff.m_effectName.C_String());
-				}
 				break;
 			}
 			}

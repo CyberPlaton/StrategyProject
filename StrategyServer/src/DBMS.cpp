@@ -307,7 +307,7 @@ namespace dbms
 		return false;
 	}
 
-	bool DBMS::GetAllStatusEffectData(net::SStatusEffectDataStorageObject& storage)
+	bool DBMS::GetAllStatusEffectData(std::vector< net::SStatusEffectData >& storage)
 	{
 		mongocxx::database db = DBMS::get()->m_mongoClient[m_database];
 
@@ -349,7 +349,7 @@ namespace dbms
 					effect.m_effectValueMax = val_max;
 					effect.m_effectValueMax = val_min;
 
-					storage.m_data.push_back(std::move(effect));
+					storage.push_back(std::move(effect));
 				}
 
 				return true;
@@ -369,7 +369,7 @@ namespace dbms
 		return false;
 	}
 
-	bool DBMS::GetAllAbilityData(net::SAbilityDataStorageObject& storage)
+	bool DBMS::GetAllAbilityData(std::vector< net::SAbilityData >& storage)
 	{
 		mongocxx::database db = DBMS::get()->m_mongoClient[m_database];
 
@@ -421,7 +421,7 @@ namespace dbms
 						ability.m_appliedStatusEffectsOnUse.push_back(e.c_str());
 					}
 
-					storage.m_data.push_back(std::move(ability));
+					storage.push_back(std::move(ability));
 				}
 				return true;
 			}
