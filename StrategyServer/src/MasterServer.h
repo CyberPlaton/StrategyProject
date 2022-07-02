@@ -29,7 +29,6 @@ public:
 	/// @brief Process incoming messages from clients. Note: You must NOT deallocate the packets, this is done in Interface.
 	/// @param packet The next message to be processed.
 	void OnMessage(RakNet::Packet* packet) override final;
-	
 	void OnClientConnect(RakNet::Packet* packet) override final;
 	void OnClientDisconnect(RakNet::Packet* packet) override final;
 	bool OnClientValidated(RakNet::Packet* packet) override final;
@@ -39,7 +38,6 @@ public:
 	//////////////////////////
 	// COMMON SERVER FUNCTIONS
 	//////////////////////////
-
 
 	bool ShouldExit() { return !Running(); }
 	bool CheckClientVersion(int64_t v);
