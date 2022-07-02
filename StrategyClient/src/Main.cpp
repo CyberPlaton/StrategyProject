@@ -644,6 +644,7 @@ void cherrysoda::SplashSceenScene::SceneImpl::Update()
 	LOG_GAME_WARN("[%.4f] SplashScreenScene transitions directly to GameScene...", APP_RUN_TIME());
 	LOG_GAME_ERROR("[%.4f] GameScene not implemented!", APP_RUN_TIME());
 
+
 	m_stateMachine->Transit("GameScene");
 }
 void cherrysoda::SplashSceenScene::SceneImpl::Begin()

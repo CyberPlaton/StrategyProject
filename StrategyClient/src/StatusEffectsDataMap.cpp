@@ -17,7 +17,12 @@ namespace cherrysoda
 
 	void EntityStatusEffectsDataMap::Data(net::SStatusEffectData& data)
 	{
+		m_data.AddData(data.m_effectName.C_String(), data);
+	}
 
+	net::SStatusEffectData& EntityStatusEffectsDataMap::Data(const std::string& name)
+	{
+		return m_data.RetrieveData(name.c_str());
 	}
 
 }

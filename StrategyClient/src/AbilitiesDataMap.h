@@ -4,6 +4,8 @@
 #include "CommonDefines.h"
 #include "Ability.h"
 
+#include "HashMap.h"
+
 
 namespace cherrysoda
 {
@@ -25,8 +27,12 @@ namespace cherrysoda
 		/// @param data Data vector.
 		void Data(net::SAbilityData& data);
 
+		net::SAbilityData& Data(const std::string& name);
+
 	private:
 		static EntityAbilitiesDataMap* g_EntityAbilitiesDataMap;
+
+		CHashMap< net::SAbilityData > m_data;
 	};
 
 }

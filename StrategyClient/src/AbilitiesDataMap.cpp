@@ -17,7 +17,12 @@ namespace cherrysoda
 
 	void EntityAbilitiesDataMap::Data(net::SAbilityData& data)
 	{
+		m_data.AddData(data.m_abilityName.C_String(), data);
+	}
 
+	net::SAbilityData& EntityAbilitiesDataMap::Data(const std::string& name)
+	{
+		return m_data.RetrieveData(name.c_str());
 	}
 
 }

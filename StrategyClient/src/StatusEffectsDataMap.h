@@ -4,6 +4,8 @@
 #include "CommonDefines.h"
 #include "Status.h"
 
+#include "HashMap.h"
+
 namespace cherrysoda
 {
 	/// @brief Datastructure holding the data for each in-game available EntityStatusEffect.
@@ -25,8 +27,12 @@ namespace cherrysoda
 		/// @param data Data vector.
 		void Data(net::SStatusEffectData& data);
 
+		net::SStatusEffectData& Data(const std::string& name);
+
 	private:
 		static EntityStatusEffectsDataMap* g_EntityStatusEffectsDataMap;
+
+		CHashMap< net::SStatusEffectData > m_data;
 	};
 
 }
