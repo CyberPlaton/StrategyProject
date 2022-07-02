@@ -21,7 +21,10 @@ public:
 	void AddData(const char* name, DATATYPE& data)
 	{
 		size_t hash = DJBHash(name, strlen(name));
-		m_data.push_back({ hash, std::move(data) });
+		size_t index = m_data.size();
+
+		m_indices.push_back({ hash, index });
+		m_data.push_back(std::move(data));
 	}
 
 	/// @brief Retrieve the stored data.
@@ -30,11 +33,11 @@ public:
 	DATATYPE& RetrieveData(const char* name)
 	{
 		size_t hash = DJBHash(name, strlen(name));
-		for(auto& d: m_data)
+		for(auto& index: m_indices)
 		{
-			if(d.first == hash)
+			if(index.first == hash)
 			{
-				return d.second;
+				return m_data[index.second];
 			}
 		}
 	}
@@ -56,7 +59,8 @@ private:
 	}
 
 private:
-	std::vector< std::pair< size_t, DATATYPE > > m_data;
+	std::vector< std::pair< size_t, size_t > > m_indices;
+	std::vector< DATATYPE > m_data;
 };
 
 
