@@ -61,9 +61,10 @@ bool cherrysoda::SceneGraphFactory::LoadSceneGraph(const cherrysoda::String& fil
 			auto initial = scene->FirstChildElement("Initial")->BoolText();
 
 
-			LOG_DBG_INFO("[{:.4f}] Loading Scene: {}:", APP_RUN_TIME(), name);
-			LOG_GAME_INFO("[%.4f] Loading Scene: \"%s\"", APP_RUN_TIME(), name);
+			LOG_DBG_INFO("[{:.4f}][SceneGraphFactory::LoadSceneGraph] Loading Scene: \"{}\" from \"{}\"!", APP_RUN_TIME(), name, filename.c_str());
+			LOG_GAME_INFO("[%.4f][SceneGraphFactory::LoadSceneGraph] Loading Scene: \"%s\" from \"%s\"!", APP_RUN_TIME(), name, filename.c_str());
 
+			// TODO
 			// Create Scene. Very Sad...
 			if (strcmp(name, "Initialization") == 0)
 			{
@@ -79,8 +80,8 @@ bool cherrysoda::SceneGraphFactory::LoadSceneGraph(const cherrysoda::String& fil
 			}
 			else
 			{
-				LOG_DBG_CRITICAL("[{:.4f}] Could not load unknown scene type: {}", APP_RUN_TIME(), name);
-				LOG_FILE_CRITICAL("[{:.4f}] Could not load unknown scene type: {}", APP_RUN_TIME(), name);
+				LOG_DBG_CRITICAL("[{:.4f}][SceneGraphFactory::LoadSceneGraph] Could not load unknown scene type: \"{}\"!", APP_RUN_TIME(), name);
+				LOG_FILE_CRITICAL("[{:.4f}][SceneGraphFactory::LoadSceneGraph] Could not load unknown scene type: \"{}\"!", APP_RUN_TIME(), name);
 				return false;
 			}
 
@@ -90,8 +91,6 @@ bool cherrysoda::SceneGraphFactory::LoadSceneGraph(const cherrysoda::String& fil
 			{
 				app->m_stateMachine->SetInitialState(new_scene);
 				app->SetScene(new_scene->AsScene());
-				LOG_DBG_INFO("\t ... as Initial");
-				LOG_GAME_INFO("\t ... as Initial");
 			}
 
 
@@ -99,10 +98,6 @@ bool cherrysoda::SceneGraphFactory::LoadSceneGraph(const cherrysoda::String& fil
 			while (transit)
 			{
 				auto transit_to = transit->GetText();
-
-				// Add Transit.
-				LOG_DBG_INFO("\tAdd Transition To: {}", transit_to);
-				LOG_GAME_INFO("\tAdd Transition To: \"%s\"", transit_to);
 
 				new_scene->AddTransition(transit_to);
 
@@ -164,82 +159,88 @@ void App::Initialize()
 {
 	if (!InitializeLogger(true, false, 256))
 	{
-		LOG_DBG_CRITICAL("[{:.4f}] Logger not initialized!", APP_RUN_TIME());
-		LOG_FILE_CRITICAL("[{:.4f}] Logger not initialized!", APP_RUN_TIME());
+		LOG_DBG_CRITICAL("[{:.4f}][App::Initialize] Logger not initialized!", APP_RUN_TIME());
+		LOG_FILE_CRITICAL("[{:.4f}][App::Initialize] Logger not initialized!", APP_RUN_TIME());
 		base::Exit(); 
 		return;
 	}
-	LOG_DBG_INFO("[{:.4f}] Logger initialized...", APP_RUN_TIME());
-	LOG_FILE_INFO("[{:.4f}] Logger initialized...", APP_RUN_TIME());
+	LOG_DBG_INFO("[{:.4f}][App::Initialize] Logger initialized...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}][App::Initialize] Logger initialized...", APP_RUN_TIME());
 
 
 	if (!InitializeLocalization())
 	{
-		LOG_DBG_CRITICAL("[{:.4f}] Localization not initialized!", APP_RUN_TIME());
-		LOG_FILE_CRITICAL("[{:.4f}] Localization not initialized!", APP_RUN_TIME());
+		LOG_DBG_CRITICAL("[{:.4f}][App::Initialize] Localization not initialized!", APP_RUN_TIME());
+		LOG_FILE_CRITICAL("[{:.4f}][App::Initialize] Localization not initialized!", APP_RUN_TIME());
 		base::Exit();
 		return;
 	}
-	LOG_DBG_INFO("[{:.4f}] Localization initialized...", APP_RUN_TIME());
-	LOG_FILE_INFO("[{:.4f}] Localization initialized...", APP_RUN_TIME());
+	LOG_DBG_INFO("[{:.4f}][App::Initialize] Localization initialized...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}][App::Initialize] Localization initialized...", APP_RUN_TIME());
 
 
 	// Initialize the Platform Client.
 	if (!InitializePlatformClient())
 	{
-		LOG_DBG_CRITICAL("[{:.4f}] Platform client not initialized!", APP_RUN_TIME());
-		LOG_FILE_CRITICAL("[{:.4f}] Platform client not initialized!", APP_RUN_TIME());
+		LOG_DBG_CRITICAL("[{:.4f}][App::Initialize] Platform client not initialized!", APP_RUN_TIME());
+		LOG_FILE_CRITICAL("[{:.4f}][App::Initialize] Platform client not initialized!", APP_RUN_TIME());
 		base::Exit();
 		return;
 	}
-	LOG_DBG_INFO("[{:.4f}] Platform client initialized...", APP_RUN_TIME());
-	LOG_FILE_INFO("[{:.4f}] Platform client initialized...", APP_RUN_TIME());
+	LOG_DBG_INFO("[{:.4f}][App::Initialize] Platform client initialized...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}][App::Initialize] Platform client initialized...", APP_RUN_TIME());
 
 
 	// Initialize the GamerService.
 	if (!InitializeGamerService())
 	{
-		LOG_DBG_CRITICAL("[{:.4f}] Gamer service not initialized!", APP_RUN_TIME());
-		LOG_FILE_CRITICAL("[{:.4f}] Gamer service not initialized!", APP_RUN_TIME());
+		LOG_DBG_CRITICAL("[{:.4f}][App::Initialize] Gamer service not initialized!", APP_RUN_TIME());
+		LOG_FILE_CRITICAL("[{:.4f}][App::Initialize] Gamer service not initialized!", APP_RUN_TIME());
 		base::Exit();
 		return;
 	}
-	LOG_DBG_INFO("[{:.4f}] Gamer service initialized...", APP_RUN_TIME());
-	LOG_FILE_INFO("[{:.4f}] Gamer service initialized...", APP_RUN_TIME());
+	LOG_DBG_INFO("[{:.4f}][App::Initialize] Gamer service initialized...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}][App::Initialize] Gamer service initialized...", APP_RUN_TIME());
 
 	if (!InitializeMasterConnection())
 	{
-		LOG_DBG_CRITICAL("[{:.4f}] Master connection not initialized!", APP_RUN_TIME());
-		LOG_FILE_CRITICAL("[{:.4f}] Master connection not initialized!", APP_RUN_TIME());
+		LOG_DBG_CRITICAL("[{:.4f}][App::Initialize] Master connection not initialized!", APP_RUN_TIME());
+		LOG_FILE_CRITICAL("[{:.4f}][App::Initialize] Master connection not initialized!", APP_RUN_TIME());
 		base::Exit();
 		return;
 	}
-	LOG_DBG_INFO("[{:.4f}] Master connection initialized...", APP_RUN_TIME());
-	LOG_FILE_INFO("[{:.4f}] Master connection initialized...", APP_RUN_TIME());
+	LOG_DBG_INFO("[{:.4f}][App::Initialize] Master connection initialized...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}][App::Initialize] Master connection initialized...", APP_RUN_TIME());
 
 
 	if (!NetCommMngr::Initialize(this))
 	{
-		LOG_DBG_CRITICAL("[{:.4f}] Net communication manager not initialized!", APP_RUN_TIME());
-		LOG_FILE_CRITICAL("[{:.4f}] Net communication manager not initialized!", APP_RUN_TIME());
+		LOG_DBG_CRITICAL("[{:.4f}][App::Initialize] Net communication manager not initialized!", APP_RUN_TIME());
+		LOG_FILE_CRITICAL("[{:.4f}][App::Initialize] Net communication manager not initialized!", APP_RUN_TIME());
 		base::Exit();
 		return;
 	}
-	LOG_DBG_INFO("[{:.4f}] Net communication manager initialized...", APP_RUN_TIME());
-	LOG_FILE_INFO("[{:.4f}] Net communication manager initialized...", APP_RUN_TIME());
-	LOG_DBG_INFO("[{:.4f}] SUBSYSTEMS SUCCESSFULLY INITIALIZED!", APP_RUN_TIME());
-	LOG_FILE_INFO("[{:.4f}] SUBSYSTEMS SUCCESSFULLY INITIALIZED!", APP_RUN_TIME());
+	LOG_DBG_INFO("[{:.4f}][App::Initialize] Net communication manager initialized...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}][App::Initialize] Net communication manager initialized...", APP_RUN_TIME());
+
+
+	LOG_DBG_INFO("[{:.4f}][App::Initialize] Subsystems initialized!", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}][App::Initialize] Subsystems initialized!", APP_RUN_TIME());
+
 
 
 	// Everything went OK. Startup the engine!
 	base::ExitOnEscapeKeypress(false);
 	base::Initialize();
 
+	// Change GameLog ImGui color scheme.
+	ImGui::StyleColorsDark();
+
 	// Load Game Scenes!
 	if (!cherrysoda::SceneGraphFactory::LoadSceneGraph("assets/SceneGraph.xml", this))
 	{
-		LOG_DBG_CRITICAL("[{:.4f}] Failed loading SceneGraph!", APP_RUN_TIME());
-		LOG_FILE_CRITICAL("[{:.4f}] Failed loading SceneGraph!", APP_RUN_TIME());
+		LOG_DBG_CRITICAL("[{:.4f}][App::Initialize] Failed loading Scene Graph \"{}\"!", APP_RUN_TIME(), "assets/SceneGraph.xml");
+		LOG_FILE_CRITICAL("[{:.4f}][App::Initialize] Failed loading Scene Graph \"{}\"!", APP_RUN_TIME(), "assets/SceneGraph.xml");
 		base::Exit();
 		return;
 	}
@@ -269,33 +270,33 @@ void App::Terminate()
 	// ...
 
 	// DELETE PLATFORMCLIENT
-	LOG_DBG_INFO("[{:.4f}] Terminating Platform client...", APP_RUN_TIME());
-	LOG_FILE_INFO("[{:.4f}] Terminating Platform client...", APP_RUN_TIME());
+	LOG_DBG_INFO("[{:.4f}][App::Terminate] Terminating Platform client...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}][App::Terminate] Terminating Platform client...", APP_RUN_TIME());
 	TerminatePlatformClient();
 
 	// DELETE GAMERSERVICE
-	LOG_DBG_INFO("[{:.4f}] Terminating Gamer service...", APP_RUN_TIME());
-	LOG_FILE_INFO("[{:.4f}] Terminating Gamer service...", APP_RUN_TIME());
+	LOG_DBG_INFO("[{:.4f}][App::Terminate] Terminating Gamer service...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}][App::Terminate] Terminating Gamer service...", APP_RUN_TIME());
 	TerminateGamerService();
 
 	// DELTET MASTERSERVER CONNECTION
-	LOG_DBG_INFO("[{:.4f}] Terminating Master connection...", APP_RUN_TIME());
-	LOG_FILE_INFO("[{:.4f}] Terminating Master connection...", APP_RUN_TIME());
+	LOG_DBG_INFO("[{:.4f}][App::Terminate] Terminating Master connection...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}][App::Terminate] Terminating Master connection...", APP_RUN_TIME());
 	TerminateMasterConnection();
 
 	// DELETE STEAM
-	LOG_DBG_INFO("[{:.4f}] Terminating SteamAPI...", APP_RUN_TIME());
-	LOG_FILE_INFO("[{:.4f}] Terminating SteamAPI...", APP_RUN_TIME());
+	LOG_DBG_INFO("[{:.4f}][App::Terminate] Terminating SteamAPI...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}][App::Terminate] Terminating SteamAPI...", APP_RUN_TIME());
 	SteamAPI_Shutdown();
 
 	// DELETE LOCALIZATION
-	LOG_DBG_INFO("[{:.4f}] Terminating Localization...", APP_RUN_TIME());
-	LOG_FILE_INFO("[{:.4f}] Terminating Localization...", APP_RUN_TIME());
+	LOG_DBG_INFO("[{:.4f}][App::Terminate] Terminating Localization...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}][App::Terminate] Terminating Localization...", APP_RUN_TIME());
 	TerminateLocalization();
 
 	// DELETE LOG
-	LOG_DBG_INFO("[{:.4f}] Terminating Logger...", APP_RUN_TIME());
-	LOG_FILE_INFO("[{:.4f}] Terminating Logger...", APP_RUN_TIME());
+	LOG_DBG_INFO("[{:.4f}][App::Terminate] Terminating Logger...", APP_RUN_TIME());
+	LOG_FILE_INFO("[{:.4f}][App::Terminate] Terminating Logger...", APP_RUN_TIME());
 	TerminateLogger();
 }
 
@@ -345,18 +346,18 @@ bool App::InitializeMasterConnection()
 {
 	if (!App::IsInitialized())
 	{
-		LOG_GAME_INFO("[App::InitializeMasterConnection] Connecting...");
+		LOG_GAME_INFO("[%.4f][App::InitializeMasterConnection] Connecting...", APP_RUN_TIME());
 
 		if(!OFFLINE_GAME_CLIENT_TEST)
 		{
 			if (!ClientInterface::Initialize(MASTER_SERVER_PORT, MASTER_SERVER_IP))
 			{
-				LOG_GAME_CRITICAL("[InitializationScene::InitializeMasterConnection] Could not initialize ClientInterface!");
-				LOG_DBG_CRITICAL("[InitializationScene::InitializeMasterConnection] Could not initialize ClientInterface!");
+				LOG_GAME_CRITICAL("[%.4f][InitializationScene::InitializeMasterConnection] Could not initialize ClientInterface!", APP_RUN_TIME());
+				LOG_DBG_CRITICAL("[{.4f}][InitializationScene::InitializeMasterConnection] Could not initialize ClientInterface!", APP_RUN_TIME());
 				return false;
 			}
 
-			LOG_GAME_INFO("[App::InitializeMasterConnection] ClientInterface initialized!");
+			LOG_GAME_SUCCESS("[%.4f][App::InitializeMasterConnection] ClientInterface initialized!", APP_RUN_TIME());
 
 			Timer timeout_timer;
 			timeout_timer.StartTimer();
@@ -370,8 +371,8 @@ bool App::InitializeMasterConnection()
 		}	
 		else
 		{
-			LOG_GAME_WARN("[%.4f][InitializeMasterConnection] Connection skipped due to offline test!", APP_RUN_TIME());
-			LOG_DBG_WARN("[{:.4f}][InitializeMasterConnection] Connection skipped due to offline test!", APP_RUN_TIME());
+			LOG_GAME_WARN("[%.4f][App::InitializeMasterConnection] Connection skipped due to offline test!", APP_RUN_TIME());
+			LOG_DBG_WARN("[{:.4f}][App::InitializeMasterConnection] Connection skipped due to offline test!", APP_RUN_TIME());
 			return true;
 		}
 	}
@@ -435,11 +436,11 @@ void App::RegisterCommands()
 // SCENE FUNCTION IMPLEMENTATIONS
 void cherrysoda::InitializationScene::SceneImpl::Begin()
 {
-	LOG_GAME_INFO("[InitializationScene] Begin");
+	LOG_GAME_INFO("[%.4f][InitializationScene::Begin] ... ", APP_RUN_TIME());
 }
 void cherrysoda::InitializationScene::SceneImpl::End()
 {
-	LOG_GAME_INFO("[InitializationScene] End");
+	LOG_GAME_INFO("[%.4f][InitializationScene::End] ... ", APP_RUN_TIME());
 }
 void cherrysoda::InitializationScene::SceneImpl::Update()
 {
@@ -448,8 +449,8 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 
 	if(OFFLINE_GAME_CLIENT_TEST)
 	{
-		LOG_GAME_WARN("[InitializationScene::Update] Debug: Transit to DebugGameScene");
-		LOG_DBG_WARN("[InitializationScene::Update] Debug: Transit to DebugGameScene");
+		LOG_GAME_WARN("[%.4f][InitializationScene::Update] Debug: Transit to DebugGameScene", APP_RUN_TIME());
+		LOG_DBG_WARN("[{:.4f}][InitializationScene::Update] Debug: Transit to DebugGameScene", APP_RUN_TIME());
 		m_stateMachine->Transit("DebugGame");
 		return;
 	}
@@ -467,8 +468,8 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 			{
 			case net::EMessageId::NET_MSG_REQUEST_USER_VALIDATION_DATA:
 			{
-				LOG_GAME_WARN("[InitializationScene::Update] Validation Data requested!");
-				LOG_DBG_WARN("[InitializationScene::Update] Validation Data requested!");
+				LOG_GAME_WARN("[%.4f][InitializationScene::Update] Validation Data requested!", APP_RUN_TIME());
+				LOG_DBG_WARN("[{:.4f}][InitializationScene::Update] Validation Data requested!", APP_RUN_TIME());
 
 				net::SClientDescription clientDesc;
 
@@ -512,23 +513,23 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 			
 			case net::EMessageId::NET_MSG_CLIENT_REJECT:
 			{
-				LOG_GAME_WARN("[InitializationScene::Update] Server rejected our client!");
-				LOG_DBG_WARN("[InitializationScene::Update] Server rejected our client!");
+				LOG_GAME_WARN("[%.4f][InitializationScene::Update] Server rejected our client!", APP_RUN_TIME());
+				LOG_DBG_WARN("[{:.4f}][InitializationScene::Update] Server rejected our client!", APP_RUN_TIME());
 				m_application->Exit();
 			break;
 			}
 
 			case net::EMessageId::NET_MSG_CLIENT_ACCEPT:
 			{
-				LOG_GAME_WARN("[InitializationScene::Update] Server accepted our client!");
-				LOG_DBG_WARN("[InitializationScene::Update] Server accepted our client!");
+				LOG_GAME_WARN("[%.4f][InitializationScene::Update] Server accepted our client!", APP_RUN_TIME());
+				LOG_DBG_WARN("[{:.4f}][InitializationScene::Update] Server accepted our client!", APP_RUN_TIME());
 				break;
 			}
 
 			case net::EMessageId::NET_MSG_USER_DATA:
 			{
-				LOG_GAME_WARN("[InitializationScene::Update] User Data received!");
-				LOG_DBG_WARN("[InitializationScene::Update] User Data received!");
+				LOG_GAME_WARN("[%.4f][InitializationScene::Update] User Data received!", APP_RUN_TIME());
+				LOG_DBG_WARN("[{:.4f}][InitializationScene::Update] User Data received!", APP_RUN_TIME());
 
 				READ_MESSAGE(in, packet);
 				m_application->m_localClientDesc = new net::SClientDescription();
@@ -547,7 +548,9 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 			case DefaultMessageIDTypes::ID_CONNECTION_ATTEMPT_FAILED:
 			{
 				m_application->Exit();
+				break;
 			}
+
 
 			default:
 			{
@@ -639,17 +642,17 @@ void cherrysoda::SplashSceenScene::SceneImpl::Update()
 	// Base update.
 	cherrysoda::Scene::Update();
 
-	LOG_DBG_WARN("[{:.4f}] SplashScreenScene transitions directly to GameScene...", APP_RUN_TIME());
-	LOG_DBG_ERROR("[{:.4f}] GameScene not implemented!", APP_RUN_TIME());
-	LOG_GAME_WARN("[%.4f] SplashScreenScene transitions directly to GameScene...", APP_RUN_TIME());
-	LOG_GAME_ERROR("[%.4f] GameScene not implemented!", APP_RUN_TIME());
+	LOG_DBG_WARN("[{:.4f}][SplashSceenScene::Update] SplashScreenScene transitions directly to GameScene...", APP_RUN_TIME());
+	LOG_DBG_ERROR("[{:.4f}][SplashSceenScene::Update] GameScene not implemented!", APP_RUN_TIME());
+	LOG_GAME_WARN("[%.4f][SplashSceenScene::Update] SplashScreenScene transitions directly to GameScene...", APP_RUN_TIME());
+	LOG_GAME_ERROR("[%.4f][SplashSceenScene::Update] GameScene not implemented!", APP_RUN_TIME());
 
 
 	m_stateMachine->Transit("GameScene");
 }
 void cherrysoda::SplashSceenScene::SceneImpl::Begin()
 {
-	LOG_GAME_INFO("[SplashSceenScene] Begin");
+	LOG_GAME_INFO("[%.4f][SplashSceenScene::Begin] ... ", APP_RUN_TIME());
 
 	using namespace cherrysoda;
 
@@ -668,7 +671,7 @@ void cherrysoda::SplashSceenScene::SceneImpl::Begin()
 }
 void cherrysoda::SplashSceenScene::SceneImpl::End()
 {
-	LOG_GAME_INFO("[SplashSceenScene] End");
+	LOG_GAME_INFO("[%.4f][SplashSceenScene::End] ... ", APP_RUN_TIME());
 }
 
 
@@ -681,12 +684,11 @@ void cherrysoda::DebugGameScene::SceneImpl::Update()
 }
 void cherrysoda::DebugGameScene::SceneImpl::End()
 {
-	LOG_GAME_INFO("[DebugGameScene] End");
+	LOG_GAME_INFO("[%.4f][DebugGameScene::End] ... ", APP_RUN_TIME());
 }
 void cherrysoda::DebugGameScene::SceneImpl::Begin()
 {
-	LOG_GAME_INFO("[DebugGameScene] Begin");
-
+	LOG_GAME_INFO("[%.4f][DebugGameScene::Begin] ... ", APP_RUN_TIME());
 	GUI::DisableInternalConsole();
 
 	

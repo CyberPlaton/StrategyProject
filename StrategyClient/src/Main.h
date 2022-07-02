@@ -43,7 +43,7 @@
 #include "GamerService.h"
 #include "PlatformClient.h"
 
-#define OFFLINE_GAME_CLIENT_TEST false
+#define OFFLINE_GAME_CLIENT_TEST true
 #define CONNECTION_TIMEOUT_TIMER_SECONDS 5
 #define MASTER_SERVER_PORT 60777
 #define MASTER_SERVER_IP "192.168.178.43"
