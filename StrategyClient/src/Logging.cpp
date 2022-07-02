@@ -75,10 +75,17 @@ namespace cherrysoda
 		{
 			const char* color_item = g_Items[i - 1];
 
-			if (strstr(color_item, "[info]")) { g_Color = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); }
-			else if (strstr(color_item, "[warn]")) { g_Color = ImVec4(1.0f, 1.0f, 0.0f, 1.0f); }
-			else if (strstr(color_item, "[error]")) { g_Color = ImVec4(1.0f, 0.3f, 0.0f, 1.0f); }
-			else if (strstr(color_item, "[critical]")) { g_Color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); }
+			if (strstr(color_item,		"[info]")) {	 g_Color = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); }			// Green
+			else if (strstr(color_item, "[warn]")) {	 g_Color = ImVec4(1.0f, 1.0f, 0.0f, 1.0f); }			// Yellow
+			else if (strstr(color_item, "[error]")) {	 g_Color = ImVec4(1.0f, 0.3f, 0.0f, 1.0f); }			// Orange
+			else if (strstr(color_item, "[critical]")) { g_Color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); }			// Red
+
+			else if (strstr(color_item, "[cyan]")) {	g_Color = ImVec4(0.12f, 0.99f, 1.0f, 1.0f); }			// Cyan
+			else if (strstr(color_item, "[magenta]")) { g_Color = ImVec4(0.92f, 0.05f, 1.0f, 1.0f); }			// Magenta
+			else if (strstr(color_item, "[blue]")) {	g_Color = ImVec4(0.68f, 0.85f, 1.0f, 1.0f); }			// Light Blue
+			else if (strstr(color_item, "[white]")) {	g_Color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); }				// White
+			else if (strstr(color_item, "[green]")) {	g_Color = ImVec4(0.05f, 1.0f, 0.05f, 1.0f); }			// Green
+
 
 			const char* item = g_Items[i];
 
