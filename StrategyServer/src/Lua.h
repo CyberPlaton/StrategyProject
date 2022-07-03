@@ -9,13 +9,12 @@
 #include <LuaBridge/UnorderedMap.h>
 #include <LuaBridge/Vector.h>
 
-#include "ScriptInterface.h"
-
 #include <exception>
 
 
 namespace cherrysoda
 {
+	/*
 	class Lua;
 	class LuaScript;
 
@@ -25,7 +24,7 @@ namespace cherrysoda
 		static Lua* InstantiateLua();
 		static void TerminateLua(Lua* lua);
 		static void InitializeBinding(Lua* lua) {};
-		static bool LoadScript(ScriptInterface* script, Lua* lua);
+		static bool LoadScript(Lua* lua);
 
 	private:
 
@@ -41,8 +40,8 @@ namespace cherrysoda
 		Lua() = default;
 		~Lua() = default;
 
-		bool TryLoad(ScriptInterface* script, Lua* lua);
-		bool TryExecute(ScriptInterface* script, const std::string& function_name);
+		bool TryLoad(Lua* lua);
+		bool TryExecute(const std::string& function_name);
 
 	private:
 		lua_State* m_luaState = nullptr;
@@ -68,4 +67,5 @@ namespace cherrysoda
 
 	private:
 	};
+	*/
 }

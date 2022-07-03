@@ -494,6 +494,9 @@ private:
 	/// @brief Current in work layout template. On creating a new one this one is deleted.
 	std::vector< SShape* > m_currentLayoutTemplateVec;
 
+	std::map< std::string, std::string > m_prefabCacheMap;
+	bool m_prefabCacheLoaded = false;
+
 private:
 
 	// GUI
@@ -536,6 +539,7 @@ private:
 	SPrefab* ImportUnitPrefab(const std::string& filepath);
 	void DisplayUnitPrefabExportWindow(SPrefab* prefab);
 	void DisplayUnitPrefabImportWindow();
+	bool ImportUnitPrefabCache(const std::string& filepath);
 
 	void DisplayUnitEditor();
 	void DisplayUnitEditorMainMenu();
@@ -555,6 +559,7 @@ private:
 	void DisplayUnitEditorAbilitiesEdit();
 	void DisplayUnitEditorUnitSpriteEdit();
 	void DisplayUnitEditorUnitSprite();
+	void DisplayUnitEditorPrefabQuickLoadDropDown();
 
 
 	// GUI UNIT TEMPLATE LAYOUT EDITOR

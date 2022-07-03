@@ -2,6 +2,7 @@
 
 namespace cherrysoda
 {
+	/*
 	Lua* LuaFactory::InstantiateLua()
 	{
 		auto lua = new Lua();
@@ -24,12 +25,12 @@ namespace cherrysoda
 			delete lua; lua = nullptr;
 		}
 	}
-	bool LuaFactory::LoadScript(ScriptInterface* script, Lua* lua)
+	bool LuaFactory::LoadScript(Lua* lua)
 	{
-		return lua->TryLoad(script, lua);
+		return lua->TryLoad(lua);
 	}
 
-	bool Lua::TryLoad(ScriptInterface* script, Lua* lua)
+	bool Lua::TryLoad(Lua* lua)
 	{
 		int result;
 		std::string error;
@@ -53,7 +54,7 @@ namespace cherrysoda
 			return false;
 		}
 	}
-	bool Lua::TryExecute(ScriptInterface* script, const std::string& function_name)
+	bool Lua::TryExecute(const std::string& function_name)
 	{
 		if (!script->Loaded())
 		{
@@ -89,4 +90,5 @@ namespace cherrysoda
 			m_luaState = nullptr;
 		}
 	}
+	*/
 }

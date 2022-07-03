@@ -47,6 +47,9 @@ namespace cherrysoda
 			return *this;
 		}
 
+
+		cherrysoda::Entity* FromFile(const std::string& filename);
+
 	private:
 		static Factory* g_Factory;
 		static size_t g_NextEntityId;

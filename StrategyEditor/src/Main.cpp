@@ -476,6 +476,13 @@ void GameEditor::RenderMainMenu()
 			ImGui::SameLine();
 			ImGui::Checkbox("Open", &g_bDecalDatabaseOpen);
 
+			if (ImGui::MenuItem("Rendering Layers"))
+			{
+				ToggleMenuItem(g_bRenderingLayersOpen);
+			}
+			ImGui::SameLine();
+			ImGui::Checkbox("Open", &g_bRenderingLayersOpen);
+
 			if (ImGui::MenuItem("Entity Database"))
 			{
 				ToggleMenuItem(g_bEntityDatabaseOpen);
@@ -589,6 +596,14 @@ void GameEditor::RenderMainMenu()
 			if (ImGui::MenuItem("Unit Prefab Editor"))
 			{
 				ToggleMenuItem(g_bUnitEditorOpen);
+				if(!m_prefabCacheLoaded)
+				{
+					// Load Prefab Cache.
+					if(!ImportUnitPrefabCache("assets/TilesetData/UnitPrefab/StrategyEditor_PrefabCache.xml"))
+					{
+
+					}
+				}
 			}
 		
 			ImGui::EndMenu();
@@ -3188,9 +3203,73 @@ bool GameEditor::ExportUnitPrefab(const std::string& filepath, SPrefab* prefab)
 	std::string path = "assets/TilesetData/UnitPrefab/" + filepath + ".xml";
 	if(doc.SaveFile(path.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
 	{
+		LOG_DBG_ERROR("[{:.4f}][ExportUnitPrefab] Could not save Prefab: \"{}\"!", APP_RUN_TIME, path);
+		LOG_FILE_ERROR("[{:.4f}][ExportUnitPrefab] Could not save Prefab: \"{}\"!", APP_RUN_TIME, path);
+		doc.Clear();
 		return false;
 	}
+
+	LOG_DBG_INFO("[{:.4f}][ExportUnitPrefab] Exported Prefab: \"{}\" as \"{}\"!", APP_RUN_TIME, prefab->prefab_name, path);
+	LOG_FILE_INFO("[{:.4f}][ExportUnitPrefab] Exported Prefab: \"{}\" as \"{}\"!", APP_RUN_TIME, prefab->prefab_name, path);
+
+
+	// Store the Prefab in the Prefab Cache.
+	// Load.
+	std::string cache_path = "assets/TilesetData/UnitPrefab/StrategyEditor_PrefabCache.xml";
+	tinyxml2::XMLDocument cache;
+	if (cache.LoadFile(cache_path.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		LOG_DBG_ERROR("[{:.4f}][ExportUnitPrefab] Could not load Prefab Cache: \"{}\"!", APP_RUN_TIME, cache_path);
+		LOG_FILE_ERROR("[{:.4f}][ExportUnitPrefab] Could not load Prefab Cache: \"{}\"!", APP_RUN_TIME, cache_path);
+		cache.Clear();
+		return false;
+	}
+
+	// Add the new Prefab Element.
+	auto cache_root = cache.RootElement();
+	auto prefab_element = cache_root->InsertNewChildElement("Prefab");
+	prefab_element->SetAttribute("name", prefab->prefab_name.c_str());
+	prefab_element->SetAttribute("path", filepath.c_str());
+
+	// Unload.
+	if (cache.SaveFile(cache_path.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		LOG_DBG_ERROR("[{:.4f}][ExportUnitPrefab] Could not save Prefab in Prefab Cache: \"{}\" as \"{}\"!", APP_RUN_TIME, prefab->prefab_name, filepath);
+		LOG_FILE_ERROR("[{:.4f}][ExportUnitPrefab] Could not save Prefab in Prefab Cache: \"{}\" as \"{}\"!", APP_RUN_TIME, prefab->prefab_name, filepath);
+		cache.Clear();
+		return false;
+	}
+
+	LOG_DBG_INFO("[{:.4f}][ExportUnitPrefab] Saved Prefab in Prefab Cache: \"{}\" as \"{}\"!", APP_RUN_TIME, prefab->prefab_name, filepath);
+	LOG_FILE_INFO("[{:.4f}][ExportUnitPrefab] Saved Prefab in Prefab Cache: \"{}\" as \"{}\"!", APP_RUN_TIME, prefab->prefab_name, filepath);
+
 	return true;
+}
+
+bool GameEditor::ImportUnitPrefabCache(const std::string& filepath)
+{
+	tinyxml2::XMLDocument cache;
+	if (cache.LoadFile(filepath.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		LOG_DBG_ERROR("[{:.4f}][ExportUnitPrefab] Could not load Prefab Cache: \"{}\"!", APP_RUN_TIME, filepath);
+		LOG_FILE_ERROR("[{:.4f}][ExportUnitPrefab] Could not load Prefab Cache: \"{}\"!", APP_RUN_TIME, filepath);
+		cache.Clear();
+		return false;
+	}
+
+	auto root = cache.RootElement();
+	auto prefab = root->FirstChildElement("Prefab");
+	while(prefab)
+	{
+		m_prefabCacheMap.emplace(prefab->Attribute("path"), prefab->Attribute("name"));
+		prefab = prefab->NextSiblingElement("Prefab");
+	}
+
+
+
+	LOG_DBG_INFO("[{:.4f}][ImportUnitPrefabCache] Prefab Cache loaded: \"{}\" with size: \"{}\"!", APP_RUN_TIME, filepath, m_prefabCacheMap.size());
+	LOG_FILE_INFO("[{:.4f}][ImportUnitPrefabCache] Prefab Cache loaded: \"{}\" with size: \"{}\"!", APP_RUN_TIME, filepath, m_prefabCacheMap.size());
+	m_prefabCacheLoaded = true;
 }
 
 SPrefab* GameEditor::ImportUnitPrefab(const std::string& filepath)
@@ -3200,6 +3279,8 @@ SPrefab* GameEditor::ImportUnitPrefab(const std::string& filepath)
 	tinyxml2::XMLDocument doc;
 	if (doc.LoadFile(path.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
 	{
+		LOG_DBG_ERROR("[{:.4f}][ImportUnitPrefab] Could not load file: \"{}\"!", APP_RUN_TIME, path);
+		LOG_FILE_ERROR("[{:.4f}][ImportUnitPrefab] Could not load file: \"{}\"!", APP_RUN_TIME, path);
 		doc.Clear();
 		return nullptr;
 	}
@@ -3260,6 +3341,17 @@ SPrefab* GameEditor::ImportUnitPrefab(const std::string& filepath)
 		prefab->abilities_vec.push_back(ability_name);
 
 		abl = abl->NextSiblingElement("Ability");
+	}
+
+	if(prefab)
+	{
+		LOG_DBG_INFO("[{:.4f}][ImportUnitPrefab] Loaded Prefab: \"{}\"!", APP_RUN_TIME, path);
+		LOG_FILE_INFO("[{:.4f}][ImportUnitPrefab] Loaded Prefab: \"{}\"!", APP_RUN_TIME, path);
+	}
+	else
+	{
+		LOG_DBG_ERROR("[{:.4f}][ImportUnitPrefab] Could not load Prefab: \"{}\"!", APP_RUN_TIME, path);
+		LOG_FILE_ERROR("[{:.4f}][ImportUnitPrefab] Could not load Prefab: \"{}\"!", APP_RUN_TIME, path);
 	}
 
 	return prefab;
@@ -3360,8 +3452,35 @@ void GameEditor::DisplayUnitPrefabImportWindow()
 		g_bImportingUnitPrefab = false;
 	}
 
+	DisplayUnitEditorPrefabQuickLoadDropDown();
+
 	ImGui::End();
 }
+
+
+void GameEditor::DisplayUnitEditorPrefabQuickLoadDropDown()
+{
+	auto open = ImGui::CollapsingHeader("Quick Load");
+	HelpMarkerWithoutQuestion("Select a Prefab to load from all available in the Prefab Cache. The Prefab Cache consists of all saved Unit Prefabs");
+
+	if(open)
+	{
+		for(auto& prefab: m_prefabCacheMap)
+		{
+			if(ImGui::Button(prefab.first.c_str()))
+			{
+				g_pCurrentEditedPrefab = ImportUnitPrefab(prefab.first);
+				if(g_pCurrentEditedPrefab)
+				{
+					g_sUnitEditorCurrentUnitSprite = g_pCurrentEditedPrefab->sprite;
+					g_bImportingUnitPrefab = false;
+				}
+				return;
+			}
+		}
+	}
+}
+
 
 void GameEditor::DisplayUnitEditor()
 {

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "ScriptInterface.h"
 #include "Lua.h"
 
+/*
 // Note: Function to be registered has to be public.
 #define REGISTER_CLASS_FUNCTION_TO_LUA(luastate, namespace_name, class_name, function) \
 luabridge::getGlobalNamespace(luastate) \
@@ -75,3 +75,4 @@ namespace cherrysoda
 
 
 }
+*/

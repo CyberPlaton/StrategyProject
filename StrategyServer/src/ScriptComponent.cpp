@@ -2,6 +2,7 @@
 
 namespace cherrysoda
 {
+	/*
 	bool ScriptComponent::Initialize(const String& filepath)
 	{
 		if (m_luaState = LuaFactory::InstantiateLua(); m_luaState != nullptr)
@@ -39,4 +40,5 @@ namespace cherrysoda
 	{
 		Execute();
 	}
+	*/
 }

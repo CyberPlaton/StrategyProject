@@ -853,7 +853,7 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 		.End();
 	entity->Get< Sprite >()->AddLoop("Idle", "Human_Swordman_Steel");
 	entity->Get< Sprite >()->Play("Idle");
-	entity->Position2D(Math::Vec2(256.0f, 0.0f));
+	entity->Position2D(Math::Vec2(0.0f, 0.0f));
 	entity->Get< Sprite >()->Position2D(Math::Vec2(0.0f, 0.0f));
 	entity->Get< Sprite >()->CenterOrigin();
 	//entity->Get< Sprite >()->Scale2D({ 0.75f, 0.75f });
@@ -884,9 +884,9 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 
 
 	entity->Get< Sprite >()->Play("first");
-	entity->Position2D(Math::Vec2(256.0f, -256.0f));
+	entity->Position2D(Math::Vec2(0.0f, 0.0f));
 	entity->Get< Sprite >()->CenterOrigin();
-	entity->Depth(0);
+	entity->Depth(1);
 
 
 	// Camera control
