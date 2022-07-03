@@ -58,6 +58,7 @@ struct ComponentCity : public Component
 	std::vector< std::pair< int, int > > m_buildingSlots;
 	std::vector< std::pair< int, int > > m_territory;
 
+	std::string m_prefabFilepath;
 
 private:
 
@@ -77,6 +78,9 @@ struct ComponentFort : public ComponentCity
 struct ComponentUnit : public Component
 {
 	ComponentUnit(): Component("Unit") {}
+
+	std::string m_prefabFilepath;
+
 };
 
 struct ComponentSound : public Component
@@ -125,7 +129,11 @@ struct Entity
 	template < typename T >
 	T* Get(std::string component)
 	{
-		return reinterpret_cast<T*>(Get(component));
+		if(Has(component))
+		{
+			return reinterpret_cast<T*>(Get(component));
+		}
+		return nullptr;
 	}
 	
 	bool Has(std::string component);

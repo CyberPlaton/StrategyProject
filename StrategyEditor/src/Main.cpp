@@ -13,6 +13,11 @@ static char g_cPrefabRequiredBuildingName[64] = "";
 static char g_cPrefabStartingStatusName[128] = "";
 static char g_cPrefabAbilityName[128] = "";
 
+static std::string g_sPrefabCacheFilepath = "assets/TilesetData/UnitPrefab/StrategyEditor_PrefabCache.xml";
+static bool g_bPrefabEditorEditingUnits = true;
+static bool g_bPrefabEditorEditingBuildings = false;
+static bool g_bPlacingPrefabedMapobjectOnMap = false;
+static std::string g_sSelectedPrefab = "none";
 static bool g_bExportingUnitPrefab = false;
 static bool g_bImportingUnitPrefab = false;
 static SPrefab* g_pCurrentEditedPrefab = nullptr;
@@ -610,7 +615,7 @@ void GameEditor::RenderMainMenu()
 				if(!m_prefabCacheLoaded)
 				{
 					// Load Prefab Cache.
-					if(!ImportUnitPrefabCache("assets/TilesetData/UnitPrefab/StrategyEditor_PrefabCache.xml"))
+					if(!ImportUnitPrefabCache(g_sPrefabCacheFilepath))
 					{
 
 					}
@@ -745,6 +750,8 @@ void GameEditor::RenderPrefabDatabase()
 		if (ImGui::ImageButton((ImTextureID)decal->id, { 64, 64 }))
 		{
 			g_sSelectedMapobject = prefab.second;
+			g_sSelectedPrefab = prefab.first;
+			g_bPlacingPrefabedMapobjectOnMap = true;
 			ImGui::SetWindowFocus(nullptr);
 		}
 		HelpMarkerWithoutQuestion(prefab.first.c_str());
@@ -1230,7 +1237,15 @@ void GameEditor::HandleInput()
 
 			if (g_sSelectedMapobject.compare("none") != 0)
 			{
-				CreateMapobjectEx(point.x, point.y, m_currentLayer, g_sSelectedMapobject);
+				// React to when we are creatin a Prefabed Mapobject.
+				if(g_bPlacingPrefabedMapobjectOnMap)
+				{
+					CreatePrefabedMapobject(point.x, point.y, m_currentLayer, g_sSelectedMapobject);
+				}
+				else
+				{
+					CreateMapobjectEx(point.x, point.y, m_currentLayer, g_sSelectedMapobject);
+				}
 			}
 			else
 			{
@@ -1624,6 +1639,28 @@ Entity* GameEditor::CreateMapobjectEx(uint64_t x, uint64_t y, std::string layer,
 	m_currentLayer = current_layer;
 	return entity;
 }
+
+Entity* GameEditor::CreatePrefabedMapobject(uint64_t x, uint64_t y, std::string layer, std::string decal, std::string name /*= "none"*/)
+{
+	if (g_sSelectedPrefab.compare("none") == 0) return nullptr;
+
+	auto e = CreateMapobjectEx(x, y, layer, decal, name);
+	
+	if(auto c = e->Get < ComponentUnit >("Unit"); c)
+	{
+		c->m_prefabFilepath = g_sSelectedPrefab;
+	}
+	else if (auto c = e->Get < ComponentTownhall >("Townhall"); c)
+	{
+		c->m_prefabFilepath = g_sSelectedPrefab;
+	}
+	else if (auto c = e->Get < ComponentFort >("Fort"); c)
+	{
+		c->m_prefabFilepath = g_sSelectedPrefab;
+	}
+
+}
+
 Entity* GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string decal, bool unit, std::string name)
 {
 	// Ensure Boundaries.
@@ -2819,6 +2856,8 @@ void GameEditor::ExportEntityComponentFort(tinyxml2::XMLElement* xml, Entity* en
 
 	auto component = entity->Get< ComponentTownhall >("Fort");
 
+	xml->SetAttribute("prefab", component->m_prefabFilepath.c_str());
+
 	for (auto bs : component->m_buildingSlots)
 	{
 		auto slot = building_slots->InsertNewChildElement("Slot");
@@ -2840,6 +2879,8 @@ void GameEditor::ExportEntityComponentTownhall(tinyxml2::XMLElement* xml, Entity
 
 	auto component = entity->Get< ComponentTownhall >("Townhall");
 
+	xml->SetAttribute("prefab", component->m_prefabFilepath.c_str());
+
 	for (auto bs : component->m_buildingSlots)
 	{
 		auto slot = building_slots->InsertNewChildElement("Slot");
@@ -2855,8 +2896,10 @@ void GameEditor::ExportEntityComponentTownhall(tinyxml2::XMLElement* xml, Entity
 }
 void GameEditor::ExportEntityComponentUnit(tinyxml2::XMLElement* xml, Entity* entity)
 {
-	LOG_DBG_ERROR("[{:.4f}][ExportEntityComponentUnit] Serializing ComponentUnit data not supported!", APP_RUN_TIME);
-	LOG_FILE_ERROR("[{:.4f}][ExportEntityComponentUnit] Serializing ComponentUnit data not supported!", APP_RUN_TIME);
+	auto unitXml = xml->InsertNewChildElement("Unit");
+
+	auto c = entity->Get< ComponentUnit >("Unit");
+	unitXml->SetAttribute("prefab", c->m_prefabFilepath.c_str());
 }
 
 
@@ -2963,6 +3006,7 @@ bool GameEditor::ImportMapData(const std::string& filepath)
 			auto townhall = entity->FirstChildElement("Townhall");
 			auto fort = entity->FirstChildElement("Fort");
 			auto sound = entity->FirstChildElement("Sound");
+			auto unit = entity->FirstChildElement("Unit");
 
 
 			if (townhall)
@@ -2976,6 +3020,10 @@ bool GameEditor::ImportMapData(const std::string& filepath)
 			if (sound)
 			{
 				ImportEntityComponentSound(sound, obj);
+			}
+			if (unit)
+			{
+				ImportEntityComponentUnit(unit, obj);
 			}
 
 
@@ -3061,6 +3109,8 @@ void GameEditor::ImportEntityComponentFort(tinyxml2::XMLElement* xml, Entity* en
 	entity->Add(new ComponentFort(entity->m_positionx, entity->m_positiony), "Fort");
 	auto fort = entity->Get< ComponentFort >("Fort");
 
+	fort->m_prefabFilepath = xml->Attribute("prefab");
+
 	// Get Building slots and Territory defined for Entity.
 	auto bs = xml->FirstChildElement("BuildingSlots");
 	auto bslot = bs->FirstChildElement("Slot");
@@ -3085,6 +3135,8 @@ void GameEditor::ImportEntityComponentTownhall(tinyxml2::XMLElement* xml, Entity
 	entity->Add(new ComponentTownhall(entity->m_positionx, entity->m_positiony), "Townhall");
 	auto townhall = entity->Get< ComponentCity >("Townhall");
 
+	townhall->m_prefabFilepath = xml->Attribute("prefab");
+
 	// Get Building slots and Territory defined for Entity.
 	auto bs = xml->FirstChildElement("BuildingSlots");
 	auto bslot = bs->FirstChildElement("Slot");
@@ -3106,8 +3158,8 @@ void GameEditor::ImportEntityComponentTownhall(tinyxml2::XMLElement* xml, Entity
 
 void GameEditor::ImportEntityComponentUnit(tinyxml2::XMLElement* xml, Entity* entity)
 {
-	LOG_DBG_ERROR("[{:.4f}][ImportEntityComponentUnit] Serializing ComponentUnit data not supported!", APP_RUN_TIME);
-	LOG_FILE_ERROR("[{:.4f}][ImportEntityComponentUnit] Serializing ComponentUnit data not supported!", APP_RUN_TIME);
+	auto c = entity->Get< ComponentUnit >("Unit");
+	c->m_prefabFilepath = xml->Attribute("prefab");
 }
 
 void GameEditor::MakeMapobjectTownhall(int x, int y, std::string layer)
@@ -3211,37 +3263,50 @@ bool GameEditor::ExportUnitPrefab(const std::string& filepath, SPrefab* prefab)
 
 	auto data = xmlRoot->InsertNewChildElement("Data");
 
-
-	data->SetAttribute("name", prefab->prefab_name.c_str());
-	data->SetAttribute("layout_template", prefab->layout_template_name.c_str());
-	data->SetAttribute("health", prefab->health);
-	data->SetAttribute("action_points", prefab->action_points);
-	data->SetAttribute("level", prefab->level);
-	data->SetAttribute("armor", prefab->armor);
-	data->SetAttribute("defense", prefab->defense);
-	data->SetAttribute("attack_min", prefab->attack_min);
-	data->SetAttribute("attack_max", prefab->attack_max);
-	data->SetAttribute("movement_type", prefab->movement_type);
-	data->SetAttribute("race", prefab->race);
-	data->SetAttribute("building_name", prefab->building_name.c_str());
-	data->SetAttribute("building_level", prefab->building_level);
-	data->SetAttribute("gold_cost", prefab->gold_cost);
-	data->SetAttribute("sprite", prefab->sprite.c_str());
-
-	// Add starting statuses.
-	auto xmlStatus = data->InsertNewChildElement("StartingStatus");
-	for(auto& s: prefab->starting_status_vec)
+	// Export unit prefab specific data.
+	if(g_bPrefabEditorEditingUnits)
 	{
-		auto element = xmlStatus->InsertNewChildElement("Status");
-		element->SetAttribute("name", s.c_str());
+		data->SetAttribute("unit_prefab", true);
+	
+
+		data->SetAttribute("name", prefab->prefab_name.c_str());
+		data->SetAttribute("layout_template", prefab->layout_template_name.c_str());
+		data->SetAttribute("health", prefab->health);
+		data->SetAttribute("action_points", prefab->action_points);
+		data->SetAttribute("level", prefab->level);
+		data->SetAttribute("armor", prefab->armor);
+		data->SetAttribute("defense", prefab->defense);
+		data->SetAttribute("attack_min", prefab->attack_min);
+		data->SetAttribute("attack_max", prefab->attack_max);
+		data->SetAttribute("movement_type", prefab->movement_type);
+		data->SetAttribute("race", prefab->race);
+		data->SetAttribute("building_name", prefab->building_name.c_str());
+		data->SetAttribute("building_level", prefab->building_level);
+		data->SetAttribute("gold_cost", prefab->gold_cost);
+		data->SetAttribute("sprite", prefab->sprite.c_str());
+
+		// Add starting statuses.
+		auto xmlStatus = data->InsertNewChildElement("StartingStatus");
+		for (auto& s : prefab->starting_status_vec)
+		{
+			auto element = xmlStatus->InsertNewChildElement("Status");
+			element->SetAttribute("name", s.c_str());
+		}
+		// Add abilities.
+		auto xmlAbility = data->InsertNewChildElement("Abilities");
+		for (auto& ab : prefab->abilities_vec)
+		{
+			auto element = xmlAbility->InsertNewChildElement("Ability");
+			element->SetAttribute("name", ab.c_str());
+		}
+
 	}
-	// Add abilities.
-	auto xmlAbility = data->InsertNewChildElement("Abilities");
-	for (auto& ab : prefab->abilities_vec)
+	// Export building specific data.
+	else if (g_bPrefabEditorEditingBuildings)
 	{
-		auto element = xmlAbility->InsertNewChildElement("Ability");
-		element->SetAttribute("name", ab.c_str());
+		data->SetAttribute("building_prefab", true);
 	}
+
 
 	std::string path = "assets/TilesetData/UnitPrefab/" + filepath + ".xml";
 	if(doc.SaveFile(path.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
@@ -3336,57 +3401,70 @@ SPrefab* GameEditor::ImportUnitPrefab(const std::string& filepath)
 	auto xmlRoot = doc.RootElement();
 	auto data = xmlRoot->FirstChildElement("Data");
 
-	auto prefab_name = data->Attribute("name");
-	auto layout_template_name = data->Attribute("layout_template");
-	auto health = data->Int64Attribute("health");
-	auto action_points = data->Int64Attribute("action_points");
-	auto level = data->Int64Attribute("level");
-	auto armor = data->Int64Attribute("armor");
-	auto defense = data->Int64Attribute("defense");
-	auto attack_min = data->Int64Attribute("attack_min");
-	auto attack_max = data->Int64Attribute("attack_max");
-	auto movement_type = data->Int64Attribute("movement_type");
-	auto race = data->Int64Attribute("race");
-	auto building_name = data->Attribute("building_name");
-	auto building_level = data->Int64Attribute("building_level");
-	auto gold_cost = data->Int64Attribute("gold_cost");
-	auto sprite = data->Attribute("sprite");
+	auto unit_prefab = data->BoolAttribute("unit_prefab", false);
+	auto building_prefab = data->BoolAttribute("building_prefab", false);
 
-	prefab->prefab_name = prefab_name;
-	prefab->layout_template_name = layout_template_name;
-	prefab->health = health;
-	prefab->action_points = action_points;
-	prefab->level = level;
-	prefab->armor = armor;
-	prefab->defense = defense;
-	prefab->attack_min = attack_min;
-	prefab->attack_max = attack_max;
-	prefab->movement_type = movement_type;
-	prefab->race = race;
-	prefab->building_name = building_name;
-	prefab->building_level = building_level;
-	prefab->gold_cost = gold_cost;
+	auto sprite = data->Attribute("sprite");
 	prefab->sprite = sprite;
 
-	auto statuses = data->FirstChildElement("StartingStatus");
-	auto abilities = data->FirstChildElement("Abilities");
-
-	auto stat = statuses->FirstChildElement("Status");
-	while(stat)
+	if(unit_prefab)
 	{
-		auto status_name = stat->Attribute("name");
-		prefab->starting_status_vec.push_back(status_name);
+		auto prefab_name = data->Attribute("name");
+		auto layout_template_name = data->Attribute("layout_template");
+		auto health = data->Int64Attribute("health");
+		auto action_points = data->Int64Attribute("action_points");
+		auto level = data->Int64Attribute("level");
+		auto armor = data->Int64Attribute("armor");
+		auto defense = data->Int64Attribute("defense");
+		auto attack_min = data->Int64Attribute("attack_min");
+		auto attack_max = data->Int64Attribute("attack_max");
+		auto movement_type = data->Int64Attribute("movement_type");
+		auto race = data->Int64Attribute("race");
+		auto building_name = data->Attribute("building_name");
+		auto building_level = data->Int64Attribute("building_level");
+		auto gold_cost = data->Int64Attribute("gold_cost");
 
-		stat = stat->NextSiblingElement("Status");
+		prefab->prefab_name = prefab_name;
+		prefab->layout_template_name = layout_template_name;
+		prefab->health = health;
+		prefab->action_points = action_points;
+		prefab->level = level;
+		prefab->armor = armor;
+		prefab->defense = defense;
+		prefab->attack_min = attack_min;
+		prefab->attack_max = attack_max;
+		prefab->movement_type = movement_type;
+		prefab->race = race;
+		prefab->building_name = building_name;
+		prefab->building_level = building_level;
+		prefab->gold_cost = gold_cost;
+		
+		auto statuses = data->FirstChildElement("StartingStatus");
+		auto abilities = data->FirstChildElement("Abilities");
+
+		auto stat = statuses->FirstChildElement("Status");
+		while (stat)
+		{
+			auto status_name = stat->Attribute("name");
+			prefab->starting_status_vec.push_back(status_name);
+
+			stat = stat->NextSiblingElement("Status");
+		}
+
+		auto abl = abilities->FirstChildElement("Ability");
+		while (abl)
+		{
+			auto ability_name = abl->Attribute("name");
+			prefab->abilities_vec.push_back(ability_name);
+
+			abl = abl->NextSiblingElement("Ability");
+		}
 	}
+	
 
-	auto abl = abilities->FirstChildElement("Ability");
-	while (abl)
+	if(building_prefab)
 	{
-		auto ability_name = abl->Attribute("name");
-		prefab->abilities_vec.push_back(ability_name);
 
-		abl = abl->NextSiblingElement("Ability");
 	}
 
 	if(prefab)
@@ -3436,6 +3514,9 @@ void GameEditor::DisplayUnitPrefabExportWindow(SPrefab* prefab)
 			{
 				LOG_DBG_INFO("[{:.4f}][DisplayUnitPrefabExportWindow] Success exporting Unit Prefab \"{}\"!", APP_RUN_TIME, prefab->prefab_name);
 				LOG_FILE_INFO("[{:.4f}][DisplayUnitPrefabExportWindow]  Success exporting Unit Prefab \"{}\"!", APP_RUN_TIME, prefab->prefab_name);
+
+				// Reload the Prefab Cache.
+				ImportUnitPrefabCache(g_sPrefabCacheFilepath);
 			}
 			else 
 			{
@@ -3530,11 +3611,11 @@ void GameEditor::DisplayUnitEditorPrefabQuickLoadDropDown()
 
 void GameEditor::DisplayUnitEditor()
 {
-	std::string name = "Unit Editor";
-	auto scene_edit_window_width = 400.f;
+	std::string name = "Prefab Editor";
+	auto scene_edit_window_width = 600.f;
 	auto prefab_preview_window_width = 700.0f;
 	auto prefab_element_window_width = 300.f;
-	auto main_window_height = ScreenHeight() - 50.0f;
+	auto main_window_height = DEFAULT_WINDOW_HEIGHT - 50.0f;
 
 	ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDecoration;
 
@@ -3545,22 +3626,32 @@ void GameEditor::DisplayUnitEditor()
 	// Display all editing windows.
 	
 	ImGui::BeginChild("Stats", ImVec2(scene_edit_window_width, main_window_height - 1.0f), true);
+	
 	DisplayUnitEditorMainMenu();
-	DisplayUnitEditorNameEdit();
-	DisplayUnitEditorLayoutTemplateNameEdit();
-	DisplayUnitEditorHealthEdit();
-	DisplayUnitEditorActionPointsEdit();
-	DisplayUnitEditorLevelEdit();
-	DisplayUnitEditorArmorEdit();
-	DisplayUnitEditorAttackEdit();
-	DisplayUnitEditorDefenseEdit();
-	DisplayUnitEditorMovementTypeEdit();
-	DisplayUnitEditorRaceEdit();
-	DisplayUnitEditorBuildingRequirementsEdit();
-	DisplayUnitEditorGoldCostEdit();
-	DisplayUnitEditorStartingStatusEdit();
-	DisplayUnitEditorAbilitiesEdit();
-	DisplayUnitEditorUnitSpriteEdit();
+	
+	if(g_bPrefabEditorEditingUnits)
+	{
+		DisplayUnitEditorNameEdit();
+		DisplayUnitEditorLayoutTemplateNameEdit();
+		DisplayUnitEditorHealthEdit();
+		DisplayUnitEditorActionPointsEdit();
+		DisplayUnitEditorLevelEdit();
+		DisplayUnitEditorArmorEdit();
+		DisplayUnitEditorAttackEdit();
+		DisplayUnitEditorDefenseEdit();
+		DisplayUnitEditorMovementTypeEdit();
+		DisplayUnitEditorRaceEdit();
+		DisplayUnitEditorBuildingRequirementsEdit();
+		DisplayUnitEditorGoldCostEdit();
+		DisplayUnitEditorStartingStatusEdit();
+		DisplayUnitEditorAbilitiesEdit();
+		DisplayUnitEditorUnitSpriteEdit();
+	}
+	if(g_bPrefabEditorEditingBuildings)
+	{
+
+	}
+	
 	ImGui::EndChild();
 
 	DisplayUnitEditorUnitSprite();
@@ -3599,6 +3690,21 @@ void GameEditor::DisplayUnitEditorMainMenu()
 		g_bImportingUnitPrefab = true;
 	}
 	ImGui::SameLine();
+	if(ImGui::SmallButton("Unit Editor"))
+	{
+		g_bPrefabEditorEditingUnits = true;
+		g_bPrefabEditorEditingBuildings = false;
+	}
+	ImGui::SameLine();
+	if (ImGui::SmallButton("Building Editor"))
+	{
+		g_bPrefabEditorEditingUnits = false;
+		g_bPrefabEditorEditingBuildings = true;
+	}
+
+
+
+	ImGui::SameLine();
 	ImGui::SetCursorPosX(ImGui::GetWindowSize().x - 25.0f);
 	if (ImGui::SmallButton("X"))
 	{
@@ -3610,18 +3716,13 @@ void GameEditor::DisplayUnitEditorMainMenu()
 
 void GameEditor::DisplayUnitEditorNameEdit()
 {
-	if (g_pCurrentEditedPrefab)
-	{
-		if (g_pCurrentEditedPrefab->prefab_name.size() > 0)
-		{
-			CopyStringToCharArray(g_pCurrentEditedPrefab->prefab_name, g_cPrefabName, sizeof(g_cPrefabName));
-		}
-	}
-
 	if(ImGui::CollapsingHeader("Name"))
 	{
-		ImGui::InputText("|", g_cPrefabName, sizeof(g_cPrefabName));
-		HelpMarkerWithoutQuestion("Set the Name of the unit. This name will be displayed to the player in-game. This is not the exported file name");
+		ImGui::InputText("|", g_cPrefabName, sizeof(g_cPrefabName)); 
+		if(g_pCurrentEditedPrefab)
+		{
+			HelpMarkerWithoutQuestion(g_pCurrentEditedPrefab->prefab_name.c_str());
+		}
 		ImGui::SameLine();
 		if (ImGui::SmallButton("OK"))
 		{
@@ -3651,6 +3752,7 @@ void GameEditor::DisplayUnitEditorNameEdit()
 				LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorNameEdit] Could not set prefab name: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
 			}
 		}
+		HelpMarkerWithoutQuestion("Set the Name of the unit. This name will be displayed to the player in-game. This is not the exported file name");
 	}
 }
 
@@ -3659,20 +3761,16 @@ void GameEditor::DisplayUnitEditorLayoutTemplateNameEdit()
 	ImGuiID input_text_id = g_idUnitEditorElementID + 100;
 	ImGuiID input_text_ok_id = g_idUnitEditorElementID + 101;
 
-	if(g_pCurrentEditedPrefab)
-	{
-		if(g_pCurrentEditedPrefab->prefab_name.size() > 0)
-		{
-			CopyStringToCharArray(g_pCurrentEditedPrefab->layout_template_name, g_cPrefabLayoutTemplateName, sizeof(g_cPrefabLayoutTemplateName));
-		}
-	}
-
 	if (ImGui::CollapsingHeader("Layout Template Name"))
 	{
 		ImGui::PushID(input_text_id);
 		ImGui::InputText("|", g_cPrefabLayoutTemplateName, sizeof(g_cPrefabLayoutTemplateName));
+		if (g_pCurrentEditedPrefab)
+		{
+			HelpMarkerWithoutQuestion(g_pCurrentEditedPrefab->layout_template_name.c_str());
+		}
 		ImGui::PopID();
-		HelpMarkerWithoutQuestion("Set the Layout Template for the unit");
+		
 		ImGui::SameLine();
 		ImGui::PushID(input_text_ok_id);
 		if (ImGui::SmallButton("OK"))
@@ -3704,6 +3802,7 @@ void GameEditor::DisplayUnitEditorLayoutTemplateNameEdit()
 			}
 		}
 		ImGui::PopID();
+		HelpMarkerWithoutQuestion("Set the Layout Template for the unit");
 	}
 }
 
@@ -3926,22 +4025,17 @@ void GameEditor::DisplayUnitEditorBuildingRequirementsEdit()
 	ImGuiID input_text_id = g_idUnitEditorElementID + 200;
 	ImGuiID input_text_ok_id = g_idUnitEditorElementID + 201;
 
-	if (g_pCurrentEditedPrefab)
-	{
-		if (g_pCurrentEditedPrefab->prefab_name.size() > 0)
-		{
-			CopyStringToCharArray(g_pCurrentEditedPrefab->building_name, g_cPrefabRequiredBuildingName, sizeof(g_cPrefabRequiredBuildingName));
-		}
-	}
-
 	if (ImGui::CollapsingHeader("Building Requirements"))
 	{
 		if (ImGui::CollapsingHeader("Building Name"))
 		{
 			ImGui::PushID(input_text_id);
 			ImGui::InputText("|", g_cPrefabRequiredBuildingName, sizeof(g_cPrefabRequiredBuildingName));
+			if (g_pCurrentEditedPrefab)
+			{
+				HelpMarkerWithoutQuestion(g_pCurrentEditedPrefab->building_name.c_str());
+			}
 			ImGui::PopID();
-			HelpMarkerWithoutQuestion("Set the required building name. The building name will be searched for in-game and has to match. In that building this unit will be produced");
 			ImGui::SameLine();
 			ImGui::PushID(input_text_ok_id);
 			if (ImGui::SmallButton("OK"))
@@ -3973,7 +4067,9 @@ void GameEditor::DisplayUnitEditorBuildingRequirementsEdit()
 				}
 			}
 			ImGui::PopID();
+			HelpMarkerWithoutQuestion("Set the required building name. The building name will be searched for in-game and has to match. In that building this unit will be produced");
 		}
+
 		if (ImGui::CollapsingHeader("Building Level"))
 		{
 			ImGuiID build_id = g_iImguiImageButtonID + strlen("BuildingLevelInt") + 1;
@@ -4762,7 +4858,7 @@ bool GameEditor::OnUserDestroy()
 
 int main()
 {
-	if (editor.Construct(1600, 900, 1, 1, true, true, false))
+	if (editor.Construct(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, 1, 1, true, true, false))
 		editor.Start();
 
 	return 0;

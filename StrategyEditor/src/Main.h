@@ -173,6 +173,9 @@ STRING(major) \
 #define DEFAULT_MIN_ZOOM_DISTANCE 1.0f
 #define DEFAULT_MAX_ZOOM_DISTANCE 50.0f
 
+#define DEFAULT_WINDOW_WIDTH 1600
+#define DEFAULT_WINDOW_HEIGHT 900
+
 // COMMON
 #include "Mapobject.h"
 using LayeredGameworld = std::map< std::string, std::vector< std::vector< Entity* > > >;
@@ -395,6 +398,15 @@ struct SPrefab
 {
 	std::string layout_template_name;
 	std::string prefab_name;
+	bool unit_prefab;
+	bool building_prefab;
+
+	// Building Stats.
+	// Exported only for Building Prefabs.
+
+
+	// Unit Stats.
+	// Exported only for Unit Prefabs.
 	uint64_t health;
 	uint64_t action_points;
 	uint64_t level;
@@ -596,6 +608,7 @@ private:
 	void RenderMapobject(Entity* object);
 	Entity* CreateMapobject(uint64_t x, uint64_t y, std::string decal, bool unit, std::string name = "none");
 	Entity* CreateMapobjectEx(uint64_t x, uint64_t y, std::string layer, std::string decal, std::string name = "none");
+	Entity* CreatePrefabedMapobject(uint64_t x, uint64_t y, std::string layer, std::string decal, std::string name = "none");
 	Entity* CreateMapobjectAudioSource(uint64_t x, uint64_t y, float radius, const std::string& soundname);
 	std::string CreateMapobjectName();
 	bool IsMapobjectNameUsed(const std::string& name);
