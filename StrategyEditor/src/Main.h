@@ -494,6 +494,7 @@ private:
 	/// @brief Current in work layout template. On creating a new one this one is deleted.
 	std::vector< SShape* > m_currentLayoutTemplateVec;
 
+	std::map< std::string, std::string > m_prefabDecalDatabase;
 	std::map< std::string, std::string > m_prefabCacheMap;
 	bool m_prefabCacheLoaded = false;
 
@@ -502,6 +503,7 @@ private:
 	// GUI
 	void RenderGUI();
 	void RenderDecalDatabase();
+	void RenderPrefabDatabase();
 	void RenderMainMenu();
 	void RenderLayerUI();
 	void RenderDecalDatabase(const std::map< std::string, olc::Decal* >& db);

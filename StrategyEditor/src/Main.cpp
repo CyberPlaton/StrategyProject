@@ -2,6 +2,7 @@
 
 // STATIC DATA
 static bool g_bDecalDatabaseOpen = true;
+static bool g_bPrefabDatabaseOpen = true;
 static bool g_bEntityDatabaseOpen = true;
 static bool g_bEntityEditorOpen = false;
 
@@ -116,6 +117,8 @@ void GameEditor::RenderGUI()
 	{
 		// Decal Database
 		if (g_bDecalDatabaseOpen) RenderDecalDatabase();
+		//Prefab Database
+		if (g_bPrefabDatabaseOpen) RenderPrefabDatabase();
 		// Entity Database
 		if (g_bEntityDatabaseOpen) RenderEntityDatabase();
 		// Rendering Layers
@@ -476,6 +479,14 @@ void GameEditor::RenderMainMenu()
 			ImGui::SameLine();
 			ImGui::Checkbox("Open", &g_bDecalDatabaseOpen);
 
+			if (ImGui::MenuItem("Prefab Database"))
+			{
+				ToggleMenuItem(g_bPrefabDatabaseOpen);
+			}
+			ImGui::SameLine();
+			ImGui::Checkbox("Open", &g_bPrefabDatabaseOpen);
+
+
 			if (ImGui::MenuItem("Rendering Layers"))
 			{
 				ToggleMenuItem(g_bRenderingLayersOpen);
@@ -708,9 +719,41 @@ void GameEditor::RenderDecalDatabase(const std::map< std::string, olc::Decal* >&
 			g_sSelectedMapobject = pair.first;
 			ImGui::SetWindowFocus(nullptr);
 		}
+		HelpMarkerWithoutQuestion(pair.first.c_str());
 		i++;
 	}
 }
+
+void GameEditor::RenderPrefabDatabase()
+{
+	ImGui::Begin("PrefabDatabase", &g_bPrefabDatabaseOpen);
+
+	int i = 0;
+	for (auto& prefab : m_prefabDecalDatabase) // This Function is REALLY slow.
+	{
+		auto decal = m_decalDatabase[prefab.second];
+
+		if (i == 4)
+		{
+			i = 0;
+		}
+		else
+		{
+			ImGui::SameLine();
+		}
+		
+		if (ImGui::ImageButton((ImTextureID)decal->id, { 64, 64 }))
+		{
+			g_sSelectedMapobject = prefab.second;
+			ImGui::SetWindowFocus(nullptr);
+		}
+		HelpMarkerWithoutQuestion(prefab.first.c_str());
+		i++;
+	}
+
+	ImGui::End();
+}
+
 void GameEditor::ToggleMenuItem(bool& item)
 {
 	item = (item == true) ? false : true;
@@ -3230,6 +3273,8 @@ bool GameEditor::ExportUnitPrefab(const std::string& filepath, SPrefab* prefab)
 	auto prefab_element = cache_root->InsertNewChildElement("Prefab");
 	prefab_element->SetAttribute("name", prefab->prefab_name.c_str());
 	prefab_element->SetAttribute("path", filepath.c_str());
+	prefab_element->SetAttribute("sprite", prefab->sprite.c_str());
+
 
 	// Unload.
 	if (cache.SaveFile(cache_path.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
@@ -3262,6 +3307,7 @@ bool GameEditor::ImportUnitPrefabCache(const std::string& filepath)
 	while(prefab)
 	{
 		m_prefabCacheMap.emplace(prefab->Attribute("path"), prefab->Attribute("name"));
+		m_prefabDecalDatabase.emplace(prefab->Attribute("path"), prefab->Attribute("sprite"));
 		prefab = prefab->NextSiblingElement("Prefab");
 	}
 
