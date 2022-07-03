@@ -81,6 +81,12 @@
 *				 - Editing stats of a unit like Attack values and Gold cost
 *				 - Adding starting statuses and abilities
 *			 o Exporting / Importing allows for quick editing and creation
+* 
+* 04.07.2022 - Version 0.4.1 Patch complete:
+*			 o Prefab Caching: Quick load and re-edit
+*			 o Create Unit and Building Prefab and distinguish them (Prefab self tells what kind it is).
+*			 o Export ComponentUnit and  export ComponentTownhall/Fort refactored, it stores now what it is (Unit or Building) and path to prefab.
+*			 o Placing Prefabs on the map by selecting them from the PrefabDatabase (otherwise the objects are just sprites basically).
 *
 * TODO: Ambient Audio "Editor" has to be update to be based on FMOD,
 *		as soon as the Audio Engine with FMOD is completed.
@@ -110,7 +116,7 @@
 
 #define EDITOR_MAJOR_VERSION 0
 #define EDITOR_MINOR_VERSION 4
-#define EDITOR_PATCH_VERSION 0
+#define EDITOR_PATCH_VERSION 1
 
 
 
