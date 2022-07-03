@@ -69,6 +69,9 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 		NET_MSG_CREATE_GAME,
 		NET_MSG_GAMEOBJECT_UPDATE,
 		NET_MSG_MAPDATA,
+
+		NET_MSG_TURN_END,																		// Client indicating that he ended his turn.
+		NET_MSG_TURN_START,																		// MasterServer/GameServer indicating a client that his turn started.
 	};
 	enum EClientPlatform
 	{

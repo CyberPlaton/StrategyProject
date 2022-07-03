@@ -1,8 +1,7 @@
 #pragma once
 
 #include "ComponentCommon.h"
-// Required for CEntityStatusEffectMngr and the system of Turn Based game.
-#include "EventSystem.h"
+
 
 namespace cherrysoda
 {
@@ -36,11 +35,43 @@ namespace cherrysoda
 
 	/// @brief Manages the execution and deletion of Status Effects on an Entity.
 	// The execution is Turn Based and performed on Turn End.
-	class CEntityStatusEffectMngr : public EventListener
+	class CEntityStatusEffectMngr : public Component
 	{
 	public:
-		CEntityStatusEffectMngr() : EventListener("TurnEnd") {}
+		CHERRYSODA_DECLARE_COMPONENT(CEntityStatusEffectMngr, Component);
 
+		CEntityStatusEffectMngr() : CEntityStatusEffectMngr(true, false)
+		{
+			// Try to add self in a free location in static storage.
+			for(int i = 0; i < g_CEntityStatusEffectMngrVec.size(); i++)
+			{
+				if(g_CEntityStatusEffectMngrVec[i] == nullptr)
+				{
+					g_CEntityStatusEffectMngrVec[i] = this;
+					m_managerId = i;
+					return;
+				}
+			}
+
+			// Add self to next location in static storage.
+			g_CEntityStatusEffectMngrVec.push_back(this);
+			m_managerId = g_nextManagerId++;
+		}
+
+		~CEntityStatusEffectMngr()
+		{
+			// Remove self from static storage.
+			g_CEntityStatusEffectMngrVec.erase(g_CEntityStatusEffectMngrVec.begin() + m_managerId);
+			g_CEntityStatusEffectMngrVec[m_managerId] = nullptr;
+		}
+
+		static void OnTurnEnd()
+		{
+			for(auto& mngr: g_CEntityStatusEffectMngrVec)
+			{
+				mngr->Update();
+			}
+		}
 
 		void Add(EntityStatusEffect* effect)
 		{
@@ -61,12 +92,10 @@ namespace cherrysoda
 			}
 		}
 
-		/// @brief Execute all status effects update function on Turn End. Removes those that are not needed anymore and remain those that should stay.
-		/// @param evnt Event to be processed.
-		void operator()(Event* evnt) override final
+		/// @brief Execute all status effects update function on Turn End. 
+		/// Removes those that are not needed anymore and remain those that should stay.
+		void Update()
 		{
-			if (evnt->m_eventType.compare("TurnEnd") != 0) return;
-
 			std::vector< EntityStatusEffect* > remaining_effects;
 
 			// Execute and store which should remain.
@@ -97,8 +126,20 @@ namespace cherrysoda
 
 
 	private:
+		static std::vector< CEntityStatusEffectMngr* > g_CEntityStatusEffectMngrVec;
+		static size_t g_nextManagerId;
+
+	private:
+		size_t m_managerId = 0;
 		std::vector< EntityStatusEffect* > m_statusEffectsVec;
+
+	private:
+		CEntityStatusEffectMngr(bool active, bool visible) : base(active, visible) {}
 	};
+
+
+	__declspec(selectany) std::vector< CEntityStatusEffectMngr* > CEntityStatusEffectMngr::g_CEntityStatusEffectMngrVec;
+	__declspec(selectany) size_t CEntityStatusEffectMngr::g_nextManagerId = 1;
 
 
 #define ENTITY_ADD_STATUS_EFFECT(effect, entity) \

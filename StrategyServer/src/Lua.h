@@ -42,7 +42,7 @@ namespace cherrysoda
 		~Lua() = default;
 
 		bool TryLoad(ScriptInterface* script, Lua* lua);
-		bool TryExecute(ScriptInterface* script, String function_name);
+		bool TryExecute(ScriptInterface* script, const std::string& function_name);
 
 	private:
 		lua_State* m_luaState = nullptr;
@@ -58,14 +58,13 @@ namespace cherrysoda
 	{
 		friend class Lua;
 	public:
-		LuaScript(const String& filepath): m_script(filepath) {}
+		LuaScript(const std::string& filepath): m_script(filepath) {}
 
 
 	private:
+		std::string m_errorMessage;
+		std::string m_script;
 
-		String m_errorMessage;
-
-		String m_script;
 
 	private:
 	};

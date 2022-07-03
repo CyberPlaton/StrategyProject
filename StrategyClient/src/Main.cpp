@@ -113,9 +113,9 @@ bool cherrysoda::SceneGraphFactory::LoadSceneGraph(const cherrysoda::String& fil
 	return false;
 }
 
-void NetCommMngr::UpdateNetGameobject(net::SGameobject* object)
+void CNetCommMngr::UpdateNetGameobject(net::SGameobject* object)
 {
-	printf("NetCommMngr::UpdateNetGameobject\n");
+	LOG_GAME_INFO("[%.4f][CNetCommMngr::UpdateNetGameobject] Dispatch to MS \"%s\"!", APP_RUN_TIME(), object->m_name.C_String());
 
 	/*
 	olc::net::message< net::Message > out;
@@ -125,6 +125,26 @@ void NetCommMngr::UpdateNetGameobject(net::SGameobject* object)
 	g_App->Send(out);
 	*/
 }
+
+void CNetCommMngr::CreateAndDispatchMasterServerMessage(net::EMessageId id)
+{
+	CREATE_MESSAGE(out, id);
+	g_App->Send(out, g_masterServerAddress);
+}
+
+bool CNetCommMngr::InitializeMasterServerConnection(RakNet::SystemAddress address)
+{
+	std::string addr = address.ToString(true, ':');
+	
+	LOG_GAME_INFO("[%.4f][CNetCommMngr::InitializeMasterServerConnection] Storing MS Address: \"%s\"", APP_RUN_TIME(), addr.c_str());
+	LOG_DBG_INFO("[{:.4f}][CNetCommMngr::InitializeMasterServerConnection] Storing MS Address: \"%s\"", APP_RUN_TIME(), addr.c_str());
+	LOG_FILE_INFO("[{:.4f}][CNetCommMngr::InitializeMasterServerConnection] Storing MS Address: \"%s\"", APP_RUN_TIME(), addr.c_str());
+
+	g_masterServerAddress = address;
+
+	return true;
+}
+
 App::App(uint64_t width, uint64_t height) : base(width, height, "Empty Title"),
 m_DefaultTexture(nullptr), m_Image(nullptr)
 {
@@ -213,7 +233,7 @@ void App::Initialize()
 	LOG_FILE_INFO("[{:.4f}][App::Initialize] Master connection initialized...", APP_RUN_TIME());
 
 
-	if (!NetCommMngr::Initialize(this))
+	if (!CNetCommMngr::Initialize(this))
 	{
 		LOG_DBG_CRITICAL("[{:.4f}][App::Initialize] Net communication manager not initialized!", APP_RUN_TIME());
 		LOG_FILE_CRITICAL("[{:.4f}][App::Initialize] Net communication manager not initialized!", APP_RUN_TIME());
@@ -536,6 +556,9 @@ void cherrysoda::InitializationScene::SceneImpl::Update()
 				m_application->m_localClientDesc->Deserialize(in, true);
 
 				m_initializationComplete = true;
+
+				// Store the MasterServer address for messaging from NetManager purposes.
+				CNetCommMngr::InitializeMasterServerConnection(packet->systemAddress);
 
 
 				// Request the Ability and Status Effects Data.

@@ -168,7 +168,6 @@ workspace "Strategy"
 			"%{prj.name}/common/include/stb",			-- Engine
 			"%{prj.name}/common/include/steam",			-- Release Platform
 			"%{prj.name}/common/include/tinyxml2",		-- Engine
-			"%{prj.name}/common/include/LuaBridge",		-- Scripting
 			"%{prj.name}/common/include/spdlog",		-- Logging
 		
 
@@ -195,7 +194,6 @@ workspace "Strategy"
 				"SDL2main",
 				"steam_api64",
 				"tinyxml2",
-				"Lua52",
 				"spdlogd",
 			}
 		filter "configurations:Release"
@@ -216,7 +214,6 @@ workspace "Strategy"
 				"SDL2main",
 				"steam_api64",
 				"tinyxml2",
-				"Lua52",
 				"spdlog",
 			}
 		filter "configurations:Distr"
@@ -237,7 +234,6 @@ workspace "Strategy"
 				"SDL2main",
 				"steam_api64",
 				"tinyxml2",
-				"Lua52",
 				"spdlog",
 			}
 		-- Everything defined below is only if we building on windows
@@ -357,6 +353,8 @@ workspace "Strategy"
 
 			"NetLib/common/include/RakNet",					-- Networking
 			"NetLib/src",									-- Networking
+
+			"%{prj.name}/common/include/LuaBridge"			-- Serverside Scripting
 		}
 		filter "configurations:Debug"
 			-- Set working directory for debugging
@@ -376,7 +374,11 @@ workspace "Strategy"
 				"tinyxml2",
 				"bsoncxx",
 				"mongocxx",
-				"spdlog",
+				"spdlogd",
+				"glew32",
+				"glfw3",
+				"opengl32",
+				"Lua52"
 			}
 		filter "configurations:Debug"
 			libdirs{"libs", "bin/" .. outputdir .. "/NetLib"}
@@ -393,6 +395,7 @@ workspace "Strategy"
 				"glew32",
 				"glfw3",
 				"opengl32",
+				"Lua52"
 			}
 		filter "configurations:Release"
 			libdirs{"libs", "%{prj.name}/common/lib/Release"}
@@ -402,7 +405,11 @@ workspace "Strategy"
 				"tinyxml2",
 				"bsoncxx",
 				"mongocxx",
-				"spdlog",
+				"spdlogd",
+				"glew32",
+				"glfw3",
+				"opengl32",
+				"Lua52"
 			}
 		-- Everything defined below is only if we building on windows
 		filter "system:Windows"
@@ -496,7 +503,7 @@ workspace "Strategy"
 			"%{prj.name}/common/include/GL",				-- ImGui
 			"%{prj.name}/common/include/GLFW",				-- ImGui
 			"%{prj.name}/common/include/FMOD",				-- FMOD
-			"%{prj.name}/common/include/spdlog",				-- SPDLOG
+			"%{prj.name}/common/include/spdlog",			-- SPDLOG
 		}
 		filter "configurations:Debug"
 			-- Set working directory for debugging

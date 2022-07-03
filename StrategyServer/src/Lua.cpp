@@ -32,7 +32,7 @@ namespace cherrysoda
 	bool Lua::TryLoad(ScriptInterface* script, Lua* lua)
 	{
 		int result;
-		String error;
+		std::string error;
 
 		try
 		{
@@ -53,7 +53,7 @@ namespace cherrysoda
 			return false;
 		}
 	}
-	bool Lua::TryExecute(ScriptInterface* script, String function_name)
+	bool Lua::TryExecute(ScriptInterface* script, const std::string& function_name)
 	{
 		if (!script->Loaded())
 		{

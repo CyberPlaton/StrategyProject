@@ -20,9 +20,6 @@
     <ClCompile Include="src\Localization.cpp">
       <Filter>Util</Filter>
     </ClCompile>
-    <ClCompile Include="src\NetCommMngr.cpp">
-      <Filter>Util</Filter>
-    </ClCompile>
     <ClCompile Include="src\EventSystem.cpp">
       <Filter>Components\Event</Filter>
     </ClCompile>
@@ -53,12 +50,6 @@
     <ClCompile Include="src\Building.cpp">
       <Filter>Components\Game</Filter>
     </ClCompile>
-    <ClCompile Include="src\Lua.cpp">
-      <Filter>Scripting</Filter>
-    </ClCompile>
-    <ClCompile Include="src\ScriptComponent.cpp">
-      <Filter>Components\Scriptable</Filter>
-    </ClCompile>
     <ClCompile Include="src\AbilitiesDataMap.cpp">
       <Filter>Components\Game\Ability</Filter>
     </ClCompile>
@@ -66,6 +57,9 @@
       <Filter>Components\Game\Status</Filter>
     </ClCompile>
     <ClCompile Include="src\TurnStepMngr.cpp">
+      <Filter>Components\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="src\NetCommMngr.cpp">
       <Filter>Components\Game</Filter>
     </ClCompile>
   </ItemGroup>
@@ -87,9 +81,6 @@
       <Filter>Util</Filter>
     </ClInclude>
     <ClInclude Include="src\Localization.h">
-      <Filter>Util</Filter>
-    </ClInclude>
-    <ClInclude Include="src\NetCommMngr.h">
       <Filter>Util</Filter>
     </ClInclude>
     <ClInclude Include="src\EventSystem.h">
@@ -161,15 +152,6 @@
     <ClInclude Include="src\Building.h">
       <Filter>Components\Game</Filter>
     </ClInclude>
-    <ClInclude Include="src\Lua.h">
-      <Filter>Scripting</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ScriptComponent.h">
-      <Filter>Components\Scriptable</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ScriptInterface.h">
-      <Filter>Scripting</Filter>
-    </ClInclude>
     <ClInclude Include="src\Status.h">
       <Filter>Components\Game\Status</Filter>
     </ClInclude>
@@ -180,6 +162,9 @@
       <Filter>Components\Game\Status</Filter>
     </ClInclude>
     <ClInclude Include="src\TurnStepMngr.h">
+      <Filter>Components\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\NetCommMngr.h">
       <Filter>Components\Game</Filter>
     </ClInclude>
   </ItemGroup>
@@ -216,12 +201,6 @@
     </Filter>
     <Filter Include="Components\Game\Ability\ActiveAbility">
       <UniqueIdentifier>{5ec64003-e9b4-4f20-bf99-3ef37b9b7a21}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Components\Scriptable">
-      <UniqueIdentifier>{6c983751-f1df-43bb-b37f-59f27bf566d0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Scripting">
-      <UniqueIdentifier>{1f545368-9ef8-4bb4-b7a0-5005991c7ce0}</UniqueIdentifier>
     </Filter>
     <Filter Include="Components\Game\Status">
       <UniqueIdentifier>{e45be3cc-30b9-4030-8dd8-07c7cc1bce85}</UniqueIdentifier>

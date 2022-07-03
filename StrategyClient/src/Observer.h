@@ -56,7 +56,7 @@ namespace cherrysoda
 					LOG_GAME_INFO("[%.4f][Observer::operator()] Update net::SGameobject: \"%z\".", APP_RUN_TIME(), net_event->m_object->m_networkId);
 					
 					// Transmit data over network.
-					NetCommMngr::get()->UpdateNetGameobject(net_event->m_object);
+					CNetCommMngr::get()->UpdateNetGameobject(net_event->m_object);
 
 					// Release the object from memory after sending over network.
 

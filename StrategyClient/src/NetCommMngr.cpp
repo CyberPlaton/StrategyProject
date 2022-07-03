@@ -1,15 +1,16 @@
 #include "NetCommMngr.h"
 
-NetCommMngr* NetCommMngr::g_NetCommMngr = nullptr;
-App* NetCommMngr::g_App = nullptr;
+CNetCommMngr* CNetCommMngr::g_NetCommMngr = nullptr;
+App* CNetCommMngr::g_App = nullptr;
+RakNet::SystemAddress CNetCommMngr::g_masterServerAddress;
 
 
-bool NetCommMngr::Initialize(App* app)
+bool CNetCommMngr::Initialize(App* app)
 {
 	g_App = app;
 	return true;
 }
-void NetCommMngr::Terminate()
+void CNetCommMngr::Terminate()
 {
 	g_App = nullptr;
 }
