@@ -12,6 +12,7 @@ static char g_cPrefabLayoutTemplateName[128] = "";
 static char g_cPrefabRequiredBuildingName[64] = "";
 static char g_cPrefabStartingStatusName[128] = "";
 static char g_cPrefabAbilityName[128] = "";
+static char g_cPrefabBuildingPredecessorName[128] = "";
 
 static std::string g_sPrefabCacheFilepath = "assets/TilesetData/UnitPrefab/StrategyEditor_PrefabCache.xml";
 static bool g_bPrefabEditorEditingUnits = true;
@@ -211,12 +212,14 @@ bool GameEditor::OnUserCreate()
 	m_structureDecalDatabase.emplace("Fort", decal);
 	m_decalDatabase.emplace("Fort", decal);
 	m_spriteDatabase.push_back(sprite);
+	m_decalSizeDatabase.try_emplace("Fort", std::make_pair(256, 256));
 
 	sprite = new olc::Sprite("assets/Tileset/Structure/Fort_2.png");
 	decal = new olc::Decal(sprite);
 	m_structureDecalDatabase.emplace("Fort_2", decal);
 	m_decalDatabase.emplace("Fort_2", decal);
 	m_spriteDatabase.push_back(sprite);
+	m_decalSizeDatabase.try_emplace("Fort_2", std::make_pair(256, 256));
 
 	sprite = new olc::Sprite("assets/Editor/speaker_audio_sound_loud.png");
 	decal = new olc::Decal(sprite);
@@ -609,7 +612,7 @@ void GameEditor::RenderMainMenu()
 				ImGui::EndMenu();
 			}
 
-			if (ImGui::MenuItem("Unit Prefab Editor"))
+			if (ImGui::MenuItem("Prefab Editor"))
 			{
 				ToggleMenuItem(g_bUnitEditorOpen);
 				if(!m_prefabCacheLoaded)
@@ -617,7 +620,8 @@ void GameEditor::RenderMainMenu()
 					// Load Prefab Cache.
 					if(!ImportUnitPrefabCache(g_sPrefabCacheFilepath))
 					{
-
+						LOG_DBG_CRITICAL("[{:.4f}][RenderMainMenu] Importing Prefab Cache Failed \"{}\"!", APP_RUN_TIME, g_sPrefabCacheFilepath);
+						LOG_FILE_CRITICAL("[{:.4f}][RenderMainMenu] Importing Prefab Cache Failed \"{}\"!", APP_RUN_TIME, g_sPrefabCacheFilepath);
 					}
 				}
 			}
@@ -3263,28 +3267,28 @@ bool GameEditor::ExportUnitPrefab(const std::string& filepath, SPrefab* prefab)
 
 	auto data = xmlRoot->InsertNewChildElement("Data");
 
+	// Export default data.
+	data->SetAttribute("gold_cost", prefab->gold_cost);
+	data->SetAttribute("sprite", prefab->sprite.c_str());
+	data->SetAttribute("name", prefab->prefab_name.c_str());
+	data->SetAttribute("layout_template", prefab->layout_template_name.c_str());
+	data->SetAttribute("defense", prefab->defense);
+	data->SetAttribute("health", prefab->health);
+	data->SetAttribute("level", prefab->level);
+
 	// Export unit prefab specific data.
 	if(g_bPrefabEditorEditingUnits)
 	{
 		data->SetAttribute("unit_prefab", true);
-	
-
-		data->SetAttribute("name", prefab->prefab_name.c_str());
-		data->SetAttribute("layout_template", prefab->layout_template_name.c_str());
-		data->SetAttribute("health", prefab->health);
 		data->SetAttribute("action_points", prefab->action_points);
-		data->SetAttribute("level", prefab->level);
 		data->SetAttribute("armor", prefab->armor);
-		data->SetAttribute("defense", prefab->defense);
 		data->SetAttribute("attack_min", prefab->attack_min);
 		data->SetAttribute("attack_max", prefab->attack_max);
 		data->SetAttribute("movement_type", prefab->movement_type);
 		data->SetAttribute("race", prefab->race);
 		data->SetAttribute("building_name", prefab->building_name.c_str());
 		data->SetAttribute("building_level", prefab->building_level);
-		data->SetAttribute("gold_cost", prefab->gold_cost);
-		data->SetAttribute("sprite", prefab->sprite.c_str());
-
+		
 		// Add starting statuses.
 		auto xmlStatus = data->InsertNewChildElement("StartingStatus");
 		for (auto& s : prefab->starting_status_vec)
@@ -3305,6 +3309,11 @@ bool GameEditor::ExportUnitPrefab(const std::string& filepath, SPrefab* prefab)
 	else if (g_bPrefabEditorEditingBuildings)
 	{
 		data->SetAttribute("building_prefab", true);
+		data->SetAttribute("gold_production", prefab->gold_production);
+		data->SetAttribute("research_points_production", prefab->research_points_production);
+		data->SetAttribute("visibility_distance", prefab->visibility_distance_in_tiles);
+		data->SetAttribute("detect_hidden", prefab->can_detect_hidden_units);
+		data->SetAttribute("predecessor_building", prefab->predecessor_building_for_upgrade.c_str());
 	}
 
 
@@ -3649,7 +3658,14 @@ void GameEditor::DisplayUnitEditor()
 	}
 	if(g_bPrefabEditorEditingBuildings)
 	{
-
+		DisplayBuildingEditorNameEdit();
+		DisplayBuildingEditorLayoutTemplateEdit();
+		DisplayUnitEditorLevelEdit();
+		DisplayBuildingEditorProducerEdit();
+		DisplayBuildingEditorDefenseEdit();
+		DisplayBuildingEditorVisibilityEdit();
+		DisplayBuildingEditorRequirementsEdit();
+		DisplayPrefabEditorBuildingSpriteEdit();
 	}
 	
 	ImGui::EndChild();
@@ -3692,12 +3708,24 @@ void GameEditor::DisplayUnitEditorMainMenu()
 	ImGui::SameLine();
 	if(ImGui::SmallButton("Unit Editor"))
 	{
+		// Start Editing a Unit prefab.
+		// If we worked on a Building, remove it...
+		delete g_pCurrentEditedPrefab;
+		g_pCurrentEditedPrefab = nullptr;
+		g_sUnitEditorCurrentUnitSprite = "none";
+
 		g_bPrefabEditorEditingUnits = true;
 		g_bPrefabEditorEditingBuildings = false;
 	}
 	ImGui::SameLine();
 	if (ImGui::SmallButton("Building Editor"))
 	{
+		// Start Editing a Building prefab.
+		// If we worked on a Unit, remove it...
+		delete g_pCurrentEditedPrefab;
+		g_pCurrentEditedPrefab = nullptr;
+		g_sUnitEditorCurrentUnitSprite = "none";
+
 		g_bPrefabEditorEditingUnits = false;
 		g_bPrefabEditorEditingBuildings = true;
 	}
@@ -3817,14 +3845,14 @@ void GameEditor::DisplayUnitEditorHealthEdit()
 		{
 			int health = g_pCurrentEditedPrefab->health;
 			ImGui::PushID(health_id);
-			ImGui::SliderInt("Int", &health, 1, 500, "%d");
+			ImGui::SliderInt("Int", &health, 1, 1000, "%d");
 			ImGui::PopID();
-			HelpMarkerWithoutQuestion("The Health amount of the unit. Defines how much damage the unit can take before dying");
+			HelpMarkerWithoutQuestion("The Health amount of the unit/building. Defines how much damage the unit/building can take before dying");
 			ImGui::SameLine();
 			ImGui::PushID(health_scalar_id);
 			ImGui::InputScalar("ScalarInt", ImGuiDataType_U32, &health, &u32_one);
 			ImGui::PopID();
-			HelpMarkerWithoutQuestion("The Health amount of the unit.  Defines how much damage the unit can take before dying");
+			HelpMarkerWithoutQuestion("The Health amount of the unit/building.  Defines how much damage the unit/building can take before dying");
 
 			g_pCurrentEditedPrefab->health = health;
 		}
@@ -3867,14 +3895,14 @@ void GameEditor::DisplayUnitEditorLevelEdit()
 		{
 			int lvl = g_pCurrentEditedPrefab->level;
 			ImGui::PushID(lvl_id);
-			ImGui::SliderInt("Int", &lvl, 1, 500, "%d");
+			ImGui::SliderInt("Int", &lvl, 1, 10, "%d");
 			ImGui::PopID();
-			HelpMarkerWithoutQuestion("The starting level of the unit. The unit will have this level on instancing in-game");
+			HelpMarkerWithoutQuestion("The starting level of the unit/building. The unit/building will have this level on instancing in-game");
 			ImGui::SameLine();
 			ImGui::PushID(lvl_scalar_id);
 			ImGui::InputScalar("ScalarInt", ImGuiDataType_U32, &lvl, &u32_one);
 			ImGui::PopID();
-			HelpMarkerWithoutQuestion("The starting level of the unit. The unit will have this level on instancing in-game");
+			HelpMarkerWithoutQuestion("The starting level of the unit/building. The unit/building will have this level on instancing in-game");
 
 			g_pCurrentEditedPrefab->level = lvl;
 		}
@@ -3958,12 +3986,12 @@ void GameEditor::DisplayUnitEditorDefenseEdit()
 			ImGui::PushID(def_id);
 			ImGui::SliderInt("Int", &def, 1, 500, "%d");
 			ImGui::PopID();
-			HelpMarkerWithoutQuestion("The Defense value of the unit. This affects how much damage the unit will take on being attacked");
+			HelpMarkerWithoutQuestion("The Defense value of the unit/building. This affects how much damage the unit/building will take on being attacked");
 			ImGui::SameLine();
 			ImGui::PushID(def_scalar_id);
 			ImGui::InputScalar("ScalarInt", ImGuiDataType_U32, &def, &u32_one);
 			ImGui::PopID();
-			HelpMarkerWithoutQuestion("The Defense value of the unit. This affects how much damage the unit will take on being attacked");
+			HelpMarkerWithoutQuestion("The Defense value of the unit/building. This affects how much damage the unit/building will take on being attacked");
 
 			g_pCurrentEditedPrefab->defense = def;
 		}
@@ -4107,12 +4135,12 @@ void GameEditor::DisplayUnitEditorGoldCostEdit()
 			ImGui::PushID(gold_id);
 			ImGui::SliderInt("Int", &gold, 1, 1000, "%d");
 			ImGui::PopID();
-			HelpMarkerWithoutQuestion("The required gold to produce this unit. The player has to spend the specified amount of gold in-game to create this unit");
+			HelpMarkerWithoutQuestion("The required gold to produce this unit/building. The player has to spend the specified amount of gold in-game to create this unit/building");
 			ImGui::SameLine();
 			ImGui::PushID(gold_scalar_id);
 			ImGui::InputScalar("ScalarInt", ImGuiDataType_U32, &gold, &u32_one);
 			ImGui::PopID();
-			HelpMarkerWithoutQuestion("The required gold to produce this unit. The player has to spend the specified amount of gold in-game to create this unit");
+			HelpMarkerWithoutQuestion("The required gold to produce this unit/building. The player has to spend the specified amount of gold in-game to create this unit/building");
 
 			g_pCurrentEditedPrefab->gold_cost = gold;
 		}
@@ -4322,6 +4350,236 @@ void GameEditor::DisplayUnitEditorUnitSpriteEdit()
 	}
 }
 
+void GameEditor::DisplayPrefabEditorBuildingSpriteEdit()
+{
+	// Display Drop-Down button to select a sprite.
+	std::vector< std::string > building_sprite_vec; // TODO Doing this every time is costly...
+
+	// Find our current item index in the vector.
+	int current_item_index = 0;
+	int index = 0;
+	bool changed = false;
+	for (auto& pair : m_structureDecalDatabase)
+	{
+		building_sprite_vec.push_back(pair.first);
+	}
+	for (int i = 0; i < building_sprite_vec.size(); i++)
+	{
+		if (building_sprite_vec[i].compare(g_sUnitEditorCurrentUnitSprite) == 0)
+		{
+			current_item_index = i;
+			break;
+		}
+	}
+
+	// Create the Combo window.
+	if (ImGui::BeginCombo("Building Sprite", g_sUnitEditorCurrentUnitSprite.c_str()))
+	{
+		for (int i = 0; i < building_sprite_vec.size(); i++)
+		{
+			const bool is_selected = (current_item_index == i);
+
+			if (ImGui::Selectable(building_sprite_vec[i].c_str(), is_selected))
+			{
+				current_item_index = i;
+				changed = true;
+			}
+
+			if (is_selected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+		}
+		ImGui::EndCombo();
+	}
+	HelpMarkerWithoutQuestion("Change the sprite of the building. This is the main representation of the building in-game, without additional indicators etc.");
+
+	// Apply the change.
+	if (changed)
+	{
+		if (g_pCurrentEditedPrefab)
+		{
+			g_sUnitEditorCurrentUnitSprite = building_sprite_vec[current_item_index];
+			g_pCurrentEditedPrefab->sprite = building_sprite_vec[current_item_index];
+
+			LOG_DBG_INFO("[{:.4f}][DisplayUnitEditorUnitSpriteEdit] Unit Sprite changed to \"{}\"", APP_RUN_TIME, building_sprite_vec[current_item_index]);
+			LOG_FILE_INFO("[{:.4f}][DisplayUnitEditorUnitSpriteEdit] Unit Sprite changed to \"{}\"", APP_RUN_TIME, building_sprite_vec[current_item_index]);
+		}
+		else
+		{
+			LOG_DBG_ERROR("[{:.4f}][DisplayUnitEditorUnitSpriteEdit] Could not change sprite: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
+			LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorUnitSpriteEdit] Could not change sprite: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
+		}
+	}
+}
+
+void GameEditor::DisplayBuildingEditorNameEdit()
+{
+	DisplayUnitEditorNameEdit();
+}
+
+void GameEditor::DisplayBuildingEditorLayoutTemplateEdit()
+{
+	DisplayUnitEditorLayoutTemplateNameEdit();
+}
+
+void GameEditor::DisplayBuildingEditorDefenseEdit()
+{
+	// Health.
+	DisplayUnitEditorHealthEdit();
+	// Defense Bonus for occupier.
+	DisplayUnitEditorDefenseEdit();
+}
+
+void GameEditor::DisplayBuildingEditorProducerEdit()
+{
+	// Gold Production.
+	ImGuiID button_id = g_idUnitEditorElementID + 30000;
+	ImGuiID button_scalar_id = g_idUnitEditorElementID + 30001;
+
+	if (ImGui::CollapsingHeader("Gold Production"))
+	{
+		if (g_pCurrentEditedPrefab)
+		{
+			int gold_prod = g_pCurrentEditedPrefab->gold_production;
+			ImGui::PushID(button_id);
+			ImGui::SliderInt("Int", &gold_prod, 1, 1000, "%d");
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The Gold production of the building in-game");
+			ImGui::SameLine();
+			ImGui::PushID(button_scalar_id);
+			ImGui::InputScalar("ScalarInt", ImGuiDataType_U32, &gold_prod, &u32_one);
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The Gold production of the building in-game");
+
+			g_pCurrentEditedPrefab->gold_production = gold_prod;
+		}
+	}
+
+	// RP Production.
+	if (ImGui::CollapsingHeader("RP Production"))
+	{
+		if (g_pCurrentEditedPrefab)
+		{
+			int rp = g_pCurrentEditedPrefab->research_points_production;
+			ImGui::PushID(button_id * 2);
+			ImGui::SliderInt("Int", &rp, 1, 1000, "%d");
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The Research Points production of the building in-game");
+			ImGui::SameLine();
+			ImGui::PushID(button_scalar_id * 2);
+			ImGui::InputScalar("ScalarInt", ImGuiDataType_U32, &rp, &u32_one);
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The Research Points production of the building in-game");
+
+			g_pCurrentEditedPrefab->research_points_production = rp;
+		}
+	}
+}
+
+void GameEditor::DisplayBuildingEditorVisibilityEdit()
+{
+	// Tile Range.
+	ImGuiID button_id = g_idUnitEditorElementID + 40000;
+	ImGuiID button_scalar_id = g_idUnitEditorElementID + 40001;
+
+	if (ImGui::CollapsingHeader("Visibility Distance"))
+	{
+		if (g_pCurrentEditedPrefab)
+		{
+			int range = g_pCurrentEditedPrefab->visibility_distance_in_tiles;
+			ImGui::PushID(button_id);
+			ImGui::SliderInt("Int", &range, 1, 10, "%d");
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The buildings visibility range in tiles");
+			ImGui::SameLine();
+			ImGui::PushID(button_scalar_id);
+			ImGui::InputScalar("ScalarInt", ImGuiDataType_U32, &range, &u32_one);
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("The buildings visibility range in tiles");
+
+			g_pCurrentEditedPrefab->visibility_distance_in_tiles = range;
+		}
+	}
+
+	// Detect hidden enemies.
+	if (ImGui::CollapsingHeader("Detect Hidden"))
+	{
+		if (g_pCurrentEditedPrefab)
+		{
+			bool detect = g_pCurrentEditedPrefab->can_detect_hidden_units;
+			ImGui::PushID(button_id * 2);
+			ImGui::Checkbox("Bool", &detect);
+			ImGui::PopID();
+			HelpMarkerWithoutQuestion("Whether the building can detect hidden enemy units such as Assassins and Spies");
+			g_pCurrentEditedPrefab->can_detect_hidden_units = detect;
+		}
+	}
+}
+
+void GameEditor::DisplayBuildingEditorRequirementsEdit()
+{
+	// Gold Cost.
+	DisplayUnitEditorGoldCostEdit();
+
+
+	// Predecessor Building. Required only of level > 1.
+	ImGuiID input_text_id = g_idUnitEditorElementID + 2000;
+	ImGuiID input_text_ok_id = g_idUnitEditorElementID + 2001;
+	if (ImGui::CollapsingHeader("Predecessor Building Name"))
+	{
+		// Quick exit.
+		if (g_pCurrentEditedPrefab)
+		{
+			if (g_pCurrentEditedPrefab->level <= 1) return;
+		}
+
+		ImGui::PushID(input_text_id);
+		ImGui::InputText("|", g_cPrefabBuildingPredecessorName, sizeof(g_cPrefabBuildingPredecessorName));
+		if (g_pCurrentEditedPrefab)
+		{
+			HelpMarkerWithoutQuestion(g_pCurrentEditedPrefab->predecessor_building_for_upgrade.c_str());
+		}
+		ImGui::PopID();
+
+		ImGui::SameLine();
+		ImGui::PushID(input_text_ok_id);
+		if (ImGui::SmallButton("OK"))
+		{
+			// Check for sanity.
+			std::string name = std::string(g_cPrefabBuildingPredecessorName);
+
+			auto length = name.size() > 0;
+
+			if (length && g_pCurrentEditedPrefab != nullptr)
+			{
+				LOG_DBG_INFO("[{:.4f}][DisplayBuildingEditorRequirementsEdit] Set Predecessor Building Name to \"{}\"!", APP_RUN_TIME, name);
+				LOG_FILE_INFO("[{:.4f}][DisplayBuildingEditorRequirementsEdit] Set Predecessor Building Name to \"{}\"!", APP_RUN_TIME, name);
+
+				// Set the layout template name for the prefab.
+				g_pCurrentEditedPrefab->predecessor_building_for_upgrade = name;
+
+				// Reset the Editing char array.
+				memset(&g_cPrefabBuildingPredecessorName, 0, sizeof(g_cPrefabBuildingPredecessorName));
+			}
+			else if (!length)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayBuildingEditorRequirementsEdit] Could not set Predecessor Building Name: Empty name!", APP_RUN_TIME);
+				LOG_FILE_ERROR("[{:.4f}][DisplayBuildingEditorRequirementsEdit] Could not set Predecessor Building Name: Empty name!", APP_RUN_TIME);
+			}
+			else if (!g_pCurrentEditedPrefab)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayBuildingEditorRequirementsEdit] Could not set Predecessor Building Name: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
+				LOG_FILE_ERROR("[{:.4f}][DisplayBuildingEditorRequirementsEdit] Could not set Predecessor Building Name: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
+			}
+		}
+		ImGui::PopID();
+		HelpMarkerWithoutQuestion("Set the building (Predecessor Building), which upgraded to the next tier, will become this one. Required only if this buildings level is greater than 1");
+	}
+}
+
+
+
 void GameEditor::DisplayUnitEditorUnitSprite()
 {
 	// Do not render if we have not selected still.
@@ -4335,7 +4593,7 @@ void GameEditor::DisplayUnitEditorUnitSprite()
 	auto wnd_size = ImGui::GetWindowSize();
 	auto position = ImVec2( (wnd_size.x - spite_width) * 0.5f, (wnd_size.y - spite_height) * 0.25f);
 	ImGui::SetCursorPos(position);
-	ImGui::Image((ImTextureID)m_unitDecalDatabase[g_sUnitEditorCurrentUnitSprite]->id, ImVec2(spite_width * 2, spite_height * 2));
+	ImGui::Image((ImTextureID)m_decalDatabase[g_sUnitEditorCurrentUnitSprite]->id, ImVec2(spite_width * 2, spite_height * 2));
 }
 
 

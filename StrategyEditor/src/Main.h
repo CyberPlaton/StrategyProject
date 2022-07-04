@@ -407,27 +407,35 @@ struct SPrefab
 	bool unit_prefab;
 	bool building_prefab;
 
+	// For both sides.
+	uint64_t health;
+	uint64_t defense;
+	uint64_t level;
+	uint64_t gold_cost;
+	std::string sprite;
+
+
 	// Building Stats.
 	// Exported only for Building Prefabs.
-
+	uint64_t gold_production;
+	uint64_t research_points_production;
+	uint64_t visibility_distance_in_tiles;
+	bool can_detect_hidden_units; // Spies and Assassins.
+	std::string predecessor_building_for_upgrade; // The same building but one level below. If level=1, then this is empty.
+	
 
 	// Unit Stats.
 	// Exported only for Unit Prefabs.
-	uint64_t health;
 	uint64_t action_points;
-	uint64_t level;
 	uint64_t armor;
-	uint64_t defense;
 	uint64_t attack_min;
 	uint64_t attack_max;
 	uint64_t movement_type;
 	uint64_t race;
-	std::string building_name;
-	uint64_t building_level;
-	uint64_t gold_cost;
+	std::string building_name; // Requirement for producing.
+	uint64_t building_level;   // Requirement for producing.
 	std::vector< std::string > starting_status_vec;
 	std::vector< std::string > abilities_vec;
-	std::string sprite;
 };
 
 
@@ -561,8 +569,10 @@ private:
 	void DisplayUnitPrefabImportWindow();
 	bool ImportUnitPrefabCache(const std::string& filepath);
 
+	// Prefab Editor.
 	void DisplayUnitEditor();
 	void DisplayUnitEditorMainMenu();
+	// Prefab Editor. Unit Section.
 	void DisplayUnitEditorNameEdit();
 	void DisplayUnitEditorLayoutTemplateNameEdit();
 	void DisplayUnitEditorHealthEdit();
@@ -580,6 +590,14 @@ private:
 	void DisplayUnitEditorUnitSpriteEdit();
 	void DisplayUnitEditorUnitSprite();
 	void DisplayUnitEditorPrefabQuickLoadDropDown();
+	// Prefab Editor. Building Section.
+	void DisplayBuildingEditorNameEdit();
+	void DisplayBuildingEditorLayoutTemplateEdit();
+	void DisplayBuildingEditorDefenseEdit();
+	void DisplayBuildingEditorProducerEdit();
+	void DisplayBuildingEditorVisibilityEdit();
+	void DisplayBuildingEditorRequirementsEdit();
+	void DisplayPrefabEditorBuildingSpriteEdit();
 
 
 	// GUI UNIT TEMPLATE LAYOUT EDITOR
