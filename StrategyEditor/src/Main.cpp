@@ -14,6 +14,10 @@ static char g_cPrefabStartingStatusName[128] = "";
 static char g_cPrefabAbilityName[128] = "";
 static char g_cPrefabBuildingPredecessorName[128] = "";
 
+static std::string g_sMapDataCacheFilepath = "assets/StrategyEditor_MapCache.xml";
+static bool g_bSavingMapDataDialog = false;
+static bool g_bLoadingMapDataDialog = false;
+
 static std::string g_sPrefabCacheFilepath = "assets/TilesetData/UnitPrefab/StrategyEditor_PrefabCache.xml";
 static bool g_bPrefabEditorEditingUnits = true;
 static bool g_bPrefabEditorEditingBuildings = false;
@@ -121,6 +125,11 @@ void GameEditor::RenderGUI()
 	}
 	else
 	{
+		// Saving/Loading Map Data
+		if (g_bSavingMapDataDialog) DisplayMapExportDialog();
+		if (g_bLoadingMapDataDialog) DisplayMapImportDialog();
+
+
 		// Decal Database
 		if (g_bDecalDatabaseOpen) RenderDecalDatabase();
 		//Prefab Database
@@ -245,6 +254,11 @@ bool GameEditor::OnUserCreate()
 	
 	// Load Audio assets
 	loaded &= LoadAudioData("assets/Audio/LoadDefinition.xml");
+
+
+	// Load Map Data Cache.
+	loaded &= ImportMapDataCache(g_sMapDataCacheFilepath);
+
 
 	return loaded;
 }
@@ -466,10 +480,15 @@ void GameEditor::RenderMainMenu()
 		if (ImGui::BeginMenu("Menu"))
 		{
 			if (ImGui::MenuItem("Imgui Demo")) ToggleMenuItem(g_bImguiDemoOpen);
-			if (ImGui::MenuItem("Save")) ExportMapData("assets/Map.xml");
-			if (ImGui::MenuItem("Load"))
+			if (ImGui::MenuItem("Save As..."))
 			{
-				ImportMapData("assets/Map.xml");
+				// Saving Map Data Window.
+				g_bSavingMapDataDialog = true;
+			}
+			if (ImGui::MenuItem("Load From..."))
+			{
+				// Loading Map Data Window.
+				g_bLoadingMapDataDialog = true;
 				SetAllLayersVisible();
 			}
 			if (ImGui::MenuItem("Exit"))
@@ -2741,7 +2760,7 @@ void GameEditor::UpdateLayerSorting()
 	m_sortedLayers = SortDescending(m_layerOrder);
 	m_sortedLayersAscending = SortAscending(m_layerOrder);
 }
-bool GameEditor::ExportMapData(const std::string& filepath)
+bool GameEditor::ExportMapData(const std::string& filepath, const std::string& map_name)
 {
 	tinyxml2::XMLDocument doc;
 	auto root = doc.NewElement("Map");
@@ -2778,9 +2797,46 @@ bool GameEditor::ExportMapData(const std::string& filepath)
 		}
 	}
 
+	if (doc.SaveFile(filepath.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		LOG_DBG_ERROR("[{:.4f}][ExportMapData] Failed to export Map Data \"{}\"!", APP_RUN_TIME, filepath);
+		LOG_FILE_ERROR("[{:.4f}][ExportMapData] Failed to export Map Data \"{}\"!", APP_RUN_TIME, filepath);
+
+		doc.Clear();
+		return false;
+	}
 
 
-	doc.SaveFile(filepath.c_str());
+	// Add self to Map Data Cache.
+	tinyxml2::XMLDocument cache_doc;
+	if (cache_doc.LoadFile(g_sMapDataCacheFilepath.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		LOG_DBG_ERROR("[{:.4f}][ExportMapData] Failed to load Map Data Cache \"{}\"!", APP_RUN_TIME, g_sMapDataCacheFilepath);
+		LOG_FILE_ERROR("[{:.4f}][ExportMapData] Failed to load Map Data Cache \"{}\"!", APP_RUN_TIME, g_sMapDataCacheFilepath);
+
+		cache_doc.Clear();
+		return false;
+	}
+	 
+	auto cache_root = cache_doc.RootElement();
+	auto map = cache_root->InsertNewChildElement("Map");
+	map->SetAttribute("name", map_name.c_str());
+	map->SetAttribute("path", map_name.c_str());
+	
+
+	if (cache_doc.SaveFile(g_sMapDataCacheFilepath.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		LOG_DBG_ERROR("[{:.4f}][ExportMapData] Error saving Map Data Cache: \"{}\"!", APP_RUN_TIME, g_sMapDataCacheFilepath);
+		LOG_FILE_ERROR("[{:.4f}][ExportMapData] Error saving Map Data Cache: \"{}\"!", APP_RUN_TIME, g_sMapDataCacheFilepath);
+
+		cache_doc.Clear();
+		return false;
+	}
+
+
+	LOG_DBG_INFO("[{:.4f}][ExportMapData] Successfully added map to Map Data Cache as: \"{}\" with path \"{}\"!", APP_RUN_TIME, map_name, map_name);
+	LOG_FILE_INFO("[{:.4f}][ExportMapData] Successfully added map to Map Data Cache as: \"{}\" with path \"{}\"!", APP_RUN_TIME, map_name, map_name);
+
 	return true;
 }
 
@@ -2875,15 +2931,15 @@ void GameEditor::ExportEntityComponentFort(tinyxml2::XMLElement* xml, Entity* en
 		terr->SetAttribute("y", tr.second);
 	}
 }
-void GameEditor::ExportEntityComponentTownhall(tinyxml2::XMLElement* xml, Entity* entity)
+void GameEditor::ExportEntityComponentTownhall(tinyxml2::XMLElement* xml, Entity* entity) // THIS HAS A BUG: EXPORTING BuidlginSlots should go INSIDE the Townhall Xml.
 {
 	auto th = xml->InsertNewChildElement("Townhall");
-	auto building_slots = xml->InsertNewChildElement("BuildingSlots");
-	auto territory = xml->InsertNewChildElement("Territory");
+	auto building_slots = th->InsertNewChildElement("BuildingSlots");
+	auto territory = th->InsertNewChildElement("Territory");
 
 	auto component = entity->Get< ComponentTownhall >("Townhall");
 
-	xml->SetAttribute("prefab", component->m_prefabFilepath.c_str());
+	th->SetAttribute("prefab", component->m_prefabFilepath.c_str());
 
 	for (auto bs : component->m_buildingSlots)
 	{
@@ -3043,6 +3099,153 @@ bool GameEditor::ImportMapData(const std::string& filepath)
 	return true;
 }
 
+bool GameEditor::ImportMapDataCache(const std::string& filepath)
+{
+	tinyxml2::XMLDocument doc;
+	if (doc.LoadFile(filepath.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		LOG_DBG_ERROR("[{:.4f}][ImportMapDataCache] Failed loading Map Data Cache \"{}\"!", APP_RUN_TIME, filepath);
+		LOG_FILE_ERROR("[{:.4f}][ImportMapDataCache] Failed loading Map Data Cache \"{}\"!", APP_RUN_TIME, filepath);
+		doc.Clear();
+		return false;
+	}
+
+	auto root = doc.RootElement();
+	auto map = root->FirstChildElement("Map");
+	while(map)
+	{
+
+		std::string map_full_path = "assets/" + std::string(map->Attribute("path")) + ".xml";
+		m_mapDataCacheMap.emplace(map_full_path, map->Attribute("name"));
+
+		map = map->NextSiblingElement("Map");
+	}
+
+	doc.Clear();
+	m_mapDataCacheLoaded = true;
+
+	LOG_DBG_INFO("[{:.4f}][ImportMapDataCache] Successfully loaded Map Data Cache \"{}\" with size \"{}\"!", APP_RUN_TIME, filepath, m_mapDataCacheMap.size());
+	LOG_FILE_INFO("[{:.4f}][ImportMapDataCache] Successfully loaded Map Data Cache \"{}\" with size \"{}\"!", APP_RUN_TIME, filepath, m_mapDataCacheMap.size());
+
+	return true;
+}
+
+void GameEditor::DisplayMapExportDialog()
+{
+	static char map_filepath_name[64] = "";
+	std::string path = "assets/";
+	std::string extension = ".xml";
+	
+	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
+
+	ImGui::Begin("Export Map Data", &g_bSavingMapDataDialog);
+	ImGui::InputText("|", map_filepath_name, 64);
+	HelpMarkerWithoutQuestion("Name of the file that will be created. The file will be saved in \"assets/\". It is not necessary to add the XML or MAP extension");
+	ImGui::SameLine();
+	if (ImGui::SmallButton("OK"))
+	{
+		// Check for sanity.
+		std::string name = std::string(map_filepath_name);
+		std::string full_filepath = path + name + extension;
+
+		bool length = name.length() > 0;
+		bool result = false;
+		if (length)
+		{
+			result = ExportMapData(full_filepath, name);
+		}
+
+		if (!length)
+		{
+			LOG_DBG_ERROR("[{:.4f}][DisplayMapExportDialog] Error exporting Map Data \"{}\": Map Name has 0 length!", APP_RUN_TIME, name);
+			LOG_FILE_ERROR("[{:.4f}][DisplayMapExportDialog]  Error exporting Map Data \"{}\": Map Name has 0 length!", APP_RUN_TIME, name);
+		}
+		if (result)
+		{
+			LOG_DBG_INFO("[{:.4f}][DisplayMapExportDialog] Success exporting Map Data \"{}\" into \"{}\"!", APP_RUN_TIME, name, full_filepath);
+			LOG_FILE_INFO("[{:.4f}][DisplayMapExportDialog]  Success exporting Map Data \"{}\" into \"{}\"!", APP_RUN_TIME, name, full_filepath);
+
+			// Reload the Map Data Cache.
+			ImportMapDataCache(g_sMapDataCacheFilepath);
+		}
+		else
+		{
+			LOG_DBG_ERROR("[{:.4f}][DisplayMapExportDialog] Error exporting Map Data \"{}\" into \"{}\"!", APP_RUN_TIME, name, full_filepath);
+			LOG_FILE_ERROR("[{:.4f}][DisplayMapExportDialog]  Error exporting Map Data \"{}\" into \"{}\"!", APP_RUN_TIME, name, full_filepath);
+		}
+
+		memset(&map_filepath_name, 0, sizeof(map_filepath_name));
+		g_bSavingMapDataDialog = false;
+	}
+
+	ImGui::End();
+}
+
+void GameEditor::DisplayMapImportDialog()
+{
+	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
+
+	ImGui::Begin("Import Map Data", &g_bLoadingMapDataDialog);
+
+	auto open = ImGui::CollapsingHeader("Quick Load");
+	HelpMarkerWithoutQuestion("Select a Map previously created to load into the editor");
+
+	if (open)
+	{
+		for (auto& map : m_mapDataCacheMap)
+		{
+			if (ImGui::Button(map.second.c_str()))
+			{
+				bool success = ImportMapData(map.first);
+				g_bLoadingMapDataDialog = false;
+
+
+				if(!success)
+				{
+					LOG_DBG_ERROR("[{:.4f}][DisplayMapImportDialog] Error loading Map Data \"{}\" from \"{}\"!", APP_RUN_TIME, map.second, map.first);
+					LOG_FILE_ERROR("[{:.4f}][DisplayMapImportDialog] Error loading Map Data \"{}\" from \"{}\"!", APP_RUN_TIME, map.second, map.first);
+				}
+				else
+				{
+					LOG_DBG_INFO("[{:.4f}][DisplayMapImportDialog] Successfully loaded Map Data \"{}\" from \"{}\"!", APP_RUN_TIME, map.second, map.first);
+					LOG_FILE_INFO("[{:.4f}][DisplayMapImportDialog] Successfully loaded Map Data \"{}\" from \"{}\"!", APP_RUN_TIME, map.second, map.first);
+				}
+			}
+		}
+	}
+
+	ImGui::End();
+}
+
+void GameEditor::FreeMapData()
+{
+	// Remove all Entities from Gameworld and from Entity Database.
+	while(m_entities.size() > 0)
+	{
+		auto e = m_entities[0];
+		delete e;
+		m_entities.erase(m_entities.begin());
+	}
+
+	// Clear all Rendering Layers.
+	for(auto& layer : m_gameworld)
+	{
+		DeleteRenderingLayer(layer.first);
+	}
+
+	// Reset all Rendering Layer related data.
+	m_layerOrder.clear();
+	m_sortedLayers.clear();
+	m_sortedLayersAscending.clear();
+	m_visibleLayers.clear();
+	m_mapobjectCount = 0;
+
+	m_mapobjectCount = 0;
+	m_currentLayer = "none";
+}
+
 Entity* GameEditor::ImportEntity(tinyxml2::XMLElement* xml, const std::string& layer)
 {
 	int x, y, w, h;
@@ -3138,7 +3341,7 @@ void GameEditor::ImportEntityComponentTownhall(tinyxml2::XMLElement* xml, Entity
 {
 	entity->Add(new ComponentTownhall(entity->m_positionx, entity->m_positiony), "Townhall");
 	auto townhall = entity->Get< ComponentCity >("Townhall");
-
+	
 	townhall->m_prefabFilepath = xml->Attribute("prefab");
 
 	// Get Building slots and Territory defined for Entity.
@@ -3198,10 +3401,20 @@ void GameEditor::AddTerritoryToCity(Entity* e, int slotx, int sloty)
 	if (e->Has("Townhall"))
 	{
 		e->Get< ComponentTownhall >("Townhall")->AddTerritory(slotx, sloty);
+		LOG_DBG_INFO("[{:.4f}][AddTerritoryToCity] Add Territory to Townhall \"{}\"!", APP_RUN_TIME, e->m_name);
+		LOG_FILE_INFO("[{:.4f}][AddTerritoryToCity] Add Territory to Townhall \"{}\"!", APP_RUN_TIME, e->m_name);
+
 	}
 	else if (e->Has("Fort"))
 	{
 		e->Get< ComponentFort >("Fort")->AddTerritory(slotx, sloty);
+		LOG_DBG_INFO("[{:.4f}][AddTerritoryToCity] Add Territory to Fort \"{}\"!", APP_RUN_TIME, e->m_name);
+		LOG_FILE_INFO("[{:.4f}][AddTerritoryToCity] Add Territory to Fort \"{}\"!", APP_RUN_TIME, e->m_name);
+	}
+	else
+	{
+		LOG_DBG_ERROR("[{:.4f}][AddTerritoryToCity] Failed adding Territory to City \"{}\": Entity does not have Townhall or Fort component!", APP_RUN_TIME, e->m_name);
+		LOG_FILE_ERROR("[{:.4f}][AddTerritoryToCity] Failed adding Territory to City \"{}\": Entity does not have Townhall or Fort component!", APP_RUN_TIME, e->m_name);
 	}
 }
 void GameEditor::AddBuildingSlotToCity(Entity* e, int slotx, int sloty)

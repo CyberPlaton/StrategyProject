@@ -88,6 +88,10 @@
 *			 o Export ComponentUnit and  export ComponentTownhall/Fort refactored, it stores now what it is (Unit or Building) and path to prefab.
 *			 o Placing Prefabs on the map by selecting them from the PrefabDatabase (otherwise the objects are just sprites basically).
 *
+* 04.07.2022 - Version 0.4.2 Patch complete:
+*			 o Building Prefab editing and exporting.
+*			 o Map Data Cache: Quick load and re-edit already created maps.
+* 
 * TODO: Ambient Audio "Editor" has to be update to be based on FMOD,
 *		as soon as the Audio Engine with FMOD is completed.
 *		After this the "Editor" can be extended based on FMOD to utilize 
@@ -524,6 +528,11 @@ private:
 	std::map< std::string, std::string > m_prefabCacheMap;
 	bool m_prefabCacheLoaded = false;
 
+	// Map Data.
+	std::map< std::string, std::string > m_mapDataCacheMap;
+	bool m_mapDataCacheLoaded = false;
+
+
 private:
 
 	// GUI
@@ -672,8 +681,14 @@ private:
 	void CopyStringToCharArray(const std::string& s, char arr[], uint64_t arr_size);
 
 	// UTIL SERIALIZATION/DESERIALIZATION
-	bool ExportMapData(const std::string& filepath);
+	// Game World and Map.
+	bool ExportMapData(const std::string& filepath, const std::string& map_name);
 	bool ImportMapData(const std::string& filepath);
+	bool ImportMapDataCache(const std::string& filepath);
+	void FreeMapData();
+	void DisplayMapExportDialog();
+	void DisplayMapImportDialog();
+
 	// Import
 	Entity* ImportEntity(tinyxml2::XMLElement* xml, const std::string& layer);
 	void ImportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* entity);
