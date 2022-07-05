@@ -138,6 +138,8 @@ struct Entity
 	
 	bool Has(std::string component);
 	
+	template < class T >
+	T* Add(Component* c, std::string name) { m_components.emplace(name, c); return reinterpret_cast<T*>(c); }
 	void Add(Component* c, std::string name) { m_components.emplace(name, c); }
 	void Add(Entity* e) { m_children.push_back(e); }
 

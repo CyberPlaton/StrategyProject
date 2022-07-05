@@ -92,6 +92,9 @@
 *			 o Building Prefab editing and exporting.
 *			 o Map Data Cache: Quick load and re-edit already created maps.
 * 
+* 05.07.2022 - Version 0.4.3 Patch complete:
+*			 o Fixing miscellaneous bugs.
+* 
 * TODO: Ambient Audio "Editor" has to be update to be based on FMOD,
 *		as soon as the Audio Engine with FMOD is completed.
 *		After this the "Editor" can be extended based on FMOD to utilize 
@@ -120,7 +123,7 @@
 
 #define EDITOR_MAJOR_VERSION 0
 #define EDITOR_MINOR_VERSION 4
-#define EDITOR_PATCH_VERSION 1
+#define EDITOR_PATCH_VERSION 3
 
 
 
@@ -434,6 +437,9 @@ struct SPrefab
 	uint64_t armor;
 	uint64_t attack_min;
 	uint64_t attack_max;
+	bool can_attack_ranged;
+	uint64_t ranged_attack_min;
+	uint64_t ranged_attack_max;
 	uint64_t movement_type;
 	uint64_t race;
 	std::string building_name; // Requirement for producing.
@@ -674,6 +680,7 @@ private:
 	void SetAllLayersVisible();
 	void ToggleLayerVisibility(int layer);
 	bool LayerVisible(int layer);
+	bool DoesLayerExist(const std::string& layer_name);
 
 	// UTIL ALGORITHM
 	std::multimap< int, std::string, std::greater<int> > SortDescending(std::map< std::string, int >& map);

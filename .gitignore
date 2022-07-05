@@ -48,3 +48,21 @@ bin/
 intermediate/
 .vs/
 Assets/
+/*.xml
+/Legal/*.docx
+/Legal/*.pdf
+/StrategyEditor/common/include/spdlog/fmt/bundled/*.rst
+/StrategyServer/common/include/LuaBridge/Lua.5.2.0/doc/*.html
+/StrategyServer/common/include/LuaBridge/Lua.5.2.0/doc/*.gif
+/StrategyServer/common/include/LuaBridge/Lua.5.2.0/doc/*.1
+/StrategyServer/common/include/LuaBridge/Lua.5.2.0/doc/*.css
+/StrategyServer/common/include/LuaBridge/Lua.5.2.0/doc/*.png
+/StrategyServer/common/include/imgui/*.txt
+/Tools/Crunch/Unit/DARK ELF/*.png
+/Tools/Crunch/Unit/HIGH ELF/*.png
+/Tools/Crunch/Unit/HUMAN/SPECIAL CARD UNITS/*.png
+/Tools/Crunch/Unit/HUMAN/*.png
+/Tools/Crunch/Unit/ORC/*.png
+/StrategyServer/common/include/LuaBridge/Lua.5.2.0/Makefile
+/StrategyServer/common/include/LuaBridge/Lua.5.2.0/README
+/StrategyServer/common/include/LuaBridge/Lua.5.2.0/src/Makefile

@@ -211,7 +211,7 @@ bool GameEditor::OnUserCreate()
 	loaded &= LoadTilesetData("Structure", "assets/Tileset/Structure", "assets/TilesetData/Structure.json");
 	loaded &= LoadTilesetData("Wall", "assets/Tileset/Wall", "assets/TilesetData/Wall.json");
 	loaded &= LoadTilesetData("Hill", "assets/Tileset/Hill", "assets/TilesetData/Hill.json");
-	loaded &= LoadTilesetData("Unit", "assets/Tileset/Unit", "assets/TilesetData/Unit.json");
+	loaded &= LoadTilesetData("Unit", "assets/Tileset/Unit", "assets/TilesetData/Units.json");
 
 	loaded &= LoadEditorGraphicalData();
 
@@ -230,6 +230,24 @@ bool GameEditor::OnUserCreate()
 	m_spriteDatabase.push_back(sprite);
 	m_decalSizeDatabase.try_emplace("Fort_2", std::make_pair(256, 256));
 
+
+	// LOAD FOR TEST THE 2 SAMURAI UNITS.
+	sprite = new olc::Sprite("assets/Tileset/Unit/HUMAN/SPECIAL CARD UNITS/figure_180x180_framed_standard_154_samurai.png");
+	decal = new olc::Decal(sprite);
+	m_unitDecalDatabase.emplace("KATANA SAMURAI", decal);
+	m_decalDatabase.emplace("KATANA SAMURAI", decal);
+	m_spriteDatabase.push_back(sprite);
+	m_decalSizeDatabase.try_emplace("KATANA SAMURAI", std::make_pair(180, 180));
+
+	sprite = new olc::Sprite("assets/Tileset/Unit/HUMAN/SPECIAL CARD UNITS/figure_180x260_framed_standard_155_yari_ashigaru.png");
+	decal = new olc::Decal(sprite);
+	m_unitDecalDatabase.emplace("YARI ASHIGARU", decal);
+	m_decalDatabase.emplace("YARI ASHIGARU", decal);
+	m_spriteDatabase.push_back(sprite);
+	m_decalSizeDatabase.try_emplace("YARI ASHIGARU", std::make_pair(180, 256));
+
+
+
 	sprite = new olc::Sprite("assets/Editor/speaker_audio_sound_loud.png");
 	decal = new olc::Decal(sprite);
 	m_editorDecalDatabase.try_emplace("AudioOn", decal);
@@ -244,14 +262,6 @@ bool GameEditor::OnUserCreate()
 	m_decalDatabase.emplace("AudioOff", decal);
 	m_spriteDatabase.push_back(sprite);
 
-	// Load Testing Decal.
-	sprite = new olc::Sprite("assets/Tileset/Unit/figure_180x260_framed_standard_112_mounted_knight.png");
-	decal = new olc::Decal(sprite);
-	m_unitDecalDatabase.try_emplace("Human_Mounted_Knight", decal);
-	m_spriteDatabase.push_back(sprite);
-	m_decalDatabase.emplace("Human_Mounted_Knight", decal);
-	m_decalSizeDatabase.try_emplace("Human_Mounted_Knight", std::make_pair(180, 260));
-	
 	// Load Audio assets
 	loaded &= LoadAudioData("assets/Audio/LoadDefinition.xml");
 
@@ -1263,6 +1273,7 @@ void GameEditor::HandleInput()
 				// React to when we are creatin a Prefabed Mapobject.
 				if(g_bPlacingPrefabedMapobjectOnMap)
 				{
+					// BUG: If selected Layer does not exists -> Hard Crash.
 					CreatePrefabedMapobject(point.x, point.y, m_currentLayer, g_sSelectedMapobject);
 				}
 				else
@@ -1633,6 +1644,12 @@ Entity* GameEditor::CreateMapobjectAudioSource(uint64_t x, uint64_t y, float rad
 }
 Entity* GameEditor::CreateMapobjectEx(uint64_t x, uint64_t y, std::string layer, std::string decal, std::string name)
 {
+	// Create Entities only on Valid Layers.
+	if(!DoesLayerExist(layer))
+	{
+		return nullptr;
+	}
+
 	auto current_layer = m_currentLayer;
 	m_currentLayer = layer;
 
@@ -1669,19 +1686,25 @@ Entity* GameEditor::CreatePrefabedMapobject(uint64_t x, uint64_t y, std::string 
 
 	auto e = CreateMapobjectEx(x, y, layer, decal, name);
 	
-	if(auto c = e->Get < ComponentUnit >("Unit"); c)
+	if(e)
 	{
-		c->m_prefabFilepath = g_sSelectedPrefab;
-	}
-	else if (auto c = e->Get < ComponentTownhall >("Townhall"); c)
-	{
-		c->m_prefabFilepath = g_sSelectedPrefab;
-	}
-	else if (auto c = e->Get < ComponentFort >("Fort"); c)
-	{
-		c->m_prefabFilepath = g_sSelectedPrefab;
+		if (auto c = e->Get < ComponentUnit >("Unit"); c)
+		{
+			c->m_prefabFilepath = g_sSelectedPrefab;
+		}
+		else if (auto c = e->Get < ComponentTownhall >("Townhall"); c)
+		{
+			c->m_prefabFilepath = g_sSelectedPrefab;
+		}
+		else if (auto c = e->Get < ComponentFort >("Fort"); c)
+		{
+			c->m_prefabFilepath = g_sSelectedPrefab;
+		}
+
+		return e;
 	}
 
+	return nullptr;
 }
 
 Entity* GameEditor::CreateMapobject(uint64_t x, uint64_t y, std::string decal, bool unit, std::string name)
@@ -2675,6 +2698,12 @@ bool GameEditor::LayerVisible(int layer)
 {
 	return m_visibleLayers[layer] == 1;
 }
+
+bool GameEditor::DoesLayerExist(const std::string& layer_name)
+{
+	return m_layerOrder.find(layer_name) != m_layerOrder.end();
+}
+
 void GameEditor::BeginTooltip(const char* help_text)
 {
 	if (ImGui::IsItemHovered())
@@ -3365,7 +3394,7 @@ void GameEditor::ImportEntityComponentTownhall(tinyxml2::XMLElement* xml, Entity
 
 void GameEditor::ImportEntityComponentUnit(tinyxml2::XMLElement* xml, Entity* entity)
 {
-	auto c = entity->Get< ComponentUnit >("Unit");
+	auto c = entity->Add< ComponentUnit >(new ComponentUnit(), "Unit");
 	c->m_prefabFilepath = xml->Attribute("prefab");
 }
 
@@ -3501,6 +3530,15 @@ bool GameEditor::ExportUnitPrefab(const std::string& filepath, SPrefab* prefab)
 		data->SetAttribute("race", prefab->race);
 		data->SetAttribute("building_name", prefab->building_name.c_str());
 		data->SetAttribute("building_level", prefab->building_level);
+
+		auto ranged = prefab->can_attack_ranged;
+		data->SetAttribute("ranged_unit", ranged);
+		if(ranged)
+		{
+			data->SetAttribute("ranged_attack_min", prefab->ranged_attack_min);
+			data->SetAttribute("ranged_attack_max", prefab->ranged_attack_max);
+		}
+
 		
 		// Add starting statuses.
 		auto xmlStatus = data->InsertNewChildElement("StartingStatus");
@@ -3645,7 +3683,12 @@ SPrefab* GameEditor::ImportUnitPrefab(const std::string& filepath)
 		auto building_name = data->Attribute("building_name");
 		auto building_level = data->Int64Attribute("building_level");
 		auto gold_cost = data->Int64Attribute("gold_cost");
-
+		auto ranged = data->BoolAttribute("ranged_unit");
+		if(ranged)
+		{
+			prefab->ranged_attack_min = data->Int64Attribute("ranged_attack_min");
+			prefab->ranged_attack_max = data->Int64Attribute("ranged_attack_max");
+		}
 		prefab->prefab_name = prefab_name;
 		prefab->layout_template_name = layout_template_name;
 		prefab->health = health;
@@ -3660,6 +3703,7 @@ SPrefab* GameEditor::ImportUnitPrefab(const std::string& filepath)
 		prefab->building_name = building_name;
 		prefab->building_level = building_level;
 		prefab->gold_cost = gold_cost;
+		prefab->can_attack_ranged = ranged;
 		
 		auto statuses = data->FirstChildElement("StartingStatus");
 		auto abilities = data->FirstChildElement("Abilities");
@@ -4151,8 +4195,11 @@ void GameEditor::DisplayUnitEditorAttackEdit()
 {
 	ImGuiID attack_id = g_idUnitEditorElementID + 8;
 	ImGuiID attack_scalar_id = g_idUnitEditorElementID + 9;
+	ImGuiID ranged_attack_id = g_idUnitEditorElementID + 8000;
+	ImGuiID ranged_attack_scalar_id = g_idUnitEditorElementID + 9000;
 
-	if (ImGui::CollapsingHeader("Attack"))
+
+	if (ImGui::CollapsingHeader("Melee Attack"))
 	{
 		if (g_pCurrentEditedPrefab)
 		{
@@ -4162,26 +4209,66 @@ void GameEditor::DisplayUnitEditorAttackEdit()
 			ImGui::PushID(attack_id);
 			ImGui::SliderInt("Min", &attack_min, 1, 500, "%d");
 			ImGui::PopID();
-			HelpMarkerWithoutQuestion("The Minimal Attack Value that this unit can do");
+			HelpMarkerWithoutQuestion("The Minimal Melee Attack Value that this unit can do");
 			ImGui::SameLine();
 			ImGui::PushID(attack_scalar_id);
 			ImGui::InputScalar("ScalarIntMin", ImGuiDataType_U32, &attack_min, &u32_one);
 			ImGui::PopID();
-			HelpMarkerWithoutQuestion("The Minimal Attack Value that this unit can do");
+			HelpMarkerWithoutQuestion("The Minimal Melee Attack Value that this unit can do");
 
 			ImGui::PushID(attack_id + 1);
 			ImGui::SliderInt("Max", &attack_max, 1, 500, "%d");
 			ImGui::PopID();
-			HelpMarkerWithoutQuestion("The Maximal Attack Value that this unit can do");
+			HelpMarkerWithoutQuestion("The Maximal Melee Attack Value that this unit can do");
 			ImGui::SameLine();
 			ImGui::PushID(attack_scalar_id + 1);
 			ImGui::InputScalar("ScalarIntMax", ImGuiDataType_U32, &attack_max, &u32_one);
 			ImGui::PopID();
-			HelpMarkerWithoutQuestion("The Maximal Attack Value that this unit can do");
+			HelpMarkerWithoutQuestion("The Maximal Melee Attack Value that this unit can do");
 
 
 			g_pCurrentEditedPrefab->attack_min = attack_min;
 			g_pCurrentEditedPrefab->attack_max = attack_max;
+		}
+	}
+	
+	if(g_pCurrentEditedPrefab)
+	{
+		ImGui::Checkbox("Ranged Unit", &g_pCurrentEditedPrefab->can_attack_ranged);
+
+		if(g_pCurrentEditedPrefab->can_attack_ranged)
+		{
+			if (ImGui::CollapsingHeader("Ranged Attack"))
+			{
+				if (g_pCurrentEditedPrefab)
+				{
+					int attack_min = g_pCurrentEditedPrefab->ranged_attack_min;
+					int attack_max = g_pCurrentEditedPrefab->ranged_attack_max;
+
+					ImGui::PushID(ranged_attack_id);
+					ImGui::SliderInt("Min", &attack_min, 1, 500, "%d");
+					ImGui::PopID();
+					HelpMarkerWithoutQuestion("The Minimal Ranged Attack Value that this unit can do");
+					ImGui::SameLine();
+					ImGui::PushID(ranged_attack_scalar_id);
+					ImGui::InputScalar("ScalarIntMin", ImGuiDataType_U32, &attack_min, &u32_one);
+					ImGui::PopID();
+					HelpMarkerWithoutQuestion("The Minimal Ranged Attack Value that this unit can do");
+
+					ImGui::PushID(ranged_attack_id + 1);
+					ImGui::SliderInt("Max", &attack_max, 1, 500, "%d");
+					ImGui::PopID();
+					HelpMarkerWithoutQuestion("The Maximal Ranged Attack Value that this unit can do");
+					ImGui::SameLine();
+					ImGui::PushID(ranged_attack_scalar_id + 1);
+					ImGui::InputScalar("ScalarIntMax", ImGuiDataType_U32, &attack_max, &u32_one);
+					ImGui::PopID();
+					HelpMarkerWithoutQuestion("The Maximal Ranged Attack Value that this unit can do");
+
+					g_pCurrentEditedPrefab->ranged_attack_min = attack_min;
+					g_pCurrentEditedPrefab->ranged_attack_max = attack_max;
+				}
+			}
 		}
 	}
 }
