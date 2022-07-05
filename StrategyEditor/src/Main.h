@@ -85,7 +85,7 @@
 * 04.07.2022 - Version 0.4.1 Patch complete:
 *			 o Prefab Caching: Quick load and re-edit
 *			 o Create Unit and Building Prefab and distinguish them (Prefab self tells what kind it is).
-*			 o Export ComponentUnit and  export ComponentTownhall/Fort refactored, it stores now what it is (Unit or Building) and path to prefab.
+*			 o Export ComponentUnit and  export ComponentTownhall/Fort re-factored, it stores now what it is (Unit or Building) and path to prefab.
 *			 o Placing Prefabs on the map by selecting them from the PrefabDatabase (otherwise the objects are just sprites basically).
 *
 * 04.07.2022 - Version 0.4.2 Patch complete:
@@ -99,6 +99,8 @@
 *				 - Whether its a ranged unit field.
 *				 - Ranged Attack min and max values.
 *				 - Ranged Attack Range min and max values.
+*			 o Import/Export of Unit Prefabs updated.
+*			 o Quick Save functionality for current edited Prefab.
 * 
 * 
 * TODO: Ambient Audio "Editor" has to be update to be based on FMOD,

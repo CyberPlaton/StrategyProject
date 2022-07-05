@@ -19,6 +19,7 @@ static bool g_bSavingMapDataDialog = false;
 static bool g_bLoadingMapDataDialog = false;
 
 static std::string g_sPrefabCacheFilepath = "assets/TilesetData/UnitPrefab/StrategyEditor_PrefabCache.xml";
+static std::string g_sCurrentEditedPrefabFilePath = "none";
 static bool g_bPrefabEditorEditingUnits = true;
 static bool g_bPrefabEditorEditingBuildings = false;
 static bool g_bPlacingPrefabedMapobjectOnMap = false;
@@ -3836,6 +3837,7 @@ void GameEditor::DisplayUnitPrefabImportWindow()
 		if (result)
 		{
 			g_sUnitEditorCurrentUnitSprite = g_pCurrentEditedPrefab->sprite;
+			g_sCurrentEditedPrefabFilePath = name;
 
 			LOG_DBG_INFO("[{:.4f}][DisplayUnitPrefabImportWindow] Success importing Unit Prefab \"{}\"!", APP_RUN_TIME, g_pCurrentEditedPrefab->prefab_name);
 			LOG_FILE_INFO("[{:.4f}][DisplayUnitPrefabImportWindow]  Success importing Unit Prefab \"{}\"!", APP_RUN_TIME, g_pCurrentEditedPrefab->prefab_name);
@@ -3872,6 +3874,7 @@ void GameEditor::DisplayUnitEditorPrefabQuickLoadDropDown()
 				{
 					g_sUnitEditorCurrentUnitSprite = g_pCurrentEditedPrefab->sprite;
 					g_bImportingUnitPrefab = false;
+					g_sCurrentEditedPrefabFilePath = prefab.first;
 				}
 				return;
 			}
@@ -3940,6 +3943,9 @@ void GameEditor::DisplayUnitEditor()
 
 void GameEditor::DisplayUnitEditorMainMenu()
 {
+	auto quick_save = g_sCurrentEditedPrefabFilePath.compare("none") != 0 && g_pCurrentEditedPrefab != nullptr;
+
+
 	if (ImGui::SmallButton("New"))
 	{
 		g_pCurrentEditedPrefab = new SPrefab();
@@ -3953,6 +3959,15 @@ void GameEditor::DisplayUnitEditorMainMenu()
 		memset(&g_cPrefabRequiredBuildingName, 0, sizeof(g_cPrefabRequiredBuildingName));
 		// Current Prefab Sprite.
 		g_sUnitEditorCurrentUnitSprite = "none";
+		g_sCurrentEditedPrefabFilePath = "none";
+	}
+	if(quick_save)
+	{
+		ImGui::SameLine();
+		if (ImGui::SmallButton("Quick Save..."))
+		{
+			ExportUnitPrefab(g_sCurrentEditedPrefabFilePath, g_pCurrentEditedPrefab);
+		}
 	}
 	ImGui::SameLine();
 	if(ImGui::SmallButton("Save As..."))
