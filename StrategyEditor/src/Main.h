@@ -95,6 +95,10 @@
 * 05.07.2022 - Version 0.4.3 Patch complete:
 *			 o Fixing miscellaneous bugs.
 *			 o Removing already added Starting Status Effects and Abilities of Unit Prefabs.
+*			 o For Unit Prefabs:
+*				 - Whether its a ranged unit field.
+*				 - Ranged Attack min and max values.
+*				 - Ranged Attack Range min and max values.
 * 
 * 
 * TODO: Ambient Audio "Editor" has to be update to be based on FMOD,
@@ -442,6 +446,8 @@ struct SPrefab
 	bool can_attack_ranged;
 	uint64_t ranged_attack_min;
 	uint64_t ranged_attack_max;
+	uint64_t ranged_range_min;
+	uint64_t ranged_range_max;
 	uint64_t movement_type;
 	uint64_t race;
 	std::string building_name; // Requirement for producing.

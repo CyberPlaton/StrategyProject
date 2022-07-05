@@ -3538,6 +3538,8 @@ bool GameEditor::ExportUnitPrefab(const std::string& filepath, SPrefab* prefab)
 		{
 			data->SetAttribute("ranged_attack_min", prefab->ranged_attack_min);
 			data->SetAttribute("ranged_attack_max", prefab->ranged_attack_max);
+			data->SetAttribute("ranged_range_min", prefab->ranged_range_min);
+			data->SetAttribute("ranged_range_max", prefab->ranged_range_max);
 		}
 
 		
@@ -3689,6 +3691,8 @@ SPrefab* GameEditor::ImportUnitPrefab(const std::string& filepath)
 		{
 			prefab->ranged_attack_min = data->Int64Attribute("ranged_attack_min");
 			prefab->ranged_attack_max = data->Int64Attribute("ranged_attack_max");
+			prefab->ranged_range_min = data->Int64Attribute("ranged_range_min");
+			prefab->ranged_range_max = data->Int64Attribute("ranged_range_max");
 		}
 		prefab->prefab_name = prefab_name;
 		prefab->layout_template_name = layout_template_name;
@@ -4198,6 +4202,8 @@ void GameEditor::DisplayUnitEditorAttackEdit()
 	ImGuiID attack_scalar_id = g_idUnitEditorElementID + 9;
 	ImGuiID ranged_attack_id = g_idUnitEditorElementID + 8000;
 	ImGuiID ranged_attack_scalar_id = g_idUnitEditorElementID + 9000;
+	ImGuiID ranged_range_id = g_idUnitEditorElementID + 10000;
+	ImGuiID ranged_range_scalar_id = g_idUnitEditorElementID + 10001;
 
 
 	if (ImGui::CollapsingHeader("Melee Attack"))
@@ -4239,6 +4245,7 @@ void GameEditor::DisplayUnitEditorAttackEdit()
 
 		if(g_pCurrentEditedPrefab->can_attack_ranged)
 		{
+			// Attack values
 			if (ImGui::CollapsingHeader("Ranged Attack"))
 			{
 				if (g_pCurrentEditedPrefab)
@@ -4268,6 +4275,39 @@ void GameEditor::DisplayUnitEditorAttackEdit()
 
 					g_pCurrentEditedPrefab->ranged_attack_min = attack_min;
 					g_pCurrentEditedPrefab->ranged_attack_max = attack_max;
+				}
+			}
+
+			// Attack range
+			if (ImGui::CollapsingHeader("Ranged Attack Range"))
+			{
+				if (g_pCurrentEditedPrefab)
+				{
+					int range_min = g_pCurrentEditedPrefab->ranged_range_min;
+					int range_max = g_pCurrentEditedPrefab->ranged_range_max;
+
+					ImGui::PushID(ranged_range_id);
+					ImGui::SliderInt("Min", &range_min, 1, 20, "%d");
+					ImGui::PopID();
+					HelpMarkerWithoutQuestion("The Minimal Range that the unit can execute a ranged attack");
+					ImGui::SameLine();
+					ImGui::PushID(ranged_range_scalar_id);
+					ImGui::InputScalar("ScalarIntMin", ImGuiDataType_U32, &range_min, &u32_one);
+					ImGui::PopID();
+					HelpMarkerWithoutQuestion("The Minimal Range that the unit can execute a ranged attack");
+
+					ImGui::PushID(ranged_range_id + 1);
+					ImGui::SliderInt("Max", &range_max, 1, 20, "%d");
+					ImGui::PopID();
+					HelpMarkerWithoutQuestion("The Maximal Range that the unit can execute a ranged attack");
+					ImGui::SameLine();
+					ImGui::PushID(ranged_range_scalar_id + 1);
+					ImGui::InputScalar("ScalarIntMax", ImGuiDataType_U32, &range_max, &u32_one);
+					ImGui::PopID();
+					HelpMarkerWithoutQuestion("The Maximal Range that the unit can execute a ranged attack");
+
+					g_pCurrentEditedPrefab->ranged_range_min = range_min;
+					g_pCurrentEditedPrefab->ranged_range_max = range_max;
 				}
 			}
 		}
