@@ -94,6 +94,8 @@
 * 
 * 05.07.2022 - Version 0.4.3 Patch complete:
 *			 o Fixing miscellaneous bugs.
+*			 o Removing already added Starting Status Effects and Abilities of Unit Prefabs.
+* 
 * 
 * TODO: Ambient Audio "Editor" has to be update to be based on FMOD,
 *		as soon as the Audio Engine with FMOD is completed.
@@ -686,6 +688,7 @@ private:
 	std::multimap< int, std::string, std::greater<int> > SortDescending(std::map< std::string, int >& map);
 	std::map< int, std::string > SortAscending(std::map< std::string, int >& map);
 	void CopyStringToCharArray(const std::string& s, char arr[], uint64_t arr_size);
+	
 
 	// UTIL SERIALIZATION/DESERIALIZATION
 	// Game World and Map.

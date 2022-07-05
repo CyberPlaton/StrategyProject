@@ -2752,6 +2752,7 @@ void GameEditor::CopyStringToCharArray(const std::string& s, char arr[], uint64_
 	}
 }
 
+
 void GameEditor::DeleteRenderingLayer(std::string layer_name)
 {
 	auto entry = m_layerOrder.find(layer_name);
@@ -4451,6 +4452,8 @@ void GameEditor::DisplayUnitEditorStartingStatusEdit()
 {
 	ImGuiID input_text_id = g_idUnitEditorElementID + 300;
 	ImGuiID input_text_ok_id = g_idUnitEditorElementID + 301;
+	ImGuiID remove_button_id = g_idUnitEditorElementID + 9001;
+	std::string to_be_removed;
 	
 	if (ImGui::CollapsingHeader("Starting Status"))
 	{
@@ -4458,12 +4461,26 @@ void GameEditor::DisplayUnitEditorStartingStatusEdit()
 		if(g_pCurrentEditedPrefab)
 		{
 			// Assume there are not duplicate statuses.
+			int i = 0;
 			for (auto& status : g_pCurrentEditedPrefab->starting_status_vec)
 			{
 				ImGui::BulletText(status.c_str());
+				ImGui::SameLine();
+				ImGui::PushID(remove_button_id + i);
+				if (ImGui::SmallButton("x"))
+				{
+					to_be_removed = status;
+				}
+				ImGui::PopID();
+				i++;
 			}
 		}
 
+		if (to_be_removed.size() > 0)
+		{
+			auto it = std::find(g_pCurrentEditedPrefab->starting_status_vec.begin(), g_pCurrentEditedPrefab->starting_status_vec.end(), to_be_removed);
+			g_pCurrentEditedPrefab->starting_status_vec.erase(it);
+		}
 
 		ImGui::PushID(input_text_id);
 		ImGui::InputText("|", g_cPrefabStartingStatusName, sizeof(g_cPrefabStartingStatusName));
@@ -4521,7 +4538,8 @@ void GameEditor::DisplayUnitEditorAbilitiesEdit()
 {
 	ImGuiID input_text_id = g_idUnitEditorElementID + 400;
 	ImGuiID input_text_ok_id = g_idUnitEditorElementID + 401;
-	
+	ImGuiID remove_button_id = g_idUnitEditorElementID + 9001;
+	std::string to_be_removed;
 
 	if (ImGui::CollapsingHeader("Abilities"))
 	{
@@ -4529,10 +4547,25 @@ void GameEditor::DisplayUnitEditorAbilitiesEdit()
 		if (g_pCurrentEditedPrefab)
 		{
 			// Assume there are not duplicate abilities.
+			int i = 0;
 			for (auto& abl : g_pCurrentEditedPrefab->abilities_vec)
 			{
 				ImGui::BulletText(abl.c_str());
+				ImGui::SameLine();
+				ImGui::PushID(remove_button_id + i);
+				if(ImGui::SmallButton("x"))
+				{
+					to_be_removed = abl;
+				}
+				ImGui::PopID();
+				i++;
 			}
+		}
+
+		if(to_be_removed.size() > 0)
+		{
+			auto it = std::find(g_pCurrentEditedPrefab->abilities_vec.begin(), g_pCurrentEditedPrefab->abilities_vec.end(), to_be_removed);
+			g_pCurrentEditedPrefab->abilities_vec.erase(it);
 		}
 
 
