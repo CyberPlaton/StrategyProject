@@ -45,6 +45,8 @@ namespace cherrysoda
 
 	/// @brief Manages the execution and deletion of Status Effects on an Entity.
 	// The execution is Turn Based and performed on Turn End.
+	// How are duplicate Status Effects handled? -> By Design Decision, they are NOT handled. Meaning duplication and stacking of Status Effects
+	// is tolerated, and if we flag to remove a SE which is duplicate, we remove the first one we find, the other one stays unless flagged as to be removed again.
 	class CEntityStatusEffectMngr : public Component
 	{
 	public:
@@ -75,6 +77,7 @@ namespace cherrysoda
 			g_CEntityStatusEffectMngrVec[m_managerId] = nullptr;
 		}
 
+
 		static void OnTurnEnd()
 		{
 			for(auto& mngr: g_CEntityStatusEffectMngrVec)
@@ -83,24 +86,31 @@ namespace cherrysoda
 			}
 		}
 
+		/// @brief Add a Status Effect Object to the Entity.
+		/// @param effect Pointer to Status Effect Object.
 		void Add(EntityStatusEffect* effect)
 		{
 			m_statusEffectsVec.push_back(effect);
 		}
-		void Remove(EntityStatusEffect* effect)
-		{
-			int i = 0;
-			for(auto& e: m_statusEffectsVec)
-			{
-				if(effect->Name().compare(e->Name()) == 0)
-				{
-					m_statusEffectsVec.erase(m_statusEffectsVec.begin() + i);
-					return;
-				}
 
-				i++;
-			}
+
+		/// @brief Flag (!) a Status Effect to be removed. This may not lead to an actual removal however,
+		/// especially if the Status Effect is permanent.
+		/// @param effect_name The name of the Status Effect to be removed.
+		void Remove(const String& effect_name)
+		{
+			m_statusEffectsFlaggedToBeRemovedVec.push_back(effect_name);
 		}
+
+
+		/// @brief Whether a SE is flagged to be removed. Meaning it will be checked and if the conditions are met, he will be deleted.
+		/// @param effect_name The name of the SE.
+		/// @return True, if the given SE if flagged to be removed.
+		bool StatusEffectFlaggedToBeRemoved(const String& effect_name)
+		{
+			return std::find(m_statusEffectsFlaggedToBeRemovedVec.begin(), m_statusEffectsFlaggedToBeRemovedVec.end(), effect_name) != m_statusEffectsFlaggedToBeRemovedVec.end();
+		}
+
 
 		/// @brief Execute all status effects update function on Turn End. 
 		/// Removes those that are not needed anymore and remain those that should stay.
@@ -134,8 +144,8 @@ namespace cherrysoda
 			// Delete the unneeded effects.
 			while(removing_effects.size() > 0)
 			{
-				auto effect = removing_effects[0];
-				delete effect; effect = nullptr;
+				_deleteStatusEffect(removing_effects[0]);
+				
 				removing_effects.erase(removing_effects.begin());
 			}
 		}
@@ -150,8 +160,42 @@ namespace cherrysoda
 		size_t m_managerId = 0;
 		std::vector< EntityStatusEffect* > m_statusEffectsVec;
 
+		std::vector< String > m_statusEffectsFlaggedToBeRemovedVec;
+
 	private:
 		CEntityStatusEffectMngr(bool active, bool visible) : base(active, visible) {}
+
+
+		/// @brief Remove SE from Storages and Free its memory.
+		/// @param effect The SE Object to be deleted.
+		void _deleteStatusEffect(EntityStatusEffect* effect)
+		{
+			// Remove SE from storage.
+			std::string effect_name = effect->Name();
+
+			int i = 0;
+			for (auto& e : m_statusEffectsVec)
+			{
+				if (effect->Name().compare(e->Name()) == 0)
+				{
+					m_statusEffectsVec.erase(m_statusEffectsVec.begin() + i);
+					break;
+				}
+
+				i++;
+			}
+
+			// Remove "to be removed" flag.
+			auto it = std::find(m_statusEffectsFlaggedToBeRemovedVec.begin(), m_statusEffectsFlaggedToBeRemovedVec.end(), effect_name);
+			if(it != m_statusEffectsFlaggedToBeRemovedVec.end())
+			{
+				m_statusEffectsFlaggedToBeRemovedVec.erase(it);
+			}
+
+			// Free SE memory.
+			delete effect;
+			effect = nullptr;
+		}
 	};
 
 
@@ -163,7 +207,8 @@ namespace cherrysoda
 auto mngr = entity->Get< CEntityStatusEffectMngr >(); \
 mngr->Add(effect) \
 
-#define ENTITY_REMOVE_STATUS_EFFECT() \
+
+#define ENTITY_REMOVE_STATUS_EFFECT(effect, entity) \
 auto mngr = entity->Get< CEntityStatusEffectMngr >(); \
 mngr->Remove(effect) \
 
