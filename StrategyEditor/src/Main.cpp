@@ -1,6 +1,17 @@
 #include "Main.h"
 
 // STATIC DATA
+#ifdef DEBUG
+static std::string g_sConfiguration = "DEBUG";
+#endif
+#ifdef RELEASE
+static std::string g_sConfiguration = "RELEASE";
+#endif
+#ifdef DISTR
+static std::string g_sConfiguration = "DISTR";
+#endif
+
+
 static bool g_bDecalDatabaseOpen = true;
 static bool g_bPrefabDatabaseOpen = true;
 static bool g_bEntityDatabaseOpen = true;
@@ -825,6 +836,7 @@ bool GameEditor::OnUserUpdate(float fElapsedTime)
 	}
 
 	DrawStringDecal(olc::vf2d(5, 25), "FPS: " + std::to_string(GetFPS()));
+	DrawStringDecal(olc::vf2d(5, 45), "BUILD: " + g_sConfiguration);
 
 	return true;
 }
@@ -1012,8 +1024,8 @@ void GameEditor::RenderMainFrame()
 	// Draw Camera Position
 	std::string position = std::to_string(m_camerax) + ":" + std::to_string(m_cameray);
 	std::string height = std::to_string(m_cameraHeigth);
-	DrawStringDecal({ 10.0f, 45.0f }, position);
-	DrawStringDecal({ 10.0f, 60.0f }, height);
+	DrawStringDecal({ 10.0f, 55.0f }, position);
+	DrawStringDecal({ 10.0f, 65.0f }, height);
 
 
 	// Draw Tile Number under Mouse.

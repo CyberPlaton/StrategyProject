@@ -1,7 +1,6 @@
 #include "DBMS.h"
 
 
-
 namespace dbms
 {
 
@@ -47,7 +46,7 @@ namespace dbms
 		catch (const mongocxx::v_noabi::logic_error& e)
 		{
 			LOG_DBG_INFO("[{:.4f}][DBMS::DeleteUser] mongocxx::v_noabi::logic_error: \"{}\"! Searched for kvp(\"_id\", \"{}\").", Logger::AppRunningTime(), e.what(), id);
-			LOG_FILE_INFO("[{:.4f}][DBMS::DeleteUser] mongocxx::v_noabi::logic_error: \"{}\"! Searched for kvp(\"_id\", \"{}\").", APP_RUN_TIME, e.what(), id);
+			LOG_FILE_INFO("[{:.4f}][DBMS::DeleteUser] mongocxx::v_noabi::logic_error: \"{}\"! Searched for kvp(\"_id\", \"{}\").", Logger::AppRunningTime(), e.what(), id);
 		}
 
 		return false;
@@ -104,7 +103,7 @@ namespace dbms
 		catch (const mongocxx::v_noabi::logic_error& e)
 		{
 			LOG_DBG_ERROR("[{:.4f}][DBMS::UpdateUser] mongocxx::v_noabi::logic_error: \"{}\"! Searched for kvp(\"_id\", \"{}\").", Logger::AppRunningTime(), e.what(), desc.m_uuid);
-			LOG_FILE_ERROR("[{:.4f}][DBMS::UpdateUser] mongocxx::v_noabi::logic_error: \"{}\"! Searched for kvp(\"_id\", \"{}\").", APP_RUN_TIME, e.what(), desc.m_uuid);
+			LOG_FILE_ERROR("[{:.4f}][DBMS::UpdateUser] mongocxx::v_noabi::logic_error: \"{}\"! Searched for kvp(\"_id\", \"{}\").", Logger::AppRunningTime(), e.what(), desc.m_uuid);
 		}
 
 		return false;
@@ -160,7 +159,7 @@ namespace dbms
 			default:
 			{
 				LOG_DBG_ERROR("[{:.4f}][DBMS::GetUserDesc] Undefined User Platform! Searched for kvp(\"_id\", \"{}\"), Platform \"{}\".", Logger::AppRunningTime(), desc.m_uuid, desc.m_platform);
-				LOG_FILE_ERROR("[{:.4f}][DBMS::GetUserDesc] Undefined User Platform! Searched for kvp(\"_id\", \"{}\"), Platform \"{}\".", APP_RUN_TIME, desc.m_uuid, desc.m_platform);
+				LOG_FILE_ERROR("[{:.4f}][DBMS::GetUserDesc] Undefined User Platform! Searched for kvp(\"_id\", \"{}\"), Platform \"{}\".", Logger::AppRunningTime(), desc.m_uuid, desc.m_platform);
 				
 				return false;
 			}
@@ -210,7 +209,7 @@ namespace dbms
 					catch (const bsoncxx::v_noabi::exception& e)
 					{
 						LOG_DBG_ERROR("[{:.4f}][DBMS::GetUserDesc - Achievements] bsoncxx::v_noabi::exception: \"{}\"! Searched for kvp(\"_id\", \"{}\").", Logger::AppRunningTime(), e.what(), desc.m_uuid);
-						LOG_FILE_ERROR("[{:.4f}][DBMS::GetUserDesc - Achievements] bsoncxx::v_noabi::exception: \"{}\"! Searched for kvp(\"_id\", \"{}\").", APP_RUN_TIME, e.what(), desc.m_uuid);
+						LOG_FILE_ERROR("[{:.4f}][DBMS::GetUserDesc - Achievements] bsoncxx::v_noabi::exception: \"{}\"! Searched for kvp(\"_id\", \"{}\").", Logger::AppRunningTime(), e.what(), desc.m_uuid);
 					}
 				}
 			}
@@ -236,7 +235,7 @@ namespace dbms
 					catch (const bsoncxx::v_noabi::exception& e)
 					{
 						LOG_DBG_ERROR("[{:.4f}][DBMS::GetUserDesc - ServiceItems] bsoncxx::v_noabi::exception: \"{}\"! Searched for kvp(\"_id\", \"{}\").", Logger::AppRunningTime(), e.what(), desc.m_uuid);
-						LOG_FILE_ERROR("[{:.4f}][DBMS::GetUserDesc - ServiceItems] bsoncxx::v_noabi::exception: \"{}\"! Searched for kvp(\"_id\", \"{}\").", APP_RUN_TIME, e.what(), desc.m_uuid);
+						LOG_FILE_ERROR("[{:.4f}][DBMS::GetUserDesc - ServiceItems] bsoncxx::v_noabi::exception: \"{}\"! Searched for kvp(\"_id\", \"{}\").", Logger::AppRunningTime(), e.what(), desc.m_uuid);
 					}
 				}
 			}
@@ -303,7 +302,7 @@ namespace dbms
 
 
 		LOG_DBG_ERROR("[{:.4f}][DBMS::GetAbility] Could not retrieve net::SAbilityData by name \"{}\"!", Logger::AppRunningTime(), ability_name);
-		LOG_FILE_ERROR("[{:.4f}][DBMS::GetAbility] Could not retrieve net::SAbilityData by name \"{}\"!", APP_RUN_TIME, ability_name);
+		LOG_FILE_ERROR("[{:.4f}][DBMS::GetAbility] Could not retrieve net::SAbilityData by name \"{}\"!", Logger::AppRunningTime(), ability_name);
 		return false;
 	}
 
@@ -358,12 +357,12 @@ namespace dbms
 		catch(const mongocxx::v_noabi::logic_error& e)
 		{
 			LOG_DBG_ERROR("[{:.4f}][DBMS::GetAllStatusEffectData] bsoncxx::v_noabi::logic_error: \"{}\"!", Logger::AppRunningTime(), e.what());
-			LOG_FILE_ERROR("[{:.4f}][DBMS::GetAllStatusEffectData] bsoncxx::v_noabi::logic_error: \"{}\"!", APP_RUN_TIME, e.what());
+			LOG_FILE_ERROR("[{:.4f}][DBMS::GetAllStatusEffectData] bsoncxx::v_noabi::logic_error: \"{}\"!", Logger::AppRunningTime(), e.what());
 		}
 		catch(const bsoncxx::v_noabi::exception& e)
 		{
 			LOG_DBG_ERROR("[{:.4f}][DBMS::GetAllStatusEffectData] bsoncxx::v_noabi::exception: \"{}\"!", Logger::AppRunningTime(), e.what());
-			LOG_FILE_ERROR("[{:.4f}][DBMS::GetAllStatusEffectData] bsoncxx::v_noabi::exception: \"{}\"!", APP_RUN_TIME, e.what());
+			LOG_FILE_ERROR("[{:.4f}][DBMS::GetAllStatusEffectData] bsoncxx::v_noabi::exception: \"{}\"!", Logger::AppRunningTime(), e.what());
 		}
 
 		return false;
@@ -429,12 +428,12 @@ namespace dbms
 		catch (const mongocxx::v_noabi::logic_error& e)
 		{
 			LOG_DBG_ERROR("[{:.4f}][DBMS::GetAllAbilityData] bsoncxx::v_noabi::logic_error: \"{}\"!", Logger::AppRunningTime(), e.what());
-			LOG_FILE_ERROR("[{:.4f}][DBMS::GetAllAbilityData] bsoncxx::v_noabi::logic_error: \"{}\"!", APP_RUN_TIME, e.what());
+			LOG_FILE_ERROR("[{:.4f}][DBMS::GetAllAbilityData] bsoncxx::v_noabi::logic_error: \"{}\"!", Logger::AppRunningTime(), e.what());
 		}
 		catch (const bsoncxx::v_noabi::exception& e)
 		{
 			LOG_DBG_ERROR("[{:.4f}][DBMS::GetAllAbilityData] bsoncxx::v_noabi::exception: \"{}\"!", Logger::AppRunningTime(), e.what());
-			LOG_FILE_ERROR("[{:.4f}][DBMS::GetAllAbilityData] bsoncxx::v_noabi::exception: \"{}\"!", APP_RUN_TIME, e.what());
+			LOG_FILE_ERROR("[{:.4f}][DBMS::GetAllAbilityData] bsoncxx::v_noabi::exception: \"{}\"!", Logger::AppRunningTime(), e.what());
 		}
 
 		return false;
@@ -485,7 +484,7 @@ namespace dbms
 		}
 
 		LOG_DBG_ERROR("[{:.4f}][DBMS::GetStatusEffect] Could not retrieve net::SStatusEffectData by name \"{}\"!", Logger::AppRunningTime(), effect_name);
-		LOG_FILE_ERROR("[{:.4f}][DBMS::GetStatusEffect] Could not retrieve net::SStatusEffectData by name \"{}\"!", APP_RUN_TIME, effect_name);
+		LOG_FILE_ERROR("[{:.4f}][DBMS::GetStatusEffect] Could not retrieve net::SStatusEffectData by name \"{}\"!", Logger::AppRunningTime(), effect_name);
 		return false;
 	}
 
@@ -527,7 +526,7 @@ namespace dbms
 			{
 
 				LOG_DBG_INFO("[{:.4f}][DBMS::CreateUser] Created new user with id \"{}\"!", Logger::AppRunningTime(), uuid);
-				LOG_FILE_INFO("[{:.4f}][DBMS::CreateUser] Created new user with id \"{}\"!", APP_RUN_TIME, uuid);
+				LOG_FILE_INFO("[{:.4f}][DBMS::CreateUser] Created new user with id \"{}\"!", Logger::AppRunningTime(), uuid);
 				
 				m_nextUUID += 1;
 				return uuid;
@@ -536,7 +535,7 @@ namespace dbms
 		catch (const mongocxx::v_noabi::logic_error& e)
 		{
 			LOG_DBG_ERROR("[{:.4f}][DBMS::CreateUser] mongocxx::v_noabi::logic_error: \"{}\"! Failed to create user.", Logger::AppRunningTime(), e.what());
-			LOG_FILE_ERROR("[{:.4f}][DBMS::CreateUser] mongocxx::v_noabi::logic_error: \"{}\"!  Failed to create user.", APP_RUN_TIME, e.what());
+			LOG_FILE_ERROR("[{:.4f}][DBMS::CreateUser] mongocxx::v_noabi::logic_error: \"{}\"!  Failed to create user.", Logger::AppRunningTime(), e.what());
 		}
 
 	
@@ -576,7 +575,7 @@ namespace dbms
 		catch (const std::exception& e)
 		{
 			LOG_DBG_ERROR("[{:.4f}][DBMS::Initialize] std::exception: \"{}\"! Failed to connect to Database \"{}\".", Logger::AppRunningTime(), e.what(), m_database);
-			LOG_FILE_ERROR("[{:.4f}][DBMS::Initialize] std::exception: \"{}\"!  Failed to connect to Database \"{}\".", APP_RUN_TIME, e.what(), m_database);
+			LOG_FILE_ERROR("[{:.4f}][DBMS::Initialize] std::exception: \"{}\"!  Failed to connect to Database \"{}\".", Logger::AppRunningTime(), e.what(), m_database);
 
 			m_initialized = false;
 		}
@@ -600,7 +599,7 @@ namespace dbms
 			db.create_collection(name);
 		
 			LOG_DBG_INFO("[{:.4f}][DBMS::CreateGame] Create game \"{}\"!", Logger::AppRunningTime(), name.c_str());
-			LOG_FILE_INFO("[{:.4f}][DBMS::CreateGame] Create game \"{}\"!", APP_RUN_TIME, name.c_str());
+			LOG_FILE_INFO("[{:.4f}][DBMS::CreateGame] Create game \"{}\"!", Logger::AppRunningTime(), name.c_str());
 		}
 	}
 
@@ -619,7 +618,7 @@ namespace dbms
 			game.drop();
 
 			LOG_DBG_INFO("[{:.4f}][DBMS::DeleteGame] Delete game \"{}\"!", Logger::AppRunningTime(), name.c_str());
-			LOG_FILE_INFO("[{:.4f}][DBMS::DeleteGame] Delete game \"{}\"!", APP_RUN_TIME, name.c_str());
+			LOG_FILE_INFO("[{:.4f}][DBMS::DeleteGame] Delete game \"{}\"!", Logger::AppRunningTime(), name.c_str());
 		}
 	}
 
@@ -702,7 +701,7 @@ namespace dbms
 		catch (const mongocxx::v_noabi::logic_error& e)
 		{
 			LOG_DBG_ERROR("[{:.4f}][DBMS::GetNetGameobjects] mongocxx::v_noabi::logic_error: \"{}\"! Failed to retrieve Net Gameobjects for Game \"game_{}\".", Logger::AppRunningTime(), e.what(), gamename);
-			LOG_FILE_ERROR("[{:.4f}][DBMS::GetNetGameobjects] mongocxx::v_noabi::logic_error: \"{}\"!  Failed to retrieve Net Gameobjects for Game \"game_{}\".", APP_RUN_TIME, e.what(), gamename);
+			LOG_FILE_ERROR("[{:.4f}][DBMS::GetNetGameobjects] mongocxx::v_noabi::logic_error: \"{}\"!  Failed to retrieve Net Gameobjects for Game \"game_{}\".", Logger::AppRunningTime(), e.what(), gamename);
 		}
 
 		return false;
@@ -834,7 +833,7 @@ namespace dbms
 		catch (const mongocxx::v_noabi::logic_error& e)
 		{
 			LOG_DBG_ERROR("[{:.4f}][DBMS::TryEmplaceNetGameobjectUnit] mongocxx::v_noabi::logic_error: \"{}\"! Failed to emplace Net Gameobject \"{}\" for Game \"game_{}\".", Logger::AppRunningTime(), e.what(), object->m_name, game.name().to_string());
-			LOG_FILE_ERROR("[{:.4f}][DBMS::TryEmplaceNetGameobjectUnit] mongocxx::v_noabi::logic_error: \"{}\"! Failed to emplace Net Gameobject \"{}\" for Game \"game_{}\".", APP_RUN_TIME, e.what(), object->m_name, game.name().to_string());
+			LOG_FILE_ERROR("[{:.4f}][DBMS::TryEmplaceNetGameobjectUnit] mongocxx::v_noabi::logic_error: \"{}\"! Failed to emplace Net Gameobject \"{}\" for Game \"game_{}\".", Logger::AppRunningTime(), e.what(), object->m_name, game.name().to_string());
 		}
 	}
 	bool DBMS::TryEmplaceNetGameobjectBuilding(net::SBuildingGameobject* object, mongocxx::collection& game, bool update)
@@ -882,7 +881,7 @@ namespace dbms
 		catch (const mongocxx::v_noabi::logic_error& e)
 		{
 			LOG_DBG_ERROR("[{:.4f}][DBMS::TryEmplaceNetGameobjectBuilding] mongocxx::v_noabi::logic_error: \"{}\"! Failed to emplace Net Gameobject \"{}\" for Game \"game_{}\".", Logger::AppRunningTime(), e.what(), object->m_name, game.name().to_string());
-			LOG_FILE_ERROR("[{:.4f}][DBMS::TryEmplaceNetGameobjectBuilding] mongocxx::v_noabi::logic_error: \"{}\"! Failed to emplace Net Gameobject \"{}\" for Game \"game_{}\".", APP_RUN_TIME, e.what(), object->m_name, game.name().to_string());
+			LOG_FILE_ERROR("[{:.4f}][DBMS::TryEmplaceNetGameobjectBuilding] mongocxx::v_noabi::logic_error: \"{}\"! Failed to emplace Net Gameobject \"{}\" for Game \"game_{}\".", Logger::AppRunningTime(), e.what(), object->m_name, game.name().to_string());
 		}
 	}
 	bool DBMS::TryEmplaceNetGameobjectMapobject(net::SMapobjectGameobject* object, mongocxx::collection& game, bool update)
@@ -929,7 +928,7 @@ namespace dbms
 		catch (const mongocxx::v_noabi::logic_error& e)
 		{
 			LOG_DBG_ERROR("[{:.4f}][DBMS::TryEmplaceNetGameobjectMapobject] mongocxx::v_noabi::logic_error: \"{}\"! Failed to emplace Net Gameobject \"{}\" for Game \"game_{}\".", Logger::AppRunningTime(), e.what(), object->m_name, game.name().to_string());
-			LOG_FILE_ERROR("[{:.4f}][DBMS::TryEmplaceNetGameobjectMapobject] mongocxx::v_noabi::logic_error: \"{}\"! Failed to emplace Net Gameobject \"{}\" for Game \"game_{}\".", APP_RUN_TIME, e.what(), object->m_name, game.name().to_string());
+			LOG_FILE_ERROR("[{:.4f}][DBMS::TryEmplaceNetGameobjectMapobject] mongocxx::v_noabi::logic_error: \"{}\"! Failed to emplace Net Gameobject \"{}\" for Game \"game_{}\".", Logger::AppRunningTime(), e.what(), object->m_name, game.name().to_string());
 		}
 	}
 	bool DBMS::TryEmplaceNetGameobjectMaptile(net::SMaptileGameobject* object, mongocxx::collection& game, bool update)
@@ -976,7 +975,7 @@ namespace dbms
 		catch (const mongocxx::v_noabi::logic_error& e)
 		{
 			LOG_DBG_ERROR("[{:.4f}][DBMS::TryEmplaceNetGameobjectMaptile] mongocxx::v_noabi::logic_error: \"{}\"! Failed to emplace Net Gameobject \"{}\" for Game \"game_{}\".", Logger::AppRunningTime(), e.what(), object->m_name, game.name().to_string());
-			LOG_FILE_ERROR("[{:.4f}][DBMS::TryEmplaceNetGameobjectMaptile] mongocxx::v_noabi::logic_error: \"{}\"! Failed to emplace Net Gameobject \"{}\" for Game \"game_{}\".", APP_RUN_TIME, e.what(), object->m_name, game.name().to_string());
+			LOG_FILE_ERROR("[{:.4f}][DBMS::TryEmplaceNetGameobjectMaptile] mongocxx::v_noabi::logic_error: \"{}\"! Failed to emplace Net Gameobject \"{}\" for Game \"game_{}\".", Logger::AppRunningTime(), e.what(), object->m_name, game.name().to_string());
 		}
 	}
 

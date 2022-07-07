@@ -10,5 +10,6 @@
 #include "BTParallel.h"
 #include "BTRandomSequence.h"
 #include "BTSequence.h"
+#include "BTSelector.h"
 
 #endif

@@ -158,7 +158,7 @@ namespace dbms
 			catch (const mongocxx::query_exception& e)
 			{
 				LOG_DBG_INFO("[{:.4f}][DBMS::_findOneByKeyValuePair] mongocxx::query_exception: \"{}\"! Searched for kvp(\"{}\", \"{}\").", Logger::AppRunningTime(), e.what(), key, value);
-				LOG_FILE_INFO("[{:.4f}][DBMS::_findOneByKeyValuePair] mongocxx::query_exception: \"{}\"! Searched for kvp(\"{}\", \"{}\").", APP_RUN_TIME, e.what(), key, value);
+				LOG_FILE_INFO("[{:.4f}][DBMS::_findOneByKeyValuePair] mongocxx::query_exception: \"{}\"! Searched for kvp(\"{}\", \"{}\").", Logger::AppRunningTime(), e.what(), key, value);
 			}
 
 			return doc.has_value();

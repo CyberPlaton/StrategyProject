@@ -473,6 +473,9 @@ workspace "Strategy"
 			debugdir ("bin/" .. outputdir .. "/%{prj.name}")
 		-- Linking libraries
 		filter "configurations:Distr"
+			libdirs{"libs", "bin/" .. outputdir .. "/NetLib"}
+			links{"ws2_32", "NetLib"}
+
 			libdirs{"libs", "%{prj.name}/common/lib/Distr"}
 			links
 			{
@@ -480,7 +483,7 @@ workspace "Strategy"
 				"tinyxml2",
 				"bsoncxx",
 				"mongocxx",
-				"spdlogd",
+				"spdlog",
 				"glew32",
 				"glfw3",
 				"opengl32",
@@ -504,6 +507,9 @@ workspace "Strategy"
 				"Lua52"
 			}
 		filter "configurations:Release"
+			libdirs{"libs", "bin/" .. outputdir .. "/NetLib"}
+			links{"ws2_32", "NetLib"}
+
 			libdirs{"libs", "%{prj.name}/common/lib/Release"}
 			links
 			{
@@ -511,7 +517,7 @@ workspace "Strategy"
 				"tinyxml2",
 				"bsoncxx",
 				"mongocxx",
-				"spdlogd",
+				"spdlog",
 				"glew32",
 				"glfw3",
 				"opengl32",
