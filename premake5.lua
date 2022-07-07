@@ -273,11 +273,17 @@ workspace "Strategy"
 
 			"NetLib/common/include/RakNet",				-- Networking
 			"NetLib/src",								-- Networking
+
+			"BehaviorTree/src",							-- Behavior Tree
 		}	
 		-- Link thirdparty libraries for each configuration
 		filter "configurations:Debug"
-			libdirs{"libs", "bin/" .. outputdir .. "/NetLib"}
+			-- Link BehaviorTree and NetLib Libraries for current configuration.
+			libdirs{"libs", "bin/" .. outputdir .. "/NetLib"} -- Networking Library
 			links{"ws2_32", "NetLib"}
+			libdirs{"libs", "bin/" .. outputdir .. "/BehaviorTree"} -- BehaviorTree Library
+			links{"BehaviorTree"}
+
 
 			libdirs{"libs", "%{prj.name}/common/lib/Debug"}
 			links

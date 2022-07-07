@@ -79,7 +79,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>PLATFORM_WINDOWS;DEBUG;_ITERATOR_DEBUG_LEVEL=0;CHERRYSODA_ENABLE_DEBUG;__STDC_LIMIT_MACROS;__STDC_FORMAT_MACROS;__STDC_CONSTANT_MACROS;_HAS_EXCEPTIONS=0;_SCL_SECURE=0;_SECURE_SCL=0;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;BGFX_CONFIG_MAX_VIEWS=8;BX_CONFIG_DEBUG=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>common\include;common\include\CherrySoda;common\include\bgfx;common\include\bx;common\include\cgltf;common\include\cmixer;common\include\glm;common\include\imgui;common\include\rapidjson;common\include\SDL2;common\include\stb;common\include\steam;common\include\tinyxml2;common\include\spdlog;..\NetLib\common\include\RakNet;..\NetLib\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>common\include;common\include\CherrySoda;common\include\bgfx;common\include\bx;common\include\cgltf;common\include\cmixer;common\include\glm;common\include\imgui;common\include\rapidjson;common\include\SDL2;common\include\stb;common\include\steam;common\include\tinyxml2;common\include\spdlog;..\NetLib\common\include\RakNet;..\NetLib\src;..\BehaviorTree\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -89,7 +89,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>ws2_32.lib;CherrySoda.lib;imgui.lib;bgfx.lib;bimg_decode.lib;bimg.lib;bx.lib;cmixer.lib;stb_vorbis.lib;SDL2.lib;SDL2main.lib;steam_api64.lib;tinyxml2.lib;spdlogd.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\bin\Debug_windows_x86_64\NetLib;..\libs;common\lib\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\bin\Debug_windows_x86_64\NetLib;..\bin\Debug_windows_x86_64\BehaviorTree;..\libs;common\lib\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">
@@ -98,7 +98,7 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>PLATFORM_WINDOWS;RELEASE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <UndefinePreprocessorDefinitions>CHERRYSODA_ENABLE_DEBUG;%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
-      <AdditionalIncludeDirectories>common\include;common\include\CherrySoda;common\include\bgfx;common\include\bx;common\include\cgltf;common\include\cmixer;common\include\glm;common\include\imgui;common\include\rapidjson;common\include\SDL2;common\include\stb;common\include\steam;common\include\tinyxml2;common\include\spdlog;..\NetLib\common\include\RakNet;..\NetLib\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>common\include;common\include\CherrySoda;common\include\bgfx;common\include\bx;common\include\cgltf;common\include\cmixer;common\include\glm;common\include\imgui;common\include\rapidjson;common\include\SDL2;common\include\stb;common\include\steam;common\include\tinyxml2;common\include\spdlog;..\NetLib\common\include\RakNet;..\NetLib\src;..\BehaviorTree\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -111,9 +111,12 @@
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>ws2_32.lib;CherrySoda.lib;imgui.lib;bgfx.lib;bimg_decode.lib;bimg.lib;bx.lib;cmixer.lib;stb_vorbis.lib;SDL2.lib;SDL2main.lib;steam_api64.lib;tinyxml2.lib;spdlog.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\bin\Release_windows_x86_64\NetLib\NetLib.lib;ws2_32.lib;CherrySoda.lib;imgui.lib;bgfx.lib;bimg_decode.lib;bimg.lib;bx.lib;cmixer.lib;stb_vorbis.lib;SDL2.lib;SDL2main.lib;steam_api64.lib;tinyxml2.lib;spdlog.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\libs;common\lib\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Distr Win64|x64'">
     <ClCompile>
@@ -121,7 +124,7 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>PLATFORM_WINDOWS;DISTR;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <UndefinePreprocessorDefinitions>CHERRYSODA_ENABLE_DEBUG;%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
-      <AdditionalIncludeDirectories>common\include;common\include\CherrySoda;common\include\bgfx;common\include\bx;common\include\cgltf;common\include\cmixer;common\include\glm;common\include\imgui;common\include\rapidjson;common\include\SDL2;common\include\stb;common\include\steam;common\include\tinyxml2;common\include\spdlog;..\NetLib\common\include\RakNet;..\NetLib\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>common\include;common\include\CherrySoda;common\include\bgfx;common\include\bx;common\include\cgltf;common\include\cmixer;common\include\glm;common\include\imgui;common\include\rapidjson;common\include\SDL2;common\include\stb;common\include\steam;common\include\tinyxml2;common\include\spdlog;..\NetLib\common\include\RakNet;..\NetLib\src;..\BehaviorTree\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -134,9 +137,12 @@
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>ws2_32.lib;CherrySoda.lib;imgui.lib;bgfx.lib;bimg_decode.lib;bimg.lib;bx.lib;cmixer.lib;stb_vorbis.lib;SDL2.lib;SDL2main.lib;steam_api64.lib;tinyxml2.lib;spdlog.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\bin\Distr_windows_x86_64\NetLib\NetLib.lib;ws2_32.lib;CherrySoda.lib;imgui.lib;bgfx.lib;bimg_decode.lib;bimg.lib;bx.lib;cmixer.lib;stb_vorbis.lib;SDL2.lib;SDL2main.lib;steam_api64.lib;tinyxml2.lib;spdlog.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\libs;common\lib\Distr;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\AbilitiesDataMap.h" />
@@ -201,6 +207,9 @@
   <ItemGroup>
     <ProjectReference Include="..\NetLib\NetLib.vcxproj">
       <Project>{E3FD35C5-CF9F-609B-B85A-74EFA49BE7EB}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\BehaviorTree\BehaviorTree.vcxproj">
+      <Project>{45B58CE0-3118-1C85-DA9D-543BC6DFE707}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
