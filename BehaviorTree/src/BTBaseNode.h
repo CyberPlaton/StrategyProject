@@ -33,9 +33,9 @@ namespace bt
 		//////////////////////////////
 		// Node Base blackboard query.
 		//////////////////////////////
-		bool HasBlackboard() override { return false; }
-		void SetBlackboard(BTBlackboard*) override {}
-		BTBlackboard* Blackboard() override { return nullptr; }
+		bool HasBlackboard() override { return m_Blackboard != nullptr; }
+		void SetBlackboard(BTBlackboard* b) override { m_Blackboard = b; }
+		BTBlackboard* Blackboard() override { return m_Blackboard; }
 		
 		//////////////////////////////
 		// Node Base parent query.
@@ -59,6 +59,7 @@ namespace bt
 		std::string Type() override { return "BTBaseNode"; }
 
 	protected:
+		BTBlackboard* m_Blackboard = nullptr;
 		BTNode* m_Parent = nullptr;
 		std::string m_Name;
 	};
