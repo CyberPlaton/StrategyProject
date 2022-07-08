@@ -69,6 +69,9 @@ namespace bt
 		/// @return Pointer to Blackboard.
 		virtual BTBlackboard* Blackboard() = 0;
 
+
+		virtual void LastRunningNode() = 0;
+
 		/// @brief Get the name of the Node.
 		/// @return Name of the node.
 		virtual std::string Name() = 0;

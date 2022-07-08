@@ -8,7 +8,7 @@ namespace bt
 	class BTInverter : public BTDecorator
 	{
 	public:
-		BTInverter(std::string name) : BTDecorator(name)
+		BTInverter(std::string name, const std::string& behavior_tree_name) : BTDecorator(name, behavior_tree_name)
 		{
 		}
 		virtual ~BTInverter()

@@ -177,6 +177,19 @@ void App::Update()
 
 void App::Initialize()
 {
+	// TESTING BUILDING BEHAVIOR TREES.
+	using namespace bt;
+	BTFactory factory("My Tree");
+	factory.Add<BTSequence>("Sequence")
+				.End()
+			.Add<BTRandomSequence>("Random Sequence")
+				.Add<BTInverter>("Inverter")
+	.Build();
+
+
+
+
+
 	if (!InitializeLogger(true, false, 256))
 	{
 		LOG_DBG_CRITICAL("[{:.4f}][App::Initialize] Logger not initialized!", APP_RUN_TIME());

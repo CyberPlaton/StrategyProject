@@ -10,7 +10,7 @@ namespace bt
 	class BTRandomSequence : public BTSequence
 	{
 	public:
-		BTRandomSequence(std::string name) : BTSequence(name)
+		BTRandomSequence(std::string name, const std::string& behavior_tree_name) : BTSequence(name, behavior_tree_name)
 		{
 		}
 		virtual ~BTRandomSequence()

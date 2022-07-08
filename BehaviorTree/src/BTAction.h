@@ -9,7 +9,7 @@ namespace bt
 	class BTAction : public BTBaseNode
 	{
 	public:
-		BTAction(std::string name) : BTBaseNode(name)
+		BTAction(std::string name, const std::string& behavior_tree_name) : BTBaseNode(name, behavior_tree_name)
 		{
 		}
 		virtual ~BTAction()

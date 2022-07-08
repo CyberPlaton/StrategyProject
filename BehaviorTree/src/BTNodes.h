@@ -11,5 +11,7 @@
 #include "BTRandomSequence.h"
 #include "BTSequence.h"
 #include "BTSelector.h"
+#include "BTLimit.h"
+#include "BTRandomSelector.h"
 
 #endif

@@ -11,7 +11,7 @@ namespace bt
 	{
 	public:
 
-		BTRandomSelector(std::string name) : BTSelector(name)
+		BTRandomSelector(std::string name, const std::string& behavior_tree_name) : BTSelector(name, behavior_tree_name)
 		{
 		}
 		virtual ~BTRandomSelector()

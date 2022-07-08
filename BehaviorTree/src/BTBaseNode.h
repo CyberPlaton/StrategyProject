@@ -7,8 +7,9 @@ namespace bt
 	class BTBaseNode : public BTNode
 	{
 	public:
-		BTBaseNode(std::string name) : m_Name(name)
+		BTBaseNode(std::string name, const std::string& behavior_tree_name) : m_Name(name)
 		{
+			m_BehaviorTreeHash = DJBHash(behavior_tree_name.c_str(), behavior_tree_name.size());
 			Initialize();
 		}
 		virtual ~BTBaseNode()
@@ -28,6 +29,11 @@ namespace bt
 		{
 			m_Name.clear();
 			m_Parent = nullptr;
+		}
+
+		void LastRunningNode() override 
+		{
+			BTCurrentRunningNodeMngr::get()->SetRunning(m_BehaviorTreeHash, this);
 		}
 		
 		//////////////////////////////
@@ -62,5 +68,6 @@ namespace bt
 		BTBlackboard* m_Blackboard = nullptr;
 		BTNode* m_Parent = nullptr;
 		std::string m_Name;
+		size_t m_BehaviorTreeHash = 0;
 	};
 }

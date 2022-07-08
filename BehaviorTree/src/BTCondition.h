@@ -9,7 +9,7 @@ namespace bt
 	class BTCondition : public BTBaseNode
 	{
 	public:
-		BTCondition(std::string name) : BTBaseNode(name)
+		BTCondition(std::string name, const std::string& behavior_tree_name) : BTBaseNode(name, behavior_tree_name)
 		{
 		}
 		virtual ~BTCondition()

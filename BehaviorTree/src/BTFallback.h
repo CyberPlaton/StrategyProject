@@ -11,7 +11,7 @@ namespace bt
 	{
 	public:
 
-		BTFallback(std::string name) : BTBaseNode(name)
+		BTFallback(std::string name, const std::string& behavior_tree_name) : BTBaseNode(name, behavior_tree_name)
 		{
 		}
 		virtual ~BTFallback()

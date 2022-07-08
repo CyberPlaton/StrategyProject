@@ -10,7 +10,7 @@ namespace bt
 	{
 	public:
 
-		BTSequence(std::string name) : BTFallback(name)
+		BTSequence(std::string name, const std::string& behavior_tree_name) : BTFallback(name, behavior_tree_name)
 		{
 		}
 		virtual ~BTSequence()

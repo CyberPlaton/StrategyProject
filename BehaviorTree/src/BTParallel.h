@@ -19,8 +19,8 @@ namespace bt
 		};
 	public:
 
-		BTParallel(std::string name, EPolicy success, EPolicy fail) : BTSequence(name), m_FailPolicy(fail), m_SuccessPolicy(success) {}
-		BTParallel(std::string name, int success, int fail) : BTSequence(name), m_FailPolicy(BTParallel::EPolicy(fail)), m_SuccessPolicy(BTParallel::EPolicy(success)) {}
+		BTParallel(std::string name, const std::string& behavior_tree_name, EPolicy success, EPolicy fail) : BTSequence(name, behavior_tree_name), m_FailPolicy(fail), m_SuccessPolicy(success) {}
+		BTParallel(std::string name, const std::string& behavior_tree_name, int success, int fail) : BTSequence(name, behavior_tree_name), m_FailPolicy(BTParallel::EPolicy(fail)), m_SuccessPolicy(BTParallel::EPolicy(success)) {}
 		virtual ~BTParallel()
 		{
 		}

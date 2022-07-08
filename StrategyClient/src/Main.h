@@ -26,6 +26,7 @@
 #include "Observer.h"
 #include "AbilitiesDataMap.h"
 #include "StatusEffectsDataMap.h"
+#include "BTInterface.h"
 
 // SOUND
 

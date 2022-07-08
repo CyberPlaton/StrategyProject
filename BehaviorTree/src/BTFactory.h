@@ -29,7 +29,7 @@ namespace bt
 		template < typename NodeType, class... Args >
 		BTFactory& Add(const std::string& node_name, Args... args)
 		{
-			NodeType* node = new NodeType(node_name, args...);
+			NodeType* node = new NodeType(node_name, m_Tree->m_Name, args...);
 
 			if (!m_HasRoot)
 			{

@@ -8,7 +8,7 @@ namespace bt
 	class BTLimit : public BTDecorator
 	{
 	public:
-		BTLimit(std::string name, size_t limit) : BTDecorator(name), m_Limit(limit)
+		BTLimit(std::string name, const std::string& behavior_tree_name, size_t limit) : BTDecorator(name, behavior_tree_name), m_Limit(limit)
 		{
 		}
 		virtual ~BTLimit()

@@ -10,7 +10,7 @@ namespace bt
 	{
 	public:
 
-		BTSelector(std::string name) : BTFallback(name)
+		BTSelector(std::string name, const std::string& behavior_tree_name) : BTFallback(name, behavior_tree_name)
 		{
 		}
 		virtual ~BTSelector()

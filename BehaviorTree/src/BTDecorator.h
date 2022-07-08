@@ -8,7 +8,7 @@ namespace bt
 	class BTDecorator : public BTBaseNode
 	{
 	public:
-		BTDecorator(std::string name) : BTBaseNode(name)
+		BTDecorator(std::string name, const std::string& behavior_tree_name) : BTBaseNode(name, behavior_tree_name)
 		{
 		}
 		virtual ~BTDecorator()
