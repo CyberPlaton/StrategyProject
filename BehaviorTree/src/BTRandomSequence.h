@@ -23,6 +23,7 @@ namespace bt
 		////////////////////////////////////////
 		EBTNodeResult Tick() override
 		{			
+			// Shuffle the order of the children.
 			std::vector<BTNode*> reshuffled_kids;
 			for (auto& kid : m_Children)
 			{
