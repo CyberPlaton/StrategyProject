@@ -103,6 +103,10 @@
 *			 o Quick Save functionality for current edited Prefab.
 * 
 * 
+* 09.07.2022 - Version 0.4.4 Patch compete:
+*			 o Remove Sound System due to bad implementation and general issues.
+* 
+* 
 * TODO: Ambient Audio "Editor" has to be update to be based on FMOD,
 *		as soon as the Audio Engine with FMOD is completed.
 *		After this the "Editor" can be extended based on FMOD to utilize 
@@ -127,11 +131,10 @@
 #define OLC_PGEX_DEAR_IMGUI_IMPLEMENTATION
 #include "olc/imgui_impl_pge.h"
 
-#include "SoundSystem.h"
 
 #define EDITOR_MAJOR_VERSION 0
 #define EDITOR_MINOR_VERSION 4
-#define EDITOR_PATCH_VERSION 3
+#define EDITOR_PATCH_VERSION 4
 
 
 
@@ -164,7 +167,6 @@ STRING(major) \
 
 // SPDLOG
 #include "Logging.h"
-#define APP_RUN_TIME Logger::AppRunningTime()
 // XML
 #include "tinyxml2/tinyxml2.h"
 // JSON
@@ -560,32 +562,7 @@ private:
 	void RenderDecalDatabase(const std::map< std::string, olc::Decal* >& db);
 	void RenderEntityDatabase();
 	void DisplayEntityEditor(Entity* e);
-	void DisplayBackgroundAudioEditor();
-	void DisplaySoundChannelEditor();
-	void DisplaySoundChannelNode(Tree* tree);
-	void DisplaySoundSourceEditor(Entity* e);
-	void DisplaySoundChannelAddRemoveOptions(Tree* node);
-	void DisplayAddingChildNodeToSoundChannel(Tree* node);
-	void RemoveNodeFromSoundChannelTree(Tree* tree, Tree* node);
-
-	// GUI SOUND EDITOR UTIL
-	void DisplayChannelGroupChanger(Entity* e);
-	void AddSoundChannelGroupToVec(Tree* tree, std::vector< std::string >& vec);
-	void DisplayDimensionChanger(Entity* e);
-	void DisplayCollisionBoxColorPicker(Entity* e);
-	void DisplaySoundFileNameChanger(Entity* e);
-	void DisplayPositionChanger(Entity* e);
-
-	void DisplayLoopButton(Entity* e);
-	void DisplayPlayButton(Entity* e);
-	void DisplayStopButton(Entity* e);
-
-	void DisplayChannelGroupControl(Tree* tree);
-	void DisplayChannelGroupControlNode(Tree* tree);
-	void UpdateChannelGroupVolumeForFMOD(const std::string& group_name, float v);
-
-	bool CreateAndSubmitSoundChannelNode(Tree* tree, const std::string& parent);
-	bool CreateAndSubmitSoundChannelTree(Tree* tree);
+	
 
 	// GUI UNIT EDITOR UTIL
 	bool ExportUnitPrefab(const std::string& filepath, SPrefab* prefab);
@@ -658,18 +635,15 @@ private:
 	Entity* CreateMapobject(uint64_t x, uint64_t y, std::string decal, bool unit, std::string name = "none");
 	Entity* CreateMapobjectEx(uint64_t x, uint64_t y, std::string layer, std::string decal, std::string name = "none");
 	Entity* CreatePrefabedMapobject(uint64_t x, uint64_t y, std::string layer, std::string decal, std::string name = "none");
-	Entity* CreateMapobjectAudioSource(uint64_t x, uint64_t y, float radius, const std::string& soundname);
 	std::string CreateMapobjectName();
 	bool IsMapobjectNameUsed(const std::string& name);
 	void DeleteMapobject(Entity* object);
-	void DeleteMapobjectAudioSource(Entity* object);
 	std::string GetMapobjectNameAt(int x, int y, std::string layer);
 	Entity* GetMapobjectAt(int x, int y, std::string layer);
 	void SetDecalSize(const std::string& name, uint64_t w, uint64_t h);
 	uint64_t GetDecalWidth(const std::string& name);
 	uint64_t GetDecalHeight(const std::string& name);
 	olc::Pixel GetRandomColor(uint64_t alpha = 255);
-	void UpdateInGameSoundSourcesMap(std::map< std::string, Entity* >& map);
 	uint32_t ConvertColorToPixel(ImVec4 color);
 
 	void MakeMapobjectTownhall(int x, int y, std::string layer);
@@ -709,24 +683,17 @@ private:
 
 	// Import
 	Entity* ImportEntity(tinyxml2::XMLElement* xml, const std::string& layer);
-	void ImportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* entity);
 	void ImportEntityComponentFort(tinyxml2::XMLElement* xml, Entity* entity);
 	void ImportEntityComponentTownhall(tinyxml2::XMLElement* xml, Entity* entity);
 	void ImportEntityComponentUnit(tinyxml2::XMLElement* xml, Entity* entity);
-	// Import Sound Channel Tree Data
-	bool LoadSoundChannelTreeMapData(tinyxml2::XMLElement* xml, Tree* tree);
-	bool LoadSoundChannelTreeStandalone(const std::string& filepath, Tree* tree);
-	void LoadSoundChannelNode(tinyxml2::XMLElement* xml_node, Tree* tree);
+
 
 	// Export
 	void ExportEntity(tinyxml2::XMLElement* xml, Entity* entity);
-	void ExportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* entity);
 	void ExportEntityComponentFort(tinyxml2::XMLElement* xml, Entity* entity);
 	void ExportEntityComponentTownhall(tinyxml2::XMLElement* xml, Entity* entity);
 	void ExportEntityComponentUnit(tinyxml2::XMLElement* xml, Entity* entity);
-	// Export Sound Channel Tree Data
-	void ExportSoundChannelTree(tinyxml2::XMLElement* xml, Tree* tree);
-	void ExportSoundChannelTreeNode(tinyxml2::XMLElement* xml, Tree* tree);
+
 
 	// UTIL IMGUI
 	void BeginTooltip(const char* help_text);

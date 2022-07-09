@@ -1,7 +1,6 @@
 #pragma once
 
 #include "olcPixelGameEngine.h"
-#include "SoundSystem.h"
 
 #include <vector>
 #include <map>
@@ -83,37 +82,6 @@ struct ComponentUnit : public Component
 
 };
 
-struct ComponentSound : public Component
-{
-	ComponentSound(float radius, const std::string& sound_name) : Component("Sound"), m_radius(radius)
-	{
-		m_soundName = sound_name;
-	}
-	ComponentSound(float radius, float r, float g, float b, float a, const std::string& sound_name) : Component("Sound"), m_radius(radius), r(r), g(g), b(b), a(a)
-	{
-		m_soundName = sound_name;
-		m_soundChannelGroup = "Master";
-	}
-	ComponentSound(float radius, float r, float g, float b, float a, const std::string& sound_name, const std::string& sound_source_name, const std::string& channel_group) : Component("Sound"), m_radius(radius), r(r), g(g), b(b), a(a)
-	{
-		m_soundName = sound_name;
-		m_soundSourceName = sound_source_name;
-		m_soundChannelGroup = channel_group;
-	}
-
-	/// @brief The Sound Source max distance. Used in FMOD::Sound::set3DMinMaxDistance().
-	float m_radius;
-
-	/// @brief Name of the Sound File without extensions. E.g. atmosphere_1 or cicada_2. Non unique.
-	std::string m_soundName;
-	
-	/// @brief Name of the SoundChannel object. Stored in SoundSystem and searched for in GetSound(), thus unique.
-	std::string m_soundSourceName;
-	
-	/// @brief Name of the FMOD::ChannelGroup in which this sound is intended to play. Non unique.
-	std::string m_soundChannelGroup;
-	float r, g, b, a;
-};
 
 struct Entity
 {

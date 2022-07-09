@@ -54,20 +54,6 @@ static bool g_bUnitEditorOpen = false;
 static std::string g_sUnitEditorCurrentUnitSprite = "none";
 
 
-static bool g_bBackgroundAudioEditorOpen = false;
-static bool g_bAudioSoundChannelEditorOpen = false;
-static Tree* g_SoundChannelTree = new Tree("Master");
-static int g_iPlayingBackgroundAudio = 0;
-static bool g_bAddingSoundSource = false;
-static std::map< std::string, Entity* > g_InGameSoundSourcesMap;
-static bool g_bSoundChannelPlayingOnLoad = true;
-static bool g_bAddingChildToSoundChannel = false;
-static Tree* g_pAddingChildToSoundChannelNode = nullptr;
-static bool g_bInGameSoundSourcesMapDirty = false;
-static std::string g_sSoundSource = "none";
-static bool g_bRenderSoundSourceDimensions = false;
-static bool g_bEditingSoundSource = false;
-static Entity* g_pEditedSoundSource = nullptr;
 static Entity* g_pEditedEntity = nullptr;
 static Entity* g_pEditedCity = nullptr;
 static bool g_bAddingTownhall = false;
@@ -150,16 +136,6 @@ void GameEditor::RenderGUI()
 		if (g_bEntityDatabaseOpen) RenderEntityDatabase();
 		// Rendering Layers
 		if (g_bRenderingLayersOpen) RenderLayerUI();
-		// Ambient Sound Editor
-		if (g_bBackgroundAudioEditorOpen) DisplayBackgroundAudioEditor();
-		// SoundChannel Editor
-		if (g_bAudioSoundChannelEditorOpen) DisplaySoundChannelEditor();
-		// Sound source editing
-		if (g_bEditingSoundSource) DisplaySoundSourceEditor(g_pEditedSoundSource);
-		// Sound Source Map Update
-		if (g_bInGameSoundSourcesMapDirty) UpdateInGameSoundSourcesMap(g_InGameSoundSourcesMap);
-		// Adding Child to Sound Channel Tree
-		if (g_bAddingChildToSoundChannel) DisplayAddingChildNodeToSoundChannel(g_pAddingChildToSoundChannelNode);
 		// Unit Editor
 		if(g_bUnitEditorOpen)
 		{
@@ -186,9 +162,6 @@ bool GameEditor::OnUserCreate()
 	// Initialize Logging.
 	if (!Logger::Initialize()) return false;
 
-	// FMOD
-	SoundSystem::get()->Initialize();
-	
 	// Initialize Layered rendering.
 	m_GUILayer = CreateLayer();
 	EnableLayer(m_GUILayer, true);
@@ -422,78 +395,6 @@ bool GameEditor::LoadAudioData(const std::string& filepath)
 	return true;
 }
 
-bool GameEditor::LoadSoundChannelTreeStandalone(const std::string& filepath, Tree* tree)
-{
-	tinyxml2::XMLDocument doc;
-	if (doc.LoadFile(filepath.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
-	{
-		doc.Clear();
-		return false;
-	}
-	auto root = doc.RootElement();
-	
-	// Set Tree root sound channel name.
-	tree->m_name = root->Attribute("root");
-	auto name = tree->m_name;
-
-	auto node = root->FirstChildElement("Node");
-	while (node)
-	{
-		tree->Node(name)->Node(node->Attribute("name"));
-		auto tree_node = tree->Node(node->Attribute("name"));
-
-		LoadSoundChannelNode(node, tree_node);
-
-		node = node->NextSiblingElement("Node");
-	}
-
-	return true;
-}
-bool GameEditor::LoadSoundChannelTreeMapData(tinyxml2::XMLElement* xml, Tree* tree)
-{
-	auto node = xml->FirstChildElement("Node");
-	while (node)
-	{
-		tree->Node(tree->m_name)->Node(node->Attribute("name"));
-		auto tree_node = tree->Node(node->Attribute("name"));
-		
-		// Load volume settings.
-		auto data = new ChannelGroupData();
-		auto volume = node->FloatAttribute("volume");
-		data->m_volume = volume;
-		m_ChannelGroupMap.emplace(tree_node->m_name, data);
-
-		LoadSoundChannelNode(node, tree_node);
-
-		node = node->NextSiblingElement("Node");
-	}
-
-	return true;
-}
-void GameEditor::LoadSoundChannelNode(tinyxml2::XMLElement* xml_node, Tree* tree)
-{
-	auto node = xml_node->FirstChildElement("Node");
-	while (node)
-	{
-		auto name = tree->m_name;
-
-		tree->Node(name)->Node(node->Attribute("name"));
-		auto tree_node = tree->Node(node->Attribute("name"));
-
-		// Load volume settings.
-		auto data = new ChannelGroupData();
-		auto volume = node->FloatAttribute("volume");
-		data->m_volume = volume;
-		m_ChannelGroupMap.emplace(tree_node->m_name, data);
-
-
-		LoadSoundChannelNode(node, tree_node);
-
-		node = node->NextSiblingElement("Node");
-	}
-}
-
-
 
 void GameEditor::RenderMainMenu()
 {
@@ -608,23 +509,6 @@ void GameEditor::RenderMainMenu()
 
 		if (ImGui::BeginMenu("Audio"))
 		{
-			if (ImGui::MenuItem("Edit Sources"))
-			{
-				ToggleMenuItem(g_bBackgroundAudioEditorOpen);
-			}
-			if (ImGui::MenuItem("Edit SoundChannels"))
-			{
-				ToggleMenuItem(g_bAudioSoundChannelEditorOpen);
-			}
-
-			if (ImGui::MenuItem("Display Source Dimensions"))
-			{
-				ToggleMenuItem(g_bRenderSoundSourceDimensions);
-			}
-			ImGui::SameLine();
-			ImGui::Checkbox("Open", &g_bRenderSoundSourceDimensions);
-
-			ImGui::EndMenu();
 		}
 
 
@@ -816,11 +700,6 @@ bool GameEditor::OnUserUpdate(float fElapsedTime)
 	Clear(olc::BLANK);
 	SetDrawTarget((uint8_t)m_GUILayer);
 
-
-	SoundSystem::get()->SetListenerPositionVector(m_camerax, m_cameray, -m_cameraHeigth);
-	SoundSystem::get()->Update();
-
-
 	HandleInput();
 	UpdateVisibleRect();
 
@@ -945,19 +824,6 @@ void GameEditor::RenderMainFrame()
 							cell.position = olc::vf2d(slot.first, slot.second);
 							cell.color = slot_color;
 							building_slot_cells.push_back(cell);
-						}
-					}
-
-					// Render Audio Source specific data.
-					if (g_bRenderSoundSourceDimensions)
-					{
-						if (e->Has("Sound"))
-						{
-							auto sound = e->Get< ComponentSound >("Sound");
-							auto color = olc::Pixel(ConvertColorToPixel(ImVec4(sound->r, sound->g, sound->b, sound->a)));
-							float xpos = e->m_positionx - sound->m_radius;
-							float ypos = e->m_positiony - sound->m_radius;
-							tv.DrawDecal({ xpos, ypos }, m_editorDecalDatabase["FilledCircle"], { sound->m_radius + 1, sound->m_radius + 1 }, color);
 						}
 					}
 				}
@@ -1380,58 +1246,6 @@ void GameEditor::HandleInput()
 	}
 
 
-	// Sound Editing.
-	// Handle input despite Imgui having focus.
-	// Unfortunately, this is a limitation of ImGui which cannot be circumvented.
-	if (g_bAddingSoundSource)
-	{
-		if (GetMouse(0).bReleased)
-		{
-			auto sound_source = CreateMapobjectAudioSource(mousex, mousey, 1.0f, g_sSoundSource);
-			g_bAddingSoundSource = false;
-			g_sSoundSource = "none";
-
-
-			auto sound_name = sound_source->Get< ComponentSound >("Sound")->m_soundName;
-			auto name = sound_source->m_name + " (" + sound_name + ")";
-			g_InGameSoundSourcesMap.try_emplace(name, sound_source);
-		}
-		if (GetMouse(1).bReleased || GetKey(olc::ESCAPE).bReleased)
-		{
-			g_bAddingSoundSource = false;
-			g_sSoundSource = "none";
-		}
-	}
-	if (!g_bAddingSoundSource)
-	{
-		if (GetMouse(0).bReleased)
-		{
-			auto sound_source = GetMapobjectAt(mousex, mousey, "AudioSourceLayer");
-			if (sound_source)
-			{
-				g_bEditingSoundSource = true;
-				g_pEditedSoundSource = sound_source;
-			}
-		}
-		if (GetMouse(1).bReleased)
-		{
-			auto sound_source = GetMapobjectAt(mousex, mousey, "AudioSourceLayer");
-			if (sound_source)
-			{
-				// Remove Sound Source from Project.
-				auto sound_name = sound_source->Get< ComponentSound >("Sound")->m_soundName;
-				auto name = sound_source->m_name + " (" + sound_name + ")";
-				if (g_InGameSoundSourcesMap.find(name) != g_InGameSoundSourcesMap.end())
-				{
-					g_InGameSoundSourcesMap.erase(name);
-				}
-				DeleteMapobjectAudioSource(sound_source);
-			}
-		}
-
-	}
-
-
 	// Unit Template Layout Editing.
 	if(g_bLayoutTemplateEditorOpen)
 	{
@@ -1571,30 +1385,6 @@ olc::Pixel GameEditor::GetRandomColor(uint64_t alpha /*= 255*/)
 }
 
 
-void GameEditor::UpdateInGameSoundSourcesMap(std::map< std::string, Entity* >& map)
-{
-	std::map< std::string, std::string > changes;
-
-	for (auto& pair : map)
-	{
-		// Check for different names.
-		if (pair.first.compare(pair.second->m_name) != 0)
-		{
-			// Mem the change required.
-			changes.emplace(pair.first, pair.second->m_name);
-		}
-	}
-
-	// Apply the changes.
-	for (auto& pair : changes)
-	{
-		auto node = map.extract(pair.first);
-
-		node.key() = pair.second;
-
-		map.insert(std::move(node));
-	}
-}
 
 uint32_t GameEditor::ConvertColorToPixel(ImVec4 color)
 {
@@ -1605,56 +1395,7 @@ std::string GameEditor::CreateMapobjectName()
 {
 	return "Mapobject_" + std::to_string(m_mapobjectCount++);
 }
-Entity* GameEditor::CreateMapobjectAudioSource(uint64_t x, uint64_t y, float radius, const std::string& soundname)
-{
-	// Ensure Boundaries.
-	if (radius < 0.0f ||
-		x < 0 ||
-		y < 0 ||
-		x > MAX_MAPSIZE_X - 1 ||
-		y > MAX_MAPSIZE_Y - 1) return nullptr;
 
-	std::string name = "SoundSource_" + soundname;
-
-	// Create a default Entity with 
-	// a visual representation.
-	//auto entity = CreateMapobject(x, y, "AudioSourceLayer", "AudioOn", soundname);
-	if (name.compare("none") == 0 || IsMapobjectNameUsed(name))
-	{
-		name += "_" + CreateMapobjectName();
-	}
-	else
-	{
-		m_mapobjectCount++;
-	}
-	// Create object.
-	auto entity = new Entity(name);
-	m_entities.push_back(entity);
-	entity->Add(new ComponentSprite("AudioOff", "AudioSourceLayer"), "Sprite");
-	entity->m_positionx = x;
-	entity->m_positiony = y;
-	entity->Get< ComponentSprite >("Sprite")->m_width = DEFAULT_DECAL_SIZE_X;
-	entity->Get< ComponentSprite >("Sprite")->m_height = DEFAULT_DECAL_SIZE_Y;
-	
-	auto sound_component = new ComponentSound(radius, soundname);
-	olc::Pixel color = GetRandomColor(150);
-	sound_component->r = color.r;
-	sound_component->g = color.g;
-	sound_component->b = color.b;
-	sound_component->a = color.a;
-	entity->Add(sound_component, "Sound");
-	
-
-	// If there is another Object already, delete it first.
-	if (m_gameworld["AudioSourceLayer"][x][y])
-	{
-		DeleteMapobject(m_gameworld["AudioSourceLayer"][x][y]);
-	}
-
-	// Add Object to layer Gameworld.
-	m_gameworld["AudioSourceLayer"][x][y] = entity;
-	return entity;
-}
 Entity* GameEditor::CreateMapobjectEx(uint64_t x, uint64_t y, std::string layer, std::string decal, std::string name)
 {
 	// Create Entities only on Valid Layers.
@@ -1805,30 +1546,7 @@ void GameEditor::DeleteMapobject(Entity* object)
 	m_gameworld[layer][x][y] = nullptr;
 }
 
-void GameEditor::DeleteMapobjectAudioSource(Entity* object)
-{
-	auto sound_component = object->Get< ComponentSound >("Sound");
-	auto name = sound_component->m_soundName;
 
-	// Stop according sample from playing and release the sound channel.
-	auto sound = SoundSystem::get()->GetSound(name);
-	if (sound)
-	{
-		sound->Stop();
-		sound->Release();
-	}
-
-	// Erase object from Sound Sources.
-	if (g_InGameSoundSourcesMap.find(name) != g_InGameSoundSourcesMap.end()) g_InGameSoundSourcesMap.erase(name);
-	
-	// Close the editing window if it is on.
-	g_bEditingSoundSource = false;
-	g_pEditedSoundSource = nullptr;
-	g_sSoundSource = "none";
-
-	// General delete of the Object.
-	DeleteMapobject(object);
-}
 
 void GameEditor::UpdateEntities()
 {
@@ -1898,592 +1616,6 @@ void GameEditor::DisplayEntityEditor(Entity* e)
 	ImGui::End();
 }
 
-void GameEditor::DisplayBackgroundAudioEditor()
-{
-	static const char* name = "Audio Editor";
-	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
-	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
-	ImGui::Begin(name, &g_bBackgroundAudioEditorOpen);
-
-	bool tree_open = ImGui::TreeNode("Audio Assets");
-	ImGui::SameLine(); HelpMarker("Currently loaded and available audio assets");
-	if (tree_open)
-	{
-		for (auto& p : m_soundPathMap)
-		{
-			if (ImGui::Button(p.first.c_str()))
-			{
-				// Selected a sound source to be placed on the map.
-				g_bAddingSoundSource = true;
-				g_sSoundSource = p.first;
-			}
-		}
-		ImGui::TreePop();
-	}
-
-	tree_open = ImGui::TreeNode("Sound Sources");
-	ImGui::SameLine(); HelpMarker("Sound sources currently placed on the map");
-	if (tree_open)
-	{
-		for (auto& pair : g_InGameSoundSourcesMap)
-		{
-			if (ImGui::Button(pair.first.c_str()))
-			{
-				g_bEditingSoundSource = true;
-				g_pEditedSoundSource = pair.second;
-			}
-		}
-
-		ImGui::TreePop();
-	}
-
-	ImGui::End();
-}
-
-void GameEditor::DisplaySoundChannelEditor()
-{
-	static const char* name = "SoundChannel Editor";
-	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
-	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
-	ImGui::Begin(name, &g_bAudioSoundChannelEditorOpen);
-	
-	// The Tree Itself.
-	bool tree_open = ImGui::TreeNode(g_SoundChannelTree->m_name.c_str());
-
-	// Show add/remove option next to Node.
-	DisplaySoundChannelAddRemoveOptions(g_SoundChannelTree);
-
-	if (tree_open)
-	{
-		for (int i = 0; i < g_SoundChannelTree->m_children.size(); i++)
-		{
-			DisplaySoundChannelNode(g_SoundChannelTree->m_children[i]);
-		}
-		ImGui::TreePop();
-	}
-
-	DisplayChannelGroupControl(g_SoundChannelTree);
-
-
-	ImGui::End();
-}
-
-
-void GameEditor::DisplayChannelGroupControl(Tree* tree)
-{
-	ImGui::Separator();
-	if(tree)
-	{
-		std::string slider_name = tree->m_name + " Vol.";
-		ImGui::Text(tree->m_name.c_str());
-		ImGui::SameLine();
-		
-		auto group = m_ChannelGroupMap[tree->m_name];
-		float vol = group->m_volume;
-		ImGui::SliderFloat(slider_name.c_str(), &vol, 0.0f, 1.0f, "%.4f", 1.0f);
-		group->m_volume = vol;
-		UpdateChannelGroupVolumeForFMOD(tree->m_name, vol);
-
-		for (auto& kid : tree->m_children)
-		{
-			DisplayChannelGroupControlNode(kid);
-		}
-	}
-}
-
-void GameEditor::DisplayChannelGroupControlNode(Tree* tree)
-{
-	std::string slider_name = tree->m_name + " Vol.";
-	ImGui::Text(tree->m_name.c_str());
-	ImGui::SameLine();
-	auto group = m_ChannelGroupMap[tree->m_name];
-	float vol = group->m_volume;
-	ImGui::SliderFloat(slider_name.c_str(), &vol, 0.0f, 1.0f, "%.4f", 1.0f);
-	group->m_volume = vol;
-	UpdateChannelGroupVolumeForFMOD(tree->m_name, vol);
-
-	for (auto& kid : tree->m_children)
-	{
-		DisplayChannelGroupControlNode(kid);
-	}
-}
-
-
-void GameEditor::UpdateChannelGroupVolumeForFMOD(const std::string& group_name, float v)
-{
-	auto group = SoundSystem::get()->GetChannelGroup(group_name);
-	if(group)
-	{
-		group->setVolume(v);
-	}
-}
-
-
-void GameEditor::DisplaySoundChannelAddRemoveOptions(Tree* node)
-{
-	ImGuiID add_button_id = g_iImguiImageButtonID + strlen(node->m_name.c_str()) + (intptr_t)"Add";
-	ImGuiID remove_button_id = g_iImguiImageButtonID + strlen(node->m_name.c_str()) + (intptr_t)"Remove";
-
-	std::string node_name = node->m_name;
-	ImGui::SameLine();
-
-	ImGui::PushID(add_button_id);
-	if (ImGui::SmallButton("+"))
-	{
-		g_bAddingChildToSoundChannel = true;
-		g_pAddingChildToSoundChannelNode = node;
-	}
-	ImGui::PopID();
-
-	HelpMarkerWithoutQuestion(std::string("Add a new child node to \"" + node_name + "\"").c_str());
-	ImGui::SameLine();
-
-	ImGui::PushID(remove_button_id);
-	if (ImGui::SmallButton("-"))
-	{
-		RemoveNodeFromSoundChannelTree(g_SoundChannelTree, node);
-	}
-	ImGui::PopID();
-
-	HelpMarkerWithoutQuestion(std::string("Remove \"" + node_name + "\" and all of its children nodes").c_str());
-}
-
-
-void GameEditor::DisplayAddingChildNodeToSoundChannel(Tree* node)
-{
-	if (node)
-	{
-		ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
-		ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
-
-		std::string title = "Adding child to \"" + node->m_name + "\"";
-		ImGui::Begin(title.c_str(), &g_bAddingChildToSoundChannel);
-
-		static char new_sound_channel_child_name[64] = "";
-		ImGui::InputText("|", new_sound_channel_child_name, 64);
-		ImGui::SameLine();
-		if (ImGui::SmallButton("OK"))
-		{
-			// Check for sanity.
-			std::string name = std::string(new_sound_channel_child_name);
-
-			bool length = name.length() > 0;
-			bool duplicate = g_SoundChannelTree->Has(name);
-
-			if (length && !duplicate)
-			{
-				node->Node(name);
-			}
-
-
-			if (!length)
-			{
-				LOG_DBG_ERROR("[{:.4f}][DisplayAddingChildNodeToSoundChannel] Error adding SoundChannelNode \"{}\" to \"{}\": Name has 0 length!", APP_RUN_TIME, name, node->m_name);
-				LOG_FILE_ERROR("[{:.4f}][DisplayAddingChildNodeToSoundChannel]  Error adding SoundChannelNode \"{}\" to \"{}\": Name has 0 length!", APP_RUN_TIME, name, node->m_name);
-			}
-			if (duplicate)
-			{
-				LOG_DBG_ERROR("[{:.4f}][DisplayAddingChildNodeToSoundChannel] Error adding SoundChannelNode \"{}\" to \"{}\": Child name is duplicate!", APP_RUN_TIME, name, node->m_name);
-				LOG_FILE_ERROR("[{:.4f}][DisplayAddingChildNodeToSoundChannel]  Error adding SoundChannelNode \"{}\" to \"{}\": Child name is duplicate!", APP_RUN_TIME, name, node->m_name);
-			}
-
-			memset(&new_sound_channel_child_name, 0, sizeof(new_sound_channel_child_name));
-			g_bAddingChildToSoundChannel = false;
-			g_pAddingChildToSoundChannelNode = nullptr;
-		}
-
-		ImGui::End();
-	}
-}
-
-
-void GameEditor::RemoveNodeFromSoundChannelTree(Tree* tree, Tree* node)
-{
-	tree->RemoveNode(node->m_name);
-}
-
-
-void GameEditor::DisplaySoundChannelNode(Tree* tree)
-{
-	bool tree_open = ImGui::TreeNode(tree->m_name.c_str());
-
-	// Show add/remove option next to Node.
-	DisplaySoundChannelAddRemoveOptions(tree);
-
-	if (tree_open)
-	{
-		for (int i = 0; i < tree->m_children.size(); i++)
-		{
-			DisplaySoundChannelNode(tree->m_children[i]);
-		}
-		ImGui::TreePop();
-	}
-}
-
-void GameEditor::DisplaySoundSourceEditor(Entity* e)
-{
-	auto sound_component = e->Get< ComponentSound >("Sound");
-
-	std::string window_title = "Sound Source Edit: " + e->m_name + "(" + sound_component->m_soundName +")";
-	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
-	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
-	ImGui::Begin(window_title.c_str(), &g_bEditingSoundSource);
-
-	DisplayLoopButton(e);
-	ImGui::SameLine();
-	DisplayPlayButton(e);
-	ImGui::SameLine();
-	DisplayStopButton(e);
-
-	// Change Sound source name
-	static char sound_source_name_buf[64] = ""; 
-	ImGui::InputText("|", sound_source_name_buf, 64);
-	HelpMarkerWithoutQuestion("Change the unique name of the Sound Source. The name does not change the sound file being played");
-	ImGui::SameLine();
-	if (ImGui::SmallButton("OK"))
-	{
-		auto name = std::string(sound_source_name_buf);
-
-		// Do not Allow empty names.
-		// Check whether the new name is a duplicate.
-		if (name.size() != 0 && g_InGameSoundSourcesMap.find(name) == g_InGameSoundSourcesMap.end())
-		{
-			// Change the Entity Name.
-			e->m_name = std::string(sound_source_name_buf);
-
-			// Change the Sound Source name (in SoundSystem and in Component).
-			SoundSystem::get()->ChangeSoundSourceName(sound_component->m_soundSourceName, e->m_name);
-			sound_component->m_soundSourceName = e->m_name;
-
-			memset(&sound_source_name_buf, 0, sizeof(sound_source_name_buf));
-
-			// Update the Map to adjust to changes.
-			g_bInGameSoundSourcesMapDirty = true;
-		}
-		else
-		{
-			LOG_DBG_ERROR("[{:.4f}][DisplaySoundSourceEditor] Error changing Sound-Source-Entity name from \"{}\" to \"{}\"!", APP_RUN_TIME, e->m_name, name);
-			LOG_FILE_ERROR("[{:.4f}][DisplaySoundSourceEditor] Error changing Sound-Source-Entity name from \"{}\" to \"{}\"!", APP_RUN_TIME, e->m_name, name);
-		}
-	}
-
-	// Change the Sound File Name
-	DisplaySoundFileNameChanger(e);
-
-	
-	// Change Channel Group
-	DisplayChannelGroupChanger(e);
-
-	// Change width and height.
-	DisplayDimensionChanger(e);
-
-	// Change position.
-	DisplayPositionChanger(e);
-
-	// Change color.
-	DisplayCollisionBoxColorPicker(e);
-	
-
-
-	ImGui::End();
-}
-
-void GameEditor::DisplayLoopButton(Entity* e)
-{
-	auto sound_component = e->Get< ComponentSound >("Sound");
-	auto sound_source_name = sound_component->m_soundSourceName;
-	auto sound_channel = SoundSystem::get()->GetSound(sound_source_name);
-
-	// Get data about sound.
-	bool sound_looped = sound_channel->GetLooped();
-
-	if (sound_looped)
-	{
-		ImGui::PushStyleColor(ImGuiCol_Button, { 1.0f, 1.0f, 0.3f, 1.0f }); // Yellow button color.
-		ImGui::PushStyleColor(ImGuiCol_Text, { 0.0f, 0.0f, 0.0f, 1.0f });	// Black text color.
-	}
-	if (ImGui::Button("Loop"))
-	{
-		if (sound_channel)
-		{
-			if (sound_channel->GetLooped() == false)
-			{
-				sound_channel->SetLooped(true);
-			}
-			else
-			{
-				sound_channel->SetLooped(false);
-			}
-		}
-		else
-		{
-			LOG_DBG_ERROR("[{:.4f}][DisplayLoopButton] SoundChannel \"{}\" invalid!", APP_RUN_TIME, sound_source_name);
-			LOG_FILE_ERROR("[{:.4f}][DisplayLoopButton] SoundChannel \"{}\" invalid!", APP_RUN_TIME, sound_source_name);
-		}
-	}
-	if (sound_looped)
-	{
-		ImGui::PopStyleColor(); ImGui::PopStyleColor();
-	}
-	HelpMarkerWithoutQuestion("Play the Sound Source in a loop");
-}
-
-void GameEditor::DisplayPlayButton(Entity* e)
-{
-	auto sound_component = e->Get< ComponentSound >("Sound");
-	auto sound_source_name = sound_component->m_soundSourceName;
-	auto sound_channel = SoundSystem::get()->GetSound(sound_source_name);
-
-	// Get data about sound.
-	bool sound_played = sound_channel->GetIsPlayed();
-
-	if (sound_played)
-	{
-		ImGui::PushStyleColor(ImGuiCol_Button, { 1.0f, 1.0f, 0.3f, 1.0f }); // Yellow button color.
-		ImGui::PushStyleColor(ImGuiCol_Text, { 0.0f, 0.0f, 0.0f, 1.0f });	// Black text color.
-	}
-	if (ImGui::Button("Play"))
-	{
-		if (sound_channel)
-		{
-			if (sound_channel->GetIsPlayed() == false)
-			{
-				sound_channel->Play();
-			}
-			else
-			{
-				sound_channel->Stop();
-				sound_channel->Play();
-			}
-		}
-		else
-		{
-			LOG_DBG_ERROR("[{:.4f}][DisplayPlayButton] SoundChannel \"{}\" invalid!", APP_RUN_TIME, sound_source_name);
-			LOG_FILE_ERROR("[{:.4f}][DisplayPlayButton] SoundChannel \"{}\" invalid!", APP_RUN_TIME, sound_source_name);
-		}
-	}
-	if (sound_played)
-	{
-		ImGui::PopStyleColor(); ImGui::PopStyleColor();
-	}
-	HelpMarkerWithoutQuestion("Play the Sound Source once");
-}
-
-void GameEditor::DisplayStopButton(Entity* e)
-{
-	auto sound_component = e->Get< ComponentSound >("Sound");
-	auto sound_source_name = sound_component->m_soundSourceName;
-	auto sound_channel = SoundSystem::get()->GetSound(sound_source_name);
-
-	ImGuiID stop_sound_id = g_iImguiImageButtonID + strlen(sound_source_name.c_str()) + (intptr_t)"Stop";
-
-	ImGui::SameLine();
-	ImGui::PushID(stop_sound_id);
-	if (ImGui::ImageButton((ImTextureID)m_editorDecalDatabase["Stop"]->id, { DEFAULT_WIDGET_IMAGE_SIZE_X, DEFAULT_WIDGET_IMAGE_SIZE_Y }))
-	{
-		if (sound_channel)
-		{
-			if (sound_channel->GetIsPlayed())
-			{
-				sound_channel->Stop();
-			}
-		}
-		else
-		{
-			LOG_DBG_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_source_name);
-			LOG_FILE_ERROR("[{:.4f}][DisplaySoundSourceEditor] SoundChannel \"{}\"invalid!", APP_RUN_TIME, sound_source_name);
-		}
-	}
-	ImGui::PopID();
-	HelpMarkerWithoutQuestion("Stop the Sound Source");
-}
-
-
-void GameEditor::DisplayPositionChanger(Entity* e)
-{
-	auto sound_component = e->Get< ComponentSound >("Sound");
-	auto sound = SoundSystem::get()->GetSound(sound_component->m_soundSourceName);
-
-
-	int x = e->m_positionx;
-	int y = e->m_positiony;
-	int z = sound->GetPosition().z;
-
-	ImGui::SliderInt("X", &x, 0, MAX_MAPSIZE_X - 1, "%d", ImGuiSliderFlags_Logarithmic);
-	HelpMarkerWithoutQuestion("Change the x position of the Sound");
-	ImGui::SliderInt("Y", &y, 0, MAX_MAPSIZE_Y - 1, "%d", ImGuiSliderFlags_Logarithmic);
-	HelpMarkerWithoutQuestion("Change the y position of the Sound");
-	ImGui::SliderInt("Z", &z, -MAX_MAPSIZE_X + 1, MAX_MAPSIZE_X - 1, "%d", ImGuiSliderFlags_Logarithmic);
-	HelpMarkerWithoutQuestion("Change the z position (height) of the Sound");
-
-
-	
-	int prevx, prevy;
-	prevx = e->m_positionx;
-	prevy = e->m_positiony;
-	if (sound)
-	{
-		e->m_positionx = x;
-		e->m_positiony = y;
-		sound->SetPosition({ (float)x, (float)y, (float)z });
-
-		// Move the Entity to appropriate map tile in the game world.
-		m_gameworld["AudioSourceLayer"][prevx][prevy] = nullptr;
-		m_gameworld["AudioSourceLayer"][x][y] = e;
-
-		LOG_DBG_INFO("[{:.4f}][DisplayPositionChanger] Changed position of \"{}\" to {}:{}:{}!", APP_RUN_TIME, sound->GetName(), x, y, z);
-		LOG_FILE_INFO("[{:.4f}][DisplayPositionChanger] Changed position of \"{}\" to {}:{}:{}!", APP_RUN_TIME, sound->GetName(), x, y, z);
-	}
-	else
-	{
-		LOG_DBG_ERROR("[{:.4f}][DisplayPositionChanger] Could not change position of \"{}\" to {}:{}:{}! SoundChannel invalid!", APP_RUN_TIME, sound->GetName(), x, y, z);
-		LOG_FILE_ERROR("[{:.4f}][DisplayPositionChanger] Could not change position of \"{}\" to {}:{}:{}! SoundChannel invalid!", APP_RUN_TIME, sound->GetName(), x, y, z);
-	}
-}
-
-void GameEditor::DisplaySoundFileNameChanger(Entity* e)
-{
-	auto sound_component = e->Get< ComponentSound >("Sound");
-
-	ImGuiID sound_file_name_input_id = g_iImguiImageButtonID + strlen(sound_component->m_soundName.c_str()) + (intptr_t)"|";
-	ImGuiID ok_button_id = g_iImguiImageButtonID + strlen(sound_component->m_soundName.c_str()) + (intptr_t)"OK";
-
-	ImGui::PushID(sound_file_name_input_id);
-	static char sound_file_name_buf[64] = "";
-	ImGui::InputText("|", sound_file_name_buf, 64);
-	ImGui::PopID();
-	HelpMarkerWithoutQuestion("Change the sound file name to be played. The name must be valid and loaded");
-	
-	
-	ImGui::SameLine();
-	ImGui::PushID(ok_button_id);
-	if (ImGui::SmallButton("OK"))
-	{
-		auto name = std::string(sound_file_name_buf);
-		auto old_name = sound_component->m_soundName;
-
-		// Do not Allow empty names.
-		// Check whether the new name is a duplicate.
-		if (name.size() > 0 && m_soundPathMap.find(name) != m_soundPathMap.end())
-		{
-			// Change the Sound File Name.
-			sound_component->m_soundName = std::string(sound_file_name_buf);
-
-			// Update the SoundChannel.
-			auto sound = SoundSystem::get()->GetSound(sound_component->m_soundSourceName);
-			if (sound)
-			{
-				// ... just unload the old sound and load the new one.
-				sound->LoadSoundToChannel(sound, m_soundPathMap[name], sound->GetIs2D());
-			}
-
-			memset(&sound_file_name_buf, 0, sizeof(sound_file_name_buf));
-
-			LOG_DBG_INFO("[{:.4f}][DisplaySoundFileNameChanger] Changed Sound-Source-Sound name from \"{}\" to \"{}\"!", APP_RUN_TIME, old_name, name);
-			LOG_FILE_INFO("[{:.4f}][DisplaySoundFileNameChanger] Changed changing Sound-Source-Sound name from \"{}\" to \"{}\"!", APP_RUN_TIME, old_name, name);
-		}
-		else
-		{
-			LOG_DBG_ERROR("[{:.4f}][DisplaySoundFileNameChanger] Error changing Sound-Source-Sound name from \"{}\" to \"{}\"!", APP_RUN_TIME, old_name, name);
-			LOG_FILE_ERROR("[{:.4f}][DisplaySoundFileNameChanger] Error changing Sound-Source-Sound name from \"{}\" to \"{}\"!", APP_RUN_TIME, old_name, name);
-		}
-	}
-	ImGui::PopID();
-}
-
-void GameEditor::DisplayCollisionBoxColorPicker(Entity* e)
-{
-	auto sound = e->Get< ComponentSound >("Sound");
-
-	ImVec4 color = {sound->r, sound->g, sound->b, sound->a};
-	
-	ImGui::ColorEdit4("Collider Color", (float*)&color, ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_InputRGB);
-	HelpMarkerWithoutQuestion("Change the color of the Sound Sources collision box");
-
-	sound->r = color.x;
-	sound->g = color.y;
-	sound->b = color.z;
-	sound->a = color.w;
-}
-
-void GameEditor::DisplayDimensionChanger(Entity* e)
-{
-	auto sound_component = e->Get< ComponentSound >("Sound");
-
-	float r = sound_component->m_radius;
-	
-	ImGui::SliderFloat("Radius", &r, 0.1f, MAX_MAPSIZE_X, "%.4f", ImGuiSliderFlags_Logarithmic | ImGuiSliderFlags_AlwaysClamp);
-	HelpMarkerWithoutQuestion("Set the radius max distance of the sound source");
-
-	sound_component->m_radius = r;
-
-	// Update radius data in FMOD.
-	auto sound = SoundSystem::get()->GetSound(sound_component->m_soundSourceName);
-	sound->SetRadius(r);
-}
-
-
-void GameEditor::DisplayChannelGroupChanger(Entity* e)
-{
-	// Create an array for the imgui combo
-	std::vector< std::string > sound_channel_group_vec;
-	
-	sound_channel_group_vec.push_back(g_SoundChannelTree->m_name);
-	for (auto& kid : g_SoundChannelTree->m_children)
-	{
-		AddSoundChannelGroupToVec(kid, sound_channel_group_vec);
-	}
-
-	// Find our current item index in the vector.
-	auto sound_component = e->Get< ComponentSound >("Sound");
-	auto sound_channel_group = sound_component->m_soundChannelGroup;
-	int current_item_index = 0;
-	bool changed = false;
-	for (int i = 0; i < sound_channel_group_vec.size(); i++)
-	{
-		if (sound_channel_group_vec[i].compare(sound_channel_group) == 0)
-		{
-			current_item_index = i;
-			break;
-		}
-	}
-
-	// Create the Combo window.
-	if (ImGui::BeginCombo("SoundChannelGroup", sound_channel_group.c_str()))
-	{
-		for (int i = 0; i < sound_channel_group_vec.size(); i++)
-		{
-			const bool is_selected = (current_item_index == i);
-
-			if (ImGui::Selectable(sound_channel_group_vec[i].c_str(), is_selected))
-			{
-				current_item_index = i;
-				LOG_DBG_INFO("[{:.4f}][DisplayChannelGroupChanger] Changed Sound Channel Group to \"{}\"", APP_RUN_TIME, sound_channel_group_vec[current_item_index]);
-				changed = true;
-			}
-
-			if (is_selected)
-			{
-				ImGui::SetItemDefaultFocus();
-			}
-		}
-		ImGui::EndCombo();
-	}
-	HelpMarkerWithoutQuestion("Change the channel group on which the sound will be played. The change will find place on the next \"Play\" command for the sound source");
-
-	// Apply the change.
-	if (changed) sound_component->m_soundChannelGroup = sound_channel_group_vec[current_item_index];
-}
-
-
-void GameEditor::AddSoundChannelGroupToVec(Tree* tree, std::vector< std::string >& vec)
-{
-	vec.push_back(tree->m_name);
-	for (auto& kid : tree->m_children)
-	{
-		AddSoundChannelGroupToVec(kid, vec);
-	}
-}
 
 void GameEditor::CreateRenderingLayer(std::string layer_name, int order)
 {
@@ -2810,10 +1942,6 @@ bool GameEditor::ExportMapData(const std::string& filepath, const std::string& m
 	doc.InsertEndChild(root);
 
 
-	// Export Sound Channel Data.
-	ExportSoundChannelTree(root, g_SoundChannelTree);
-
-
 	// Export World Layer Data.
 	auto layers = root->InsertNewChildElement("Layers");
 	for (auto& l : m_sortedLayers)
@@ -2907,50 +2035,9 @@ void GameEditor::ExportEntity(tinyxml2::XMLElement* xml, Entity* entity)
 	if (has_fort) ExportEntityComponentFort(xml, entity);
 	if (has_townhall) ExportEntityComponentTownhall(xml, entity);
 	if (has_unit) ExportEntityComponentUnit(xml, entity);
-	if (has_sound) ExportEntityComponentSound(xml, entity);
 }
-void GameEditor::ExportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* entity)
-{
-	auto sound_component = entity->Get< ComponentSound >("Sound");
-	auto sound_xml = xml->InsertNewChildElement("Sound");
-
-	sound_xml->SetAttribute("radius", sound_component->m_radius);
-	sound_xml->SetAttribute("r", sound_component->r);
-	sound_xml->SetAttribute("g", sound_component->g);
-	sound_xml->SetAttribute("b", sound_component->b);
-	sound_xml->SetAttribute("a", sound_component->a);
-	sound_xml->SetAttribute("soundName", sound_component->m_soundName.c_str());
-	sound_xml->SetAttribute("soundChannelGroupName", sound_component->m_soundChannelGroup.c_str());
-	sound_xml->SetAttribute("soundSourceName", sound_component->m_soundSourceName.c_str());
-
-	// Special for the sound component we export the custom given name,
-	// this may cause problems on loading duplicate or errorous names.
-	sound_xml->SetAttribute("entityName", entity->m_name.c_str());
 
 
-	// Special for FMOD export sound data like Volume, Pitch etc.
-	auto sound = SoundSystem::get()->GetSound(sound_component->m_soundSourceName);
-	if (sound)
-	{
-		sound_xml->SetAttribute("volume", sound->GetVolume());
-		sound_xml->SetAttribute("pitch", sound->GetPitch());
-		sound_xml->SetAttribute("pan", sound->GetPan());
-		sound_xml->SetAttribute("looped", sound->GetLooped());
-		sound_xml->SetAttribute("is2d", sound->GetIs2D());
-
-		// Dont export Position and Velocity, as Velocity is null and position is derived from Entity.
-		// Only Z axis can be exported here.
-		if (sound->GetIs2D() == false)
-		{
-			sound_xml->SetAttribute("z", sound->GetPosition().z);
-		}
-	}
-	else
-	{
-		LOG_DBG_ERROR("[{:.4f}][ExportEntityComponentSound] SoundChannel \"{}\"could not be found! Cannot export SoundChannel data!", APP_RUN_TIME, sound_component->m_soundName);
-		LOG_FILE_ERROR("[{:.4f}][ExportEntityComponentSound] SoundChannel \"{}\"could not be found! Cannot export SoundChannel data!", APP_RUN_TIME, sound_component->m_soundName);
-	}
-}
 void GameEditor::ExportEntityComponentFort(tinyxml2::XMLElement* xml, Entity* entity)
 {
 	auto fort = xml->InsertNewChildElement("Fort");
@@ -3006,44 +2093,6 @@ void GameEditor::ExportEntityComponentUnit(tinyxml2::XMLElement* xml, Entity* en
 }
 
 
-void GameEditor::ExportSoundChannelTree(tinyxml2::XMLElement* xml, Tree* tree)
-{
-	auto root = xml->InsertNewChildElement("SoundChannelTree");
-	root->SetAttribute("root", tree->m_name.c_str());
-
-	// Export volume settings.
-	auto volume = m_ChannelGroupMap[tree->m_name];
-	root->SetAttribute("volume", volume);
-
-	for (auto& kid : tree->m_children)
-	{
-		ExportSoundChannelTreeNode(root, kid);
-	}
-}
-
-void GameEditor::ExportSoundChannelTreeNode(tinyxml2::XMLElement* xml, Tree* tree)
-{
-	auto node = xml->InsertNewChildElement("Node");
-	node->SetAttribute("name", tree->m_name.c_str());
-
-	// Export volume settings.
-	auto volume = m_ChannelGroupMap[tree->m_name];
-	node->SetAttribute("volume", volume);
-
-	for (auto& kid : tree->m_children)
-	{
-		auto leaf = node->InsertNewChildElement("Node");
-		leaf->SetAttribute("name", kid->m_name.c_str());
-		
-	
-		volume = m_ChannelGroupMap[kid->m_name];
-		leaf->SetAttribute("volume", volume);
-
-
-		ExportSoundChannelTreeNode(leaf, kid);
-	}
-}
-
 bool GameEditor::ImportMapData(const std::string& filepath)
 {
 	tinyxml2::XMLDocument doc;
@@ -3054,39 +2103,6 @@ bool GameEditor::ImportMapData(const std::string& filepath)
 	}
 
 	auto root = doc.RootElement();
-
-	// LOAD SOUND CHANNEL TREE
-	auto sound_channel_tree = root->FirstChildElement("SoundChannelTree");
-	if (sound_channel_tree)
-	{
-		// Load Master ChannelGroup into the channel group control map.
-		auto data = new ChannelGroupData();
-		data->m_volume = sound_channel_tree->FloatAttribute("volume");
-		m_ChannelGroupMap.emplace("Master", data);
-
-		if (LoadSoundChannelTreeMapData(sound_channel_tree, g_SoundChannelTree))
-		{
-			// Create the ChannelGroup tree in FMOD.
-			if (CreateAndSubmitSoundChannelTree(g_SoundChannelTree))
-			{
-				LOG_DBG_INFO("[{:.4f}][CreateAndSubmitSoundChannelTree] Success creating ChannelGroup Tree for FMOD!", APP_RUN_TIME);
-				LOG_FILE_INFO("[{:.4f}][CreateAndSubmitSoundChannelTree] Success creating ChannelGroup Tree for FMOD!", APP_RUN_TIME);
-			}
-			else
-			{
-				LOG_DBG_ERROR("[{:.4f}][CreateAndSubmitSoundChannelTree] Failed creating ChannelGroup Tree for FMOD!", APP_RUN_TIME);
-				LOG_FILE_ERROR("[{:.4f}][CreateAndSubmitSoundChannelTree] Failed creating ChannelGroup Tree for FMOD!", APP_RUN_TIME);
-			}
-
-			LOG_DBG_INFO("[{:.4f}][LoadSoundChannelTreeMapData] Success loading SoundChannelTree!", APP_RUN_TIME);
-			LOG_FILE_INFO("[{:.4f}][LoadSoundChannelTreeMapData] Success loading SoundChannelTree!", APP_RUN_TIME);
-		}
-		else
-		{
-			LOG_DBG_ERROR("[{:.4f}][LoadSoundChannelTreeMapData] Failed loading SoundChannelTree!", APP_RUN_TIME);
-			LOG_FILE_ERROR("[{:.4f}][LoadSoundChannelTreeMapData] Failed loading SoundChannelTree!", APP_RUN_TIME);
-		}
-	}
 
 
 	// LOAD LAYER DATA.
@@ -3119,10 +2135,6 @@ bool GameEditor::ImportMapData(const std::string& filepath)
 			if (fort)
 			{
 				ImportEntityComponentFort(fort, obj);
-			}
-			if (sound)
-			{
-				ImportEntityComponentSound(sound, obj);
 			}
 			if (unit)
 			{
@@ -3305,54 +2317,6 @@ Entity* GameEditor::ImportEntity(tinyxml2::XMLElement* xml, const std::string& l
 	return object;
 }
 
-void GameEditor::ImportEntityComponentSound(tinyxml2::XMLElement* xml, Entity* entity)
-{
-	auto radius = xml->FloatAttribute("radius", 1.0f);
-	auto r = xml->FloatAttribute("r", 1.0f);
-	auto g = xml->FloatAttribute("g", 1.0f);
-	auto b = xml->FloatAttribute("b", 1.0f);
-	auto a = xml->FloatAttribute("a", 1.0f);
-	auto sound_name = xml->Attribute("soundName");
-	auto group = xml->Attribute("soundChannelGroupName");
-	auto sound_entity_name = xml->Attribute("entityName");
-	auto sound_source_name = xml->Attribute("soundSourceName");
-
-
-	entity->Add(new ComponentSound(radius, r, g, b, a, sound_name, sound_source_name, group), "Sound");
-	entity->m_name = sound_entity_name;
-	
-	g_InGameSoundSourcesMap.try_emplace(entity->m_name, entity);
-
-
-	// Retrieve data needed for FMOD.
-	auto volume = xml->FloatAttribute("volume");
-	auto pitch = xml->FloatAttribute("pitch");
-	auto pan = xml->FloatAttribute("pan");
-	auto looped = xml->BoolAttribute("looped");
-	auto is2d = xml->BoolAttribute("is2d");
-	auto z = 0.0f;
-	if (is2d == false) z = xml->FloatAttribute("z");
-
-
-	// After importing automatically create sound on FMOD.
-	auto path = m_soundPathMap[sound_name];
-	auto name = sound_source_name;
-	auto channel_group = group;
-	auto sound_2d = false;
-	FMOD_VECTOR position = { entity->m_positionx, entity->m_positiony, z };
-
-	
-	if (SoundSystem::get()->CreateSoundOnChannel(path, name, channel_group, looped, is2d, position, volume, pitch, pan, radius, g_bSoundChannelPlayingOnLoad))
-	{
-		LOG_DBG_INFO("[{:.4f}][ImportEntityComponentSound] Created Sound Source: \"{}\" (\"{}\") with Sound \"{}\"", APP_RUN_TIME, entity->m_name, sound_source_name, sound_name);
-		LOG_FILE_INFO("[{:.4f}][ImportEntityComponentSound] Created Sound Source \"{}\"( \"{}\") with Sound \"{}\"", APP_RUN_TIME, entity->m_name, sound_source_name, sound_name);
-	}
-	else
-	{
-		LOG_DBG_ERROR("[{:.4f}][ImportEntityComponentSound] Failed creating Sound Source \"{}\" (\"{}\") with Sound \"{}\"", APP_RUN_TIME, entity->m_name, sound_source_name, sound_name);
-		LOG_FILE_ERROR("[{:.4f}][ImportEntityComponentSound] Failed creating Sound Source \"{}\" (\"{}\") with Sound \"{}\"", APP_RUN_TIME, entity->m_name, sound_source_name, sound_name);
-	}
-}
 
 void GameEditor::ImportEntityComponentFort(tinyxml2::XMLElement* xml, Entity* entity)
 {
@@ -3494,26 +2458,6 @@ void GameEditor::RemoveBuildingSlotFromCity(Entity* e, int slotx, int sloty)
 	}
 }
 
-
-
-bool GameEditor::CreateAndSubmitSoundChannelTree(Tree* tree)
-{
-	auto system = SoundSystem::get();
-
-	// First release all channel groups if there are any.
-	system->ReleaseAllChannelGroups();
-
-	// Create the Master channel.
-	bool result = system->CreateMasterChannelGroup(g_SoundChannelTree->m_name);
-
-	// Create Channel Groups.
-	for (auto& kid : g_SoundChannelTree->m_children)
-	{
-		result &= CreateAndSubmitSoundChannelNode(kid, g_SoundChannelTree->m_name);
-	}
-
-	return result;
-}
 
 bool GameEditor::ExportUnitPrefab(const std::string& filepath, SPrefab* prefab)
 {
@@ -5482,19 +4426,6 @@ bool GameEditor::ImportPrefabLayoutTemplate(const std::string& filepath)
 }
 
 
-bool GameEditor::CreateAndSubmitSoundChannelNode(Tree* tree, const std::string& parent)
-{
-	auto system = SoundSystem::get();
-
-	bool result = system->CreateChannelGroup(tree->m_name, parent);
-
-	for (auto& kid : tree->m_children)
-	{
-		result &= CreateAndSubmitSoundChannelNode(kid, tree->m_name);
-	}
-
-	return result;
-}
 
 void SRectangle::Draw(GameEditor* editor)
 {
@@ -5509,7 +4440,6 @@ bool GameEditor::OnUserDestroy()
 	g_pCurrentEditedPrefab = nullptr;
 	g_PrefabElementTypeVec.clear();
 
-	SoundSystem::get()->Terminate();
 	Logger::Terminate();
 	return true;
 }

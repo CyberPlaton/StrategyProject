@@ -18,22 +18,6 @@ void Entity::Update()
 		m_dirty = false;
 	}
 
-	if (Has("Sound"))
-	{
-		auto sound_component = Get< ComponentSound >("Sound");
-
-		auto sound_channel = SoundSystem::get()->GetSound(sound_component->m_soundName);
-
-		if (sound_channel != nullptr && sound_channel->GetIsPlayed())
-		{
-			Get< ComponentSprite >("Sprite")->m_decal = "AudioOn";
-		}
-		else
-		{
-			Get< ComponentSprite >("Sprite")->m_decal = "AudioOff";
-		}
-	}
-
 
 	// Update components.
 	for (auto& c : m_components)
