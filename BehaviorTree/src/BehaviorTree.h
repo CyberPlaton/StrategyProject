@@ -24,6 +24,7 @@ namespace bt
 			delete m_Root; m_Root = nullptr;
 			m_Name.clear();
 			m_TreeNodes.clear();
+			m_BehaviorTreeHash = 0;
 		}
 
 		BTNode::EBTNodeResult Update()
@@ -33,10 +34,7 @@ namespace bt
 			{
 				return last_running_node->Tick();
 			}
-			else
-			{
-				return m_Root->Tick();
-			}
+			return m_Root->Tick();
 		}
 		void Root(BTNode* node){m_Root = node;}
 		BTNode* Root(){return m_Root;}
