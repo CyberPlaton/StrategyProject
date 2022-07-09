@@ -70,7 +70,19 @@ namespace bt
 		virtual BTBlackboard* Blackboard() = 0;
 
 
+		virtual BTBlackboard* GlobalBlackboard() = 0;
+
+		virtual void GlobalBlackboard(BTBlackboard*) = 0;
+
+
+		/// @brief Set this node as the last one running for its Behavior Tree.
+		// Note that the next Update will start the Tick propagation with this node,
+		// also you are required to remove this node as last running if it finished:
+		// If you call LastRunningNode() - you call on end ResetLastRunning().
 		virtual void LastRunningNode() = 0;
+
+		/// @brief Reset the last running node for Behavior Tree of this node.
+		virtual void ResetLastRunning() = 0;
 
 		/// @brief Get the name of the Node.
 		/// @return Name of the node.

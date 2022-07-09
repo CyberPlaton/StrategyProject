@@ -14,7 +14,7 @@ namespace bt
 		friend class BTFactory;
 
 	public:
-		BehaviorTree(std::string name) : m_Name(name) 
+		BehaviorTree(std::string name, BTBlackboard* behavior_tree_global_blackboard) : m_Name(name), m_GlobalBlackboard(behavior_tree_global_blackboard)
 		{
 			m_BehaviorTreeHash = DJBHash(m_Name.c_str(), m_Name.size());
 		}
@@ -36,13 +36,18 @@ namespace bt
 			}
 			return m_Root->Tick();
 		}
-		void Root(BTNode* node){m_Root = node;}
-		BTNode* Root(){return m_Root;}
-
+		
 	private:
 		std::vector<BTNode*> m_TreeNodes;
 		BTNode* m_Root = nullptr;
+		BTBlackboard* m_GlobalBlackboard = nullptr;
 		std::string m_Name;
 		size_t m_BehaviorTreeHash = 0;
+
+
+
+	private:
+		void Root(BTNode* node) { m_Root = node; }
+		BTNode* Root() { return m_Root; }
 	};
 }

@@ -9,7 +9,7 @@ namespace bt
 	class BTFactory
 	{
 	public:
-		BTFactory(const std::string& behavior_tree_name) : m_Tree(new BehaviorTree(behavior_tree_name)) {}
+		BTFactory(const std::string& behavior_tree_name, BTBlackboard* behavior_tree_global_blackboard) : m_Tree(new BehaviorTree(behavior_tree_name, behavior_tree_global_blackboard)) {}
 		~BTFactory()
 		{
 			// Do not delete the Tree Here.
@@ -33,7 +33,9 @@ namespace bt
 
 			if (!m_HasRoot)
 			{
+				// Set the Root,
 				m_Tree->Root(node);
+				node->GlobalBlackboard(m_Tree->m_GlobalBlackboard);
 				m_HasRoot = true;
 				m_LastParent = node;
 			}

@@ -7,7 +7,20 @@ namespace bt
 	class BTBaseNode : public BTNode
 	{
 	public:
+		/// @brief Ctor designated to "normal" nodes (NOT ROOT).
+		/// @param name Name of the node.
+		/// @param behavior_tree_name Name of the Behavior Tree (Required for Hash).
 		BTBaseNode(std::string name, const std::string& behavior_tree_name) : m_Name(name)
+		{
+			m_BehaviorTreeHash = DJBHash(behavior_tree_name.c_str(), behavior_tree_name.size());
+			Initialize();
+		}
+
+		/// @brief Ctor for a Root Node.
+		/// @param name Name of the Node.
+		/// @param behavior_tree_name Name of the Behavior Tree (Required for Hash).
+		/// @param behavior_tree_global_blackboard An optional Behavior Tree Global Blackboard.
+		BTBaseNode(std::string name, const std::string& behavior_tree_name, BTBlackboard* behavior_tree_global_blackboard) : m_Name(name), m_GlobalBlackboard(behavior_tree_global_blackboard)
 		{
 			m_BehaviorTreeHash = DJBHash(behavior_tree_name.c_str(), behavior_tree_name.size());
 			Initialize();
@@ -35,6 +48,11 @@ namespace bt
 		{
 			BTCurrentRunningNodeMngr::get()->SetRunning(m_BehaviorTreeHash, this);
 		}
+
+		void ResetLastRunning() override
+		{
+			BTCurrentRunningNodeMngr::get()->ResetRunning(m_BehaviorTreeHash);
+		}
 		
 		//////////////////////////////
 		// Node Base blackboard query.
@@ -42,6 +60,8 @@ namespace bt
 		bool HasBlackboard() override { return m_Blackboard != nullptr; }
 		void SetBlackboard(BTBlackboard* b) override { m_Blackboard = b; }
 		BTBlackboard* Blackboard() override { return m_Blackboard; }
+		BTBlackboard* GlobalBlackboard() override;
+		void GlobalBlackboard(BTBlackboard* b) override;
 		
 		//////////////////////////////
 		// Node Base parent query.
@@ -65,6 +85,7 @@ namespace bt
 		std::string Type() override { return "BTBaseNode"; }
 
 	protected:
+		BTBlackboard* m_GlobalBlackboard = nullptr;
 		BTBlackboard* m_Blackboard = nullptr;
 		BTNode* m_Parent = nullptr;
 		std::string m_Name;

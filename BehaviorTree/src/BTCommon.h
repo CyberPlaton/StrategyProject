@@ -23,7 +23,12 @@ namespace bt
 {
 	class BTNode;
 
-	size_t DJBHash(const char* str, size_t length)
+	/// @brief Create a Hash Value for a String.
+	/// Algorithm by Prof. Daniel J. Bernstein. Source: https://www.partow.net/programming/hashfunctions/#StringHashing 06 - DJB Hash Function.
+	/// @param str C String to be hashed.
+	/// @param length Length of the C String.
+	/// @return The generated Hash Value.
+	static size_t DJBHash(const char* str, size_t length)
 	{
 		size_t hash = length;
 		for (size_t i = 0; i < length; ++str, ++i)
@@ -54,7 +59,6 @@ namespace bt
 			}
 			return nullptr;
 		}
-
 
 		/// @brief Set the last running node for the Behavior Tree.
 		/// @param behavior_tree_hash Hash of the name of the Behavior Tree.
