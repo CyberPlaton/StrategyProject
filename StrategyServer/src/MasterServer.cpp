@@ -13,17 +13,17 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 	std::string addr_string = addr.ToString(true, '|');
 	auto id = (RakNet::MessageID)packet->data[0];
 	
-	LOG_DBG_INFO("[{:.4f}][OnMessage] Message \"{}\" from Client \"{}\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(),	addr_string.c_str());
-	LOG_FILE_INFO("[{:.4f}][OnMessage] Message \"{}\" from Client \"{}\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(),	addr_string.c_str());
-	LOG_MS_INFO("[%.4f][OnMessage] Message \"%s\" from Client \"%s\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(),		addr_string.c_str());
+	LOG_DBG_INFO("[{:.4f}][OnMessage] Message \"{}\" from Client \"{}\".", APP_RUN_TIME, net::MessageIDTypeToString(id).C_String(),	addr_string.c_str());
+	LOG_FILE_INFO("[{:.4f}][OnMessage] Message \"{}\" from Client \"{}\".", APP_RUN_TIME, net::MessageIDTypeToString(id).C_String(),	addr_string.c_str());
+	LOG_MS_INFO("[%.4f][OnMessage] Message \"%s\" from Client \"%s\".", APP_RUN_TIME, net::MessageIDTypeToString(id).C_String(),		addr_string.c_str());
 
 	switch (id)
 	{
 	case net::EMessageId::NET_MSG_USER_VALIDATION_DATA:
 	{
-		LOG_DBG_INFO("[{:.4f}][OnMessage] Received User Data from Client \"{}\".", APP_RUN_TIME(),	addr_string.c_str());
-		LOG_FILE_INFO("[{:.4f}][OnMessage] Received User Data from Client \"{}\".", APP_RUN_TIME(), addr_string.c_str());
-		LOG_MS_INFO("[%.4f][OnMessage] Received User Data from Client \"%s\".", APP_RUN_TIME(),		addr_string.c_str());
+		LOG_DBG_INFO("[{:.4f}][OnMessage] Received User Data from Client \"{}\".", APP_RUN_TIME,	addr_string.c_str());
+		LOG_FILE_INFO("[{:.4f}][OnMessage] Received User Data from Client \"{}\".", APP_RUN_TIME, addr_string.c_str());
+		LOG_MS_INFO("[%.4f][OnMessage] Received User Data from Client \"%s\".", APP_RUN_TIME,		addr_string.c_str());
 
 		net::SClientDescription clientDesc;
 
@@ -33,9 +33,9 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 		// Verify Client Version.
 		if (!CheckClientVersion(clientDesc))
 		{
-			LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Client \"{}\" out of date!", APP_RUN_TIME(),	addr_string.c_str());
-			LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Client \"{}\" out of date!", APP_RUN_TIME(), addr_string.c_str());
-			LOG_MS_CRITICAL("[%.4f][OnMessage] Client \"%s\" out of date!", APP_RUN_TIME(),		addr_string.c_str());
+			LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Client \"{}\" out of date!", APP_RUN_TIME,	addr_string.c_str());
+			LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Client \"{}\" out of date!", APP_RUN_TIME, addr_string.c_str());
+			LOG_MS_CRITICAL("[%.4f][OnMessage] Client \"%s\" out of date!", APP_RUN_TIME,		addr_string.c_str());
 
 
 			// Disconnect client.
@@ -45,17 +45,17 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 
 		if (!dbms::DBMS::GetUserDesc(clientDesc))
 		{
-			LOG_DBG_WARN("[{:.4f}][OnMessage] Client \"{}\" without DB entry! Attempt to create one!", APP_RUN_TIME(),	addr_string.c_str());
-			LOG_FILE_WARN("[{:.4f}][OnMessage] Client \"{}\" without DB entry! Attempt to create one!", APP_RUN_TIME(), addr_string.c_str());
-			LOG_MS_WARN("[%.4f][OnMessage] Client \"%s\" without DB entry! Attempt to create one!", APP_RUN_TIME(),		addr_string.c_str());
+			LOG_DBG_WARN("[{:.4f}][OnMessage] Client \"{}\" without DB entry! Attempt to create one!", APP_RUN_TIME,	addr_string.c_str());
+			LOG_FILE_WARN("[{:.4f}][OnMessage] Client \"{}\" without DB entry! Attempt to create one!", APP_RUN_TIME, addr_string.c_str());
+			LOG_MS_WARN("[%.4f][OnMessage] Client \"%s\" without DB entry! Attempt to create one!", APP_RUN_TIME,		addr_string.c_str());
 
 
 			clientDesc.m_uuid = dbms::DBMS::CreateUser();
 			if (!dbms::DBMS::UpdateUser(clientDesc))
 			{
-				LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Failed to update DB user entry! UUID: \"{}\" for Client \"{}\"!", APP_RUN_TIME(),		clientDesc.m_uuid, addr_string.c_str());
-				LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Failed to update DB user entry! UUID: \"{}\" for Client \"{}\"!", APP_RUN_TIME(), clientDesc.m_uuid, addr_string.c_str());
-				LOG_MS_CRITICAL("[%.4f][OnMessage] Failed to update DB user entry! UUID: \"%zu\" for Client \"%s\"!", APP_RUN_TIME(), clientDesc.m_uuid, addr_string.c_str());
+				LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Failed to update DB user entry! UUID: \"{}\" for Client \"{}\"!", APP_RUN_TIME,		clientDesc.m_uuid, addr_string.c_str());
+				LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Failed to update DB user entry! UUID: \"{}\" for Client \"{}\"!", APP_RUN_TIME, clientDesc.m_uuid, addr_string.c_str());
+				LOG_MS_CRITICAL("[%.4f][OnMessage] Failed to update DB user entry! UUID: \"%zu\" for Client \"%s\"!", APP_RUN_TIME, clientDesc.m_uuid, addr_string.c_str());
 
 
 				// Disconnect client.
@@ -86,24 +86,24 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 		bool error = false;
 		if(!dbms::DBMS::GetAllStatusEffectData(status_effect_storage))
 		{
-			LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve StatusEffect Data for Client \"{}\"!", APP_RUN_TIME(),	 addr_string.c_str());
-			LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve StatusEffect Data for Client \"{}\"!", APP_RUN_TIME(), addr_string.c_str());
-			LOG_MS_CRITICAL("[%.4f][OnMessage] Failed to retrieve StatusEffect Data for Client \"%s\"!", APP_RUN_TIME(),	 addr_string.c_str());
+			LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve StatusEffect Data for Client \"{}\"!", APP_RUN_TIME,	 addr_string.c_str());
+			LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve StatusEffect Data for Client \"{}\"!", APP_RUN_TIME, addr_string.c_str());
+			LOG_MS_CRITICAL("[%.4f][OnMessage] Failed to retrieve StatusEffect Data for Client \"%s\"!", APP_RUN_TIME,	 addr_string.c_str());
 			error = true;
 		}
 		if(!dbms::DBMS::GetAllAbilityData(ability_storage))
 		{
-			LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve Ability Data for Client \"{}\"!", APP_RUN_TIME(),	addr_string.c_str());
-			LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve Ability Data for Client \"{}\"!", APP_RUN_TIME(), addr_string.c_str());
-			LOG_MS_CRITICAL("[%.4f][OnMessage] Failed to retrieve Ability Data for Client \"%s\"!", APP_RUN_TIME(),		addr_string.c_str());
+			LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve Ability Data for Client \"{}\"!", APP_RUN_TIME,	addr_string.c_str());
+			LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Failed to retrieve Ability Data for Client \"{}\"!", APP_RUN_TIME, addr_string.c_str());
+			LOG_MS_CRITICAL("[%.4f][OnMessage] Failed to retrieve Ability Data for Client \"%s\"!", APP_RUN_TIME,		addr_string.c_str());
 			error = true;
 		}
 		if(!error)
 		{
 
-			LOG_DBG_INFO("[{:.4f}][OnMessage] Successfully retrieved \"{}\" Abilities for Client \"{}\"! Sending Now...", APP_RUN_TIME(), ability_storage.size(),	addr_string.c_str());
-			LOG_FILE_INFO("[{:.4f}][OnMessage]  Successfully retrieved \"{}\" Abilities for Client \"{}\"! Sending Now...", APP_RUN_TIME(), ability_storage.size(), addr_string.c_str());
-			LOG_MS_SUCCESS("[%.4f][OnMessage] Successfully retrieved \"%d\" Abilities for Client \"%s\"! Sending Now...", APP_RUN_TIME(), ability_storage.size(),	addr_string.c_str());
+			LOG_DBG_INFO("[{:.4f}][OnMessage] Successfully retrieved \"{}\" Abilities for Client \"{}\"! Sending Now...", APP_RUN_TIME, ability_storage.size(),	addr_string.c_str());
+			LOG_FILE_INFO("[{:.4f}][OnMessage]  Successfully retrieved \"{}\" Abilities for Client \"{}\"! Sending Now...", APP_RUN_TIME, ability_storage.size(), addr_string.c_str());
+			LOG_MS_SUCCESS("[%.4f][OnMessage] Successfully retrieved \"%d\" Abilities for Client \"%s\"! Sending Now...", APP_RUN_TIME, ability_storage.size(),	addr_string.c_str());
 			// Send Ability Data.
 			{
 				for(auto& ability : ability_storage)
@@ -115,9 +115,9 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 			}
 
 
-			LOG_DBG_INFO("[{:.4f}][OnMessage] Successfully retrieved \"{}\" StatusEffects for Client \"{}\"! Sending Now...", APP_RUN_TIME(), status_effect_storage.size(),		addr_string.c_str());
-			LOG_FILE_INFO("[{:.4f}][OnMessage]  Successfully retrieved \"{}\" StatusEffects for Client \"{}\"! Sending Now...", APP_RUN_TIME(), status_effect_storage.size(),	addr_string.c_str());
-			LOG_MS_SUCCESS("[%.4f][OnMessage] Successfully retrieved \"%d\" StatusEffects for Client \"%s\"! Sending Now...", APP_RUN_TIME(), status_effect_storage.size(),		addr_string.c_str());
+			LOG_DBG_INFO("[{:.4f}][OnMessage] Successfully retrieved \"{}\" StatusEffects for Client \"{}\"! Sending Now...", APP_RUN_TIME, status_effect_storage.size(),		addr_string.c_str());
+			LOG_FILE_INFO("[{:.4f}][OnMessage]  Successfully retrieved \"{}\" StatusEffects for Client \"{}\"! Sending Now...", APP_RUN_TIME, status_effect_storage.size(),	addr_string.c_str());
+			LOG_MS_SUCCESS("[%.4f][OnMessage] Successfully retrieved \"%d\" StatusEffects for Client \"%s\"! Sending Now...", APP_RUN_TIME, status_effect_storage.size(),		addr_string.c_str());
 			// Send StatusEffects Data.
 			{
 				for (auto& effect : status_effect_storage)
@@ -141,9 +141,9 @@ void MasterServer::OnMessage(RakNet::Packet* packet)
 
 	default:
 	{
-		LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Unrecognized Message: \"{}\" from Client \"{}\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(),		addr_string.c_str());
-		LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Unrecognized Message: \"{}\" from Client \"{}\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(),	addr_string.c_str());
-		LOG_MS_CRITICAL("[%.4f][OnMessage] Unrecognized Message: \"%s\" from Client \"%s\".", APP_RUN_TIME(), net::MessageIDTypeToString(id).C_String(),		addr_string.c_str());
+		LOG_DBG_CRITICAL("[{:.4f}][OnMessage] Unrecognized Message: \"{}\" from Client \"{}\".", APP_RUN_TIME, net::MessageIDTypeToString(id).C_String(),		addr_string.c_str());
+		LOG_FILE_CRITICAL("[{:.4f}][OnMessage] Unrecognized Message: \"{}\" from Client \"{}\".", APP_RUN_TIME, net::MessageIDTypeToString(id).C_String(),	addr_string.c_str());
+		LOG_MS_CRITICAL("[%.4f][OnMessage] Unrecognized Message: \"%s\" from Client \"%s\".", APP_RUN_TIME, net::MessageIDTypeToString(id).C_String(),		addr_string.c_str());
 		break;
 	}
 	}
@@ -153,9 +153,9 @@ void MasterServer::OnClientConnect(RakNet::Packet* packet)
 	auto addr = packet->systemAddress;
 	std::string addr_string = addr.ToString(true, ':');
 
-	LOG_DBG_INFO("[{:.4f}][OnClientConnect] Client connected: \"{}\".", APP_RUN_TIME(),		addr_string.c_str());
-	LOG_FILE_INFO("[{:.4f}][OnClientConnect] Client connected: \"{}\".", APP_RUN_TIME(),	addr_string.c_str());
-	LOG_MS_INFO("[%.4f][OnClientConnect] Client connected: \"%s\".", APP_RUN_TIME(),		addr_string.c_str());
+	LOG_DBG_INFO("[{:.4f}][OnClientConnect] Client connected: \"{}\".", APP_RUN_TIME,		addr_string.c_str());
+	LOG_FILE_INFO("[{:.4f}][OnClientConnect] Client connected: \"{}\".", APP_RUN_TIME,	addr_string.c_str());
+	LOG_MS_INFO("[%.4f][OnClientConnect] Client connected: \"%s\".", APP_RUN_TIME,		addr_string.c_str());
 
 
 	// RakNet and ServerInterface Validation steps successfully passed.
@@ -173,9 +173,9 @@ void MasterServer::OnClientDisconnect(RakNet::Packet* packet)
 	auto addr = packet->systemAddress;
 	std::string addr_string = addr.ToString(true, ':');
 
-	LOG_DBG_WARN("[{:.4f}][OnClientDisconnect] Client disconnected: \"{}\".", APP_RUN_TIME(),	addr_string.c_str());
-	LOG_FILE_WARN("[{:.4f}][OnClientConnect] Client disconnected: \"{}\".", APP_RUN_TIME(),		addr_string.c_str());
-	LOG_MS_WARN("[%.4f][OnClientConnect] Client disconnected: \"%s\".", APP_RUN_TIME(),		addr_string.c_str());
+	LOG_DBG_WARN("[{:.4f}][OnClientDisconnect] Client disconnected: \"{}\".", APP_RUN_TIME,	addr_string.c_str());
+	LOG_FILE_WARN("[{:.4f}][OnClientConnect] Client disconnected: \"{}\".", APP_RUN_TIME,		addr_string.c_str());
+	LOG_MS_WARN("[%.4f][OnClientConnect] Client disconnected: \"%s\".", APP_RUN_TIME,		addr_string.c_str());
 
 	// Remote system was disconnected.
 	// Remove from storage.
@@ -188,9 +188,9 @@ bool MasterServer::OnClientValidated(RakNet::Packet* packet)
 	auto addr = packet->systemAddress;
 	std::string addr_string = addr.ToString(true, ':');
 
-	LOG_DBG_INFO("[{:.4f}][OnClientValidated] Client validated: \"{}\"", APP_RUN_TIME(),	addr_string.c_str());
-	LOG_FILE_INFO("[{:.4f}][OnClientValidated] Client validated: \"{}\".", APP_RUN_TIME(),	addr_string.c_str());
-	LOG_MS_SUCCESS("[%.4f][OnClientConnect] Client validated: \"%s\".", APP_RUN_TIME(),	addr_string.c_str());
+	LOG_DBG_INFO("[{:.4f}][OnClientValidated] Client validated: \"{}\"", APP_RUN_TIME,	addr_string.c_str());
+	LOG_FILE_INFO("[{:.4f}][OnClientValidated] Client validated: \"{}\".", APP_RUN_TIME,	addr_string.c_str());
+	LOG_MS_SUCCESS("[%.4f][OnClientConnect] Client validated: \"%s\".", APP_RUN_TIME,	addr_string.c_str());
 
 
 	return true;

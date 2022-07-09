@@ -19,7 +19,7 @@ namespace sound
 	/// @param str 
 	/// @param length 
 	/// @return 
-	size_t DJBHash(const char* str, size_t length)
+	static size_t DJBHash(const char* str, size_t length)
 	{
 		size_t hash = length;
 		for (size_t i = 0; i < length; ++str, ++i)

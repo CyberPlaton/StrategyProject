@@ -1,3 +1,5 @@
+#ifndef _LOGGING_H_
+#define _LOGGING_H_
 #pragma once
 
 #define STATIC_GET_DEL(CLASS, STATIC_MEMBER) \
@@ -60,7 +62,7 @@ private:
 	Logger() = default;
 };
 
-#define APP_RUN_TIME() Logger::AppRunningTime()
+#define APP_RUN_TIME Logger::AppRunningTime()
 
 #ifdef DEBUG
 // Stdout in DEBUG
@@ -99,4 +101,6 @@ private:
 #define LOG_FILE_WARN(...)	   Logger::FileLog()->warn(__VA_ARGS__)
 #define LOG_FILE_ERROR(...)	   Logger::FileLog()->error(__VA_ARGS__)
 #define LOG_FILE_CRITICAL(...) Logger::FileLog()->critical(__VA_ARGS__)
+#endif
+
 #endif

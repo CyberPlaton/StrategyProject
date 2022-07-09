@@ -86,7 +86,7 @@ namespace cherrysoda
 	};
 }
 
-#define APP_RUN_TIME() cherrysoda::Logger::AppRunningTime()
+#define APP_RUN_TIME cherrysoda::Logger::AppRunningTime()
 #ifdef DEBUG
 // Stdout in DEBUG
 #define LOG_DBG_INFO(...) cherrysoda::Logger::ConsoleLog()->info(__VA_ARGS__)

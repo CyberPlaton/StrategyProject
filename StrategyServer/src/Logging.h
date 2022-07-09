@@ -42,7 +42,7 @@ private:
 	Logger() = default;
 };
 
-#define APP_RUN_TIME() Logger::AppRunningTime()
+#define APP_RUN_TIME Logger::AppRunningTime()
 
 #ifdef DEBUG
 // Stdout in DEBUG

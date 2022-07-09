@@ -569,13 +569,10 @@ workspace "Strategy"
 
 
 
-
-
 	-- ##################################################################################################################################
 	-- Gameeditor - Windows
 	-- ##################################################################################################################################
-	filter "system:Windows"
-		project "StrategyEditor"
+	project "StrategyEditor"
 		-- specify location of Project rel. to root directory
 		location "StrategyEditor"
 		-- what the application actually is
