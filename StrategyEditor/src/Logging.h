@@ -59,7 +59,9 @@ private:
 private:
 	Logger() = default;
 };
+
 #define APP_RUN_TIME() Logger::AppRunningTime()
+
 #ifdef DEBUG
 // Stdout in DEBUG
 #define LOG_DBG_INFO(...)		Logger::ConsoleLog()->info(__VA_ARGS__)

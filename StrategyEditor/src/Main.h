@@ -166,7 +166,7 @@ STRING(major) \
 
 
 // SPDLOG
-#include "Logging.h"
+
 // XML
 #include "tinyxml2/tinyxml2.h"
 // JSON
