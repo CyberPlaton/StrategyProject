@@ -79,8 +79,11 @@ namespace sound
 
 	void SoundSource::Stop()
 	{
-		m_FMODChannel->stop();
-		m_FMODChannel = nullptr;
+		if(m_FMODChannel)
+		{
+			m_FMODChannel->stop();
+			m_FMODChannel = nullptr;
+		}
 	}
 
 	void SoundSource::Pause()
@@ -88,6 +91,11 @@ namespace sound
 		m_FMODChannel->setPaused(true);
 	}
 
+
+	void SoundSource::Volume(float v)
+	{
+		m_FMODChannel->setVolume(v);
+	}
 
 	//////////////////////////////////////////////////////
 	// Sound System base functionality.
@@ -115,7 +123,18 @@ namespace sound
 
 	void SoundSystem::Terminate()
 	{
-		// TODO
+		// No need to release or delete Channel Groups.
+		m_ChannelGroupMap.clear();
+
+		// Release Sound Sources.
+		for(auto& pair: m_SoundSourceMap)
+		{
+			pair.second->Terminate();
+		}
+
+		// Close and Release FMOD from Duty.
+		m_FMODSystem->close();
+		m_FMODSystem->release();
 	}
 
 	FMOD::System* SoundSystem::System()
@@ -125,7 +144,37 @@ namespace sound
 
 	void SoundSystem::Update(float camerax, float cameray, float cameraz)
 	{
-		// TODO
+		// Simulate the listener and audio movement by hand.
+		for(auto& pair: m_SoundSourceMap)
+		{
+			auto sound = pair.second;
+			auto data = sound->m_SoundData;
+
+			// Compute Distance.
+			float dist = _computeDistance(camerax, cameray, cameraz, data.m_X, data.m_Y, data.m_Z);
+
+			if(dist <= data.m_Radius)
+			{
+				// Compute volume.
+				float vol = _computeVolume(data.m_VolumeFalloffFactor, dist);
+
+				if(vol == 0.0f)
+				{
+					sound->Stop();
+				}
+				else
+				{
+					sound->Volume(vol);
+				}
+			}
+			else
+			{
+				sound->Stop();
+			}
+		}
+
+
+		m_FMODSystem->update();
 	}
 
 
@@ -142,9 +191,14 @@ namespace sound
 			// Store the Sound.
 			_addSoundSource(data->m_SoundName, sound);
 
+			LOG_DBG_INFO("[{:.4f}][SoundSystem::CreateSound] Created Sound Source: Name:\"{}\", Path:\"{}\"!", APP_RUN_TIME, data->m_SoundName, data->m_Soundfilepath);
+			LOG_FILE_INFO("[{:.4f}][SoundSystem::CreateSound] Created Sound Source: Name:\"{}\";, Path:\"{}\"!", APP_RUN_TIME, data->m_SoundName, data->m_Soundfilepath);
+
 			return true;
 		}
 
+		LOG_DBG_ERROR("[{:.4f}][SoundSystem::CreateSound] Failed creating Sound Source: Name:\"{}\", Path:\"{}\"!", APP_RUN_TIME, data->m_SoundName, data->m_Soundfilepath);
+		LOG_FILE_ERROR("[{:.4f}][SoundSystem::CreateSound] Failed creating Sound Source: Name:\"{}\";, Path:\"{}\"!", APP_RUN_TIME, data->m_SoundName, data->m_Soundfilepath);
 		sound->Terminate();
 		return false;
 	}
@@ -165,9 +219,18 @@ namespace sound
 		{
 			if(auto group = _getChannelGroup(sound_channel_group); group)
 			{
+				LOG_DBG_INFO("[{:.4f}][SoundSystem::PlaySound] Playing Sound Source \"{}\" on Channel Group \"{}\"!", APP_RUN_TIME, sound_source_name, sound_channel_group);
+				LOG_FILE_INFO("[{:.4f}][SoundSystem::PlaySound] Playing Sound Source \"{}\" on Channel Group \"{}\"!", APP_RUN_TIME, sound_source_name, sound_channel_group);
+
 				return sound->Play(this, group, loop_sound);
 			}
+
+			LOG_DBG_ERROR("[{:.4f}][SoundSystem::PlaySound] Failed playing Sound Source \"{}\": Channel Group \"{}\" not found!", APP_RUN_TIME, sound_source_name, sound_channel_group);
+			LOG_FILE_ERROR("[{:.4f}][SoundSystem::PlaySound] Failed playing Sound Source \"{}\": Channel Group \"{}\" not found!", APP_RUN_TIME, sound_source_name, sound_channel_group);
 		}
+
+		LOG_DBG_ERROR("[{:.4f}][SoundSystem::PlaySound] Failed playing Sound Source \"{}\": Sound Source \"{}\" not found!", APP_RUN_TIME, sound_source_name, sound_source_name);
+		LOG_FILE_ERROR("[{:.4f}][SoundSystem::PlaySound] Failed playing Sound Source \"{}\": Sound Source \"{}\" not found!", APP_RUN_TIME, sound_source_name, sound_source_name);
 
 		return false;
 	}
@@ -178,6 +241,9 @@ namespace sound
 		if (auto sound = _getSound(sound_source_name); sound)
 		{
 			sound->Stop();
+
+			LOG_DBG_INFO("[{:.4f}][SoundSystem::StopSound] Stop Sound Source \"{}\"!", APP_RUN_TIME, sound_source_name);
+			LOG_FILE_INFO("[{:.4f}][SoundSystem::StopSound] Stop Sound Source \"{}\"!", APP_RUN_TIME, sound_source_name);
 		}
 	}
 
@@ -186,6 +252,9 @@ namespace sound
 		if (auto sound = _getSound(sound_source_name); sound)
 		{
 			sound->Pause();
+
+			LOG_DBG_INFO("[{:.4f}][SoundSystem::PauseSound] Pause Sound Source \"{}\"!", APP_RUN_TIME, sound_source_name);
+			LOG_FILE_INFO("[{:.4f}][SoundSystem::PauseSound] Pause Sound Source \"{}\"!", APP_RUN_TIME, sound_source_name);
 		}
 	}
 
@@ -238,6 +307,32 @@ namespace sound
 		}
 	}
 
+
+	float SoundSystem::_computeDistance(float a, float b, float c, float x, float y, float z)
+	{
+		// We compute 3D euclidian distance.
+		float q = (a - x) * (a - x);
+		float r = (b - y) * (b - y);
+		float s = (c - z) * (c - z);
+
+		return std::sqrt(q + r + s);
+	}
+
+	float SoundSystem::_computeVolume(float sound_source_falloff_factor, float distance)
+	{
+		// The Base.
+		float b = (1 / sound_source_falloff_factor);
+
+		// The power to which to raise.
+		// This can be adjusted in order to match the scale of the Game World.
+		float x = distance;
+
+
+		// Return the Inverse. But clamp it between 0 and 1.
+		float y = 1 - pow(b, x);
+
+		return std::clamp(y, 0.0f, 1.0f);
+	}
 
 	void SoundSystem::_addChannelGroup(const std::string& sound_channel_group, FMOD::ChannelGroup* group)
 	{

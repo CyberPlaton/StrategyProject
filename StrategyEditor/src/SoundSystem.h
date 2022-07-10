@@ -53,6 +53,7 @@ namespace sound
 		bool Play(SoundSystem* system, FMOD::ChannelGroup* sound_source_channel_group, bool loop_sound);
 		void Stop();
 		void Pause();
+		void Volume(float v);
 
 
 		Data m_SoundData;
@@ -148,5 +149,23 @@ namespace sound
 		FMOD::ChannelGroup* _getChannelGroup(const std::string& sound_channel_group);
 		void _removeSoundSource(const std::string& sound_source_name);
 		void _removeChannelGroup(const std::string& sound_channel_group);
+
+
+		/// @brief Compute the 3D distance between 2 Points.
+		/// @param a First Point X coordinate.
+		/// @param b First Point Y coordinate.
+		/// @param c First Point Z coordinate.
+		/// @param x Second Point X coordinate.
+		/// @param y Second Point Y coordinate.
+		/// @param z Second Point Z coordinate.
+		/// @return The distance value.
+		float _computeDistance(float a, float b, float c, float x, float y, float z);
+
+
+		/// @brief Compute the volume of a sound.
+		/// @param sound_source_falloff_factor The sound sources falloff curve data.
+		/// @param distance The sound sources distance between it and the listener.
+		/// @return The volume clamped between 0.0 (OFF) and 1.0 (FULL).
+		float _computeVolume(float sound_source_falloff_factor, float distance);
 	};
 }
