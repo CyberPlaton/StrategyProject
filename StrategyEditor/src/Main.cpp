@@ -268,6 +268,7 @@ bool GameEditor::OnUserCreate()
 	data.m_Z = 0.0f;
 	data.m_VolumeFalloffFactor = 2.0f;
 	data.m_Radius = 50.0f;
+	data.m_FadeoutRadius = 10.0f;
 	data.m_ChannelGroup = "Master";
 	data.m_Loop = true;
 
@@ -283,6 +284,7 @@ bool GameEditor::OnUserCreate()
 	data.m_Z = 0.0f;
 	data.m_VolumeFalloffFactor = 2.7f;
 	data.m_Radius = 40.0f;
+	data.m_FadeoutRadius = 10.0f;
 	data.m_ChannelGroup = "Master";
 	data.m_Loop = true;
 
@@ -297,6 +299,7 @@ bool GameEditor::OnUserCreate()
 	data.m_Z = 0.0f;
 	data.m_VolumeFalloffFactor = 5.0f;
 	data.m_Radius = 40.0f;
+	data.m_FadeoutRadius = 10.0f;
 	data.m_ChannelGroup = "Master";
 	data.m_Loop = true;
 
@@ -310,8 +313,9 @@ bool GameEditor::OnUserCreate()
 	data.m_X = 51.0f;
 	data.m_Y = 4.0f;
 	data.m_Z = 0.0f;
-	data.m_VolumeFalloffFactor = 2.7f;
-	data.m_Radius = 20.0f;
+	data.m_VolumeFalloffFactor = 3.7f;
+	data.m_Radius = 30.0f;
+	data.m_FadeoutRadius = 10.0f;
 	data.m_ChannelGroup = "Master";
 	data.m_Loop = true;
 
@@ -326,6 +330,7 @@ bool GameEditor::OnUserCreate()
 	data.m_Z = 0.0f;
 	data.m_VolumeFalloffFactor = 5.5f;
 	data.m_Radius = 30.0f;
+	data.m_FadeoutRadius = 10.0f;
 	data.m_ChannelGroup = "Master";
 	data.m_Loop = true;
 

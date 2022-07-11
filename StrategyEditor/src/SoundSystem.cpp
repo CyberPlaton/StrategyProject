@@ -198,13 +198,11 @@ namespace sound
 
 				if(sound->Playing())
 				{
-					// Adjust volume or stop if barely hearable.
-					if (vol <= m_UnhearableBarrier)
+					// Adjust volume.
+					if (vol > m_UnhearableBarrier)
 					{
-						LOG_DBG_CRITICAL("[{:.4f}][SoundSystem::Update] Stopping Sound Source: \"{}\"!", APP_RUN_TIME, data.m_SoundName);
-						sound->Stop();
+						sound->Volume(vol);
 					}
-					sound->Volume(vol);
 				}
 				else
 				{
@@ -218,13 +216,26 @@ namespace sound
 					sound->Volume(m_UnhearableBarrier);
 				}
 			}
-			else
+			else if(dist <= data.m_Radius + data.m_FadeoutRadius) // Barely outside of Radius.
+			{
+				// Simulate Fadeout.
+				float fadeout_volume = sound->Volume();
+				sound->Volume(fadeout_volume - 0.001f);
+
+
+				if (sound->Volume() == 0.0f)
+				{
+					LOG_DBG_CRITICAL("[{:.4f}][SoundSystem::Update] Stopping Sound Source: \"{}\"!", APP_RUN_TIME, data.m_SoundName);
+					sound->Stop();
+				}
+			}
+			else // Hard outside of Radius.
 			{
 				sound->Stop();
 			}
 		}
-
-
+		
+		// FMOD update.
 		m_FMODSystem->update();
 	}
 

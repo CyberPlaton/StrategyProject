@@ -7,6 +7,7 @@
 // COMMMON INCLUDE
 #include "Logging.h"
 #include <map>
+#include <vector>
 
 
 // Sometimes, Windows touches me where no one has ever been...
@@ -53,6 +54,7 @@ namespace sound
 			float m_X, m_Y, m_Z;
 			float m_VolumeFalloffFactor;
 			float m_Radius;
+			float m_FadeoutRadius;
 			bool m_Loop;
 		};
 
@@ -180,6 +182,8 @@ namespace sound
 		FMOD::System* m_FMODSystem;
 
 		std::map< size_t, SoundSource* > m_SoundSourceMap;
+
+		std::vector< SoundSource* > m_SoundSourcesToBeStoppedVec;
 
 		std::map< size_t, FMOD::ChannelGroup* > m_ChannelGroupMap;
 
