@@ -213,7 +213,7 @@ namespace sound
 						sound->Play(this, _getChannelGroup(data.m_ChannelGroup), data.m_Loop);
 					}
 					// Start the new Sound Source with the minimal available volume.
-					sound->Volume(m_UnhearableBarrier);
+					sound->Volume(0.0f);
 				}
 			}
 			else if(dist <= data.m_Radius + data.m_FadeoutRadius) // Barely outside of Radius.
