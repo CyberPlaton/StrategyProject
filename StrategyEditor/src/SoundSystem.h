@@ -183,8 +183,6 @@ namespace sound
 
 		std::map< size_t, SoundSource* > m_SoundSourceMap;
 
-		std::vector< SoundSource* > m_SoundSourcesToBeStoppedVec;
-
 		std::map< size_t, FMOD::ChannelGroup* > m_ChannelGroupMap;
 
 		/// @brief The higher the scale, the faster the general Sound Source volume falloff.
@@ -192,6 +190,7 @@ namespace sound
 
 		/// @brief The minimal Sound Source volume value, after which it stops playing.
 		float m_UnhearableBarrier;
+
 
 	private:
 		//////////////////////////////////////////////////////

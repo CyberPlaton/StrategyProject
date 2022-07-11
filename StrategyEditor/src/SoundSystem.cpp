@@ -281,10 +281,14 @@ namespace sound
 		{
 			if(auto group = _getChannelGroup(sound_channel_group); group)
 			{
-				LOG_DBG_INFO("[{:.4f}][SoundSystem::PlaySound] Playing Sound Source \"{}\" on Channel Group \"{}\"!", APP_RUN_TIME, sound_source_name, sound_channel_group);
-				LOG_FILE_INFO("[{:.4f}][SoundSystem::PlaySound] Playing Sound Source \"{}\" on Channel Group \"{}\"!", APP_RUN_TIME, sound_source_name, sound_channel_group);
+				auto r = sound->Play(this, group, loop_sound);
+				if(r)
+				{
+					LOG_DBG_INFO("[{:.4f}][SoundSystem::PlaySound] Playing Sound Source \"{}\" on Channel Group \"{}\"!", APP_RUN_TIME, sound_source_name, sound_channel_group);
+					LOG_FILE_INFO("[{:.4f}][SoundSystem::PlaySound] Playing Sound Source \"{}\" on Channel Group \"{}\"!", APP_RUN_TIME, sound_source_name, sound_channel_group);
 
-				return sound->Play(this, group, loop_sound);
+					return true;
+				}
 			}
 
 			LOG_DBG_ERROR("[{:.4f}][SoundSystem::PlaySound] Failed playing Sound Source \"{}\": Channel Group \"{}\" not found!", APP_RUN_TIME, sound_source_name, sound_channel_group);
@@ -303,7 +307,7 @@ namespace sound
 		if (auto sound = _getSound(sound_source_name); sound)
 		{
 			sound->Stop();
-
+		
 			LOG_DBG_INFO("[{:.4f}][SoundSystem::StopSound] Stop Sound Source \"{}\"!", APP_RUN_TIME, sound_source_name);
 			LOG_FILE_INFO("[{:.4f}][SoundSystem::StopSound] Stop Sound Source \"{}\"!", APP_RUN_TIME, sound_source_name);
 		}
