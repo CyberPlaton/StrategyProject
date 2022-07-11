@@ -162,7 +162,7 @@ bool GameEditor::OnUserCreate()
 	// Initialize Logging.
 	if (!Logger::Initialize()) return false;
 	// Initialize Sound.
-	if (!sound::SoundSystem::get()->Initialize()) return false;
+	if (!sound::SoundSystem::get()->Initialize(0.08f, 0.0f)) return false;
 
 	// Initialize Layered rendering.
 	m_GUILayer = CreateLayer();
@@ -257,18 +257,63 @@ bool GameEditor::OnUserCreate()
 	loaded &= ImportMapDataCache(g_sMapDataCacheFilepath);
 
 
+	/*
 	// Test Sound System.
+	// FIRST
 	sound::SoundSource::Data data;
-	data.m_SoundName = "main_theme_battle";
-	data.m_Soundfilepath = m_soundPathMap["main_theme_battle"];
-	data.m_X = 0.0f;
-	data.m_Y = 0.0f;
+	data.m_SoundName = "THEME_music_sound";
+	data.m_Soundfilepath = m_soundPathMap["main_theme_forest"];
+	data.m_X = 3.0f;
+	data.m_Y = 5.0f;
 	data.m_Z = 0.0f;
-	data.m_VolumeFalloffFactor = 3.0f;
-	data.m_Radius = 59.0f;
+	data.m_VolumeFalloffFactor = 2.0f;
+	data.m_Radius = 100.0f;
 	data.m_ChannelGroup = "Master";
+
 	sound::SoundSystem::get()->CreateSound(&data);
-	sound::SoundSystem::get()->PlaySound("main_theme_battle", "Master", true);
+	sound::SoundSystem::get()->PlaySound("THEME_music_sound", "Master", true);
+
+
+	// SECOND
+	data.m_SoundName = "AMBIENT_forest_sound_01";
+	data.m_Soundfilepath = m_soundPathMap["sound_forest"];
+	data.m_X = 44.0f;
+	data.m_Y = 33.0f;
+	data.m_Z = 0.0f;
+	data.m_VolumeFalloffFactor = 2.0f;
+	data.m_Radius = 100.0f;
+	data.m_ChannelGroup = "Master";
+
+	sound::SoundSystem::get()->CreateSound(&data);
+	sound::SoundSystem::get()->PlaySound("AMBIENT_forest_sound_01", "Master", true);
+
+	// THIRD
+	data.m_SoundName = "AMBIENT_river_sound_01";
+	data.m_Soundfilepath = m_soundPathMap["sound_river"];
+	data.m_X = 10.0f;
+	data.m_Y = 15.0f;
+	data.m_Z = 0.0f;
+	data.m_VolumeFalloffFactor = 2.0f;
+	data.m_Radius = 100.0f;
+	data.m_ChannelGroup = "Master";
+
+	sound::SoundSystem::get()->CreateSound(&data);
+	sound::SoundSystem::get()->PlaySound("AMBIENT_river_sound_01", "Master", true);
+
+
+	// FOURTH
+	data.m_SoundName = "AMBIENT_cold_wind_sound_01";
+	data.m_Soundfilepath = m_soundPathMap["wind_2"];
+	data.m_X = 51.0f;
+	data.m_Y = 4.0f;
+	data.m_Z = 0.0f;
+	data.m_VolumeFalloffFactor = 2.0f;
+	data.m_Radius = 100.0f;
+	data.m_ChannelGroup = "Master";
+
+	sound::SoundSystem::get()->CreateSound(&data);
+	sound::SoundSystem::get()->PlaySound("AMBIENT_cold_wind_sound_01", "Master", true);
+	*/
 
 	return loaded;
 }
@@ -427,7 +472,6 @@ void GameEditor::RenderMainMenu()
 			{
 				// Loading Map Data Window.
 				g_bLoadingMapDataDialog = true;
-				SetAllLayersVisible();
 			}
 			if (ImGui::MenuItem("Exit"))
 			{
@@ -2276,7 +2320,7 @@ void GameEditor::DisplayMapImportDialog()
 			{
 				bool success = ImportMapData(map.first);
 				g_bLoadingMapDataDialog = false;
-
+				SetAllLayersVisible();
 
 				if(!success)
 				{
