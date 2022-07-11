@@ -265,7 +265,7 @@ bool GameEditor::OnUserCreate()
 	data.m_Soundfilepath = m_soundPathMap["main_theme_forest"];
 	data.m_X = 3.0f;
 	data.m_Y = 5.0f;
-	data.m_Z = 0.0f;
+	data.m_Z = 1.0f;
 	data.m_VolumeFalloffFactor = 2.0f;
 	data.m_Radius = 50.0f;
 	data.m_FadeoutRadius = 10.0f;
@@ -278,10 +278,10 @@ bool GameEditor::OnUserCreate()
 
 	// SECOND
 	data.m_SoundName = "AMBIENT_forest_sound_01";
-	data.m_Soundfilepath = m_soundPathMap["sound_forest"];
+	data.m_Soundfilepath = m_soundPathMap["ambient_birds_in_forest"];
 	data.m_X = 44.0f;
 	data.m_Y = 33.0f;
-	data.m_Z = 0.0f;
+	data.m_Z = 1.0f;
 	data.m_VolumeFalloffFactor = 2.7f;
 	data.m_Radius = 40.0f;
 	data.m_FadeoutRadius = 10.0f;
@@ -296,7 +296,7 @@ bool GameEditor::OnUserCreate()
 	data.m_Soundfilepath = m_soundPathMap["sound_river"];
 	data.m_X = 10.0f;
 	data.m_Y = 15.0f;
-	data.m_Z = 0.0f;
+	data.m_Z = 1.0f;
 	data.m_VolumeFalloffFactor = 5.0f;
 	data.m_Radius = 40.0f;
 	data.m_FadeoutRadius = 10.0f;
@@ -312,7 +312,7 @@ bool GameEditor::OnUserCreate()
 	data.m_Soundfilepath = m_soundPathMap["wind_2"];
 	data.m_X = 51.0f;
 	data.m_Y = 4.0f;
-	data.m_Z = 0.0f;
+	data.m_Z = 1.0f;
 	data.m_VolumeFalloffFactor = 3.7f;
 	data.m_Radius = 30.0f;
 	data.m_FadeoutRadius = 10.0f;
@@ -322,12 +322,12 @@ bool GameEditor::OnUserCreate()
 	sound::SoundSystem::get()->CreateSound(&data);
 	sound::SoundSystem::get()->PlaySound("AMBIENT_cold_wind_sound_01", "Master", true);
 	
-
+	// FIFTH
 	data.m_SoundName = "AMBIENT_jungle_sound_01";
 	data.m_Soundfilepath = m_soundPathMap["sound_jungle"];
 	data.m_X = 64.0f;
 	data.m_Y = 36.0f;
-	data.m_Z = 0.0f;
+	data.m_Z = 1.0f;
 	data.m_VolumeFalloffFactor = 5.5f;
 	data.m_Radius = 30.0f;
 	data.m_FadeoutRadius = 10.0f;
@@ -336,6 +336,36 @@ bool GameEditor::OnUserCreate()
 
 	sound::SoundSystem::get()->CreateSound(&data);
 	sound::SoundSystem::get()->PlaySound("AMBIENT_jungle_sound_01", "Master", true);
+
+	// SIXTH
+	data.m_SoundName = "AMBIENT_beach_sound_01";
+	data.m_Soundfilepath = m_soundPathMap["ambient_beach_waves_and_seagull"];
+	data.m_X = 27.0f;
+	data.m_Y = 59.0f;
+	data.m_Z = 1.0f;
+	data.m_VolumeFalloffFactor = 3.0f;
+	data.m_Radius = 30.0f;
+	data.m_FadeoutRadius = 15.0f;
+	data.m_ChannelGroup = "Master";
+	data.m_Loop = true;
+
+	sound::SoundSystem::get()->CreateSound(&data);
+	sound::SoundSystem::get()->PlaySound("AMBIENT_beach_sound_01", "Master", true);
+
+	// SEVENTH
+	data.m_SoundName = "AMBIENT_beach_sound_02";
+	data.m_Soundfilepath = m_soundPathMap["ambient_beach_waves_and_seagull"];
+	data.m_X = 52.0f;
+	data.m_Y = 55.0f;
+	data.m_Z = 1.0f;
+	data.m_VolumeFalloffFactor = 3.0f;
+	data.m_Radius = 30.0f;
+	data.m_FadeoutRadius = 15.0f;
+	data.m_ChannelGroup = "Master";
+	data.m_Loop = true;
+
+	sound::SoundSystem::get()->CreateSound(&data);
+	sound::SoundSystem::get()->PlaySound("AMBIENT_beach_sound_02", "Master", true);
 
 
 	return loaded;
