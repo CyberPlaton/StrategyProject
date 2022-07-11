@@ -94,14 +94,29 @@ namespace sound
 
 	void SoundSource::Volume(float v)
 	{
-		m_FMODChannel->setVolume(v);
+		if(m_FMODChannel)
+		{
+			m_FMODChannel->setVolume(v);
+		}
+	}
+
+	float SoundSource::Volume()
+	{
+		if (m_FMODChannel)
+		{
+			float v;
+			m_FMODChannel->getVolume(&v);
+			return v;
+		}
+
+		return -INT_MAX;
 	}
 
 	//////////////////////////////////////////////////////
 	// Sound System base functionality.
 	//////////////////////////////////////////////////////
 
-	bool SoundSystem::Initialize()
+	bool SoundSystem::Initialize(float game_world_scale, float minimal_sound_source_volume)
 	{
 		auto r = FMOD::System_Create(&m_FMODSystem);
 		if(r == FMOD_OK)
@@ -115,6 +130,11 @@ namespace sound
 				m_FMODSystem->getMasterChannelGroup(&master);
 
 				_addChannelGroup("Master", master);
+
+				m_GameWorldScale = game_world_scale;
+				m_UnhearableBarrier = minimal_sound_source_volume;
+
+				return true;
 			}
 		}
 
@@ -149,16 +169,21 @@ namespace sound
 		{
 			auto sound = pair.second;
 			auto data = sound->m_SoundData;
+			LOG_DBG_INFO("[{:.4f}][SoundSystem::Update] Processing: \"{}\"!", APP_RUN_TIME, data.m_SoundName);
+
 
 			// Compute Distance.
 			float dist = _computeDistance(camerax, cameray, cameraz, data.m_X, data.m_Y, data.m_Z);
+			LOG_DBG_WARN("[{:.4f}][SoundSystem::Update] Distance: \"{}\"; Radius: \"{}\"!", APP_RUN_TIME, dist, data.m_Radius);
+
 
 			if(dist <= data.m_Radius)
 			{
 				// Compute volume.
-				float vol = _computeVolume(data.m_VolumeFalloffFactor, dist);
+				float vol = 1.0f - _computeVolume(data.m_VolumeFalloffFactor, dist);
+				LOG_DBG_WARN("[{:.4f}][SoundSystem::Update] Volume: \"{}\"!", APP_RUN_TIME, vol);
 
-				if(vol == 0.0f)
+				if(vol <= m_UnhearableBarrier)
 				{
 					sound->Stop();
 				}
@@ -315,7 +340,9 @@ namespace sound
 		float r = (b - y) * (b - y);
 		float s = (c - z) * (c - z);
 
-		return std::sqrt(q + r + s);
+		float d = std::sqrt(q + r + s);
+
+		return d;
 	}
 
 	float SoundSystem::_computeVolume(float sound_source_falloff_factor, float distance)
@@ -325,13 +352,20 @@ namespace sound
 
 		// The power to which to raise.
 		// This can be adjusted in order to match the scale of the Game World.
-		float x = distance;
+		float x = distance * m_GameWorldScale;
 
 
 		// Return the Inverse. But clamp it between 0 and 1.
-		float y = 1 - pow(b, x);
+		float y = 1.0f - pow(b, x);
 
-		return std::clamp(y, 0.0f, 1.0f);
+		float r = y;
+		if (y > 1.0f) r = 1.0f;
+		if (y < 0.0f) r = 0.0f;
+
+		LOG_DBG_WARN("[{:.4f}][SoundSystem::_computeVolume] Formula: 1 - power( ({}), {} ) = {}.", APP_RUN_TIME, b, x, y);
+		LOG_DBG_WARN("[{:.4f}][SoundSystem::_computeVolume] Clamped: {}.", APP_RUN_TIME, r);
+
+		return r;
 	}
 
 	void SoundSystem::_addChannelGroup(const std::string& sound_channel_group, FMOD::ChannelGroup* group)

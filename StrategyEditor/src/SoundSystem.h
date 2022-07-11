@@ -1,13 +1,18 @@
 #pragma once
 
+// FMOD INCLUDE
 #include "FMOD/fmod.hpp"
 #include "FMOD/fmod_studio.hpp"
 #include "FMOD/fsbank.h"
-
+// COMMMON INCLUDE
 #include "Logging.h"
-
 #include <map>
 
+
+// Sometimes, Windows touches me where no one has ever been...
+#ifdef PlaySound
+#undef PlaySound
+#endif
 
 namespace sound
 {
@@ -29,11 +34,18 @@ namespace sound
 		return hash;
 	}
 
+	/// @brief 
 	class SoundSource
 	{
 	public:
 		struct Data
 		{
+			Data() : m_X(-INT_MAX), m_Y(-INT_MAX), m_Z(-INT_MAX),
+					 m_VolumeFalloffFactor(-INT_MAX), m_Radius(-INT_MAX)
+			{
+
+			}
+
 			std::string m_Soundfilepath;
 			std::string m_SoundName;
 			std::string m_ChannelGroup;
@@ -44,16 +56,45 @@ namespace sound
 
 
 	public:
-		SoundSource() = default;
+		SoundSource() : m_FMODSound(nullptr), m_FMODChannel(nullptr)
+		{
+		}
 		~SoundSource();
 
+		//////////////////////////////////////////////////////
+		// Sound Source base functionality.
+		//////////////////////////////////////////////////////
+		
+		/// @brief Create a Sound resource using FMOD and copy the Data.
+		/// @param system Pointer to Sound System to acquire the FMOD System.
+		/// @param data Pointer to the defining Data.
+		/// @return True on success.
 		bool Initialize(SoundSystem* system, SoundSource::Data* data);
+
+		/// @brief Release FMOD Sound resource and free used memory.
 		void Terminate();
 
+		/// @brief Try to play FMOD sound. The Sound must belong to a Channel Group. A new Channel will be created.
+		/// @param system The initialized Sound System.
+		/// @param sound_source_channel_group The Channel Group to which the created Channel will be attached. By default "sound_source_channel_group" will be "Master".
+		/// @param loop_sound Whether to loop the sound.
+		/// @return True on success.
 		bool Play(SoundSystem* system, FMOD::ChannelGroup* sound_source_channel_group, bool loop_sound);
+		
+		/// @brief Stop the sound from playing and delete the Channel.
 		void Stop();
+		
+		/// @brief Just pause the sound from playing. Calling "Play" after this will play the sound again.
 		void Pause();
+		
+
+
+
+		/////////////////////////////////////////////
+		// Sound Source basic setters and getters.
+		/////////////////////////////////////////////
 		void Volume(float v);
+		float Volume();
 
 
 		Data m_SoundData;
@@ -65,6 +106,7 @@ namespace sound
 
 
 
+	/// @brief 
 	class SoundSystem
 	{
 	public:
@@ -76,10 +118,10 @@ namespace sound
 
 		/// @brief Initialize the Sound System to be ready to create and play sound sources.
 		/// @return True on success.
-		bool Initialize();
+		bool Initialize(float game_world_scale = 0.08f, float minimal_sound_source_volume = 0.1f);
 
 		/// @brief Terminate the Sound System and release any used data.
-		void Terminate(); // TODO
+		void Terminate();
 
 
 		/// @brief Get the FMOD System.
@@ -91,7 +133,7 @@ namespace sound
 		/// @param camerax X Position of the listener.
 		/// @param cameray Y Position of the listener.
 		/// @param cameraz Z Position of the listener, i.e. his Height.
-		void Update(float camerax, float cameray, float cameraz); // TODO
+		void Update(float camerax, float cameray, float cameraz);
 		
 
 
@@ -112,10 +154,12 @@ namespace sound
 
 
 		/// @brief Try to Play a Sound Source on a Channel Group. The Channel Group can be changed dynamically.
+		/// Fails if the specified Sound Source or the specified Channel Group does not exist.
+		/// By default the Sound plays on "Master" and is not Looped.
 		/// @param sound_source_name Name of the Sound Source.
 		/// @param sound_channel_group Name of the Channel Group.
 		/// @return True on success.
-		bool PlaySound(const std::string& sound_source_name, const std::string& sound_channel_group, bool loop_sound);
+		bool PlaySound(const std::string& sound_source_name, const std::string& sound_channel_group = "Master", bool loop_sound = false);
 
 
 		/// @brief Stop a Sound Source from playing. The sound is stopped abruptly.
@@ -137,6 +181,11 @@ namespace sound
 
 		std::map< size_t, FMOD::ChannelGroup* > m_ChannelGroupMap;
 
+		/// @brief The higher the scale, the faster the general Sound Source volume falloff.
+		float m_GameWorldScale;
+
+		/// @brief The minimal Sound Source volume value, after which it stops playing.
+		float m_UnhearableBarrier;
 
 	private:
 		//////////////////////////////////////////////////////

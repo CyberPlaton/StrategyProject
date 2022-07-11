@@ -161,6 +161,8 @@ bool GameEditor::OnUserCreate()
 
 	// Initialize Logging.
 	if (!Logger::Initialize()) return false;
+	// Initialize Sound.
+	if (!sound::SoundSystem::get()->Initialize()) return false;
 
 	// Initialize Layered rendering.
 	m_GUILayer = CreateLayer();
@@ -254,6 +256,19 @@ bool GameEditor::OnUserCreate()
 	// Load Map Data Cache.
 	loaded &= ImportMapDataCache(g_sMapDataCacheFilepath);
 
+
+	// Test Sound System.
+	sound::SoundSource::Data data;
+	data.m_SoundName = "main_theme_battle";
+	data.m_Soundfilepath = m_soundPathMap["main_theme_battle"];
+	data.m_X = 0.0f;
+	data.m_Y = 0.0f;
+	data.m_Z = 0.0f;
+	data.m_VolumeFalloffFactor = 3.0f;
+	data.m_Radius = 59.0f;
+	data.m_ChannelGroup = "Master";
+	sound::SoundSystem::get()->CreateSound(&data);
+	sound::SoundSystem::get()->PlaySound("main_theme_battle", "Master", true);
 
 	return loaded;
 }
@@ -700,11 +715,17 @@ bool GameEditor::OnUserUpdate(float fElapsedTime)
 	Clear(olc::BLANK);
 	SetDrawTarget((uint8_t)m_GUILayer);
 
+	// User Input Handling.
 	HandleInput();
+	
+	// Camera Update.
 	UpdateVisibleRect();
-
+	// Sound Update.
+	sound::SoundSystem::get()->Update(m_camerax, m_cameray, m_cameraHeigth);
+	// Entity Update.
 	UpdateEntities();
 
+	// Render.
 	if(g_bLayoutTemplateEditorOpen)
 	{
 		RenderMainFrameForUnitEditor();
@@ -4440,6 +4461,7 @@ bool GameEditor::OnUserDestroy()
 	g_pCurrentEditedPrefab = nullptr;
 	g_PrefabElementTypeVec.clear();
 
+	sound::SoundSystem::get()->Terminate();
 	Logger::Terminate();
 	return true;
 }
