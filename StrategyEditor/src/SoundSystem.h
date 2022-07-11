@@ -65,6 +65,7 @@ namespace sound
 		}
 		~SoundSource();
 
+
 		//////////////////////////////////////////////////////
 		// Sound Source base functionality.
 		//////////////////////////////////////////////////////
@@ -94,12 +95,29 @@ namespace sound
 
 
 
+		
 		/////////////////////////////////////////////
 		// Sound Source basic setters and getters.
 		/////////////////////////////////////////////
 		void Volume(float v);
 		float Volume();
 		bool Playing();
+		
+
+
+
+		/////////////////////////////////////////////
+		// Sound Source utility functionality.
+		/////////////////////////////////////////////
+
+		unsigned int MSTotal();
+		unsigned int SecTotal();
+		unsigned int MinTotal();
+
+		unsigned int MSCurrent();
+		unsigned int SecCurrent();
+		unsigned int MinCurrent();
+
 
 		Data m_SoundData;
 

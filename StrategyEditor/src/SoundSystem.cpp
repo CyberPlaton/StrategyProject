@@ -124,6 +124,56 @@ namespace sound
 		return false;
 	}
 
+
+	unsigned int SoundSource::MSTotal()
+	{
+		if (m_FMODSound)
+		{
+			unsigned int lenms;
+			if (auto r = m_FMODSound->getLength(&lenms, FMOD_TIMEUNIT_MS); r == FMOD_OK)
+			{
+				return lenms;
+			}
+		}
+
+		return 0;
+	}
+
+	unsigned int SoundSource::SecTotal()
+	{
+		return MSTotal() / 1000 % 60;
+	}
+
+	unsigned int SoundSource::MinTotal()
+	{
+		return MSTotal() / 60000;
+	}
+
+	unsigned int SoundSource::MSCurrent()
+	{
+		if (m_FMODChannel)
+		{
+			unsigned int lenms;
+			if (auto r = m_FMODChannel->getPosition(&lenms, FMOD_TIMEUNIT_MS); r == FMOD_OK)
+			{
+				return lenms;
+			}
+		}
+
+		return 0;
+	}
+
+	unsigned int SoundSource::SecCurrent()
+	{
+		return MSCurrent() / 1000 % 60;
+	}
+
+	unsigned int SoundSource::MinCurrent()
+	{
+		return MSCurrent() / 60000;
+	}
+
+
 	//////////////////////////////////////////////////////
 	// Sound System base functionality.
 	//////////////////////////////////////////////////////
@@ -183,6 +233,9 @@ namespace sound
 			auto data = sound->m_SoundData;
 			LOG_DBG_INFO("[{:.4f}][SoundSystem::Update] Processing: \"{}\"!", APP_RUN_TIME, data.m_SoundName);
 
+			LOG_DBG_INFO("[{:.4f}][SoundSystem::Update] \"{}\": {}:{}:{} - {}:{}:{}.", APP_RUN_TIME, data.m_SoundName, sound->MinCurrent(), sound->SecCurrent(), sound->MSCurrent(),
+																													   sound->MinTotal(), sound->SecTotal(), sound->MSTotal());
+
 
 			// Compute Distance.
 			float dist = _computeDistance(camerax, cameray, cameraz, data.m_X, data.m_Y, data.m_Z);
@@ -232,6 +285,17 @@ namespace sound
 			else // Hard outside of Radius.
 			{
 				sound->Stop();
+			}
+		
+
+			// Cleanly stop Sound Sources which are no longer playing.
+			if (!data.m_Loop)
+			{
+				// Compute whether sound is done playing.
+				if(!sound->Playing())
+				{
+					sound->Stop();
+				}
 			}
 		}
 		
