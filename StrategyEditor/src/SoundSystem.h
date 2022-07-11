@@ -41,7 +41,8 @@ namespace sound
 		struct Data
 		{
 			Data() : m_X(-INT_MAX), m_Y(-INT_MAX), m_Z(-INT_MAX),
-					 m_VolumeFalloffFactor(-INT_MAX), m_Radius(-INT_MAX)
+					 m_VolumeFalloffFactor(-INT_MAX), m_Radius(-INT_MAX),
+					 m_Loop(false)
 			{
 
 			}
@@ -52,6 +53,7 @@ namespace sound
 			float m_X, m_Y, m_Z;
 			float m_VolumeFalloffFactor;
 			float m_Radius;
+			bool m_Loop;
 		};
 
 
@@ -95,7 +97,7 @@ namespace sound
 		/////////////////////////////////////////////
 		void Volume(float v);
 		float Volume();
-
+		bool Playing();
 
 		Data m_SoundData;
 
@@ -118,7 +120,7 @@ namespace sound
 
 		/// @brief Initialize the Sound System to be ready to create and play sound sources.
 		/// @return True on success.
-		bool Initialize(float game_world_scale = 0.08f, float minimal_sound_source_volume = 0.1f);
+		bool Initialize(float game_world_scale = 0.08f, float minimal_sound_source_volume = 0.001f);
 
 		/// @brief Terminate the Sound System and release any used data.
 		void Terminate();

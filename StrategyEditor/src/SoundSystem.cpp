@@ -112,6 +112,18 @@ namespace sound
 		return -INT_MAX;
 	}
 
+	bool SoundSource::Playing()
+	{
+		if(m_FMODChannel)
+		{
+			bool v;
+			m_FMODChannel->isPlaying(&v);
+			return v;
+		}
+
+		return false;
+	}
+
 	//////////////////////////////////////////////////////
 	// Sound System base functionality.
 	//////////////////////////////////////////////////////
@@ -183,13 +195,27 @@ namespace sound
 				float vol = 1.0f - _computeVolume(data.m_VolumeFalloffFactor, dist);
 				LOG_DBG_WARN("[{:.4f}][SoundSystem::Update] Volume: \"{}\"!", APP_RUN_TIME, vol);
 
-				if(vol <= m_UnhearableBarrier)
+
+				if(sound->Playing())
 				{
-					sound->Stop();
+					// Adjust volume or stop if barely hearable.
+					if (vol <= m_UnhearableBarrier)
+					{
+						LOG_DBG_CRITICAL("[{:.4f}][SoundSystem::Update] Stopping Sound Source: \"{}\"!", APP_RUN_TIME, data.m_SoundName);
+						sound->Stop();
+					}
+					sound->Volume(vol);
 				}
 				else
 				{
-					sound->Volume(vol);
+					// Adjust volume and start if barely hearable.
+					if (vol >= m_UnhearableBarrier)
+					{
+						LOG_DBG_CRITICAL("[{:.4f}][SoundSystem::Update] Starting Sound Source: \"{}\"!", APP_RUN_TIME, data.m_SoundName);
+						sound->Play(this, _getChannelGroup(data.m_ChannelGroup), data.m_Loop);
+					}
+					// Start the new Sound Source with the minimal available volume.
+					sound->Volume(m_UnhearableBarrier);
 				}
 			}
 			else

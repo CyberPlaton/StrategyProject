@@ -162,7 +162,7 @@ bool GameEditor::OnUserCreate()
 	// Initialize Logging.
 	if (!Logger::Initialize()) return false;
 	// Initialize Sound.
-	if (!sound::SoundSystem::get()->Initialize(0.08f, 0.0f)) return false;
+	if (!sound::SoundSystem::get()->Initialize()) return false;
 
 	// Initialize Layered rendering.
 	m_GUILayer = CreateLayer();
@@ -257,7 +257,7 @@ bool GameEditor::OnUserCreate()
 	loaded &= ImportMapDataCache(g_sMapDataCacheFilepath);
 
 
-	/*
+	
 	// Test Sound System.
 	// FIRST
 	sound::SoundSource::Data data;
@@ -267,8 +267,9 @@ bool GameEditor::OnUserCreate()
 	data.m_Y = 5.0f;
 	data.m_Z = 0.0f;
 	data.m_VolumeFalloffFactor = 2.0f;
-	data.m_Radius = 100.0f;
+	data.m_Radius = 50.0f;
 	data.m_ChannelGroup = "Master";
+	data.m_Loop = true;
 
 	sound::SoundSystem::get()->CreateSound(&data);
 	sound::SoundSystem::get()->PlaySound("THEME_music_sound", "Master", true);
@@ -280,9 +281,10 @@ bool GameEditor::OnUserCreate()
 	data.m_X = 44.0f;
 	data.m_Y = 33.0f;
 	data.m_Z = 0.0f;
-	data.m_VolumeFalloffFactor = 2.0f;
-	data.m_Radius = 100.0f;
+	data.m_VolumeFalloffFactor = 2.7f;
+	data.m_Radius = 40.0f;
 	data.m_ChannelGroup = "Master";
+	data.m_Loop = true;
 
 	sound::SoundSystem::get()->CreateSound(&data);
 	sound::SoundSystem::get()->PlaySound("AMBIENT_forest_sound_01", "Master", true);
@@ -293,9 +295,10 @@ bool GameEditor::OnUserCreate()
 	data.m_X = 10.0f;
 	data.m_Y = 15.0f;
 	data.m_Z = 0.0f;
-	data.m_VolumeFalloffFactor = 2.0f;
-	data.m_Radius = 100.0f;
+	data.m_VolumeFalloffFactor = 5.0f;
+	data.m_Radius = 40.0f;
 	data.m_ChannelGroup = "Master";
+	data.m_Loop = true;
 
 	sound::SoundSystem::get()->CreateSound(&data);
 	sound::SoundSystem::get()->PlaySound("AMBIENT_river_sound_01", "Master", true);
@@ -307,13 +310,28 @@ bool GameEditor::OnUserCreate()
 	data.m_X = 51.0f;
 	data.m_Y = 4.0f;
 	data.m_Z = 0.0f;
-	data.m_VolumeFalloffFactor = 2.0f;
-	data.m_Radius = 100.0f;
+	data.m_VolumeFalloffFactor = 2.7f;
+	data.m_Radius = 20.0f;
 	data.m_ChannelGroup = "Master";
+	data.m_Loop = true;
 
 	sound::SoundSystem::get()->CreateSound(&data);
 	sound::SoundSystem::get()->PlaySound("AMBIENT_cold_wind_sound_01", "Master", true);
-	*/
+	
+
+	data.m_SoundName = "AMBIENT_jungle_sound_01";
+	data.m_Soundfilepath = m_soundPathMap["sound_jungle"];
+	data.m_X = 64.0f;
+	data.m_Y = 36.0f;
+	data.m_Z = 0.0f;
+	data.m_VolumeFalloffFactor = 5.5f;
+	data.m_Radius = 30.0f;
+	data.m_ChannelGroup = "Master";
+	data.m_Loop = true;
+
+	sound::SoundSystem::get()->CreateSound(&data);
+	sound::SoundSystem::get()->PlaySound("AMBIENT_jungle_sound_01", "Master", true);
+
 
 	return loaded;
 }
