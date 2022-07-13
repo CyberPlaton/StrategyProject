@@ -1,6 +1,6 @@
 #include "BTBaseNode.h"
 
-namespace bt
+namespace sakura
 {
 
 	BTBlackboard* BTBaseNode::GlobalBlackboard()

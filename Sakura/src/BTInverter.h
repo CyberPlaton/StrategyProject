@@ -2,7 +2,7 @@
 
 #include "BTDecorator.h"
 
-namespace bt
+namespace sakura
 {
 	/// @brief Inverter is a flow control Behavior Tree Node. It inverts the returned Tick value of its Child.
 	class BTInverter : public BTDecorator

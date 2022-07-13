@@ -4,7 +4,7 @@
 #include "BTNodes.h"
 #include "Any.h"
 
-namespace bt
+namespace sakura
 {
 	class BTBlackboard
 	{

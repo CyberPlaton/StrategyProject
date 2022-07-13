@@ -2,7 +2,7 @@
 
 #include "BTFallback.h"
 
-namespace bt
+namespace sakura
 {
 	/// @brief Selector is a flow control Behavior Tree Node. It returns immediately SUCCESS when one of its children returns SUCCESS,
 	// if it runs out of children it returns FAILURE.

@@ -2,7 +2,7 @@
 
 #include "BTBaseNode.h"
 
-namespace bt
+namespace sakura
 {
 	/// @brief Sequence is a flow control Behavior Tree Node. It returns SUCCESS/RUNNING on the first kid 
 	// that returns SUCCESS/RUNNING, else it keeps executing their Tick in order. If no kid return

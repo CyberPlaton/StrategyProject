@@ -2,7 +2,7 @@
 
 #include "BTBaseNode.h"
 
-namespace bt
+namespace sakura
 {
 	/// @brief Action is a Leaf Behavior Tree Node. It requires the designer to override it and provide
 	// a correct implementation of the Command function, which is executed on the Node Tick.

@@ -3,7 +3,7 @@
 #include "BTSequence.h"
 #include "Random.h"
 
-namespace bt
+namespace sakura
 {
 	/// @brief Random Sequence is a flow control Behavior Tree Node. Executes children Tick in a random order as long as 
 	// their Tick returns SUCCESS, else it returns the return value.

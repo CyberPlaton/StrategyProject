@@ -3,7 +3,7 @@
 #include "BTSelector.h"
 #include "Random.h"
 
-namespace bt
+namespace sakura
 {
 	/// @brief Random Selector is a flow control Behavior Tree Node. It returns immediately SUCCESS when one of its children returns SUCCESS,
 	// if it runs out of children it returns FAILURE. The execution order of the children Tick is randomized.

@@ -2,7 +2,7 @@
 
 #include "BTCommon.h"
 
-namespace bt
+namespace sakura
 {
 	class Any
 	{

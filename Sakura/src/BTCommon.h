@@ -19,7 +19,7 @@ static void del() \
 {if(STATIC_MEMBER){delete STATIC_MEMBER; STATIC_MEMBER = nullptr;}}
 
 
-namespace bt
+namespace sakura
 {
 	class BTNode;
 
@@ -83,7 +83,7 @@ namespace bt
 	};
 
 
-	__declspec(selectany) bt::BTCurrentRunningNodeMngr* BTCurrentRunningNodeMngr::g_BTCurrentRunningNodeMngr = nullptr;
+	__declspec(selectany) sakura::BTCurrentRunningNodeMngr* BTCurrentRunningNodeMngr::g_BTCurrentRunningNodeMngr = nullptr;
 	__declspec(selectany) std::map< size_t, BTNode* > BTCurrentRunningNodeMngr::m_RunningNodeMap;
 
 }

@@ -2,7 +2,7 @@
 
 #include "BTFallback.h"
 
-namespace bt
+namespace sakura
 {
 	/// @brief Sequence is a flow control Behavior Tree Node. Executes its children Tick as long as they return SUCCESS.
 	// The execution order is from left (0) to right (n-1).

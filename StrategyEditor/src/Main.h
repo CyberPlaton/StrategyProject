@@ -365,13 +365,6 @@ private:
 	}
 };
 
-/// @brief Information about a particular FMOD::ChannelGroup
-struct ChannelGroupData
-{
-	float m_volume;
-};
-
-
 
 /// @brief Commonly used shapes in the Unit Layout Template editor.
 struct SShape
@@ -532,7 +525,7 @@ private:
 
 	// Audio
 	std::map< std::string, std::string > m_soundPathMap;
-	std::map< std::string, ChannelGroupData* > m_ChannelGroupMap;
+
 
 	// Permanent Editor specific layers which cannot be altered.
 	std::vector< int > m_PermanentLayersVec;

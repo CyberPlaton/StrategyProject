@@ -2,7 +2,7 @@
 
 #include "BTSequence.h"
 
-namespace bt
+namespace sakura
 {
 
 	/// @brief Parallel is a flow control Behavior Tree Node. Generally, behaves as a sequence, which returns

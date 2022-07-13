@@ -2,7 +2,7 @@
 
 #include "BTNode.h"
 
-namespace bt
+namespace sakura
 {
 	class BTBaseNode : public BTNode
 	{

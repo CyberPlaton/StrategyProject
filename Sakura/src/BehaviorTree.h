@@ -4,7 +4,7 @@
 #include "BTBlackboard.h"
 #include "Any.h"
 
-namespace bt
+namespace sakura
 {
 	class BTFactory;
 

@@ -23,9 +23,9 @@ workspace "Strategy"
 	-- ##################################################################################################################################
 	-- Behavior Tree Library  - Crossplatform (Windows, Linux, Switch, Xbox...)
 	-- ##################################################################################################################################
-	project "BehaviorTree"
+	project "Sakura"
 		-- specify location of Project rel. to root directory
-		location "BehaviorTree"
+		location "Sakura"
 		-- what the application actually is
 		kind "StaticLib"
 		-- the programming language of the project
@@ -274,15 +274,15 @@ workspace "Strategy"
 			"NetLib/common/include/RakNet",				-- Networking
 			"NetLib/src",								-- Networking
 
-			"BehaviorTree/src",							-- Behavior Tree
+			"Sakura/src",								-- Behavior Tree
 		}	
 		-- Link thirdparty libraries for each configuration
 		filter "configurations:Debug"
 			-- Link BehaviorTree and NetLib Libraries for current configuration.
 			libdirs{"libs", "bin/" .. outputdir .. "/NetLib"} -- Networking Library
 			links{"ws2_32", "NetLib"}
-			libdirs{"libs", "bin/" .. outputdir .. "/BehaviorTree"} -- BehaviorTree Library
-			links{"BehaviorTree"}
+			libdirs{"libs", "bin/" .. outputdir .. "/Sakura"} -- BehaviorTree Library
+			links{"Sakura"}
 
 
 			libdirs{"libs", "%{prj.name}/common/lib/Debug"}

@@ -3,7 +3,7 @@
 #include "BTNodes.h"
 #include "BehaviorTree.h"
 
-namespace bt
+namespace sakura
 {
 	/// @brief The purpose of the Behavior Tree Factory is to create fast and convenient a Behavior Tree.
 	class BTFactory

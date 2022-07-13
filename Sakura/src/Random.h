@@ -9,7 +9,7 @@
 
 #include <random>
 
-namespace bt
+namespace sakura
 {
 	class Random {
 	public:

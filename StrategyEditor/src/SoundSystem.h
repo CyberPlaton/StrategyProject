@@ -152,7 +152,7 @@ namespace sound
 
 
 
-	/// @brief 
+	/// @brief
 	class SoundSystem
 	{
 	public:

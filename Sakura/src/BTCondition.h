@@ -2,7 +2,7 @@
 
 #include "BTBaseNode.h"
 
-namespace bt
+namespace sakura
 {
 	/// @brief Condition is a Leaf Behavior Tree Node. The designer has to provide a override
 	// of the CheckCondition function. If the condition returns true, the node returns SUCCESS, else FAILURE.

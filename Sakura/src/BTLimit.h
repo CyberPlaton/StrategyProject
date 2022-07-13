@@ -2,7 +2,7 @@
 
 #include "BTDecorator.h"
 
-namespace bt
+namespace sakura
 {
 	/// @brief Inverter is a flow control Behavior Tree Node. It runs its Tick only if the limit has not been reached.
 	class BTLimit : public BTDecorator
