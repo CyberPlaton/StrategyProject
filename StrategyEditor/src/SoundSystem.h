@@ -99,11 +99,35 @@ namespace sound
 		/////////////////////////////////////////////
 		// Sound Source basic setters and getters.
 		/////////////////////////////////////////////
-		void Volume(float v);
-		float Volume();
-		bool Playing();
-		
 
+		/// @brief Set the Volume for the Sound Source playing.
+		/// Note that we set the FMOD Channel volume.
+		/// @param v Volume, where 0.0f is mute and 1.0f is maximum possible.
+		void SetVolume(float v);
+
+		/// @brief Retrieve the current volume of the Sound Source.
+		/// Note that it is possible, that the volume is non-zero, and the Sound Source still
+		/// unhearable, because it is stopped or paused.
+		/// @return Value between 0.0f and 1.0f, where 0.0f is muted and 1.0f is at max volume.
+		float GetVolume();
+
+		/// @brief Set the position of the Sound Source.
+		/// @param v 3D Vector specifying the position.
+		void SetPosition(FMOD_VECTOR v);
+
+		/// @brief Retrieve the current position of the Sound Source.
+		/// @return 3D Vector specifying the position.
+		FMOD_VECTOR GetPosition();
+		
+		/// @brief Retrieve whether the Sound Source is currently playing.
+		/// @return False if paused or stopped.
+		bool Playing();
+
+		DECLARE_GET_SET(float, Radius, m_SoundData.m_Radius);
+		DECLARE_GET_SET(float, FadeoutRadius, m_SoundData.m_FadeoutRadius);
+		DECLARE_GET_SET(float, VolumeFalloffFactor, m_SoundData.m_VolumeFalloffFactor);
+		DECLARE_GET_SET(bool, Looped, m_SoundData.m_Loop);
+		DECLARE_GET_SET(std::string, ChannelGroupName, m_SoundData.m_ChannelGroup);
 
 
 		/////////////////////////////////////////////

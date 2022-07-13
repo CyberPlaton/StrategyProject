@@ -92,15 +92,16 @@ namespace sound
 	}
 
 
-	void SoundSource::Volume(float v)
+	void SoundSource::SetVolume(float v)
 	{
 		if(m_FMODChannel)
 		{
+			v = std::clamp(v, 0.0f, 1.0f);
 			m_FMODChannel->setVolume(v);
 		}
 	}
 
-	float SoundSource::Volume()
+	float SoundSource::GetVolume()
 	{
 		if (m_FMODChannel)
 		{
@@ -110,6 +111,18 @@ namespace sound
 		}
 
 		return -INT_MAX;
+	}
+
+	void SoundSource::SetPosition(FMOD_VECTOR v)
+	{
+		m_SoundData.m_X = v.x;
+		m_SoundData.m_Y = v.y;
+		m_SoundData.m_Z = v.z;
+	}
+
+	FMOD_VECTOR SoundSource::GetPosition()
+	{
+		return { m_SoundData.m_X, m_SoundData.m_Y, m_SoundData.m_Z };
 	}
 
 	bool SoundSource::Playing()
@@ -231,30 +244,21 @@ namespace sound
 		{
 			auto sound = pair.second;
 			auto data = sound->m_SoundData;
-			LOG_DBG_INFO("[{:.4f}][SoundSystem::Update] Processing: \"{}\"!", APP_RUN_TIME, data.m_SoundName);
-
-			LOG_DBG_INFO("[{:.4f}][SoundSystem::Update] \"{}\": {}:{}:{} - {}:{}:{}.", APP_RUN_TIME, data.m_SoundName, sound->MinCurrent(), sound->SecCurrent(), sound->MSCurrent(),
-																													   sound->MinTotal(), sound->SecTotal(), sound->MSTotal());
-
 
 			// Compute Distance.
 			float dist = _computeDistance(camerax, cameray, cameraz, data.m_X, data.m_Y, data.m_Z);
-			LOG_DBG_WARN("[{:.4f}][SoundSystem::Update] Distance: \"{}\"; Radius: \"{}\"!", APP_RUN_TIME, dist, data.m_Radius);
-
 
 			if(dist <= data.m_Radius)
 			{
 				// Compute volume.
 				float vol = 1.0f - _computeVolume(data.m_VolumeFalloffFactor, dist);
-				LOG_DBG_WARN("[{:.4f}][SoundSystem::Update] Volume: \"{}\"!", APP_RUN_TIME, vol);
-
 
 				if(sound->Playing())
 				{
 					// Adjust volume.
 					if (vol > m_UnhearableBarrier)
 					{
-						sound->Volume(vol);
+						sound->SetVolume(vol);
 					}
 				}
 				else
@@ -262,23 +266,21 @@ namespace sound
 					// Adjust volume and start if barely hearable.
 					if (vol >= m_UnhearableBarrier)
 					{
-						LOG_DBG_CRITICAL("[{:.4f}][SoundSystem::Update] Starting Sound Source: \"{}\"!", APP_RUN_TIME, data.m_SoundName);
 						sound->Play(this, _getChannelGroup(data.m_ChannelGroup), data.m_Loop);
 					}
 					// Start the new Sound Source with the minimal available volume.
-					sound->Volume(0.0f);
+					sound->SetVolume(0.0f);
 				}
 			}
 			else if(dist <= data.m_Radius + data.m_FadeoutRadius) // Barely outside of Radius.
 			{
 				// Simulate Fadeout.
-				float fadeout_volume = sound->Volume();
-				sound->Volume(fadeout_volume - 0.001f);
+				float fadeout_volume = sound->GetVolume();
+				sound->SetVolume(fadeout_volume - 0.001f);
 
 
-				if (sound->Volume() == 0.0f)
+				if (sound->GetVolume() == 0.0f)
 				{
-					LOG_DBG_CRITICAL("[{:.4f}][SoundSystem::Update] Stopping Sound Source: \"{}\"!", APP_RUN_TIME, data.m_SoundName);
 					sound->Stop();
 				}
 			}
@@ -348,9 +350,6 @@ namespace sound
 				auto r = sound->Play(this, group, loop_sound);
 				if(r)
 				{
-					LOG_DBG_INFO("[{:.4f}][SoundSystem::PlaySound] Playing Sound Source \"{}\" on Channel Group \"{}\"!", APP_RUN_TIME, sound_source_name, sound_channel_group);
-					LOG_FILE_INFO("[{:.4f}][SoundSystem::PlaySound] Playing Sound Source \"{}\" on Channel Group \"{}\"!", APP_RUN_TIME, sound_source_name, sound_channel_group);
-
 					return true;
 				}
 			}
@@ -371,9 +370,6 @@ namespace sound
 		if (auto sound = _getSound(sound_source_name); sound)
 		{
 			sound->Stop();
-		
-			LOG_DBG_INFO("[{:.4f}][SoundSystem::StopSound] Stop Sound Source \"{}\"!", APP_RUN_TIME, sound_source_name);
-			LOG_FILE_INFO("[{:.4f}][SoundSystem::StopSound] Stop Sound Source \"{}\"!", APP_RUN_TIME, sound_source_name);
 		}
 	}
 
@@ -382,9 +378,6 @@ namespace sound
 		if (auto sound = _getSound(sound_source_name); sound)
 		{
 			sound->Pause();
-
-			LOG_DBG_INFO("[{:.4f}][SoundSystem::PauseSound] Pause Sound Source \"{}\"!", APP_RUN_TIME, sound_source_name);
-			LOG_FILE_INFO("[{:.4f}][SoundSystem::PauseSound] Pause Sound Source \"{}\"!", APP_RUN_TIME, sound_source_name);
 		}
 	}
 
@@ -459,16 +452,12 @@ namespace sound
 		// This can be adjusted in order to match the scale of the Game World.
 		float x = distance * m_GameWorldScale;
 
-
 		// Return the Inverse. But clamp it between 0 and 1.
 		float y = 1.0f - pow(b, x);
 
 		float r = y;
 		if (y > 1.0f) r = 1.0f;
 		if (y < 0.0f) r = 0.0f;
-
-		LOG_DBG_WARN("[{:.4f}][SoundSystem::_computeVolume] Formula: 1 - power( ({}), {} ) = {}.", APP_RUN_TIME, b, x, y);
-		LOG_DBG_WARN("[{:.4f}][SoundSystem::_computeVolume] Clamped: {}.", APP_RUN_TIME, r);
 
 		return r;
 	}
