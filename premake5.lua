@@ -51,22 +51,26 @@ workspace "Strategy"
 		includedirs
 		{
 			"%{prj.name}/common/include",
+			"%{prj.name}/common/include/tinyxml2",
 		}	
 		-- Link thirdparty libraries for each configuration
 		filter "configurations:Debug"
 			libdirs{"libs", "%{prj.name}/common/lib/Debug"}
 			links
 			{
+				"tinyxml2",
 			}
 		filter "configurations:Release"
 			libdirs{"libs", "%{prj.name}/common/lib/Release"}
 			links
 			{
+				"tinyxml2",
 			}
 		filter "configurations:Distr"
 			libdirs{"libs", "%{prj.name}/common/lib/Distr"}
 			links
 			{
+				"tinyxml2",
 			}
 		-- Everything defined below is only if we building on windows
 		filter "system:Windows"
@@ -276,15 +280,14 @@ workspace "Strategy"
 
 			"Sakura/src",								-- Behavior Tree
 		}	
-		-- Link thirdparty libraries for each configuration
+
+
+
 		filter "configurations:Debug"
-			-- Link BehaviorTree and NetLib Libraries for current configuration.
 			libdirs{"libs", "bin/" .. outputdir .. "/NetLib"} -- Networking Library
 			links{"ws2_32", "NetLib"}
 			libdirs{"libs", "bin/" .. outputdir .. "/Sakura"} -- BehaviorTree Library
 			links{"Sakura"}
-
-
 			libdirs{"libs", "%{prj.name}/common/lib/Debug"}
 			links
 			{
@@ -303,6 +306,10 @@ workspace "Strategy"
 				"spdlogd",
 			}
 		filter "configurations:Release"
+			libdirs{"libs", "bin/" .. outputdir .. "/NetLib"} -- Networking Library
+			links{"ws2_32", "NetLib"}
+			libdirs{"libs", "bin/" .. outputdir .. "/Sakura"} -- BehaviorTree Library
+			links{"Sakura"}
 			libdirs{"libs", "%{prj.name}/common/lib/Release"}
 			links
 			{
@@ -323,6 +330,10 @@ workspace "Strategy"
 				"spdlog",
 			}
 		filter "configurations:Distr"
+			libdirs{"libs", "bin/" .. outputdir .. "/NetLib"} -- Networking Library
+			links{"ws2_32", "NetLib"}
+			libdirs{"libs", "bin/" .. outputdir .. "/Sakura"} -- BehaviorTree Library
+			links{"Sakura"}
 			libdirs{"libs", "%{prj.name}/common/lib/Distr"}
 			links
 			{
@@ -460,8 +471,12 @@ workspace "Strategy"
 			"NetLib/common/include/RakNet",					-- Networking
 			"NetLib/src",									-- Networking
 
-			"%{prj.name}/common/include/LuaBridge"			-- Serverside Scripting
+			"%{prj.name}/common/include/LuaBridge",			-- Serverside Scripting
+
+			"Sakura/src",									-- Behavior Tree
 		}
+
+		
 		filter "configurations:Debug"
 			-- Set working directory for debugging
 			debugdir ("bin/" .. outputdir .. "/%{prj.name}")
@@ -473,8 +488,10 @@ workspace "Strategy"
 			debugdir ("bin/" .. outputdir .. "/%{prj.name}")
 		-- Linking libraries
 		filter "configurations:Distr"
-			libdirs{"libs", "bin/" .. outputdir .. "/NetLib"}
+			libdirs{"libs", "bin/" .. outputdir .. "/NetLib"} -- Networking Library
 			links{"ws2_32", "NetLib"}
+			libdirs{"libs", "bin/" .. outputdir .. "/Sakura"} -- BehaviorTree Library
+			links{"Sakura"}
 
 			libdirs{"libs", "%{prj.name}/common/lib/Distr"}
 			links
@@ -492,6 +509,8 @@ workspace "Strategy"
 		filter "configurations:Debug"
 			libdirs{"libs", "bin/" .. outputdir .. "/NetLib"}
 			links{"ws2_32", "NetLib"}
+			libdirs{"libs", "bin/" .. outputdir .. "/Sakura"} -- BehaviorTree Library
+			links{"Sakura"}
 
 			libdirs{"libs", "%{prj.name}/common/lib/Debug"}
 			links
@@ -509,6 +528,8 @@ workspace "Strategy"
 		filter "configurations:Release"
 			libdirs{"libs", "bin/" .. outputdir .. "/NetLib"}
 			links{"ws2_32", "NetLib"}
+			libdirs{"libs", "bin/" .. outputdir .. "/Sakura"} -- BehaviorTree Library
+			links{"Sakura"}
 
 			libdirs{"libs", "%{prj.name}/common/lib/Release"}
 			links
