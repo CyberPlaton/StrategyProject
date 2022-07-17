@@ -3,15 +3,6 @@
 
 int main()
 {	
-	// TESTING BEHAVIOR TREE.
-	using namespace sakura;
-	BTBlackboard blackboard("Testing Tree Blackboard");
-	BTFactory factory("Testing Tree", &blackboard);
-
-	auto tree = factory.Add< BTSequence >("Sequence").Build();
-
-
-
 	using namespace dbms;	
 
 	Terminal::TerminalDescription desc;
@@ -30,6 +21,7 @@ int main()
 		{
 			LOG_TERMINAL_ERROR("[INIT] Could not Initialize Logger!");
 		}
+
 
 		if (!init)
 		{

@@ -44,9 +44,10 @@ namespace sakura
 			m_Parent = nullptr;
 		}
 
-		void LastRunningNode() override 
+		EBTNodeResult LastRunningNode() override
 		{
 			BTCurrentRunningNodeMngr::get()->SetRunning(m_BehaviorTreeHash, this);
+			return EBTNodeResult::RUNNING;
 		}
 
 		void ResetLastRunning() override
