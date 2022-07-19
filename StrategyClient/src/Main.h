@@ -31,7 +31,6 @@
 // SOUND
 
 
-
 // EVENT SYSTEM
 #include "EventSystem.h"
 
@@ -43,6 +42,11 @@
 #include "Observer.h"
 #include "GamerService.h"
 #include "PlatformClient.h"
+
+
+// GAME SYSTEMS
+#include "StatusEffectUpdateEngine.h"
+
 
 #define OFFLINE_GAME_CLIENT_TEST true
 #define CONNECTION_TIMEOUT_TIMER_SECONDS 5

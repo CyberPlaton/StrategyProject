@@ -1,3 +1,6 @@
+#ifndef _UNIT_H_
+#define _UNIT_H_
+#pragma once
 
 #include "ComponentCommon.h"
 
@@ -10,18 +13,12 @@
 
 namespace cherrysoda
 {
+	class StatusEffectScriptingEngine;
+
+
 	class Unit : public Component
 	{
-	public:
-
-		enum EMovementType
-		{
-			MT_INVALID = 0,
-			MT_WALK = 1,
-			MT_FLY,
-			MT_SWIM,
-			MT_RIDE
-		};
+		friend class StatusEffectScriptingEngine;
 
 	public:
 		CHERRYSODA_DECLARE_COMPONENT(Unit, Component);
@@ -46,7 +43,13 @@ namespace cherrysoda
 		DECLARE_GET_SET(size_t,			Health,				m_health);
 		DECLARE_GET_SET(size_t,			Armor,				m_armor);
 		DECLARE_GET_SET(size_t,			Defense,			m_defense);
-		DECLARE_GET_SET(size_t,			Attack,				m_attack);
+		DECLARE_GET_SET(size_t,			MinAttack,			m_minAttack);
+		DECLARE_GET_SET(size_t,			MaxAttack,			m_maxAttack);
+		DECLARE_GET_SET(bool,			Ranged,				m_ranged);
+		DECLARE_GET_SET(size_t,			RangedMinAttack,	 m_rangedMinAttack);
+		DECLARE_GET_SET(size_t,			RangedMaxAttack,	 m_rangedMaxAttack);
+		DECLARE_GET_SET(size_t,			RangedMinRange,		m_rangedMinRange);
+		DECLARE_GET_SET(size_t,			RangedMaxRange,		m_rangedMaxRange);
 		DECLARE_GET_SET(size_t,			Level,				m_level);
 		DECLARE_GET_SET(size_t,			Experience,			m_experience);
 		DECLARE_GET_SET(size_t,			SightRadius,		m_sightRadius);
@@ -68,7 +71,15 @@ namespace cherrysoda
 		size_t m_health = 0;
 		size_t m_armor = 0;
 		size_t m_defense = 0;
-		size_t m_attack = 0;
+		
+		size_t m_minAttack = 0;
+		size_t m_maxAttack = 0;
+		bool m_ranged = false;
+		size_t m_rangedMinAttack = 0;
+		size_t m_rangedMaxAttack = 0;
+		size_t m_rangedMinRange = 0;
+		size_t m_rangedMaxRange = 0;
+
 		size_t m_level = 1;
 		size_t m_experience = 0;
 		size_t m_sightRadius = 1;
@@ -76,10 +87,12 @@ namespace cherrysoda
 		size_t m_tilePositionY = 0;
 		float  m_positionX = 0.0f;
 		float  m_positionY = 0.0f;
-		EMovementType m_movementType = EMovementType(0);
+
+		/// @brief 0=INVALID, 1=WALK, 2=SWIM, 3=RIDING
+		size_t m_movementType = 0;
 
 		/// @brief Basically the Action Points of the unit. Define how many actions it can perform in one round.
-		size_t m_movementPoints = 0;
+		size_t m_actionPoints = 0;
 
 		bool m_isDirty = false;
 
@@ -91,3 +104,4 @@ namespace cherrysoda
 }
 
 
+#endif
