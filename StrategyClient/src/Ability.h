@@ -19,7 +19,7 @@ namespace cherrysoda
 	* For an Attack that causes Bleeding to the target over several turns, is created by an 
 	* Attack that injects a StatusBleeding status into the target.
 	*/
-	class EntityAbility
+	class IEntityAbility
 	{
 	public:
 		/// @brief Pointer to the entity this ability belongs to.
@@ -56,7 +56,7 @@ namespace cherrysoda
 		}
 
 		void Use(const cherrysoda::String& name, cherrysoda::Entity* entity);
-		void Add(const cherrysoda::String& name, EntityAbility* ability);
+		void Add(const cherrysoda::String& name, IEntityAbility* ability);
 		void Remove(const cherrysoda::String& name);
 		bool Has(const cherrysoda::String& name);
 		template < class T >
@@ -71,7 +71,7 @@ namespace cherrysoda
 
 
 	private:
-		std::map< cherrysoda::String, EntityAbility* > m_abilities;
+		std::map< cherrysoda::String, IEntityAbility* > m_abilities;
 	};
 
 

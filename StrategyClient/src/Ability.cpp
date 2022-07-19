@@ -2,7 +2,7 @@
 
 namespace cherrysoda
 {
-	void EntityAbilityMap::Add(const cherrysoda::String& name, EntityAbility* ability)
+	void EntityAbilityMap::Add(const cherrysoda::String& name, IEntityAbility* ability)
 	{
 		m_abilities.try_emplace(name, ability);
 	}

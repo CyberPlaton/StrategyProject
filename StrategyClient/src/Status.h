@@ -10,7 +10,7 @@ namespace cherrysoda
 
 
 	/// @brief 
-	class EntityStatusEffect
+	class IEntityStatusEffect
 	{
 	public:
 		enum ETimerType
@@ -88,7 +88,7 @@ namespace cherrysoda
 
 		/// @brief Add a Status Effect Object to the Entity.
 		/// @param effect Pointer to Status Effect Object.
-		void Add(EntityStatusEffect* effect)
+		void Add(IEntityStatusEffect* effect)
 		{
 			m_statusEffectsVec.push_back(effect);
 		}
@@ -116,8 +116,8 @@ namespace cherrysoda
 		/// Removes those that are not needed anymore and remain those that should stay.
 		void Update()
 		{
-			std::vector< EntityStatusEffect* > remaining_effects;
-			std::vector< EntityStatusEffect* > removing_effects;
+			std::vector< IEntityStatusEffect* > remaining_effects;
+			std::vector< IEntityStatusEffect* > removing_effects;
 
 			// Execute and store which should remain and which should be removed.
 			for(int i = 0; i < m_statusEffectsVec.size(); i++)
@@ -158,7 +158,7 @@ namespace cherrysoda
 
 	private:
 		size_t m_managerId = 0;
-		std::vector< EntityStatusEffect* > m_statusEffectsVec;
+		std::vector< IEntityStatusEffect* > m_statusEffectsVec;
 
 		std::vector< String > m_statusEffectsFlaggedToBeRemovedVec;
 
@@ -168,7 +168,7 @@ namespace cherrysoda
 
 		/// @brief Remove SE from Storages and Free its memory.
 		/// @param effect The SE Object to be deleted.
-		void _deleteStatusEffect(EntityStatusEffect* effect)
+		void _deleteStatusEffect(IEntityStatusEffect* effect)
 		{
 			// Remove SE from storage.
 			std::string effect_name = effect->Name();
