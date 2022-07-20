@@ -16,6 +16,18 @@ static bool g_bDecalDatabaseOpen = true;
 static bool g_bPrefabDatabaseOpen = true;
 static bool g_bEntityDatabaseOpen = true;
 static bool g_bEntityEditorOpen = false;
+static bool g_bStatusEffectEditorOpen = false;
+
+// Status Effect Static Data
+static SStatusEffect* g_pCurrentEditedStatusEffect = nullptr;
+static std::string g_sCurrentEditedStatusEffectFilePath = "none";
+
+static char g_cStatusEffectName[64] = "";
+static char g_cStatusEffectDisplayName[64] = "";
+static char g_cStatusEffectDescription[512] = "";
+static char g_cStatusEffectBehaviorTreeImplName[64] = "";
+static char g_cStatusEffectTimerType[64] = "";
+
 
 // Prefab Static Data
 static char g_cPrefabName[64] = "";
@@ -145,6 +157,7 @@ void GameEditor::RenderGUI()
 			// Prefab Import Menu.
 			if (g_bImportingUnitPrefab) DisplayUnitPrefabImportWindow();
 		}
+		if (g_bStatusEffectEditorOpen) DisplayStatusEffectEditor();
 	}
 }
 
@@ -624,16 +637,17 @@ void GameEditor::RenderMainMenu()
 		}
 
 
+
 		if (ImGui::BeginMenu("Unit"))
 		{
-			if(ImGui::BeginMenu("Unit Layout"))
+			if (ImGui::BeginMenu("Unit Layout"))
 			{
 				if (ImGui::MenuItem("Layout Template Editor"))
 				{
 					ToggleMenuItem(g_bLayoutTemplateEditorOpen);
 				}
 
-				if(ImGui::MenuItem("Shape Window"))
+				if (ImGui::MenuItem("Shape Window"))
 				{
 					ToggleMenuItem(g_bShapeWindowOpen);
 				}
@@ -652,20 +666,27 @@ void GameEditor::RenderMainMenu()
 			if (ImGui::MenuItem("Prefab Editor"))
 			{
 				ToggleMenuItem(g_bUnitEditorOpen);
-				if(!m_prefabCacheLoaded)
+				if (!m_prefabCacheLoaded)
 				{
 					// Load Prefab Cache.
-					if(!ImportUnitPrefabCache(g_sPrefabCacheFilepath))
+					if (!ImportUnitPrefabCache(g_sPrefabCacheFilepath))
 					{
 						LOG_DBG_CRITICAL("[{:.4f}][RenderMainMenu] Importing Prefab Cache Failed \"{}\"!", APP_RUN_TIME, g_sPrefabCacheFilepath);
 						LOG_FILE_CRITICAL("[{:.4f}][RenderMainMenu] Importing Prefab Cache Failed \"{}\"!", APP_RUN_TIME, g_sPrefabCacheFilepath);
 					}
 				}
 			}
-		
-			ImGui::EndMenu();
-		}
 
+
+			if (ImGui::MenuItem("Status Effect Editor"))
+			{
+				ToggleMenuItem(g_bStatusEffectEditorOpen);
+			}
+
+
+			ImGui::EndMenu();
+
+		}
 	}
 	ImGui::EndMainMenuBar();
 }
@@ -3210,6 +3231,132 @@ void GameEditor::DisplayUnitEditorHealthEdit()
 	}
 }
 
+
+void GameEditor::DisplayEditFieldNumber(int& value, int min, int max, const char* field_name, const char* field_desc, ImGuiID slider_id, ImGuiID scalar_id)
+{
+	if(ImGui::CollapsingHeader(field_name))
+	{
+		int previous_value = value;
+		ImGui::PushID(slider_id);
+		ImGui::SliderInt("Int", &previous_value, min, max, "%d");
+		ImGui::PopID();
+		HelpMarkerWithoutQuestion(field_desc);
+		ImGui::SameLine();
+		ImGui::PushID(scalar_id);
+		ImGui::InputScalar("ScalarInt", ImGuiDataType_U32, &previous_value, &u32_one);
+		ImGui::PopID();
+		HelpMarkerWithoutQuestion(field_desc);
+
+		value = previous_value;
+	}
+}
+
+
+
+void GameEditor::DisplayEditFieldBoolean(bool& value, const char* field_name, const char* field_desc, ImGuiID checkbox_id)
+{
+	ImGui::PushID(checkbox_id);
+	ImGui::Checkbox(field_name, &value);
+	ImGui::PopID();
+	HelpMarkerWithoutQuestion(field_desc);
+}
+
+bool GameEditor::DisplayEditFieldString(char* string, int string_size, std::string& current_string, const char* field_name, const char* field_desc, ImGuiID text_input_id, ImGuiID text_input_ok_id)
+{
+	bool result = false;
+
+	if (ImGui::CollapsingHeader(field_name))
+	{
+		ImGui::PushID(text_input_ok_id);
+		ImGui::InputText("|", string, string_size);
+		ImGui::PopID();
+
+		HelpMarkerWithoutQuestion(current_string.c_str());
+
+		ImGui::SameLine();
+		ImGui::PushID(text_input_id);
+		if (ImGui::SmallButton("OK"))
+		{
+			// Check for sanity.
+			std::string name = std::string(string);
+
+			auto length = name.size() > 0;
+
+			if (length)
+			{
+				LOG_DBG_INFO("[{:.4f}][DisplayEditFieldString] Set string to \"{}\"!", APP_RUN_TIME, name);
+				LOG_FILE_INFO("[{:.4f}][DisplayEditFieldString] Set string to \"{}\"!", APP_RUN_TIME, name);
+
+				// Set the name.
+				current_string = name;
+				result = true;
+			}
+			else if (!length)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayEditFieldString] Could not set string: Empty name!", APP_RUN_TIME);
+				LOG_FILE_ERROR("[{:.4f}][DisplayEditFieldString] Could not set string: Empty name!", APP_RUN_TIME);
+			}
+		}
+		ImGui::PopID();
+		HelpMarkerWithoutQuestion(field_desc);
+	}
+
+	return result;
+}
+
+void GameEditor::DisplayEditFieldIcon(const char* field_name, const char* field_desc, std::map< std::string, olc::Decal* >& data_map, std::string& current_icon)
+{
+	std::vector< std::string > icon_vec;
+
+	// Find our current item index in the vector.
+	int current_item_index = 0;
+	int index = 0;
+	bool changed = false;
+	for (auto& pair : data_map)
+	{
+		icon_vec.push_back(pair.first);
+	}
+	for (int i = 0; i < icon_vec.size(); i++)
+	{
+		if (icon_vec[i].compare(current_icon) == 0)
+		{
+			current_item_index = i;
+			break;
+		}
+	}
+
+	// Create the Combo window.
+	if (ImGui::BeginCombo(field_name, current_icon.c_str()))
+	{
+		for (int i = 0; i < icon_vec.size(); i++)
+		{
+			const bool is_selected = (current_item_index == i);
+
+			if (ImGui::Selectable(icon_vec[i].c_str(), is_selected))
+			{
+				current_item_index = i;
+				changed = true;
+			}
+
+			if (is_selected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+		}
+		ImGui::EndCombo();
+	}
+	HelpMarkerWithoutQuestion(field_desc);
+
+	// Apply the change.
+	if (changed)
+	{
+		current_icon = icon_vec[current_item_index];
+
+		LOG_DBG_INFO("[{:.4f}][DisplayEditFieldIcon] Icon changed to \"{}\"", APP_RUN_TIME, icon_vec[current_item_index]);
+		LOG_FILE_INFO("[{:.4f}][DisplayEditFieldIcon] Icon changed to \"{}\"", APP_RUN_TIME, icon_vec[current_item_index]);
+	}
+}
+
 void GameEditor::DisplayUnitEditorActionPointsEdit()
 {
 	ImGuiID ap_id = g_idUnitEditorElementID + 2;
@@ -3873,6 +4020,90 @@ void GameEditor::DisplayPrefabEditorBuildingSpriteEdit()
 			LOG_FILE_ERROR("[{:.4f}][DisplayUnitEditorUnitSpriteEdit] Could not change sprite: No prefab in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
 		}
 	}
+}
+
+void GameEditor::DisplayStatusEffectEditor()
+{
+	std::string name = "Status Effect Editor";
+	auto scene_edit_window_width = 600.f;
+	auto status_effect_preview_window_width = 700.0f;
+	auto status_effect_element_window_width = 300.f;
+	auto main_window_height = DEFAULT_WINDOW_HEIGHT - 50.0f;
+
+	ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDecoration;
+
+	ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize(ImVec2(scene_edit_window_width + status_effect_preview_window_width + status_effect_element_window_width + 35.0f, main_window_height), ImGuiCond_Appearing);
+	ImGui::Begin(name.c_str(), &g_bStatusEffectEditorOpen, flags);
+
+	// Display all editing windows.
+	ImGui::BeginChild("Stats", ImVec2(scene_edit_window_width, main_window_height - 1.0f), true);
+
+	DisplayStatusEffectEditorMainMenu();
+	
+	if(g_pCurrentEditedStatusEffect)
+	{
+		DisplayEditFieldString(g_cStatusEffectName, sizeof(g_cStatusEffectName), g_pCurrentEditedStatusEffect->name, "Name", "Name Desc", 10000, 10001);
+		DisplayEditFieldString(g_cStatusEffectDisplayName, sizeof(g_cStatusEffectDisplayName), g_pCurrentEditedStatusEffect->displayName, "Display Name", "Display Name Desc", 10002, 10003);
+		DisplayEditFieldString(g_cStatusEffectDescription, sizeof(g_cStatusEffectDescription), g_pCurrentEditedStatusEffect->description, "Description", "Description Desc", 10004, 10005);
+		DisplayEditFieldString(g_cStatusEffectBehaviorTreeImplName, sizeof(g_cStatusEffectBehaviorTreeImplName), g_pCurrentEditedStatusEffect->behaviorTreeImplName, "Behavior Tree Impl Name", "Behavior Tree Impl Desc", 10006, 10007);
+		DisplayEditFieldString(g_cStatusEffectTimerType, sizeof(g_cStatusEffectTimerType), g_pCurrentEditedStatusEffect->timerType, "Timer Type", "Timer Type Desc", 10008, 10009);
+		DisplayEditFieldNumber(g_pCurrentEditedStatusEffect->applicableTo, 0, 3, "Applicable To", "Applicable To Desc", 10010, 10011);
+		DisplayEditFieldNumber(g_pCurrentEditedStatusEffect->applicationProbability, 1, 100, "Application Prob", "Application Prob Desc", 10012, 10013);
+		DisplayEditFieldNumber(g_pCurrentEditedStatusEffect->minValue, 1, 100, "Min Value", "Min Value Desc", 10014, 10015);
+		DisplayEditFieldNumber(g_pCurrentEditedStatusEffect->maxValue, 1, 100, "Max Value", "Max Value Desc", 10016, 10017);
+		DisplayEditFieldNumber(g_pCurrentEditedStatusEffect->timerValue, 1, 100, "Timer Value", "Timer Value Desc", 10018, 10019);
+	}
+
+	ImGui::EndChild();
+	ImGui::End();
+}
+
+void GameEditor::DisplayStatusEffectEditorMainMenu()
+{
+	auto quick_save = g_sCurrentEditedStatusEffectFilePath.compare("none") != 0 && g_pCurrentEditedStatusEffect != nullptr;
+
+	if (ImGui::SmallButton("New"))
+	{
+		if(g_pCurrentEditedStatusEffect)
+		{
+			delete g_pCurrentEditedStatusEffect;
+			g_pCurrentEditedStatusEffect = nullptr;
+		}
+
+		g_pCurrentEditedStatusEffect = new SStatusEffect();
+	}
+	if (quick_save)
+	{
+		ImGui::SameLine();
+		if (ImGui::SmallButton("Quick Save..."))
+		{
+		}
+	}
+	ImGui::SameLine();
+	if (ImGui::SmallButton("Save As..."))
+	{
+	}
+	ImGui::SameLine();
+	if (ImGui::SmallButton("Load From..."))
+	{
+	}
+	ImGui::SameLine();
+	if (ImGui::SmallButton("Sync DBMS..."))
+	{
+	}
+
+
+
+
+	ImGui::SameLine();
+	ImGui::SetCursorPosX(ImGui::GetWindowSize().x - 25.0f);
+	if (ImGui::SmallButton("X"))
+	{
+		ToggleMenuItem(g_bStatusEffectEditorOpen);
+	}
+	ImGui::Separator();
+	ImGui::Separator();
 }
 
 void GameEditor::DisplayBuildingEditorNameEdit()

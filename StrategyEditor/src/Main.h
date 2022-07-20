@@ -103,18 +103,23 @@
 *			 o Quick Save functionality for current edited Prefab.
 * 
 * 
-* 09.07.2022 - Version 0.4.4 Patch compete:
+* 09.07.2022 - Version 0.4.4 Patch complete:
 *			 o Remove Sound System due to bad implementation and general issues.
+* 
+* 20.07.2022 - Version 0.4.5 Patch complete:
+*			 o Add newly created Audio System.
+* 
+* 
+* 
+* 
+* 
+* 
 * 
 * 
 * TODO: Ambient Audio "Editor" has to be update to be based on FMOD,
 *		as soon as the Audio Engine with FMOD is completed.
 *		After this the "Editor" can be extended based on FMOD to utilize 
 *		".bank" files, FMOD events, triggers etc.
-* 
-* 
-* 
-* 
 */
 
 // OLC INLCUDE
@@ -134,7 +139,7 @@
 
 #define EDITOR_MAJOR_VERSION 0
 #define EDITOR_MINOR_VERSION 4
-#define EDITOR_PATCH_VERSION 4
+#define EDITOR_PATCH_VERSION 5
 
 
 
@@ -454,6 +459,22 @@ struct SPrefab
 };
 
 
+struct SStatusEffect
+{
+	std::string name;
+	std::string displayName;
+	std::string behaviorTreeImplName;
+	std::string description;
+	std::string timerType;
+
+	int applicableTo;
+	int applicationProbability;
+	int minValue;
+	int maxValue;
+
+	int timerValue;
+};
+
 
 // Utility. Create a hook function to actually call the GameEditors OnUserUpdate function.
 void MainRender(GameEditor* editor);
@@ -593,7 +614,15 @@ private:
 	void DisplayBuildingEditorVisibilityEdit();
 	void DisplayBuildingEditorRequirementsEdit();
 	void DisplayPrefabEditorBuildingSpriteEdit();
-
+	// Status Effect Editor.
+	void DisplayStatusEffectEditor();
+	void DisplayStatusEffectEditorMainMenu();
+	
+	// General Editor Utilities.
+	void DisplayEditFieldNumber(int& value, int min, int max, const char* field_name, const char* field_desc, ImGuiID slider_id, ImGuiID scalar_id);
+	void DisplayEditFieldBoolean(bool& value, const char* field_name, const char* field_desc, ImGuiID checkbox_id);
+	bool DisplayEditFieldString(char* string, int string_size, std::string& current_string, const char* field_name, const char* field_desc, ImGuiID text_input_id, ImGuiID text_input_ok_id);
+	void DisplayEditFieldIcon(const char* field_name, const char* field_desc, std::map< std::string, olc::Decal* >& data_map, std::string& current_icon);
 
 	// GUI UNIT TEMPLATE LAYOUT EDITOR
 	void DisplayShapesWindow();
