@@ -37,6 +37,8 @@ namespace sakura
 			return m_Root->Tick();
 		}
 		
+		BTBlackboard* Blackboard() { return m_GlobalBlackboard; }
+
 	private:
 		std::vector<BTNode*> m_TreeNodes;
 		BTNode* m_Root = nullptr;

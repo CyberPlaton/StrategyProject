@@ -4,31 +4,59 @@
 namespace cherrysoda
 {
 
-
-
-	CEntityStatusEffect::CEntityStatusEffect()
+	CEntityStatusEffect::CEntityStatusEffect() : m_behaviorTree(nullptr)
 	{
 
 	}
 
 	CEntityStatusEffect::~CEntityStatusEffect()
 	{
-
+		Terminate();
 	}
 
-	bool CEntityStatusEffect::Initialize(const std::string& effect_name, const SStatusEffectData& effect_data, Entity* self_entity)
+	bool CEntityStatusEffect::Initialize(const net::SStatusEffectData& effect_data, Entity* self_entity, sakura::BehaviorTree* behavior_tree)
 	{
+		// Sanity check.
+		if (!self_entity || !behavior_tree) return false;
 
+
+		// Copy the data.
+		m_data.m_effectName = effect_data.m_effectName;
+		m_data.m_effectDisplayName = effect_data.m_effectDisplayName;
+		m_data.m_effectType = effect_data.m_effectType;
+
+		m_data.m_effectValueMin = effect_data.m_effectValueMin;
+		m_data.m_effectValueMax = effect_data.m_effectValueMax;
+		m_data.m_effectApplicationProbability = effect_data.m_effectApplicationProbability;
+
+		m_data.m_effectApplicableTo = effect_data.m_effectApplicableTo;
+
+		m_data.m_effectTimerType = effect_data.m_effectTimerType;
+
+		m_data.m_effectTimerValue = effect_data.m_effectTimerValue;
+
+		m_data.m_effectDesc = effect_data.m_effectDesc;
+
+		// Set the BT
+		m_behaviorTree = behavior_tree; behavior_tree = nullptr;
+
+		// Store the Entity in BT global blackboard.
+		m_behaviorTree->Blackboard()->SetDataObject< cherrysoda::Entity >("Self", self_entity, "Entity");
+
+
+		return true;
 	}
 
 	void CEntityStatusEffect::Terminate()
 	{
-
+		// Delete BT.
+		delete m_behaviorTree;
+		m_behaviorTree = nullptr;
 	}
 
 	Entity* CEntityStatusEffect::Self()
 	{
-
+		return m_behaviorTree->Blackboard()->GetDataObject< cherrysoda::Entity >("Self");
 	}
 
 	bool CEntityStatusEffect::OnUpdate()
@@ -61,7 +89,7 @@ namespace cherrysoda
 
 	cherrysoda::String CEntityStatusEffect::Name()
 	{
-
+		return m_data.m_effectName;
 	}
 
 }

@@ -1,14 +1,19 @@
+#ifndef _STATUS_H_
+#define _STATUS_H_
 #pragma once
 
 #include "ComponentCommon.h"
+#include "NetCommon.h"
+#include "BTInterface.h"
 
+// Forward Decl.
+class sakura::BehaviorTree;
+
+// Forward decl.
+struct net::SStatusEffectData;
 
 namespace cherrysoda
 {
-	// Forward decl.
-	struct SStatusEffectData;
-
-
 	/// @brief 
 	class IEntityStatusEffect
 	{
@@ -28,7 +33,7 @@ namespace cherrysoda
 		virtual Entity* Self() = 0;
 
 
-		virtual bool Initialize(const std::string&, const SStatusEffectData&, Entity*) = 0;
+		virtual bool Initialize(const net::SStatusEffectData&, Entity*, sakura::BehaviorTree*) = 0;
 
 
 
@@ -210,3 +215,5 @@ namespace cherrysoda
 
 
 }
+
+#endif

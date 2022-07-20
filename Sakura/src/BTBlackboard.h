@@ -24,15 +24,13 @@ namespace sakura
 
 
 		template < typename T >
-		void SetData(std::string name, T value, const std::string& type)
+		void SetDataPOD(std::string name, T value, const std::string& type)
 		{
-			std::scoped_lock lock(*m_Mutex);
-
 			// Does the entry already exist
 			if (m_Data.find(name) != m_Data.end())
 			{
 				// Change entry
-				m_Data.at(name).set<T>(value, type);
+				m_Data[name].SetPOD<T>(value, type);
 			}
 			else
 			{
@@ -40,7 +38,23 @@ namespace sakura
 				Any a(value, name);
 				m_Data.emplace(name, a);
 			}
+		}
 
+		template < typename T >
+		void SetDataObject(std::string name, T* value, const std::string& type)
+		{
+			// Does the entry already exist
+			if (m_Data.find(name) != m_Data.end())
+			{
+				// Change entry
+				m_Data[name].SetObject<T>(value, type);
+			}
+			else
+			{
+				// Create new object pointer entry
+				Any a(value, type);
+				m_Data.emplace(name, a);
+			}
 		}
 
 

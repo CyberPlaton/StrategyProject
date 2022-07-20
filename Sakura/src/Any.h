@@ -1,6 +1,11 @@
+#ifndef _ANY_H_
+#define _ANY_H_
 #pragma once
 
 #include "BTCommon.h"
+#include <vcruntime_typeinfo.h>
+#include <any>
+
 
 namespace sakura
 {
@@ -13,6 +18,9 @@ namespace sakura
 		Any(std::any&& value, const std::string& type) : m_Value(value), m_Type(type)
 		{
 		}
+		Any() : m_Type("none")
+		{
+		}
 		~Any()
 		{
 			m_Value.reset();
@@ -23,6 +31,18 @@ namespace sakura
 		/// @return The Type.
 		std::string Type() { return m_Type; }
 
+
+		bool HasValue()
+		{
+			if(m_Type.compare("none") == 0)
+			{
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}
 
 		/// @brief Get the stored value as plain-old-data. E.g. a float or string.
 		/// @tparam T The type that the data will be casted to.
@@ -88,3 +108,5 @@ namespace sakura
 		std::string m_Type;
 	};
 }
+
+#endif

@@ -2,11 +2,9 @@
 #define _STATUS_EFFECT_H_
 #pragma once
 
-#include "StatusEffectsDataMap.h"
-#include "Status.h"
-#include "BTInterface.h"
+#include "StatusEffectsDataMap.h"	// Get SStatusEffectData by Name.
+#include "Status.h"					// IEntityStatusEffect interface.
 #include "Logging.h"
-
 
 namespace cherrysoda
 {
@@ -18,7 +16,7 @@ namespace cherrysoda
 		~CEntityStatusEffect();
 
 
-		bool Initialize(const std::string& effect_name, const SStatusEffectData& effect_data, Entity* self_entity) override final;
+		bool Initialize(const net::SStatusEffectData& effect_data, Entity* self_entity, sakura::BehaviorTree* behavior_tree) override final;
 		void Terminate() override final;
 
 
@@ -30,6 +28,7 @@ namespace cherrysoda
 
 	private:
 		sakura::BehaviorTree* m_behaviorTree;
+		net::SStatusEffectData m_data;
 	};
 
 
