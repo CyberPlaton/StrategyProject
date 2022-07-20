@@ -27,13 +27,18 @@ namespace cherrysoda
 		/// @return Entity Pointer.
 		virtual Entity* Self() = 0;
 
+
+		virtual bool Initialize(const std::string&, const SStatusEffectData&, Entity*) = 0;
+
+
+
+		virtual void Terminate() = 0;
+
+
+
 		/// @brief Perform an update.
 		/// @return True, if this effect stays to the next update; False if it can be removed and deleted.
 		virtual bool OnUpdate() = 0;
-
-		/// @brief Set the data for the status effect.
-		/// @param The status effect data from SStatusEffectData.
-		virtual void Data(SStatusEffectData*) = 0;
 
 		/// @brief Retrieve the Status Effect Name.
 		/// @return Name.
@@ -44,6 +49,7 @@ namespace cherrysoda
 
 
 	/// @brief Manages the execution and deletion of Status Effects on an Entity.
+	// Central query interface for an entities Status Effects and their data.
 	// The execution is Turn Based and performed on Turn End.
 	// How are duplicate Status Effects handled? -> By Design Decision, they are NOT handled. Meaning duplication and stacking of Status Effects
 	// is tolerated, and if we flag to remove a SE which is duplicate, we remove the first one we find, the other one stays unless flagged as to be removed again.
@@ -201,16 +207,6 @@ namespace cherrysoda
 
 	__declspec(selectany) std::vector< CEntityStatusEffectMngr* > CEntityStatusEffectMngr::g_CEntityStatusEffectMngrVec;
 	__declspec(selectany) size_t CEntityStatusEffectMngr::g_nextManagerId = 1;
-
-
-#define ENTITY_ADD_STATUS_EFFECT(effect, entity) \
-auto mngr = entity->Get< CEntityStatusEffectMngr >(); \
-mngr->Add(effect) \
-
-
-#define ENTITY_REMOVE_STATUS_EFFECT(effect, entity) \
-auto mngr = entity->Get< CEntityStatusEffectMngr >(); \
-mngr->Remove(effect) \
 
 
 }
