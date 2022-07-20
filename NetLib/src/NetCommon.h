@@ -309,6 +309,7 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 	{
 		void Serialize(RakNet::BitStream& stream) override final
 		{
+			// Write General Information
 			stream.Write(m_name);
 			stream.Write(m_networkId);
 			stream.Write(m_playerId);
@@ -317,21 +318,35 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 			stream.Write(m_positionY);
 			stream.Write(m_playerId);
 
+			// Write Unit General Information.
 			stream.Write(m_unitName);
 			stream.Write(m_unitHealth);
 			stream.Write(m_unitArmor);
-			stream.Write(m_unitAttack);
 			stream.Write(m_unitDefense);
 			stream.Write(m_unitLevel);
 			stream.Write(m_unitExperience);
 			stream.Write(m_unitSightRadius);
 			stream.Write(m_unitMovementType);
-			stream.Write(m_unitMovementPoints);
+			stream.Write(m_unitActionPoints);
+
+			// Write Unit Attack information based on whether its a melee or ranged unit.
+			stream.Write(m_unitMinAttack);
+			stream.Write(m_unitMaxAttack);
+
+			stream.Write(m_unitRanged);
+			if(m_unitRanged)
+			{
+				stream.Write(m_unitRangedMinAttack);
+				stream.Write(m_unitRangedMaxAttack);
+				stream.Write(m_unitRangedMinRange);
+				stream.Write(m_unitRangedMaxRange);
+			}
 		}
 		void Deserialize(RakNet::BitStream& stream, bool ignore_id = false)  override final
 		{
 			if (ignore_id) stream.IgnoreBytes(sizeof(RakNet::MessageID));
 
+			// Read General Information
 			stream.Read(m_name);
 			stream.Read(m_networkId);
 			stream.Read(m_playerId);
@@ -340,28 +355,50 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 			stream.Read(m_positionY);
 			stream.Read(m_playerId);
 
+			// Read General Unit Information
 			stream.Read(m_unitName);
 			stream.Read(m_unitHealth);
 			stream.Read(m_unitArmor);
-			stream.Read(m_unitAttack);
 			stream.Read(m_unitDefense);
 			stream.Read(m_unitLevel);
 			stream.Read(m_unitExperience);
 			stream.Read(m_unitSightRadius);
 			stream.Read(m_unitMovementType);
-			stream.Read(m_unitMovementPoints);
+			stream.Read(m_unitActionPoints);
+
+			// Read Unit Attack definition, based on whether it is a melee or ranged unit
+			stream.Read(m_unitMinAttack);
+			stream.Read(m_unitMaxAttack);
+
+			stream.Read(m_unitRanged);
+			if(m_unitRanged)
+			{
+				stream.Read(m_unitRangedMinAttack);
+				stream.Read(m_unitRangedMaxAttack);
+				stream.Read(m_unitRangedMinRange);
+				stream.Read(m_unitRangedMaxRange);
+			}
 		}
 
 		RakNet::RakString m_unitName;
 		int64_t m_unitHealth;
 		int64_t m_unitArmor;
-		int64_t m_unitAttack;
 		int64_t m_unitDefense;
 		int64_t m_unitLevel;
 		int64_t m_unitExperience;
 		int64_t m_unitSightRadius;
 		int64_t m_unitMovementType;
-		int64_t m_unitMovementPoints;
+		int64_t m_unitActionPoints;
+
+
+		int64_t m_unitMinAttack;
+		int64_t m_unitMaxAttack;
+
+		bool m_unitRanged;
+		int64_t m_unitRangedMinAttack;
+		int64_t m_unitRangedMaxAttack;
+		int64_t m_unitRangedMinRange;
+		int64_t m_unitRangedMaxRange;
 	};
 	struct SMaptileGameobject : public SGameobject, public SSerializable
 	{

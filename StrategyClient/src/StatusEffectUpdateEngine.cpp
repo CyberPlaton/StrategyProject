@@ -3,6 +3,10 @@
 
 namespace cherrysoda
 {
+	StatusEffectScriptingEngine* StatusEffectScriptingEngine::g_StatusEffectScriptingEngine = nullptr;
+
+
+
 	void StatusEffectScriptingEngine::DoUpdate(EUpdateOperation operation, EUpdateField field, cherrysoda::Entity* entity, size_t update_value)
 	{
 		auto engine = StatusEffectScriptingEngine::get();
@@ -114,4 +118,5 @@ namespace cherrysoda
 			}
 		}
 	}
+
 }

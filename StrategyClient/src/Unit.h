@@ -26,16 +26,10 @@ namespace cherrysoda
 		Unit() : Unit(true, true)
 		{
 		}
-		Unit::Unit(const String& unit_name,
-						  size_t player_id,
-						  size_t health,
-						  size_t armor,
-						  size_t defense,
-						  size_t attack,
-						  size_t tile_position_x,
-						  size_t tile_position_y,
-						  float position_x,
-						  float position_y);
+		Unit::Unit(const String& unit_name, size_t player_id, size_t health, size_t armor, size_t defense,
+						  size_t min_attack, size_t max_attack, 
+						  bool ranged, size_t ranged_min_attack, size_t ranged_max_attack, size_t ranged_min_range, size_t ranged_max_range,
+						  size_t tile_position_x, size_t tile_position_y, float position_x, float position_y);
 
 		// GETTER/SETTER
 		DECLARE_GET_SET(const String&,  UnitName,			m_unitName);
@@ -46,8 +40,8 @@ namespace cherrysoda
 		DECLARE_GET_SET(size_t,			MinAttack,			m_minAttack);
 		DECLARE_GET_SET(size_t,			MaxAttack,			m_maxAttack);
 		DECLARE_GET_SET(bool,			Ranged,				m_ranged);
-		DECLARE_GET_SET(size_t,			RangedMinAttack,	 m_rangedMinAttack);
-		DECLARE_GET_SET(size_t,			RangedMaxAttack,	 m_rangedMaxAttack);
+		DECLARE_GET_SET(size_t,			RangedMinAttack,	m_rangedMinAttack);
+		DECLARE_GET_SET(size_t,			RangedMaxAttack,	m_rangedMaxAttack);
 		DECLARE_GET_SET(size_t,			RangedMinRange,		m_rangedMinRange);
 		DECLARE_GET_SET(size_t,			RangedMaxRange,		m_rangedMaxRange);
 		DECLARE_GET_SET(size_t,			Level,				m_level);
@@ -57,9 +51,13 @@ namespace cherrysoda
 		DECLARE_GET_SET(size_t,			TilePositionY,		m_tilePositionY);
 		DECLARE_GET_SET(float,			PositionX,			m_positionX);
 		DECLARE_GET_SET(float,			PositionY,			m_positionY);
+		DECLARE_GET_SET(size_t,			MovementType,		m_movementType);
+		DECLARE_GET_SET(size_t,			ActionPoints,		m_actionPoints);
+
 
 		// QUERYING
 		DECLARE_QUERY(Dirty, m_isDirty);
+
 
 		// COMMON FUNCTIONALITY
 		

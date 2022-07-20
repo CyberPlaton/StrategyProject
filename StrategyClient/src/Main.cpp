@@ -849,7 +849,7 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 	// Unit
 	entity = factory->Begin(this)
 		.Add(new  Sprite("assets/UnitAtlas.json"))
-		.Add(new Unit("Steel Swordman", 1, 50, 200, 25, 50, 0, 0, 0, 0))
+		.Add(new Unit("Steel Swordman", 1, 50, 25, 10, 10, 15, false, 0, 0, 0, 0, 1, 1, 250.0f, 250.0f))
 		.End();
 	entity->Get< Sprite >()->AddLoop("Idle", "Human_Swordman_Steel");
 	entity->Get< Sprite >()->Play("Idle");
@@ -863,7 +863,7 @@ void cherrysoda::DebugGameScene::SceneImpl::Begin()
 		.Add(new  SelectableUnit(1))
 		.Add(new  Sprite("assets/UnitAtlas.json"))
 		.Add(new  CollidableComponent(true, false, true))
-		.Add(new  Unit("HighElf_Swordman_Malachite", 1, 20, 1, 1, 5, 0, 0, 0, 0))
+		.Add(new  Unit("HighElf_Swordman_Malachite", 1, 50, 25, 10, 10, 15, false, 0, 0, 0, 0, 2, 1, 500.0f, 250.0f))
 		.End();
 	
 	// Create custom Animation adding them "Frame by Frame".
