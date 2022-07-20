@@ -665,14 +665,22 @@ namespace dbms
 							obj = new net::SUnitGameobject();
 							AS_UNIT(obj)->m_unitHealth = doc["unitHealth"].get_int64();
 							AS_UNIT(obj)->m_unitArmor = doc["unitArmor"].get_int64();
-							AS_UNIT(obj)->m_unitAttack = doc["unitAttack"].get_int64();
 							AS_UNIT(obj)->m_unitDefense = doc["unitDefense"].get_int64();
 							AS_UNIT(obj)->m_unitLevel = doc["unitLevel"].get_int64();
 							AS_UNIT(obj)->m_unitSightRadius = doc["unitSightRadius"].get_int64();
 							AS_UNIT(obj)->m_unitMovementType = doc["unitMovementType"].get_int64();
-							AS_UNIT(obj)->m_unitMovementPoints = doc["unitMovementPoints"].get_int64();
+							AS_UNIT(obj)->m_unitActionPoints = doc["unitMovementPoints"].get_int64();
 							AS_UNIT(obj)->m_unitExperience = doc["unitExperience"].get_int64();
 							AS_UNIT(obj)->m_unitName = doc["unitName"].get_utf8().value.to_string().c_str();
+
+							AS_UNIT(obj)->m_unitMinAttack = doc["unitMinAttack"].get_int64();
+							AS_UNIT(obj)->m_unitMaxAttack = doc["unitMaxAttack"].get_int64();
+
+							AS_UNIT(obj)->m_unitRanged = doc["unitRanged"].get_bool();
+							AS_UNIT(obj)->m_unitRangedMinAttack = doc["unitRangedMinAttack"].get_int64();
+							AS_UNIT(obj)->m_unitRangedMaxAttack = doc["unitRangedMaxAttack"].get_int64();
+							AS_UNIT(obj)->m_unitRangedMinRange = doc["unitRangedMinRange"].get_int64();
+							AS_UNIT(obj)->m_unitRangedMaxRange = doc["unitRangedMaxRange"].get_int64();
 							break;
 						}
 						case net::EGameobjectType::NET_GO_BUILDING:
@@ -796,13 +804,18 @@ namespace dbms
 				kvp("unitName", object->m_unitName.C_String()),
 				kvp("unitHealth", (int64_t)object->m_unitHealth),
 				kvp("unitArmor", (int64_t)object->m_unitArmor),
-				kvp("unitAttack", (int64_t)object->m_unitAttack),
 				kvp("unitDefense", (int64_t)object->m_unitDefense),
 				kvp("unitLevel", (int64_t)object->m_unitLevel),
 				kvp("unitExperience", (int64_t)object->m_unitExperience),
 				kvp("unitSightRadius", (int64_t)object->m_unitSightRadius),
 				kvp("unitMovementType", (int64_t)object->m_unitMovementType),
-				kvp("unitMovementPoints", (int64_t)object->m_unitMovementPoints)
+				kvp("unitMovementPoints", (int64_t)object->m_unitActionPoints),
+
+				kvp("unitRanged", object->m_unitRanged),
+				kvp("unitRangedMinAttack", (int64_t)object->m_unitRangedMinAttack),
+				kvp("unitRangedMaxAttack", (int64_t)object->m_unitRangedMaxAttack),
+				kvp("unitRangedMinRange", (int64_t)object->m_unitRangedMinRange),
+				kvp("unitRangedMaxRange", (int64_t)object->m_unitRangedMaxRange)
 			);
 
 
