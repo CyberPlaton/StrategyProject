@@ -17,7 +17,7 @@ namespace cherrysoda
 		~CEntityStatusEffect();
 
 
-		bool Initialize(const net::SStatusEffectData& effect_data, Entity* self_entity, sakura::BehaviorTree* behavior_tree) override final;
+		bool Initialize(const net::SStatusEffectData& effect_data, Entity* self_entity) override final;
 		void Terminate() override final;
 
 
@@ -30,6 +30,13 @@ namespace cherrysoda
 	private:
 		sakura::BehaviorTree* m_behaviorTree;
 		net::SStatusEffectData m_data;
+
+
+	private:
+		/// @brief Construct an appropriate BT. Which one will be constructed depends on the impl. name, which
+		/// is defined in the Status Effect data.
+		/// @param implementation_name The Behavior Tree implementation.
+		bool _constructBehaviorTree(const std::string& implementation_name);
 	};
 
 
@@ -37,15 +44,22 @@ namespace cherrysoda
 
 
 
-#define ENTITY_ADD_STATUS_EFFECT(effect, entity) \
-auto mngr = entity->Get< CEntityStatusEffectMngr >(); \
-mngr->Add(effect) \
+#define ENTITY_ADD_STATUS_EFFECT(effect_name, entity) \
+auto se = new cherrysoda::CEntityStatusEffect(); \
+if(se->Initialize(cherrysoda::EntityStatusEffectsDataMap::get()->Data(effect_name), entity)) \
+{ \
+	auto mngr = entity->Get< cherrysoda::CEntityStatusEffectMngr >(); \
+	mngr->Add(effect) \
+} \
+else \
+{ \
+	delete se; \
+} \
 
 
 #define ENTITY_REMOVE_STATUS_EFFECT(effect, entity) \
 auto mngr = entity->Get< CEntityStatusEffectMngr >(); \
 mngr->Remove(effect) \
-
 
 
 #endif

@@ -33,7 +33,7 @@ namespace cherrysoda
 		virtual Entity* Self() = 0;
 
 
-		virtual bool Initialize(const net::SStatusEffectData&, Entity*, sakura::BehaviorTree*) = 0;
+		virtual bool Initialize(const net::SStatusEffectData&, Entity*) = 0;
 
 
 

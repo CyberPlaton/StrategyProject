@@ -14,10 +14,10 @@ namespace cherrysoda
 		Terminate();
 	}
 
-	bool CEntityStatusEffect::Initialize(const net::SStatusEffectData& effect_data, Entity* self_entity, sakura::BehaviorTree* behavior_tree)
+	bool CEntityStatusEffect::Initialize(const net::SStatusEffectData& effect_data, Entity* self_entity)
 	{
 		// Sanity check.
-		if (!self_entity || !behavior_tree) return false;
+		if (!self_entity) return false;
 
 
 		// Copy the data.
@@ -37,8 +37,13 @@ namespace cherrysoda
 
 		m_data.m_effectDesc = effect_data.m_effectDesc;
 
-		// Set the BT
-		m_behaviorTree = behavior_tree; behavior_tree = nullptr;
+		m_data.m_behaviorTreeName = effect_data.m_behaviorTreeName;
+
+		// Construct the BT.
+		if(!_constructBehaviorTree(m_data.m_behaviorTreeName))
+		{
+			return false;
+		}
 
 		// Store the Entity in BT global blackboard.
 		m_behaviorTree->Blackboard()->SetDataObject< cherrysoda::Entity >("Self", self_entity, "Entity");
@@ -90,6 +95,11 @@ namespace cherrysoda
 	cherrysoda::String CEntityStatusEffect::Name()
 	{
 		return m_data.m_effectName;
+	}
+
+	bool CEntityStatusEffect::_constructBehaviorTree(const std::string& implementation_name)
+	{
+
 	}
 
 }
