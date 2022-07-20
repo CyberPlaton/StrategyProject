@@ -37,10 +37,10 @@ namespace cherrysoda
 
 		m_data.m_effectDesc = effect_data.m_effectDesc;
 
-		m_data.m_behaviorTreeName = effect_data.m_behaviorTreeName;
+		m_data.m_behaviorTreeImplName = effect_data.m_behaviorTreeImplName;
 
 		// Construct the BT.
-		if(!_constructBehaviorTree(m_data.m_behaviorTreeName))
+		if(!_constructBehaviorTree(m_data.m_behaviorTreeImplName))
 		{
 			return false;
 		}
@@ -97,9 +97,46 @@ namespace cherrysoda
 		return m_data.m_effectName;
 	}
 
-	bool CEntityStatusEffect::_constructBehaviorTree(const std::string& implementation_name)
+	bool CEntityStatusEffect::_constructBehaviorTree(const std::string& tree_name, const std::string& implementation_name)
 	{
+		using namespace sakura;
 
+		std::string name = implementation_name + "::" + tree_name;
+		bool construction_result;
+
+		if(implementation_name.compare("BT_Impl_Testing_Tree") == 0)
+		{
+			BTBlackboard blackboard(name + "::Blackboard");
+			BTFactory factory(name, &blackboard);
+
+			m_behaviorTree = factory.Add< BTSequence >("Base Sequence")
+										.Add<BTDebugCondition>("Debug Condition", 0, "SE_Default_Heal")
+				.Build();
+
+
+			construction_result = m_behaviorTree != nullptr;
+		}
+		
+
+
+		if(construction_result)
+		{
+			LOG_DBG_INFO("[{:.4f}][CEntityStatusEffect::_constructBehaviorTree] Constructed Behavior Tree: \"{}\"!", APP_RUN_TIME, name);
+			LOG_GAME_SUCCESS("[%.4f][CEntityStatusEffect::_constructBehaviorTree] Constructed Behavior Tree: \"%s\"!", APP_RUN_TIME, name);
+			LOG_FILE_INFO("[{:.4f}][CEntityStatusEffect::_constructBehaviorTree] Constructed Behavior Tree: \"{}\"!", APP_RUN_TIME, name);
+			return true;
+		}
+		else
+		{
+			LOG_DBG_ERROR("[{:.4f}][CEntityStatusEffect::_constructBehaviorTree] Constructing Behavior Tree failed: \"{}\"!", APP_RUN_TIME, name);
+			LOG_GAME_ERROR("[%.4f][CEntityStatusEffect::_constructBehaviorTree] Constructing Behavior Tree failed: \"%s\"!", APP_RUN_TIME, name);
+			LOG_FILE_ERROR("[{:.4f}][CEntityStatusEffect::_constructBehaviorTree] Constructing Behavior Tree failed: \"{}\"!", APP_RUN_TIME, name);
+			return false;
+		}
+		LOG_DBG_ERROR("[{:.4f}][CEntityStatusEffect::_constructBehaviorTree] Unknown Behavior Tree Implementation: \"{}\"!", APP_RUN_TIME, implementation_name);
+		LOG_GAME_ERROR("[%.4f][CEntityStatusEffect::_constructBehaviorTree] Unknown Behavior Tree Implementation: \"%s\"!", APP_RUN_TIME, implementation_name);
+		LOG_FILE_ERROR("[{:.4f}][CEntityStatusEffect::_constructBehaviorTree] Unknown Behavior Tree Implementation: \"{}\"!", APP_RUN_TIME, implementation_name);
+		return false;
 	}
 
 }

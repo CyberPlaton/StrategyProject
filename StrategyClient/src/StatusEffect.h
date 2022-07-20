@@ -6,6 +6,8 @@
 #include "Status.h"					// IEntityStatusEffect interface.
 #include "Logging.h"
 
+// Include all conditions required for BT creation.
+#include "BTDebugCondition.h"
 
 namespace cherrysoda
 {
@@ -36,7 +38,7 @@ namespace cherrysoda
 		/// @brief Construct an appropriate BT. Which one will be constructed depends on the impl. name, which
 		/// is defined in the Status Effect data.
 		/// @param implementation_name The Behavior Tree implementation.
-		bool _constructBehaviorTree(const std::string& implementation_name);
+		bool _constructBehaviorTree(const std::string& tree_name, const std::string& implementation_name);
 	};
 
 
