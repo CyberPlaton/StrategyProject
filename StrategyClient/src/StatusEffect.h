@@ -6,6 +6,7 @@
 #include "Status.h"					// IEntityStatusEffect interface.
 #include "Logging.h"
 
+
 namespace cherrysoda
 {
 

@@ -381,7 +381,7 @@ workspace "Strategy"
 				"__STDC_LIMIT_MACROS",
 				"__STDC_FORMAT_MACROS",
 				"__STDC_CONSTANT_MACROS",
-				"_HAS_EXCEPTIONS=0",
+				"_HAS_EXCEPTIONS=1", -- Exceptions are required for Any implementation to link to std::bad_cast libraries. We dont throw them however, just ignore.
 				"_SCL_SECURE=0",
 				"_SECURE_SCL=0",
 				"_CRT_SECURE_NO_WARNINGS",
@@ -395,6 +395,17 @@ workspace "Strategy"
 			{
 				"RELEASE",
 				"NDEBUG",
+				"_ITERATOR_DEBUG_LEVEL=0",
+				"__STDC_LIMIT_MACROS",
+				"__STDC_FORMAT_MACROS",
+				"__STDC_CONSTANT_MACROS",
+				"_HAS_EXCEPTIONS=1", -- Exceptions are required for Any implementation to link to std::bad_cast libraries. We dont throw them however, just ignore.
+				"_SCL_SECURE=0",
+				"_SECURE_SCL=0",
+				"_CRT_SECURE_NO_WARNINGS",
+				"_CRT_SECURE_NO_DEPRECATE",
+				"BGFX_CONFIG_MAX_VIEWS=8",
+				"BX_CONFIG_DEBUG=0"
 			}
 			undefines
 			{
@@ -406,6 +417,17 @@ workspace "Strategy"
 			{
 				"DISTR",
 				"NDEBUG",
+				"_ITERATOR_DEBUG_LEVEL=0",
+				"__STDC_LIMIT_MACROS",
+				"__STDC_FORMAT_MACROS",
+				"__STDC_CONSTANT_MACROS",
+				"_HAS_EXCEPTIONS=1", -- Exceptions are required for Any implementation to link to std::bad_cast libraries. We dont throw them however, just ignore.
+				"_SCL_SECURE=0",
+				"_SECURE_SCL=0",
+				"_CRT_SECURE_NO_WARNINGS",
+				"_CRT_SECURE_NO_DEPRECATE",
+				"BGFX_CONFIG_MAX_VIEWS=8",
+				"BX_CONFIG_DEBUG=0"
 			} 
 			undefines
 			{

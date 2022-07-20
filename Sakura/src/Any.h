@@ -3,9 +3,6 @@
 #pragma once
 
 #include "BTCommon.h"
-#include <vcruntime_typeinfo.h>
-#include <any>
-
 
 namespace sakura
 {
@@ -31,7 +28,8 @@ namespace sakura
 		/// @return The Type.
 		std::string Type() { return m_Type; }
 
-
+		/// @brief Whether the Object has a value set.
+		/// @return True if Object has a value set.
 		bool HasValue()
 		{
 			if(m_Type.compare("none") == 0)
