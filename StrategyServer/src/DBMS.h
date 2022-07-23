@@ -107,7 +107,7 @@ namespace dbms
 		/// @brief Load status effect definitions from files into the database.
 		/// @param filepath Filepath of the Status Effect Cache.
 		/// @return True, if all Status Effects were loaded into database.
-		static bool LoadStatusEffectDefinitions(const std::string& filepath, const std::string& collection);
+		static bool LoadStatusEffectDefinitions(const std::string& status_effects_filepath, const std::string& filepath, const std::string& collection);
 
 		/// @brief Upload the Status Effect data into the database.
 		/// @param data Data to be uploaded.
@@ -117,7 +117,7 @@ namespace dbms
 		/// @brief Load ability definitions from files into the database.
 		/// @param filepath Filepath of the Ability Cache.
 		/// @return True, if all Abilities were loaded into database.
-		static bool LoadAbilityDefinitions(const std::string& filepath, const std::string& collection);
+		static bool LoadAbilityDefinitions(const std::string& abilities_path, const std::string& filepath, const std::string& collection);
 
 		/// @brief Upload the Ability data into the database.
 		/// @param data Data to be uploaded.
@@ -127,7 +127,7 @@ namespace dbms
 		/// @brief Load unit and building prefab definitions from files into the database. We determine dynamic whether its a unit or building.
 		/// @param filepath Filepath of the Unit Prefab Cache.
 		/// @return True if uploading was successful.
-		static bool LoadUnitAndBuildingPrefabDefinitions(const std::string& filepath, const std::string& collection);
+		static bool LoadUnitAndBuildingPrefabDefinitions(const std::string& prefab_file_path, const std::string& filepath, const std::string& collection);
 
 		/// @brief Upload the Unit Prefab data into the database.
 		/// @param prefab Unit Prefab to be uploaded.

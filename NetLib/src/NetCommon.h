@@ -642,7 +642,7 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 
 		/// @brief On what kind of Game Objects the ability can be used. E.g. "Attack" can be used on NET_GO_UNIT and
 		// "Move" can be used on NET_GO_MAPTILE.
-		EGameobjectType m_abilityApplicableTo;
+		int64_t m_abilityApplicableTo;
 
 		/// @brief Whether the Ability can be used on the one unit or building using it = self.
 		bool m_abilityUsableOnSelf;

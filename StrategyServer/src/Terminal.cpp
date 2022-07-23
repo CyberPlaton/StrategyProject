@@ -438,6 +438,29 @@ void Terminal::MainMenuBar()
 				DBMS::del();
 				LOG_TERMINAL_SUCCESS("[DBMS] Successfully shut down DBMS!");
 			}
+			if (ImGui::MenuItem("Sync Unit & Building Definitions"))
+			{
+				if(DBMS::get()->LoadUnitAndBuildingPrefabDefinitions("../StrategyEditor/assets/TilesetData/UnitPrefab/", "../StrategyEditor/assets/TilesetData/UnitPrefab/StrategyEditor_PrefabCache.xml", "unit_building_prefab_cache_test"))
+				{
+					LOG_TERMINAL_SUCCESS("[DBMS] LoadUnitAndBuildingPrefabDefinitions succeded!");
+				}
+				else
+				{
+					LOG_TERMINAL_ERROR("[DBMS] LoadUnitAndBuildingPrefabDefinitions failed!");
+				}
+			}
+			if (ImGui::MenuItem("Sync Status Effect Definitions"))
+			{
+				if (DBMS::get()->LoadStatusEffectDefinitions("../StrategyEditor/assets/TilesetData/StatusEffect/", "../StrategyEditor/assets/TilesetData/StatusEffect/StrategyEditor_StatusEffectCache.xml", "status_effect_cache_test"))
+				{
+					LOG_TERMINAL_SUCCESS("[DBMS] LoadStatusEffectDefinitions succeded!");
+				}
+				else
+				{
+					LOG_TERMINAL_ERROR("[DBMS] LoadStatusEffectDefinitions failed!");
+				}
+			}
+
 
 			ImGui::EndMenu();
 		}

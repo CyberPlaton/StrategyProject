@@ -439,7 +439,7 @@ namespace dbms
 		return false;
 	}
 
-	bool DBMS::LoadStatusEffectDefinitions(const std::string& filepath, const std::string& collection)
+	bool DBMS::LoadStatusEffectDefinitions(const std::string& status_effects_filepath, const std::string& filepath, const std::string& collection)
 	{
 		if (!m_initialized) return false;
 
@@ -459,7 +459,7 @@ namespace dbms
 		while(se)
 		{
 			std::string path = se->Attribute("path");
-			std::string final_path = filepath + path;
+			std::string final_path = status_effects_filepath + path + ".xml";
 
 			// Load Status Effect from XML.
 			tinyxml2::XMLDocument seXML;
@@ -509,10 +509,113 @@ namespace dbms
 
 	bool DBMS::StoreStatusEffect(net::SStatusEffectData& data, const std::string& collection)
 	{
+		if (!m_initialized) return false;
 
+		// Get database and collection.
+		mongocxx::database db = DBMS::get()->m_mongoClient[m_database];
+		mongocxx::collection seCollection = db[collection];
+
+		boost::optional<bsoncxx::v_noabi::document::value> doc;
+
+		// Check whether the Prefab Already exists.
+		const bool prefab_exists = _findOneByKeyValuePair(seCollection, doc, "name", data.m_effectName.C_String());
+
+		// Create the MongoDB Document,
+		auto update_or_insert_doc = make_document(
+			kvp("effectName",					data.m_effectName.C_String()),
+			kvp("effectDisplayName",			data.m_effectDisplayName.C_String()),
+
+			kvp("effectDesc",					data.m_effectDesc.C_String()),
+			kvp("effectSprite",					data.m_effectSprite.C_String()),
+			kvp("effectBehaviorTreeImplName",	data.m_effectBehaviorTreeImpl.C_String()),
+
+			kvp("effectType",					data.m_effectType.C_String()),
+			kvp("effectValueMin",				(int64_t)data.m_effectValueMin),
+			kvp("effectValueMax",				(int64_t)data.m_effectValueMax),
+			kvp("effectApplicationProbability", (int64_t)data.m_effectApplicationProbability),
+			kvp("effectApplicableTo",			(int64_t)data.m_effectApplicableTo),
+			kvp("effectTimerType",				data.m_effectTimerType.C_String()),
+			kvp("effectTimerValue",				(int64_t)data.m_effectTimerValue)
+		);
+
+
+		// If it exists, update it.
+		if (prefab_exists)
+		{
+			// Doc safe to view as he exists.
+			auto view = doc->view();
+
+			try
+			{
+				bsoncxx::stdx::optional<mongocxx::result::update> result = seCollection.update_one(
+					make_document(kvp("name", view["name"].get_utf8().value.to_string().c_str())),
+					make_document(kvp("$set", update_or_insert_doc.view()))
+				);
+
+				if (result.value().result().modified_count() > 0)
+				{
+					return true;
+				}
+				else
+				{
+					LOG_DBG_ERROR("[{:.4f}][DBMS::StoreStatusEffect] Failed to update Status Effect \"{}\" to collection \"{}\".", Logger::AppRunningTime(), data.m_effectName, collection.c_str());
+					LOG_FILE_ERROR("[{:.4f}][DBMS::StoreStatusEffect] Failed to update Status Effect\"{}\" to collection \"{}\".", Logger::AppRunningTime(), data.m_effectName, collection.c_str());
+					return false;
+				}
+			}
+			catch (const mongocxx::v_noabi::logic_error& e)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DBMS::StoreStatusEffect] mongocxx::v_noabi::logic_error: \"{}\"! Failed to update Status Effect\"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), data.m_effectName, collection.c_str());
+				LOG_FILE_ERROR("[{:.4f}][DBMS::StoreStatusEffect] mongocxx::v_noabi::logic_error: \"{}\"!  Failed to update Status Effect \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), data.m_effectName, collection.c_str());
+				return false;
+			}
+			catch (const bsoncxx::v_noabi::exception& e)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DBMS::StoreStatusEffect] bsoncxx::v_noabi::exception: \"{}\"! Failed to update Status Effect \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), data.m_effectName, collection.c_str());
+				LOG_FILE_ERROR("[{:.4f}][DBMS::StoreStatusEffect] bsoncxx::v_noabi::exception: \"{}\"!  Failed to update Status Effect \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), data.m_effectName, collection.c_str());
+				return false;
+			}
+
+		}
+		// If it does not exist, create new entry.
+		else
+		{
+			try
+			{
+				bsoncxx::stdx::optional<mongocxx::result::insert_one> result = seCollection.insert_one(
+					std::move(update_or_insert_doc)
+				);
+
+				if (result.value().result().inserted_count() > 0)
+				{
+					return true;
+				}
+				else
+				{
+					LOG_DBG_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] Failed to upsert Status Effect \"{}\" to collection \"{}\".", Logger::AppRunningTime(), data.m_effectName, collection.c_str());
+					LOG_FILE_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] Failed to upsert Status Effect\"{}\" to collection \"{}\".", Logger::AppRunningTime(), data.m_effectName, collection.c_str());
+					return false;
+				}
+			}
+			catch (const mongocxx::v_noabi::logic_error& e)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] mongocxx::v_noabi::logic_error: \"{}\"! Failed to upsert Status Effect\"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), data.m_effectName, collection.c_str());
+				LOG_FILE_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] mongocxx::v_noabi::logic_error: \"{}\"!  Failed to upsert Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), data.m_effectName, collection.c_str());
+				return false;
+			}
+			catch (const bsoncxx::v_noabi::exception& e)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] bsoncxx::v_noabi::exception: \"{}\"! Failed to upsert Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), data.m_effectName, collection.c_str());
+				LOG_FILE_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] bsoncxx::v_noabi::exception: \"{}\"!  Failed to upsert Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), data.m_effectName, collection.c_str());
+				return false;
+			}
+		}
+
+
+		return false;
 	}
 
-	bool DBMS::LoadAbilityDefinitions(const std::string& filepath, const std::string& collection)
+	bool DBMS::LoadAbilityDefinitions(const std::string& abilities_path, const std::string& filepath, const std::string& collection)
 	{
 		if (!m_initialized) return false;
 
@@ -532,7 +635,7 @@ namespace dbms
 		while (abl)
 		{
 			std::string path = abl->Attribute("path");
-			std::string final_path = filepath + path;
+			std::string final_path = abilities_path + path + ".xml";
 
 			// Load Status Effect from XML.
 			tinyxml2::XMLDocument ablXml;
@@ -570,10 +673,114 @@ namespace dbms
 
 	bool DBMS::StoreAbility(net::SAbilityData& data, const std::string& collection)
 	{
+		if (!m_initialized) return false;
 
+		// Get database and collection.
+		mongocxx::database db = DBMS::get()->m_mongoClient[m_database];
+		mongocxx::collection ablCollection = db[collection];
+
+		boost::optional<bsoncxx::v_noabi::document::value> doc;
+
+		// Check whether the Prefab Already exists.
+		const bool prefab_exists = _findOneByKeyValuePair(ablCollection, doc, "name", data.m_abilityName.C_String());
+
+		// Create the MongoDB Document.
+		auto applied_status_effects = bsoncxx::builder::basic::array{};
+		for (auto e : data.m_appliedStatusEffectsOnUse)
+		{
+			applied_status_effects.append(e);
+		}
+		auto update_or_insert_doc = make_document(
+			kvp("abilityName",						data.m_abilityName.C_String()),
+			kvp("abilityDisplayName",				data.m_abilityDisplayName.C_String()),
+			kvp("abilityDesc",						data.m_abilityDesc.C_String()),
+
+			kvp("abilityApplicableTo",				data.m_abilityApplicableTo),
+			kvp("abilityUsableOnSelf",				data.m_abilityUsableOnSelf),
+			kvp("abilityUsableOnFriendlies",		data.m_abilityUsableOnFriendlies),
+			kvp("abilityUsableOnEnemies",			data.m_abilityUsableOnEnemies),
+
+			kvp("appliedStatusEffectsOnUse",		applied_status_effects)
+		);
+
+
+		// If it exists, update it.
+		if (prefab_exists)
+		{
+			// Doc safe to view as he exists.
+			auto view = doc->view();
+
+			try
+			{
+				bsoncxx::stdx::optional<mongocxx::result::update> result = ablCollection.update_one(
+					make_document(kvp("name", view["name"].get_utf8().value.to_string().c_str())),
+					make_document(kvp("$set", update_or_insert_doc.view()))
+				);
+
+				if (result.value().result().modified_count() > 0)
+				{
+					return true;
+				}
+				else
+				{
+					LOG_DBG_ERROR("[{:.4f}][DBMS::StoreStatusEffect] Failed to update Ability \"{}\" to collection \"{}\".", Logger::AppRunningTime(), data.m_abilityName, collection.c_str());
+					LOG_FILE_ERROR("[{:.4f}][DBMS::StoreStatusEffect] Failed to update Ability \"{}\" to collection \"{}\".", Logger::AppRunningTime(), data.m_abilityName, collection.c_str());
+					return false;
+				}
+			}
+			catch (const mongocxx::v_noabi::logic_error& e)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DBMS::StoreStatusEffect] mongocxx::v_noabi::logic_error: \"{}\"! Failed to update Ability \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), data.m_abilityName, collection.c_str());
+				LOG_FILE_ERROR("[{:.4f}][DBMS::StoreStatusEffect] mongocxx::v_noabi::logic_error: \"{}\"!  Failed to update Ability \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), data.m_abilityName, collection.c_str());
+				return false;
+			}
+			catch (const bsoncxx::v_noabi::exception& e)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DBMS::StoreStatusEffect] bsoncxx::v_noabi::exception: \"{}\"! Failed to update Ability \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), data.m_abilityName, collection.c_str());
+				LOG_FILE_ERROR("[{:.4f}][DBMS::StoreStatusEffect] bsoncxx::v_noabi::exception: \"{}\"!  Failed to update Ability \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), data.m_abilityName, collection.c_str());
+				return false;
+			}
+
+		}
+		// If it does not exist, create new entry.
+		else
+		{
+			try
+			{
+				bsoncxx::stdx::optional<mongocxx::result::insert_one> result = ablCollection.insert_one(
+					std::move(update_or_insert_doc)
+				);
+
+				if (result.value().result().inserted_count() > 0)
+				{
+					return true;
+				}
+				else
+				{
+					LOG_DBG_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] Failed to upsert Ability \"{}\" to collection \"{}\".", Logger::AppRunningTime(), data.m_abilityName, collection.c_str());
+					LOG_FILE_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] Failed to upsert Ability \"{}\" to collection \"{}\".", Logger::AppRunningTime(), data.m_abilityName, collection.c_str());
+					return false;
+				}
+			}
+			catch (const mongocxx::v_noabi::logic_error& e)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] mongocxx::v_noabi::logic_error: \"{}\"! Failed to upsert Ability \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), data.m_abilityName, collection.c_str());
+				LOG_FILE_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] mongocxx::v_noabi::logic_error: \"{}\"!  Failed to upsert Ability \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), data.m_abilityName, collection.c_str());
+				return false;
+			}
+			catch (const bsoncxx::v_noabi::exception& e)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] bsoncxx::v_noabi::exception: \"{}\"! Failed to upsert Ability \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), data.m_abilityName, collection.c_str());
+				LOG_FILE_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] bsoncxx::v_noabi::exception: \"{}\"!  Failed to upsert Ability \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), data.m_abilityName, collection.c_str());
+				return false;
+			}
+		}
+
+
+		return false;
 	}
 
-	bool DBMS::LoadUnitAndBuildingPrefabDefinitions(const std::string& filepath, const std::string& collection)
+	bool DBMS::LoadUnitAndBuildingPrefabDefinitions(const std::string& prefab_file_path, const std::string& filepath, const std::string& collection)
 	{
 		if (!m_initialized) return false;
 
@@ -589,11 +796,11 @@ namespace dbms
 
 
 		auto cache_root = cache.RootElement();
-		auto prefab = cache_root->FirstChildElement("UnitPrefab");
+		auto prefab = cache_root->FirstChildElement("Prefab");
 		while (prefab)
 		{
 			std::string path = prefab->Attribute("path");
-			std::string final_path = filepath + path;
+			std::string final_path = prefab_file_path + path + ".xml";
 
 			// Load Status Effect from XML.
 			tinyxml2::XMLDocument prefabXml;
@@ -701,7 +908,7 @@ namespace dbms
 				}
 			}
 
-			prefab = prefab->NextSiblingElement("UnitPrefab");
+			prefab = prefab->NextSiblingElement("Prefab");
 		}
 
 		return true;
@@ -716,7 +923,6 @@ namespace dbms
 		mongocxx::collection prefabCollection = db[collection];
 
 		boost::optional<bsoncxx::v_noabi::document::value> doc;
-		auto view = doc->view();
 
 		// Check whether the Prefab Already exists.
 		const bool prefab_exists = _findOneByKeyValuePair(prefabCollection, doc, "name", prefab.m_unitName.C_String());
@@ -764,6 +970,9 @@ namespace dbms
 		// If it exists, update it.
 		if(prefab_exists)
 		{
+			// Doc safe to view as he exists.
+			auto view = doc->view();
+
 			try
 			{
 				bsoncxx::stdx::optional<mongocxx::result::update> result = prefabCollection.update_one(
@@ -844,7 +1053,6 @@ namespace dbms
 		mongocxx::collection prefabCollection = db[collection];
 
 		boost::optional<bsoncxx::v_noabi::document::value> doc;
-		auto view = doc->view();
 
 		// Check whether the Prefab Already exists.
 		const bool prefab_exists = _findOneByKeyValuePair(prefabCollection, doc, "name", prefab.m_buildingName.C_String());
@@ -870,6 +1078,9 @@ namespace dbms
 		// If it exists, update it.
 		if (prefab_exists)
 		{
+			// Doc safe to view as he exists.
+			auto view = doc->view();
+
 			try
 			{
 				bsoncxx::stdx::optional<mongocxx::result::update> result = prefabCollection.update_one(
