@@ -20,7 +20,11 @@ static bool g_bStatusEffectEditorOpen = false;
 
 // Status Effect Static Data
 static SStatusEffect* g_pCurrentEditedStatusEffect = nullptr;
+static SStatusEffect* g_pExportedStatusEffect = nullptr;
 static std::string g_sCurrentEditedStatusEffectFilePath = "none";
+static std::string g_sStatusEffectEditorCurrentIconSprite = "none";
+static bool g_bExportingStatusEffect = false;
+static bool g_bImportingStatusEffect = false;
 
 static char g_cStatusEffectName[64] = "";
 static char g_cStatusEffectDisplayName[64] = "";
@@ -157,7 +161,14 @@ void GameEditor::RenderGUI()
 			// Prefab Import Menu.
 			if (g_bImportingUnitPrefab) DisplayUnitPrefabImportWindow();
 		}
-		if (g_bStatusEffectEditorOpen) DisplayStatusEffectEditor();
+		if (g_bStatusEffectEditorOpen)
+		{
+			DisplayStatusEffectEditor();
+			// Status Effect Export Menu.
+			if (g_bExportingStatusEffect)  DisplayStatusEffectExportWindow(g_pExportedStatusEffect);
+			// Status Effect Import Menu.
+			if (g_bImportingStatusEffect) DisplayStatusEffectImportWindow();
+		}
 	}
 }
 
@@ -212,6 +223,7 @@ bool GameEditor::OnUserCreate()
 	loaded &= LoadTilesetData("Wall", "assets/Tileset/Wall", "assets/TilesetData/Wall.json");
 	loaded &= LoadTilesetData("Hill", "assets/Tileset/Hill", "assets/TilesetData/Hill.json");
 	loaded &= LoadTilesetData("Unit", "assets/Tileset/Unit", "assets/TilesetData/Units.json");
+	loaded &= LoadTilesetData("StatusEffect", "assets/Tileset/StatusEffect", "assets/TilesetData/StatusEffect.json");
 
 	loaded &= LoadEditorGraphicalData();
 
@@ -732,6 +744,8 @@ void GameEditor::RenderDecalDatabase()
 			RenderDecalDatabase(m_wallDecalDatabase);
 			ImGui::EndTabItem();
 		}
+
+
 		if (ImGui::BeginTabItem("Road"))
 		{
 			ImGui::Separator();
@@ -762,9 +776,17 @@ void GameEditor::RenderDecalDatabase()
 			RenderDecalDatabase(m_unitDecalDatabase);
 			ImGui::EndTabItem();
 		}
+		if (ImGui::BeginTabItem("StatusEffect"))
+		{
+			ImGui::Separator();
+			RenderDecalDatabase(m_statusEffectDecalDatabase);
+			ImGui::EndTabItem();
+		}
 
 		ImGui::EndTabBar();
 	}
+
+
 	ImGui::End();
 }
 void GameEditor::RenderDecalDatabase(const std::map< std::string, olc::Decal* >& db)
@@ -1161,6 +1183,10 @@ bool GameEditor::LoadTilesetData(const std::string& database, const std::string&
 			else if (database.compare("Unit") == 0)
 			{
 				m_unitDecalDatabase.try_emplace(name, decal);
+			}
+			else if (database.compare("StatusEffect") == 0)
+			{
+				m_statusEffectDecalDatabase.try_emplace(name, decal);
 			}
 
 
@@ -4043,19 +4069,24 @@ void GameEditor::DisplayStatusEffectEditor()
 	
 	if(g_pCurrentEditedStatusEffect)
 	{
-		DisplayEditFieldString(g_cStatusEffectName, sizeof(g_cStatusEffectName), g_pCurrentEditedStatusEffect->name, "Name", "Name Desc", 10000, 10001);
-		DisplayEditFieldString(g_cStatusEffectDisplayName, sizeof(g_cStatusEffectDisplayName), g_pCurrentEditedStatusEffect->displayName, "Display Name", "Display Name Desc", 10002, 10003);
-		DisplayEditFieldString(g_cStatusEffectDescription, sizeof(g_cStatusEffectDescription), g_pCurrentEditedStatusEffect->description, "Description", "Description Desc", 10004, 10005);
-		DisplayEditFieldString(g_cStatusEffectBehaviorTreeImplName, sizeof(g_cStatusEffectBehaviorTreeImplName), g_pCurrentEditedStatusEffect->behaviorTreeImplName, "Behavior Tree Impl Name", "Behavior Tree Impl Desc", 10006, 10007);
-		DisplayEditFieldString(g_cStatusEffectTimerType, sizeof(g_cStatusEffectTimerType), g_pCurrentEditedStatusEffect->timerType, "Timer Type", "Timer Type Desc", 10008, 10009);
-		DisplayEditFieldNumber(g_pCurrentEditedStatusEffect->applicableTo, 0, 3, "Applicable To", "Applicable To Desc", 10010, 10011);
-		DisplayEditFieldNumber(g_pCurrentEditedStatusEffect->applicationProbability, 1, 100, "Application Prob", "Application Prob Desc", 10012, 10013);
-		DisplayEditFieldNumber(g_pCurrentEditedStatusEffect->minValue, 1, 100, "Min Value", "Min Value Desc", 10014, 10015);
-		DisplayEditFieldNumber(g_pCurrentEditedStatusEffect->maxValue, 1, 100, "Max Value", "Max Value Desc", 10016, 10017);
-		DisplayEditFieldNumber(g_pCurrentEditedStatusEffect->timerValue, 1, 100, "Timer Value", "Timer Value Desc", 10018, 10019);
-	}
+		g_pCurrentEditedStatusEffect->sprite = g_sStatusEffectEditorCurrentIconSprite;
 
+		DisplayEditFieldString(g_cStatusEffectName, sizeof(g_cStatusEffectName), g_pCurrentEditedStatusEffect->name, "Name", "Change the internal name of the Status Effect. Follow the convention \"SE_Default_Poison\" or \"SE_Default_Creature_Summoned\"; where \"Default\" indicates the status to be race agnostic and the standard accessible to a class of units", 10000, 10001);
+		DisplayEditFieldString(g_cStatusEffectDisplayName, sizeof(g_cStatusEffectDisplayName), g_pCurrentEditedStatusEffect->displayName, "Display Name", "Change the Status Effect name that the player will see in-game", 10002, 10003);
+		DisplayEditFieldString(g_cStatusEffectDescription, sizeof(g_cStatusEffectDescription), g_pCurrentEditedStatusEffect->description, "Description", "Change the Status Effect description that the player will read in-game to understand what it is", 10004, 10005);
+		DisplayEditFieldString(g_cStatusEffectBehaviorTreeImplName, sizeof(g_cStatusEffectBehaviorTreeImplName), g_pCurrentEditedStatusEffect->behaviorTreeImplName, "Behavior Tree Impl Name", "Set the BT for the Status Effect. Follow the convention \"BT_Impl_\" and the implementation chosen from: \"Testing_Tree\", \"Turn_Based\", \"Persistent\" or \"Reoccurring_[YOUR IMPL NAME]\"", 10006, 10007);
+		DisplayEditFieldString(g_cStatusEffectTimerType, sizeof(g_cStatusEffectTimerType), g_pCurrentEditedStatusEffect->timerType, "Timer Type", "Change the type of the timer. Choose from \"Turn\", \"Persistent\", \"Reoccurring\"", 10008, 10009);
+		DisplayEditFieldNumber(g_pCurrentEditedStatusEffect->timerValue, 1, 100, "Timer Value", "Change the value of the timer. Based on context it means: \"Turn\"=How many turns the Effect stays applied until it removes itself. \"Persistent\"=Ignore the value. \"Reoccurring\"=If effect was removed, specify how many turns the condition for the effect has to be invalid, before it will be re-applied again", 10018, 10019);
+		DisplayEditFieldNumber(g_pCurrentEditedStatusEffect->applicableTo, 0, 3, "Applicable To", "Change on which Entity Type in-game the Status Effect is applicable. 0=Maptile, 1=Mapobject, 2=Unit, 3=Building", 10010, 10011);
+		DisplayEditFieldNumber(g_pCurrentEditedStatusEffect->applicationProbability, 1, 100, "Application Prob", "Change the probability with which the Status Effect will be applied on casting", 10012, 10013);
+		DisplayEditFieldNumber(g_pCurrentEditedStatusEffect->minValue, 1, 100, "Min Value", "Change the minimal value that is applied by this Status Effect. Based on context this can be healing or damaging etc.", 10014, 10015);
+		DisplayEditFieldNumber(g_pCurrentEditedStatusEffect->maxValue, 1, 100, "Max Value", "Change the maximal value that is applied by this Status Effect. Based on context this can be healing or damaging etc.", 10016, 10017);
+		DisplayEditFieldIcon("Icon Field", "Change the Status Effect in-game icon. It will be displayed on the side of a unit and potentially as stand-alone image", m_statusEffectDecalDatabase, g_sStatusEffectEditorCurrentIconSprite);
+	}
 	ImGui::EndChild();
+
+	DisplayStatusEffectEditorIconSprite();
+
 	ImGui::End();
 }
 
@@ -4072,6 +4103,9 @@ void GameEditor::DisplayStatusEffectEditorMainMenu()
 		}
 
 		g_pCurrentEditedStatusEffect = new SStatusEffect();
+
+		g_sStatusEffectEditorCurrentIconSprite = "none";
+		g_sCurrentEditedStatusEffectFilePath = "none";
 	}
 	if (quick_save)
 	{
@@ -4083,10 +4117,13 @@ void GameEditor::DisplayStatusEffectEditorMainMenu()
 	ImGui::SameLine();
 	if (ImGui::SmallButton("Save As..."))
 	{
+		g_bExportingStatusEffect = true;
+		g_pExportedStatusEffect = g_pCurrentEditedStatusEffect;
 	}
 	ImGui::SameLine();
 	if (ImGui::SmallButton("Load From..."))
 	{
+		g_bImportingStatusEffect = true;
 	}
 	ImGui::SameLine();
 	if (ImGui::SmallButton("Sync DBMS..."))
@@ -4104,6 +4141,211 @@ void GameEditor::DisplayStatusEffectEditorMainMenu()
 	}
 	ImGui::Separator();
 	ImGui::Separator();
+}
+
+void GameEditor::DisplayStatusEffectEditorIconSprite()
+{
+	// Do not render if we have not selected still.
+	if (g_sStatusEffectEditorCurrentIconSprite.compare("none") == 0 ||
+		g_sStatusEffectEditorCurrentIconSprite.size() == 0)
+	{
+		return;
+	}
+
+	float sprite_width = m_decalSizeDatabase[g_sStatusEffectEditorCurrentIconSprite].first;
+	float sprite_height = m_decalSizeDatabase[g_sStatusEffectEditorCurrentIconSprite].second;
+
+	auto wnd_size = ImGui::GetWindowSize();
+	auto position = ImVec2((wnd_size.x - sprite_width) * 0.5f, (wnd_size.y - sprite_height) * 0.25f);
+	ImGui::SetCursorPos(position);
+	ImGui::Image((ImTextureID)m_decalDatabase[g_sStatusEffectEditorCurrentIconSprite]->id, ImVec2(sprite_width, sprite_height));
+}
+
+void GameEditor::DisplayStatusEffectExportWindow(SStatusEffect* se)
+{
+	static char se_filepath_name[64] = "";
+	if (se)
+	{
+		ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
+		ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
+
+		ImGui::Begin("Status Effect Export", &g_bExportingStatusEffect);
+		ImGui::InputText("|", se_filepath_name, 64);
+		HelpMarkerWithoutQuestion("Name of the file that will be created. The file will be saved in \"assets/TilesetData/StatusEffect\". It is not necessary to add the XML extension");
+		ImGui::SameLine();
+		if (ImGui::SmallButton("OK"))
+		{
+			// Check for sanity.
+			std::string name = std::string(se_filepath_name);
+
+			bool length = name.length() > 0;
+			bool result = false;
+			if (length)
+			{
+				result = ExportStatusEffect(name, se);
+			}
+
+			if (!length)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayStatusEffectExportWindow] Error exporting Status Effect \"{}\": Filepath has 0 length!", APP_RUN_TIME, se->name);
+				LOG_FILE_ERROR("[{:.4f}][DisplayStatusEffectExportWindow]  Error exporting Status Effect \"{}\": Filepath has 0 length!", APP_RUN_TIME, se->name);
+			}
+			if (result)
+			{
+				LOG_DBG_INFO("[{:.4f}][DisplayStatusEffectExportWindow] Success exporting Status Effect \"{}\"!", APP_RUN_TIME, se->name);
+				LOG_FILE_INFO("[{:.4f}][DisplayStatusEffectExportWindow]  Success exporting Status Effect \"{}\"!", APP_RUN_TIME, se->name);
+
+				// Reload the Cache here...
+			}
+			else
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayUnitPrefabExportWindow] Error exporting Status Effect \"{}\"!", APP_RUN_TIME, se->name);
+				LOG_FILE_ERROR("[{:.4f}][DisplayUnitPrefabExportWindow]  Error exporting Status Effect \"{}\"!", APP_RUN_TIME, se->name);
+			}
+
+			memset(&se_filepath_name, 0, sizeof(se_filepath_name));
+			g_bExportingStatusEffect = false;
+			g_pExportedStatusEffect = nullptr;
+		}
+
+		ImGui::End();
+	}
+}
+
+void GameEditor::DisplayStatusEffectImportWindow()
+{
+	static char se_import_filepath_name[256] = "";
+
+	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
+
+	ImGui::Begin("Status Effect Import", &g_bImportingStatusEffect);
+	ImGui::InputText("|", se_import_filepath_name, 64);
+	HelpMarkerWithoutQuestion("Name of the file that will be imported. The file will be loaded from \"assets/TilesetData/StatusEffect\". It is not necessary to add the XML extension");
+	ImGui::SameLine();
+	if (ImGui::SmallButton("OK"))
+	{
+		// Check for sanity.
+		std::string name = std::string(se_import_filepath_name);
+
+		bool length = name.length() > 0;
+		bool result = false;
+		if (length)
+		{
+			g_pCurrentEditedStatusEffect = ImportStatusEffect(name);
+			result = (g_pCurrentEditedStatusEffect != nullptr);
+		}
+
+		if (!length)
+		{
+			LOG_DBG_ERROR("[{:.4f}][DisplayStatusEffectImportWindow] Error importing Status Effect: Filepath has 0 length!", APP_RUN_TIME);
+			LOG_FILE_ERROR("[{:.4f}][DisplayStatusEffectImportWindow]  Error importing Status Effect: Filepath has 0 length!", APP_RUN_TIME);
+		}
+		if (result)
+		{
+			g_sStatusEffectEditorCurrentIconSprite = g_pCurrentEditedStatusEffect->sprite;
+			g_sCurrentEditedStatusEffectFilePath = name;
+
+			LOG_DBG_INFO("[{:.4f}][DisplayStatusEffectImportWindow] Success importing Status Effect \"{}\"!", APP_RUN_TIME, g_pCurrentEditedStatusEffect->name);
+			LOG_FILE_INFO("[{:.4f}][DisplayStatusEffectImportWindow]  Success importing Status Effect \"{}\"!", APP_RUN_TIME, g_pCurrentEditedStatusEffect->name);
+		}
+		else
+		{
+			LOG_DBG_ERROR("[{:.4f}][DisplayStatusEffectImportWindow] Error importing Status Effect \"{}\"!", APP_RUN_TIME, name);
+			LOG_FILE_ERROR("[{:.4f}][DisplayStatusEffectImportWindow]  Error importing Status Effect \"{}\"!", APP_RUN_TIME, name);
+		}
+
+		memset(&se_import_filepath_name, 0, sizeof(se_import_filepath_name));
+		g_bImportingStatusEffect = false;
+	}
+
+	// Add Quick Load button here
+
+	ImGui::End();
+}
+
+bool GameEditor::ExportStatusEffect(const std::string& filepath, SStatusEffect* se)
+{
+	tinyxml2::XMLDocument doc;
+	auto xmlRoot = doc.NewElement("StatusEffect");
+	doc.InsertEndChild(xmlRoot);
+
+	auto data = xmlRoot->InsertNewChildElement("Data");
+
+	// Export default data.
+	data->SetAttribute("name", se->name.c_str());
+	data->SetAttribute("displayName", se->displayName.c_str());
+	data->SetAttribute("description", se->description.c_str());
+	data->SetAttribute("behaviorTreeImplName", se->behaviorTreeImplName.c_str());
+	data->SetAttribute("timerType", se->timerType.c_str());
+	data->SetAttribute("timerValue", se->timerValue);
+	data->SetAttribute("sprite", se->sprite.c_str());
+	data->SetAttribute("applicableTo", se->applicableTo); 
+	data->SetAttribute("applicationProbability", se->applicationProbability); 
+	data->SetAttribute("minValue", se->minValue); 
+	data->SetAttribute("maxValue", se->maxValue);
+
+
+	std::string path = "assets/TilesetData/StatusEffect/" + filepath + ".xml";
+	if (doc.SaveFile(path.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		LOG_DBG_ERROR("[{:.4f}][ExportStatusEffect] Could not save Status Effect: \"{}\"!", APP_RUN_TIME, path);
+		LOG_FILE_ERROR("[{:.4f}][ExportStatusEffect] Could not save Status Effect: \"{}\"!", APP_RUN_TIME, path);
+		doc.Clear();
+		return false;
+	}
+
+	LOG_DBG_INFO("[{:.4f}][ExportStatusEffect] Exported Status Effect: \"{}\" as \"{}\"!", APP_RUN_TIME, se->name, path);
+	LOG_FILE_INFO("[{:.4f}][ExportStatusEffect] Exported Status Effect: \"{}\" as \"{}\"!", APP_RUN_TIME, se->name, path);
+
+
+	return true;
+}
+
+SStatusEffect* GameEditor::ImportStatusEffect(const std::string& filepath)
+{
+	std::string path = "assets/TilesetData/StatusEffect/" + filepath + ".xml";
+
+	tinyxml2::XMLDocument doc;
+	if (doc.LoadFile(path.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		LOG_DBG_ERROR("[{:.4f}][ImportStatusEffect] Could not load file: \"{}\"!", APP_RUN_TIME, path);
+		LOG_FILE_ERROR("[{:.4f}][ImportStatusEffect] Could not load file: \"{}\"!", APP_RUN_TIME, path);
+		doc.Clear();
+		return nullptr;
+	}
+
+	SStatusEffect* se = new SStatusEffect();
+
+	auto xmlRoot = doc.RootElement();
+	auto data = xmlRoot->FirstChildElement("Data");
+
+	if (se)
+	{
+		se->name = data->Attribute("name");
+		se->displayName = data->Attribute("displayName");
+		se->description = data->Attribute("description");
+		se->behaviorTreeImplName = data->Attribute("behaviorTreeImplName");
+		se->timerType = data->Attribute("timerType");
+		se->timerValue = data->IntAttribute("timerValue");
+		se->applicableTo = data->IntAttribute("applicableTo");
+		se->applicationProbability = data->IntAttribute("applicationProbability");
+		se->minValue = data->IntAttribute("minValue");
+		se->maxValue = data->IntAttribute("maxValue");
+
+		LOG_DBG_INFO("[{:.4f}][ImportStatusEffect] Loaded Status Effect: \"{}\"!", APP_RUN_TIME, path);
+		LOG_FILE_INFO("[{:.4f}][ImportStatusEffect] Loaded Status Effect: \"{}\"!", APP_RUN_TIME, path);
+	}
+	else
+	{
+		LOG_DBG_ERROR("[{:.4f}][ImportStatusEffect] Could not load Status Effect: \"{}\"!", APP_RUN_TIME, path);
+		LOG_FILE_ERROR("[{:.4f}][ImportStatusEffect] Could not load Status Effect: \"{}\"!", APP_RUN_TIME, path);
+
+		delete se;
+		se = nullptr;
+	}
+
+	return se;
 }
 
 void GameEditor::DisplayBuildingEditorNameEdit()

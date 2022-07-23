@@ -473,6 +473,8 @@ struct SStatusEffect
 	int maxValue;
 
 	int timerValue;
+
+	std::string sprite;
 };
 
 
@@ -536,6 +538,7 @@ private:
 	std::map< std::string, olc::Decal* > m_riverDecalDatabase;
 	std::map< std::string, olc::Decal* > m_hillDecalDatabase;
 	std::map< std::string, olc::Decal* > m_unitDecalDatabase;
+	std::map< std::string, olc::Decal* > m_statusEffectDecalDatabase;
 	std::map< std::string, olc::Decal* > m_decalDatabase;
 	std::vector< olc::Sprite* > m_spriteDatabase;
 	std::map< std::string, std::pair< uint64_t, uint64_t > > m_decalSizeDatabase;
@@ -617,6 +620,12 @@ private:
 	// Status Effect Editor.
 	void DisplayStatusEffectEditor();
 	void DisplayStatusEffectEditorMainMenu();
+	void DisplayStatusEffectEditorIconSprite();
+	void DisplayStatusEffectExportWindow(SStatusEffect* se);
+	void DisplayStatusEffectImportWindow();
+
+	bool ExportStatusEffect(const std::string& filepath, SStatusEffect* se);
+	SStatusEffect* ImportStatusEffect(const std::string& filepath);
 	
 	// General Editor Utilities.
 	void DisplayEditFieldNumber(int& value, int min, int max, const char* field_name, const char* field_desc, ImGuiID slider_id, ImGuiID scalar_id);
