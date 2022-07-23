@@ -563,6 +563,11 @@ private:
 	std::map< std::string, std::string > m_prefabCacheMap;
 	bool m_prefabCacheLoaded = false;
 
+	// Status Effect Editor.
+	std::map< std::string, std::string > m_statusEffectCacheMap;
+	bool m_statusEffectCacheLoaded = false;
+
+
 	// Map Data.
 	std::map< std::string, std::string > m_mapDataCacheMap;
 	bool m_mapDataCacheLoaded = false;
@@ -623,6 +628,8 @@ private:
 	void DisplayStatusEffectEditorIconSprite();
 	void DisplayStatusEffectExportWindow(SStatusEffect* se);
 	void DisplayStatusEffectImportWindow();
+	void DisplayStatusEffectQuickLoadDropDown();
+	bool ImportStatusEffectCache(const std::string& filepath);
 
 	bool ExportStatusEffect(const std::string& filepath, SStatusEffect* se);
 	SStatusEffect* ImportStatusEffect(const std::string& filepath);

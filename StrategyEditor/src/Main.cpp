@@ -25,6 +25,7 @@ static std::string g_sCurrentEditedStatusEffectFilePath = "none";
 static std::string g_sStatusEffectEditorCurrentIconSprite = "none";
 static bool g_bExportingStatusEffect = false;
 static bool g_bImportingStatusEffect = false;
+static std::string g_sStatusEffectCacheFilepath = "assets/TilesetData/StatusEffect/StrategyEditor_StatusEffectCache.xml";
 
 static char g_cStatusEffectName[64] = "";
 static char g_cStatusEffectDisplayName[64] = "";
@@ -693,6 +694,15 @@ void GameEditor::RenderMainMenu()
 			if (ImGui::MenuItem("Status Effect Editor"))
 			{
 				ToggleMenuItem(g_bStatusEffectEditorOpen);
+				if (!m_statusEffectCacheLoaded)
+				{
+					// Load Status Effect Cache.
+					if (!ImportStatusEffectCache(g_sStatusEffectCacheFilepath))
+					{
+						LOG_DBG_CRITICAL("[{:.4f}][RenderMainMenu] Importing Status Effect Cache Failed \"{}\"!", APP_RUN_TIME, g_sStatusEffectCacheFilepath);
+						LOG_FILE_CRITICAL("[{:.4f}][RenderMainMenu] Importing Status Effect Cache Failed \"{}\"!", APP_RUN_TIME, g_sStatusEffectCacheFilepath);
+					}
+				}
 			}
 
 
@@ -4112,6 +4122,7 @@ void GameEditor::DisplayStatusEffectEditorMainMenu()
 		ImGui::SameLine();
 		if (ImGui::SmallButton("Quick Save..."))
 		{
+			ExportStatusEffect(g_sCurrentEditedStatusEffectFilePath, g_pCurrentEditedStatusEffect);
 		}
 	}
 	ImGui::SameLine();
@@ -4195,7 +4206,7 @@ void GameEditor::DisplayStatusEffectExportWindow(SStatusEffect* se)
 				LOG_DBG_INFO("[{:.4f}][DisplayStatusEffectExportWindow] Success exporting Status Effect \"{}\"!", APP_RUN_TIME, se->name);
 				LOG_FILE_INFO("[{:.4f}][DisplayStatusEffectExportWindow]  Success exporting Status Effect \"{}\"!", APP_RUN_TIME, se->name);
 
-				// Reload the Cache here...
+				ImportStatusEffectCache(g_sStatusEffectCacheFilepath);
 			}
 			else
 			{
@@ -4259,9 +4270,61 @@ void GameEditor::DisplayStatusEffectImportWindow()
 		g_bImportingStatusEffect = false;
 	}
 
-	// Add Quick Load button here
+	DisplayStatusEffectQuickLoadDropDown();
 
 	ImGui::End();
+}
+
+void GameEditor::DisplayStatusEffectQuickLoadDropDown()
+{
+	auto open = ImGui::CollapsingHeader("Quick Load");
+	HelpMarkerWithoutQuestion("Select a Status Effect to load from all available in the Status Effect Cache. The Status Effect Cache consists of all saved Status Effects");
+
+	if (open)
+	{
+		for (auto& se : m_statusEffectCacheMap)
+		{
+			if (ImGui::Button(se.first.c_str()))
+			{
+				g_pCurrentEditedStatusEffect = ImportStatusEffect(se.first);
+				if (g_pCurrentEditedStatusEffect)
+				{
+					g_sStatusEffectEditorCurrentIconSprite = g_pCurrentEditedStatusEffect->sprite;
+					g_bImportingStatusEffect = false;
+					g_sCurrentEditedStatusEffectFilePath = se.first;
+				}
+				return;
+			}
+		}
+	}
+}
+
+bool GameEditor::ImportStatusEffectCache(const std::string& filepath)
+{
+	tinyxml2::XMLDocument cache;
+	if (cache.LoadFile(filepath.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		LOG_DBG_ERROR("[{:.4f}][ImportStatusEffectCache] Could not load Status Effect Cache: \"{}\"!", APP_RUN_TIME, filepath);
+		LOG_FILE_ERROR("[{:.4f}][ImportStatusEffectCache] Could not load Status Effect Cache: \"{}\"!", APP_RUN_TIME, filepath);
+		cache.Clear();
+		return false;
+	}
+
+	auto root = cache.RootElement();
+	auto se = root->FirstChildElement("StatusEffect");
+	while (se)
+	{
+		m_statusEffectCacheMap.emplace(se->Attribute("path"), se->Attribute("name"));
+
+		se = se->NextSiblingElement("StatusEffect");
+	}
+
+
+
+	LOG_DBG_INFO("[{:.4f}][ImportStatusEffectCache] Status Effect Cache loaded: \"{}\" with size: \"{}\"!", APP_RUN_TIME, filepath, m_statusEffectCacheMap.size());
+	LOG_FILE_INFO("[{:.4f}][ImportStatusEffectCache] Status Effect Cache loaded: \"{}\" with size: \"{}\"!", APP_RUN_TIME, filepath, m_statusEffectCacheMap.size());
+
+	m_statusEffectCacheLoaded = true;
 }
 
 bool GameEditor::ExportStatusEffect(const std::string& filepath, SStatusEffect* se)
@@ -4299,6 +4362,38 @@ bool GameEditor::ExportStatusEffect(const std::string& filepath, SStatusEffect* 
 	LOG_FILE_INFO("[{:.4f}][ExportStatusEffect] Exported Status Effect: \"{}\" as \"{}\"!", APP_RUN_TIME, se->name, path);
 
 
+
+	// Store the SE in the SE Cache
+	// Load.
+	std::string cache_path = "assets/TilesetData/StatusEffect/StrategyEditor_StatusEffectCache.xml";
+	tinyxml2::XMLDocument cache;
+	if (cache.LoadFile(cache_path.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		LOG_DBG_ERROR("[{:.4f}][ExportStatusEffect] Could not load Prefab Cache: \"{}\"!", APP_RUN_TIME, cache_path);
+		LOG_FILE_ERROR("[{:.4f}][ExportStatusEffect] Could not load Prefab Cache: \"{}\"!", APP_RUN_TIME, cache_path);
+		cache.Clear();
+		return false;
+	}
+
+	// Add the new Prefab Element.
+	auto cache_root = cache.RootElement();
+	auto prefab_element = cache_root->InsertNewChildElement("StatusEffect");
+	prefab_element->SetAttribute("name", se->name.c_str());
+	prefab_element->SetAttribute("path", filepath.c_str());
+
+	// Unload.
+	if (cache.SaveFile(cache_path.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		LOG_DBG_ERROR("[{:.4f}][ExportStatusEffect] Could not save Status Effect in Prefab Cache: \"{}\" as \"{}\"!", APP_RUN_TIME, se->name, filepath);
+		LOG_FILE_ERROR("[{:.4f}][ExportStatusEffect] Could not save Status Effect in Prefab Cache: \"{}\" as \"{}\"!", APP_RUN_TIME, se->name, filepath);
+		cache.Clear();
+		return false;
+	}
+
+	LOG_DBG_INFO("[{:.4f}][ExportStatusEffect] Saved Status Effect in Prefab Cache: \"{}\" as \"{}\"!", APP_RUN_TIME, se->name, filepath);
+	LOG_FILE_INFO("[{:.4f}][ExportStatusEffect] Saved Status Effect in Prefab Cache: \"{}\" as \"{}\"!", APP_RUN_TIME, se->name, filepath);
+
+
 	return true;
 }
 
@@ -4332,6 +4427,7 @@ SStatusEffect* GameEditor::ImportStatusEffect(const std::string& filepath)
 		se->applicationProbability = data->IntAttribute("applicationProbability");
 		se->minValue = data->IntAttribute("minValue");
 		se->maxValue = data->IntAttribute("maxValue");
+		se->sprite = data->Attribute("sprite");
 
 		LOG_DBG_INFO("[{:.4f}][ImportStatusEffect] Loaded Status Effect: \"{}\"!", APP_RUN_TIME, path);
 		LOG_FILE_INFO("[{:.4f}][ImportStatusEffect] Loaded Status Effect: \"{}\"!", APP_RUN_TIME, path);
