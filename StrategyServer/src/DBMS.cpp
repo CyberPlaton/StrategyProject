@@ -439,6 +439,506 @@ namespace dbms
 		return false;
 	}
 
+	bool DBMS::LoadStatusEffectDefinitions(const std::string& filepath, const std::string& collection)
+	{
+		if (!m_initialized) return false;
+
+		// Load cache XML.
+		tinyxml2::XMLDocument cache;
+		if (cache.LoadFile(filepath.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+		{
+			LOG_DBG_ERROR("[{:.4f}][DBMS::LoadStatusEffectDefinitions] Could not load Status Effect Cache: \"{}\"!", Logger::AppRunningTime(), filepath);
+			LOG_FILE_ERROR("[{:.4f}][DBMS::LoadStatusEffectDefinitions] Could not load Status Effect Cache: \"{}\"!", Logger::AppRunningTime(), filepath);
+			cache.Clear();
+			return false;
+		}
+
+
+		auto cache_root = cache.RootElement();
+		auto se = cache_root->FirstChildElement("StatusEffect");
+		while(se)
+		{
+			std::string path = se->Attribute("path");
+			std::string final_path = filepath + path;
+
+			// Load Status Effect from XML.
+			tinyxml2::XMLDocument seXML;
+			if (seXML.LoadFile(final_path.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DBMS::LoadStatusEffectDefinitions] Could not load Status Effect: \"{}\"!", Logger::AppRunningTime(), final_path);
+				LOG_FILE_ERROR("[{:.4f}][DBMS::LoadStatusEffectDefinitions] Could not load Status Effect: \"{}\"!", Logger::AppRunningTime(), final_path);
+				seXML.Clear();
+				return false;
+			}
+
+			auto se_root = seXML.RootElement();
+			auto seData = se_root->FirstChildElement("Data");
+
+			net::SStatusEffectData data;
+			data.m_effectName = seData->Attribute("name");
+			data.m_effectDisplayName = seData->Attribute("displayName");
+			data.m_effectDesc = seData->Attribute("description");
+			data.m_effectBehaviorTreeImpl = seData->Attribute("behaviorTreeImplName");
+			data.m_effectSprite = seData->Attribute("sprite");
+			data.m_effectTimerType = seData->Attribute("timerType");
+
+			data.m_effectTimerValue = seData->Int64Attribute("timerValue");
+			data.m_effectApplicableTo = (net::EGameobjectType)seData->Int64Attribute("applicableTo");
+			data.m_effectApplicationProbability = seData->Int64Attribute("applicationProbability");
+			data.m_effectValueMin = seData->Int64Attribute("minValue");
+			data.m_effectValueMax = seData->Int64Attribute("maxValue");
+
+
+
+			// Store Status Effect in DB.
+			if(!StoreStatusEffect(data, collection))
+			{
+				LOG_DBG_ERROR("[{:.4f}][DBMS::LoadStatusEffectDefinitions] Could not upload Status Effect: \"{}\"!", Logger::AppRunningTime(), data.m_effectName);
+				LOG_FILE_ERROR("[{:.4f}][DBMS::LoadStatusEffectDefinitions] Could not upload Status Effect: \"{}\"!", Logger::AppRunningTime(), data.m_effectName);
+
+				seXML.Clear();
+				cache.Clear();
+				return false;
+			}
+
+			se = se->NextSiblingElement("StatusEffect");
+		}
+
+		return true;
+	}
+
+	bool DBMS::StoreStatusEffect(net::SStatusEffectData& data, const std::string& collection)
+	{
+
+	}
+
+	bool DBMS::LoadAbilityDefinitions(const std::string& filepath, const std::string& collection)
+	{
+		if (!m_initialized) return false;
+
+		// Load cache XML.
+		tinyxml2::XMLDocument cache;
+		if (cache.LoadFile(filepath.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+		{
+			LOG_DBG_ERROR("[{:.4f}][DBMS::LoadAbilityDefinitions] Could not load Ability Cache: \"{}\"!", Logger::AppRunningTime(), filepath);
+			LOG_FILE_ERROR("[{:.4f}][DBMS::LoadAbilityDefinitions] Could not load Ability Cache: \"{}\"!", Logger::AppRunningTime(), filepath);
+			cache.Clear();
+			return false;
+		}
+
+
+		auto cache_root = cache.RootElement();
+		auto abl = cache_root->FirstChildElement("Ability");
+		while (abl)
+		{
+			std::string path = abl->Attribute("path");
+			std::string final_path = filepath + path;
+
+			// Load Status Effect from XML.
+			tinyxml2::XMLDocument ablXml;
+			if (ablXml.LoadFile(final_path.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DBMS::LoadAbilityDefinitions] Could not load Ability: \"{}\"!", Logger::AppRunningTime(), final_path);
+				LOG_FILE_ERROR("[{:.4f}][DBMS::LoadAbilityDefinitions] Could not load Ability: \"{}\"!", Logger::AppRunningTime(), final_path);
+				ablXml.Clear();
+				return false;
+			}
+
+			auto abl_root = ablXml.RootElement();
+			auto ablData = abl_root->FirstChildElement("Data");
+
+			net::SAbilityData data;
+
+			// Load ablility data.
+
+			// Store Status Effect in DB.
+			if (!StoreAbility(data, collection))
+			{
+				LOG_DBG_ERROR("[{:.4f}][DBMS::LoadAbilityDefinitions] Could not upload Ability: \"{}\"!", Logger::AppRunningTime(), data.m_abilityName);
+				LOG_FILE_ERROR("[{:.4f}][DBMS::LoadAbilityDefinitions] Could not upload Ability: \"{}\"!", Logger::AppRunningTime(), data.m_abilityName);
+
+				ablXml.Clear();
+				cache.Clear();
+				return false;
+			}
+
+			abl = abl->NextSiblingElement("Ability");
+		}
+
+		return true;
+	}
+
+	bool DBMS::StoreAbility(net::SAbilityData& data, const std::string& collection)
+	{
+
+	}
+
+	bool DBMS::LoadUnitAndBuildingPrefabDefinitions(const std::string& filepath, const std::string& collection)
+	{
+		if (!m_initialized) return false;
+
+		// Load cache XML.
+		tinyxml2::XMLDocument cache;
+		if (cache.LoadFile(filepath.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+		{
+			LOG_DBG_ERROR("[{:.4f}][DBMS::LoadUnitAndBuildingPrefabDefinitions] Could not load Unit Prefab Cache: \"{}\"!", Logger::AppRunningTime(), filepath);
+			LOG_FILE_ERROR("[{:.4f}][DBMS::LoadUnitAndBuildingPrefabDefinitions] Could not load Unit Prefab Cache: \"{}\"!", Logger::AppRunningTime(), filepath);
+			cache.Clear();
+			return false;
+		}
+
+
+		auto cache_root = cache.RootElement();
+		auto prefab = cache_root->FirstChildElement("UnitPrefab");
+		while (prefab)
+		{
+			std::string path = prefab->Attribute("path");
+			std::string final_path = filepath + path;
+
+			// Load Status Effect from XML.
+			tinyxml2::XMLDocument prefabXml;
+			if (prefabXml.LoadFile(final_path.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DBMS::LoadUnitAndBuildingPrefabDefinitions] Could not load Unit Prefab: \"{}\"!", Logger::AppRunningTime(), final_path);
+				LOG_FILE_ERROR("[{:.4f}][DBMS::LoadUnitAndBuildingPrefabDefinitions] Could not load Unit Prefab: \"{}\"!", Logger::AppRunningTime(), final_path);
+				prefabXml.Clear();
+				return false;
+			}
+
+			auto prefab_root = prefabXml.RootElement();
+			auto prefabData = prefab_root->FirstChildElement("Data");
+
+			const bool unit_prefab = prefabData->BoolAttribute("unit_prefab");
+			if(unit_prefab)
+			{
+				// Load unit prefab data.
+				net::SUnitGameobject data;
+
+				data.m_unitName = prefabData->Attribute("name");
+				data.m_unitSprite = prefabData->Attribute("sprite");
+				data.m_unitLayoutTemplate = prefabData->Attribute("layout_template");
+				data.m_unitGoldCost = prefab->Int64Attribute("gold_cost");
+
+				data.m_unitHealth = prefabData->Int64Attribute("health");
+				data.m_unitArmor = prefabData->Int64Attribute("armor");
+				data.m_unitDefense = prefabData->Int64Attribute("defense");
+				data.m_unitLevel = prefabData->Int64Attribute("level");
+				data.m_unitExperience = prefabData->Int64Attribute("experience");
+				data.m_unitSightRadius = prefabData->Int64Attribute("sightRadius");
+				data.m_unitMovementType = prefabData->Int64Attribute("movement_type");
+				data.m_unitActionPoints = prefabData->Int64Attribute("action_points");
+				data.m_unitMinAttack = prefabData->Int64Attribute("attack_min");
+				data.m_unitMaxAttack = prefabData->Int64Attribute("attack_max");
+				
+				const bool unit_ranged = prefabData->BoolAttribute("ranged_unit");
+				data.m_unitRanged = unit_ranged;
+				if(unit_ranged)
+				{
+					data.m_unitRangedMinAttack = prefabData->Int64Attribute("ranged_attack_min");
+					data.m_unitRangedMaxAttack = prefabData->Int64Attribute("ranged_attack_max");
+					data.m_unitRangedMinRange = prefabData->Int64Attribute("ranged_range_min");
+					data.m_unitRangedMaxRange = prefabData->Int64Attribute("ranged_range_max");
+				}
+
+
+				// Load available abilities and starting status effects.
+				auto starting_statusXml = prefabData->FirstChildElement("StartingStatus");
+				auto abilitiesXml = prefabData->FirstChildElement("Abilities");
+
+				// SE
+				auto status = starting_statusXml->FirstChildElement("Status");
+				while(status)
+				{
+					data.m_unitStartingStatusEffects.push_back(status->Attribute("name"));
+					status = status->NextSiblingElement("Status");
+				}
+
+				// ABL
+				auto abl = abilitiesXml->FirstChildElement("Ability");
+				while(abl)
+				{
+					data.m_unitAbilities.push_back(abl->Attribute("name"));
+					abl = abl->NextSiblingElement("Ability");
+				}
+
+				// Store Status Effect in DB.
+				if (!StoreUnitPrefab(data, collection))
+				{
+					LOG_DBG_ERROR("[{:.4f}][DBMS::LoadUnitAndBuildingPrefabDefinitions] Could not upload Unit Prefab: \"{}\"!", Logger::AppRunningTime(), data.m_name);
+					LOG_FILE_ERROR("[{:.4f}][DBMS::LoadUnitAndBuildingPrefabDefinitions] Could not upload Unit Prefab: \"{}\"!", Logger::AppRunningTime(), data.m_name);
+
+					prefabXml.Clear();
+					cache.Clear();
+					return false;
+				}
+			}
+			else
+			{
+				// Load building prefab data.
+				net::SBuildingGameobject data;
+
+				data.m_buildingName = prefabData->Attribute("name");
+				data.m_buildingSprite = prefabData->Attribute("sprite");
+				data.m_buildingPredecessorBuilding = prefabData->Attribute("predecessor_building");
+				data.m_buildingCanDetectHidden = prefabData->BoolAttribute("detect_hidden");
+				data.m_buildingHealth = prefabData->Int64Attribute("health");
+				data.m_buildingLevel = prefabData->Int64Attribute("level");
+				data.m_buildingDefense = prefabData->Int64Attribute("defense");
+				data.m_buildingGoldProduction = prefabData->Int64Attribute("gold_production");
+				data.m_buildingResearchPointsProduction = prefabData->Int64Attribute("research_points_production");
+				data.m_buildingSightRange = prefabData->Int64Attribute("visibility_distance");
+				data.m_buildingGoldCost = prefabData->Int64Attribute("gold_cost");
+
+				// Store Building Prefab in DB.
+				if (!StoreBuidlingPrefab(data, collection))
+				{
+					LOG_DBG_ERROR("[{:.4f}][DBMS::LoadUnitAndBuildingPrefabDefinitions] Could not upload Building Prefab: \"{}\"!", Logger::AppRunningTime(), data.m_name);
+					LOG_FILE_ERROR("[{:.4f}][DBMS::LoadUnitAndBuildingPrefabDefinitions] Could not upload Building Prefab: \"{}\"!", Logger::AppRunningTime(), data.m_name);
+
+					prefabXml.Clear();
+					cache.Clear();
+					return false;
+				}
+			}
+
+			prefab = prefab->NextSiblingElement("UnitPrefab");
+		}
+
+		return true;
+	}
+
+	bool DBMS::StoreUnitPrefab(net::SUnitGameobject& prefab, const std::string& collection)
+	{
+		if (!m_initialized) return false;
+
+		// Get database and collection.
+		mongocxx::database db = DBMS::get()->m_mongoClient[m_database];
+		mongocxx::collection prefabCollection = db[collection];
+
+		boost::optional<bsoncxx::v_noabi::document::value> doc;
+		auto view = doc->view();
+
+		// Check whether the Prefab Already exists.
+		const bool prefab_exists = _findOneByKeyValuePair(prefabCollection, doc, "name", prefab.m_unitName.C_String());
+
+		// Create the MongoDB Document,
+		auto abilities = bsoncxx::builder::basic::array{};
+		for (auto e : prefab.m_unitAbilities)
+		{
+			abilities.append(e);
+		}
+
+		auto status_effects = bsoncxx::builder::basic::array{};
+		for (auto e : prefab.m_unitStartingStatusEffects)
+		{
+			status_effects.append(e);
+		}
+
+
+
+		auto update_or_insert_doc = make_document(
+			kvp("unitSprite", prefab.m_unitSprite.C_String()),
+			kvp("unitLayoutTemplate", prefab.m_unitLayoutTemplate.C_String()),
+
+			kvp("unitName", prefab.m_unitName.C_String()),
+			kvp("unitHealth", (int64_t)prefab.m_unitHealth),
+			kvp("unitArmor", (int64_t)prefab.m_unitArmor),
+			kvp("unitDefense", (int64_t)prefab.m_unitDefense),
+			kvp("unitLevel", (int64_t)prefab.m_unitLevel),
+			kvp("unitExperience", (int64_t)prefab.m_unitExperience),
+			kvp("unitSightRadius", (int64_t)prefab.m_unitSightRadius),
+			kvp("unitMovementType", (int64_t)prefab.m_unitMovementType),
+			kvp("unitMovementPoints", (int64_t)prefab.m_unitActionPoints),
+
+			kvp("unitRanged", prefab.m_unitRanged),
+			kvp("unitRangedMinAttack", (int64_t)prefab.m_unitRangedMinAttack),
+			kvp("unitRangedMaxAttack", (int64_t)prefab.m_unitRangedMaxAttack),
+			kvp("unitRangedMinRange", (int64_t)prefab.m_unitRangedMinRange),
+			kvp("unitRangedMaxRange", (int64_t)prefab.m_unitRangedMaxRange),
+
+			kvp("unitAbilities", abilities),
+			kvp("unitStartingStatusEffects", status_effects)
+		);
+
+
+		// If it exists, update it.
+		if(prefab_exists)
+		{
+			try
+			{
+				bsoncxx::stdx::optional<mongocxx::result::update> result = prefabCollection.update_one(
+					make_document(kvp("name", view["name"].get_utf8().value.to_string().c_str())),
+					make_document(kvp("$set", update_or_insert_doc.view()))
+				);
+
+				if (result.value().result().modified_count() > 0)
+				{
+					return true;
+				}
+				else
+				{
+					LOG_DBG_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] Failed to update Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), prefab.m_unitName, collection.c_str());
+					LOG_FILE_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] Failed to update Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), prefab.m_unitName, collection.c_str());
+					return false;
+				}
+			}
+			catch (const mongocxx::v_noabi::logic_error& e)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] mongocxx::v_noabi::logic_error: \"{}\"! Failed to update Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), prefab.m_unitName, collection.c_str());
+				LOG_FILE_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] mongocxx::v_noabi::logic_error: \"{}\"!  Failed to update Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), prefab.m_unitName, collection.c_str());
+				return false;
+			}
+			catch (const bsoncxx::v_noabi::exception& e)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] bsoncxx::v_noabi::exception: \"{}\"! Failed to update Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), prefab.m_unitName, collection.c_str());
+				LOG_FILE_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] bsoncxx::v_noabi::exception: \"{}\"!  Failed to update Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), prefab.m_unitName, collection.c_str());
+				return false;
+			}
+
+		}
+		// If it does not exist, create new entry.
+		else
+		{
+			try
+			{
+				bsoncxx::stdx::optional<mongocxx::result::insert_one> result = prefabCollection.insert_one(
+					std::move(update_or_insert_doc)
+				);
+
+				if (result.value().result().inserted_count() > 0)
+				{
+					return true;
+				}
+				else
+				{
+					LOG_DBG_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] Failed to upsert Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), prefab.m_unitName, collection.c_str());
+					LOG_FILE_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] Failed to upsert Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), prefab.m_unitName, collection.c_str());
+					return false;
+				}
+			}
+			catch (const mongocxx::v_noabi::logic_error& e)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] mongocxx::v_noabi::logic_error: \"{}\"! Failed to upsert Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), prefab.m_unitName, collection.c_str());
+				LOG_FILE_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] mongocxx::v_noabi::logic_error: \"{}\"!  Failed to upsert Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), prefab.m_unitName, collection.c_str());
+				return false;
+			}
+			catch (const bsoncxx::v_noabi::exception& e)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] bsoncxx::v_noabi::exception: \"{}\"! Failed to upsert Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), prefab.m_unitName, collection.c_str());
+				LOG_FILE_ERROR("[{:.4f}][DBMS::StoreUnitPrefab] bsoncxx::v_noabi::exception: \"{}\"!  Failed to upsert Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), prefab.m_unitName, collection.c_str());
+				return false;
+			}
+		}
+
+
+		return false;
+	}
+
+
+	bool DBMS::StoreBuidlingPrefab(net::SBuildingGameobject& prefab, const std::string& collection)
+	{
+		if (!m_initialized) return false;
+
+		// Get database and collection.
+		mongocxx::database db = DBMS::get()->m_mongoClient[m_database];
+		mongocxx::collection prefabCollection = db[collection];
+
+		boost::optional<bsoncxx::v_noabi::document::value> doc;
+		auto view = doc->view();
+
+		// Check whether the Prefab Already exists.
+		const bool prefab_exists = _findOneByKeyValuePair(prefabCollection, doc, "name", prefab.m_buildingName.C_String());
+
+		// Create the MongoDB Document,
+		auto update_or_insert_doc = make_document(
+			kvp("buildingSprite",					prefab.m_buildingSprite.C_String()),
+			kvp("buildingPredecessorBuilding",		prefab.m_buildingPredecessorBuilding.C_String()),
+
+			kvp("buildingName",						prefab.m_buildingName.C_String()),
+			kvp("buildingHealth",					(int64_t)prefab.m_buildingHealth),
+			kvp("buildingDefense",					(int64_t)prefab.m_buildingDefense),
+			kvp("buildingLevel",					(int64_t)prefab.m_buildingLevel),
+			kvp("buildingCanDetectHidden",			prefab.m_buildingCanDetectHidden),
+			kvp("buildingGoldProduction",			(int64_t)prefab.m_buildingGoldProduction),
+			kvp("buildingResearchPointsProduction", (int64_t)prefab.m_buildingResearchPointsProduction),
+			kvp("buildingSightRange",				(int64_t)prefab.m_buildingSightRange),
+			kvp("buildingGoldCost",					(int64_t)prefab.m_buildingGoldCost)
+		);
+
+
+
+		// If it exists, update it.
+		if (prefab_exists)
+		{
+			try
+			{
+				bsoncxx::stdx::optional<mongocxx::result::update> result = prefabCollection.update_one(
+					make_document(kvp("name", view["name"].get_utf8().value.to_string().c_str())),
+					make_document(kvp("$set", update_or_insert_doc.view()))
+				);
+
+				if (result.value().result().modified_count() > 0)
+				{
+					return true;
+				}
+				else
+				{
+					LOG_DBG_ERROR("[{:.4f}][DBMS::StoreBuidlingPrefab] Failed to update Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), prefab.m_buildingName, collection.c_str());
+					LOG_FILE_ERROR("[{:.4f}][DBMS::StoreBuidlingPrefab] Failed to update Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), prefab.m_buildingName, collection.c_str());
+					return false;
+				}
+			}
+			catch (const mongocxx::v_noabi::logic_error& e)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DBMS::StoreBuidlingPrefab] mongocxx::v_noabi::logic_error: \"{}\"! Failed to update Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), prefab.m_buildingName, collection.c_str());
+				LOG_FILE_ERROR("[{:.4f}][DBMS::StoreBuidlingPrefab] mongocxx::v_noabi::logic_error: \"{}\"!  Failed to update Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), prefab.m_buildingName, collection.c_str());
+				return false;
+			}
+			catch (const bsoncxx::v_noabi::exception& e)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DBMS::StoreBuidlingPrefab] bsoncxx::v_noabi::exception: \"{}\"! Failed to update Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), prefab.m_buildingName, collection.c_str());
+				LOG_FILE_ERROR("[{:.4f}][DBMS::StoreBuidlingPrefab] bsoncxx::v_noabi::exception: \"{}\"!  Failed to update Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), prefab.m_buildingName, collection.c_str());
+				return false;
+			}
+		}
+		// If it does not exist, create new entry.
+		else
+		{
+			try
+			{
+				bsoncxx::stdx::optional<mongocxx::result::insert_one> result = prefabCollection.insert_one(
+					std::move(update_or_insert_doc)
+				);
+
+				if (result.value().result().inserted_count() > 0)
+				{
+					return true;
+				}
+				else
+				{
+					LOG_DBG_ERROR("[{:.4f}][DBMS::StoreBuidlingPrefab] Failed to upsert Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), prefab.m_buildingName, collection.c_str());
+					LOG_FILE_ERROR("[{:.4f}][DBMS::StoreBuidlingPrefab] Failed to upsert Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), prefab.m_buildingName, collection.c_str());
+					return false;
+				}
+			}
+			catch (const mongocxx::v_noabi::logic_error& e)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DBMS::StoreBuidlingPrefab] mongocxx::v_noabi::logic_error: \"{}\"! Failed to upsert Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), prefab.m_buildingName, collection.c_str());
+				LOG_FILE_ERROR("[{:.4f}][DBMS::StoreBuidlingPrefab] mongocxx::v_noabi::logic_error: \"{}\"!  Failed to upsert Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), prefab.m_buildingName, collection.c_str());
+				return false;
+			}
+			catch (const bsoncxx::v_noabi::exception& e)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DBMS::StoreBuidlingPrefab] bsoncxx::v_noabi::exception: \"{}\"! Failed to upsert Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), prefab.m_buildingName, collection.c_str());
+				LOG_FILE_ERROR("[{:.4f}][DBMS::StoreBuidlingPrefab] bsoncxx::v_noabi::exception: \"{}\"!  Failed to upsert Unit Prefab \"{}\" to collection \"{}\".", Logger::AppRunningTime(), e.what(), prefab.m_buildingName, collection.c_str());
+				return false;
+			}
+		}
+
+
+		return false;
+	}
+
 	bool DBMS::GetStatusEffect(const std::string& effect_name, net::SStatusEffectData* effect)
 	{
 		if (!m_initialized || !effect) return false;

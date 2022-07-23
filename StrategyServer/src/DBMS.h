@@ -99,6 +99,48 @@ namespace dbms
 		/// @return True on success. False if could not retrieve any.
 		static bool GetAllAbilityData(std::vector< net::SAbilityData >& storage);
 
+
+		/*
+		* DBMS DATA MANAGEMENT
+		*/
+		
+		/// @brief Load status effect definitions from files into the database.
+		/// @param filepath Filepath of the Status Effect Cache.
+		/// @return True, if all Status Effects were loaded into database.
+		static bool LoadStatusEffectDefinitions(const std::string& filepath, const std::string& collection);
+
+		/// @brief Upload the Status Effect data into the database.
+		/// @param data Data to be uploaded.
+		/// @return True if uploading was successful.
+		static bool StoreStatusEffect(net::SStatusEffectData& data, const std::string& collection);
+
+		/// @brief Load ability definitions from files into the database.
+		/// @param filepath Filepath of the Ability Cache.
+		/// @return True, if all Abilities were loaded into database.
+		static bool LoadAbilityDefinitions(const std::string& filepath, const std::string& collection);
+
+		/// @brief Upload the Ability data into the database.
+		/// @param data Data to be uploaded.
+		/// @return True if uploading was successful.
+		static bool StoreAbility(net::SAbilityData& data, const std::string& collection);
+
+		/// @brief Load unit and building prefab definitions from files into the database. We determine dynamic whether its a unit or building.
+		/// @param filepath Filepath of the Unit Prefab Cache.
+		/// @return True if uploading was successful.
+		static bool LoadUnitAndBuildingPrefabDefinitions(const std::string& filepath, const std::string& collection);
+
+		/// @brief Upload the Unit Prefab data into the database.
+		/// @param prefab Unit Prefab to be uploaded.
+		/// @return True if uploading was successful.
+		static bool StoreUnitPrefab(net::SUnitGameobject& prefab, const std::string& collection);
+
+
+		/// @brief Upload the Building Prefab data into the database.
+		/// @param prefab Building Prefab to be uploaded.
+		/// @return True if uploading was successful.
+		static bool StoreBuidlingPrefab(net::SBuildingGameobject& prefab, const std::string& collection);
+
+
 		
 		/*
 		* USER MANAGEMENT

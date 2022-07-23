@@ -302,8 +302,18 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 		}
 
 		RakNet::RakString m_buildingName;
+		RakNet::RakString m_buildingSprite;
+		RakNet::RakString m_buildingPredecessorBuilding;
+
+		bool m_buildingCanDetectHidden;
+
 		int64_t m_buildingHealth;
 		int64_t m_buildingLevel;
+		int64_t m_buildingDefense;
+		int64_t m_buildingGoldProduction;
+		int64_t m_buildingResearchPointsProduction;
+		int64_t m_buildingSightRange;
+		int64_t m_buildingGoldCost;
 	};
 	struct SUnitGameobject : public SGameobject, public SSerializable
 	{
@@ -380,6 +390,9 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 			}
 		}
 
+		RakNet::RakString m_unitSprite;
+		RakNet::RakString m_unitLayoutTemplate;
+
 		RakNet::RakString m_unitName;
 		int64_t m_unitHealth;
 		int64_t m_unitArmor;
@@ -389,7 +402,7 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 		int64_t m_unitSightRadius;
 		int64_t m_unitMovementType;
 		int64_t m_unitActionPoints;
-
+		int64_t m_unitGoldCost;
 
 		int64_t m_unitMinAttack;
 		int64_t m_unitMaxAttack;
@@ -399,6 +412,9 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 		int64_t m_unitRangedMaxAttack;
 		int64_t m_unitRangedMinRange;
 		int64_t m_unitRangedMaxRange;
+
+		std::vector< RakNet::RakString > m_unitAbilities;
+		std::vector< RakNet::RakString > m_unitStartingStatusEffects;
 	};
 	struct SMaptileGameobject : public SGameobject, public SSerializable
 	{
@@ -552,6 +568,12 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 
 		/// @brief Description of the Effect. Intended for user.
 		RakNet::RakString m_effectDesc;
+
+		/// @brief The in-game sprite icon of the Status Effect.
+		RakNet::RakString m_effectSprite;
+
+		/// @brief The in-game Behavior Tree implementation name; used to create the appropriate BT for the Status Effect.
+		RakNet::RakString m_effectBehaviorTreeImpl;
 	};
 
 

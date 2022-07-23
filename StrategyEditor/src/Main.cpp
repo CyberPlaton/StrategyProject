@@ -4136,11 +4136,6 @@ void GameEditor::DisplayStatusEffectEditorMainMenu()
 	{
 		g_bImportingStatusEffect = true;
 	}
-	ImGui::SameLine();
-	if (ImGui::SmallButton("Sync DBMS..."))
-	{
-	}
-
 
 
 

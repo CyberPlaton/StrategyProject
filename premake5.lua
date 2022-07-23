@@ -657,6 +657,7 @@ workspace "Strategy"
 			"%{prj.name}/common/include/FMOD",				-- FMOD
 			"%{prj.name}/common/include/spdlog",			-- SPDLOG
 		}
+
 		filter "configurations:Debug"
 			-- Set working directory for debugging
 			debugdir ("bin/" .. outputdir .. "/%{prj.name}")
