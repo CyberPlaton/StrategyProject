@@ -33,6 +33,20 @@ static char g_cStatusEffectDescription[512] = "";
 static char g_cStatusEffectBehaviorTreeImplName[64] = "";
 static char g_cStatusEffectTimerType[64] = "";
 
+// Ability Static Data
+static SAbility* g_pCurrentEditedAbility = nullptr;
+static SAbility* g_pExportedAbility = nullptr;
+static bool g_bExportingAbility = false;
+static bool g_bImportingAbility = false;
+static bool g_bAbilityEditorOpen = false;
+static char g_cAbilityName[64] = "";
+static char g_cAbilityDisplayName[64] = "";
+static char g_cAbilityAppliedStatusEffectName[64] = "";
+static char g_cAbilityDescription[512] = "";
+
+static std::string g_sCurrentEditedAbilityFilePath = "none";
+static std::string g_sAbilityCacheFilepath = "assets/TilesetData/Ability/StrategyEditor_AbilityCache.xml";
+
 
 // Prefab Static Data
 static char g_cPrefabName[64] = "";
@@ -170,6 +184,15 @@ void GameEditor::RenderGUI()
 			// Status Effect Import Menu.
 			if (g_bImportingStatusEffect) DisplayStatusEffectImportWindow();
 		}
+		if (g_bAbilityEditorOpen)
+		{
+			DisplayAbilityEditor();
+			// Ability Export Menu.
+			if (g_bExportingAbility)  DisplayAbilityEditorExportWindow(g_pExportedAbility);
+			// Ability Import Menu.
+			if (g_bImportingAbility) DisplayAbilityEditorImportWindow();
+		}
+
 	}
 }
 
@@ -701,6 +724,21 @@ void GameEditor::RenderMainMenu()
 					{
 						LOG_DBG_CRITICAL("[{:.4f}][RenderMainMenu] Importing Status Effect Cache Failed \"{}\"!", APP_RUN_TIME, g_sStatusEffectCacheFilepath);
 						LOG_FILE_CRITICAL("[{:.4f}][RenderMainMenu] Importing Status Effect Cache Failed \"{}\"!", APP_RUN_TIME, g_sStatusEffectCacheFilepath);
+					}
+				}
+			}
+
+
+			if (ImGui::MenuItem("Ability Editor"))
+			{
+				ToggleMenuItem(g_bAbilityEditorOpen);
+				if (!m_abilityCacheLoaded)
+				{
+					// Load Ability Cache.
+					if (!ImportAbilityCache(g_sAbilityCacheFilepath))
+					{
+						LOG_DBG_CRITICAL("[{:.4f}][RenderMainMenu] Importing Ability Cache Failed \"{}\"!", APP_RUN_TIME, g_sAbilityCacheFilepath);
+						LOG_FILE_CRITICAL("[{:.4f}][RenderMainMenu] Importing Ability Cache Failed \"{}\"!", APP_RUN_TIME, g_sAbilityCacheFilepath);
 					}
 				}
 			}
@@ -4437,6 +4475,205 @@ SStatusEffect* GameEditor::ImportStatusEffect(const std::string& filepath)
 	}
 
 	return se;
+}
+
+void GameEditor::DisplayAbilityEditor()
+{
+	std::string name = "Ability Editor";
+	auto scene_edit_window_width = 600.f;
+	auto ability_preview_window_width = 700.0f;
+	auto ability_element_window_width = 300.f;
+	auto main_window_height = DEFAULT_WINDOW_HEIGHT - 50.0f;
+
+	ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDecoration;
+
+	ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize(ImVec2(scene_edit_window_width + ability_preview_window_width + ability_element_window_width + 35.0f, main_window_height), ImGuiCond_Appearing);
+	ImGui::Begin(name.c_str(), &g_bAbilityEditorOpen, flags);
+
+	// Display all editing windows.
+	ImGui::BeginChild("Stats", ImVec2(scene_edit_window_width, main_window_height - 1.0f), true);
+
+	DisplayAbilityEditorMainMenu();
+
+	if (g_pCurrentEditedAbility)
+	{
+		DisplayEditFieldString(g_cAbilityName, sizeof(g_cAbilityName), g_pCurrentEditedAbility->name, "Name", "Change the internal name of the Ability; must be unique", 10000, 10001);
+		DisplayEditFieldString(g_cAbilityDisplayName, sizeof(g_cAbilityDisplayName), g_pCurrentEditedAbility->displayName, "Display Name", "Change the in-game name, that will be displayed to the player", 10002, 10003);
+		DisplayEditFieldString(g_cAbilityDescription, sizeof(g_cAbilityDescription), g_pCurrentEditedAbility->description, "Description", "Change the in-game description of the ability; the player will read it to know what the ability is doing and what it is for", 10004, 10005);
+		DisplayEditFieldNumber(g_pCurrentEditedAbility->applicableTo, 0, 3, "Applicable To", "Change the entity type on which the ability can be used: 0=Maptile, 1=Map Object, 2=Unit, 3=Building", 1006, 1007);
+		DisplayEditFieldBoolean(g_pCurrentEditedAbility->usableOnSelf, "Usable on self", "Change whether the ability is usable on the unit that is casting the ability itself", 10008);
+		DisplayEditFieldBoolean(g_pCurrentEditedAbility->usableOnFriendlies, "Usable on friendlies", "Change whether the ability is usable on the allies of the casting unit", 10009);
+		DisplayEditFieldBoolean(g_pCurrentEditedAbility->usableOnEnemies, "Usable on enemies", "Change whether the ability is usable on enemies of the casting unit", 10010);
+		DisplayAbilityAppliedStatusEffectsEditorWindow();
+	}
+	ImGui::EndChild();
+
+	DisplayStatusEffectEditorIconSprite();
+
+	ImGui::End();
+}
+
+void GameEditor::DisplayAbilityEditorMainMenu()
+{
+	auto quick_save = g_sCurrentEditedAbilityFilePath.compare("none") != 0 && g_pCurrentEditedAbility != nullptr;
+
+	if (ImGui::SmallButton("New"))
+	{
+		if (g_pCurrentEditedAbility)
+		{
+			delete g_pCurrentEditedAbility;
+			g_pCurrentEditedAbility = nullptr;
+		}
+
+		g_pCurrentEditedAbility = new SAbility();
+
+		g_sCurrentEditedAbilityFilePath = "none";
+	}
+	if (quick_save)
+	{
+		ImGui::SameLine();
+		if (ImGui::SmallButton("Quick Save..."))
+		{
+			ExportAbility(g_sCurrentEditedAbilityFilePath, g_pCurrentEditedAbility);
+		}
+	}
+	ImGui::SameLine();
+	if (ImGui::SmallButton("Save As..."))
+	{
+		g_bExportingAbility = true;
+		g_pExportedAbility = g_pCurrentEditedAbility;
+	}
+	ImGui::SameLine();
+	if (ImGui::SmallButton("Load From..."))
+	{
+		g_bImportingAbility = true;
+	}
+
+
+
+	ImGui::SameLine();
+	ImGui::SetCursorPosX(ImGui::GetWindowSize().x - 25.0f);
+	if (ImGui::SmallButton("X"))
+	{
+		ToggleMenuItem(g_bAbilityEditorOpen);
+	}
+	ImGui::Separator();
+	ImGui::Separator();
+}
+
+void GameEditor::DisplayAbilityEditorExportWindow(SAbility* abl)
+{
+
+}
+
+void GameEditor::DisplayAbilityEditorImportWindow()
+{
+
+}
+
+void GameEditor::DisplayAbilityAppliedStatusEffectsEditorWindow()
+{
+	ImGuiID input_text_id = g_idUnitEditorElementID + 20000;
+	ImGuiID input_text_ok_id = g_idUnitEditorElementID + 20001;
+	ImGuiID remove_button_id = g_idUnitEditorElementID + 20002;
+	std::string to_be_removed;
+
+	if (ImGui::CollapsingHeader("Applied Status Effects on use"))
+	{
+		if (g_pCurrentEditedAbility)
+		{
+			int i = 0;
+			for (auto& status : g_pCurrentEditedAbility->appliedStatusEffectsOnUse)
+			{
+				ImGui::BulletText(status.c_str());
+				ImGui::SameLine();
+				ImGui::PushID(remove_button_id + i);
+				if (ImGui::SmallButton("x"))
+				{
+					to_be_removed = status;
+				}
+				ImGui::PopID();
+				i++;
+			}
+		}
+
+		if (to_be_removed.size() > 0)
+		{
+			auto it = std::find(g_pCurrentEditedAbility->appliedStatusEffectsOnUse.begin(), g_pCurrentEditedAbility->appliedStatusEffectsOnUse.end(), to_be_removed);
+			g_pCurrentEditedAbility->appliedStatusEffectsOnUse.erase(it);
+		}
+
+		ImGui::PushID(input_text_id);
+		ImGui::InputText("|", g_cAbilityAppliedStatusEffectName, sizeof(g_cAbilityAppliedStatusEffectName));
+		ImGui::PopID();
+		HelpMarkerWithoutQuestion("");
+		ImGui::SameLine();
+		ImGui::PushID(input_text_ok_id);
+		if (ImGui::SmallButton("OK"))
+		{
+			// Check for sanity.
+			std::string name = std::string(g_cAbilityAppliedStatusEffectName);
+
+			auto length = name.size() > 0;
+			auto duplicate = false;
+
+			if (length && g_pCurrentEditedAbility != nullptr)
+			{
+
+				duplicate = std::find(g_pCurrentEditedAbility->appliedStatusEffectsOnUse.begin(), g_pCurrentEditedAbility->appliedStatusEffectsOnUse.end(), name) != g_pCurrentEditedAbility->appliedStatusEffectsOnUse.end();
+
+				if (!duplicate)
+				{
+					LOG_DBG_INFO("[{:.4f}][DisplayAbilityAppliedStatusEffectsEditorWindow] Add applied starting status \"{}\"!", APP_RUN_TIME, name);
+					LOG_FILE_INFO("[{:.4f}][DisplayAbilityAppliedStatusEffectsEditorWindow] Add applied starting status \"{}\"!", APP_RUN_TIME, name);
+
+					// Set the layout template name for the prefab.
+					g_pCurrentEditedAbility->appliedStatusEffectsOnUse.push_back(name);
+				}
+
+				memset(&g_cAbilityAppliedStatusEffectName, 0, sizeof(g_cAbilityAppliedStatusEffectName));
+			}
+
+			// Error messages.
+			if (!length)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayAbilityAppliedStatusEffectsEditorWindow] Could not add applied starting status: Empty name!", APP_RUN_TIME);
+				LOG_FILE_ERROR("[{:.4f}][DisplayAbilityAppliedStatusEffectsEditorWindow] Could not add applied starting status: Empty name!", APP_RUN_TIME);
+			}
+			else if (duplicate)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayAbilityAppliedStatusEffectsEditorWindow] Could not add applied starting status: Duplicate!", APP_RUN_TIME);
+				LOG_FILE_ERROR("[{:.4f}][DisplayAbilityAppliedStatusEffectsEditorWindow] Could not add applied starting status: Duplicate!", APP_RUN_TIME);
+			}
+			else if (!g_pCurrentEditedAbility)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayAbilityAppliedStatusEffectsEditorWindow] Could not add applied starting status: No Ability in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
+				LOG_FILE_ERROR("[{:.4f}][DisplayAbilityAppliedStatusEffectsEditorWindow] Could not add applied starting status: No Ability in work. Hit the \"New\" button Sherlock!", APP_RUN_TIME);
+			}
+		}
+		ImGui::PopID();
+	}
+}
+
+void GameEditor::DisplayAbilityEditorQuickLoadDropDown()
+{
+
+}
+
+bool GameEditor::ImportAbilityCache(const std::string& filepath)
+{
+	return false;
+}
+
+bool GameEditor::ExportAbility(const std::string& filepath, SAbility* abl)
+{
+	return false;
+}
+
+SAbility* GameEditor::ImportAbility(const std::string& filepath)
+{
+	return false;
 }
 
 void GameEditor::DisplayBuildingEditorNameEdit()

@@ -478,6 +478,22 @@ struct SStatusEffect
 };
 
 
+struct SAbility
+{
+	std::string name;
+	std::string displayName;
+	std::string description;
+
+	int applicableTo;
+	bool usableOnSelf;
+	bool usableOnFriendlies;
+	bool usableOnEnemies;
+
+	std::vector< std::string > appliedStatusEffectsOnUse;
+};
+
+
+
 // Utility. Create a hook function to actually call the GameEditors OnUserUpdate function.
 void MainRender(GameEditor* editor);
 
@@ -567,6 +583,10 @@ private:
 	std::map< std::string, std::string > m_statusEffectCacheMap;
 	bool m_statusEffectCacheLoaded = false;
 
+	// Abilities Editor
+	std::map< std::string, std::string > m_abilityCacheMap;
+	bool m_abilityCacheLoaded = false;
+
 
 	// Map Data.
 	std::map< std::string, std::string > m_mapDataCacheMap;
@@ -634,11 +654,25 @@ private:
 	bool ExportStatusEffect(const std::string& filepath, SStatusEffect* se);
 	SStatusEffect* ImportStatusEffect(const std::string& filepath);
 	
+	// Ability Editor
+	void DisplayAbilityEditor();
+	void DisplayAbilityEditorMainMenu();
+	void DisplayAbilityEditorExportWindow(SAbility* abl);
+	void DisplayAbilityEditorImportWindow();
+	void DisplayAbilityAppliedStatusEffectsEditorWindow();
+	void DisplayAbilityEditorQuickLoadDropDown();
+	bool ImportAbilityCache(const std::string& filepath);
+	bool ExportAbility(const std::string& filepath, SAbility* abl);
+	SAbility* ImportAbility(const std::string& filepath);
+
 	// General Editor Utilities.
 	void DisplayEditFieldNumber(int& value, int min, int max, const char* field_name, const char* field_desc, ImGuiID slider_id, ImGuiID scalar_id);
 	void DisplayEditFieldBoolean(bool& value, const char* field_name, const char* field_desc, ImGuiID checkbox_id);
 	bool DisplayEditFieldString(char* string, int string_size, std::string& current_string, const char* field_name, const char* field_desc, ImGuiID text_input_id, ImGuiID text_input_ok_id);
 	void DisplayEditFieldIcon(const char* field_name, const char* field_desc, std::map< std::string, olc::Decal* >& data_map, std::string& current_icon);
+
+
+
 
 	// GUI UNIT TEMPLATE LAYOUT EDITOR
 	void DisplayShapesWindow();
