@@ -4358,6 +4358,8 @@ bool GameEditor::ImportStatusEffectCache(const std::string& filepath)
 	LOG_FILE_INFO("[{:.4f}][ImportStatusEffectCache] Status Effect Cache loaded: \"{}\" with size: \"{}\"!", APP_RUN_TIME, filepath, m_statusEffectCacheMap.size());
 
 	m_statusEffectCacheLoaded = true;
+
+	return true;
 }
 
 bool GameEditor::ExportStatusEffect(const std::string& filepath, SStatusEffect* se)
@@ -4564,12 +4566,104 @@ void GameEditor::DisplayAbilityEditorMainMenu()
 
 void GameEditor::DisplayAbilityEditorExportWindow(SAbility* abl)
 {
+	static char abl_filepath_name[64] = "";
+	if (abl)
+	{
+		ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
+		ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
 
+		ImGui::Begin("Ability Export", &g_bExportingAbility);
+		ImGui::InputText("|", abl_filepath_name, 64);
+		HelpMarkerWithoutQuestion("Name of the file that will be created. The file will be saved in \"assets/TilesetData/Ability\". It is not necessary to add the XML extension");
+		ImGui::SameLine();
+		if (ImGui::SmallButton("OK"))
+		{
+			// Check for sanity.
+			std::string name = std::string(abl_filepath_name);
+
+			bool length = name.length() > 0;
+			bool result = false;
+			if (length)
+			{
+				result = ExportAbility(name, abl);
+			}
+
+			if (!length)
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayAbilityEditorExportWindow] Error exporting Status Effect \"{}\": Filepath has 0 length!", APP_RUN_TIME, abl->name);
+				LOG_FILE_ERROR("[{:.4f}][DisplayAbilityEditorExportWindow]  Error exporting Status Effect \"{}\": Filepath has 0 length!", APP_RUN_TIME, abl->name);
+			}
+			if (result)
+			{
+				LOG_DBG_INFO("[{:.4f}][DisplayAbilityEditorExportWindow] Success exporting Status Effect \"{}\"!", APP_RUN_TIME, abl->name);
+				LOG_FILE_INFO("[{:.4f}][DisplayAbilityEditorExportWindow]  Success exporting Status Effect \"{}\"!", APP_RUN_TIME, abl->name);
+
+				ImportAbilityCache(g_sAbilityCacheFilepath);
+			}
+			else
+			{
+				LOG_DBG_ERROR("[{:.4f}][DisplayAbilityEditorExportWindow] Error exporting Status Effect \"{}\"!", APP_RUN_TIME, abl->name);
+				LOG_FILE_ERROR("[{:.4f}][DisplayAbilityEditorExportWindow]  Error exporting Status Effect \"{}\"!", APP_RUN_TIME, abl->name);
+			}
+
+			memset(&abl_filepath_name, 0, sizeof(abl_filepath_name));
+			g_bExportingAbility = false;
+			g_pExportedAbility = nullptr;
+		}
+
+		ImGui::End();
+	}
 }
 
 void GameEditor::DisplayAbilityEditorImportWindow()
 {
+	static char abl_import_filepath_name[256] = "";
 
+	ImGui::SetNextWindowPos(ImVec2(ScreenWidth() / 2.0f - ScreenWidth() / 4.0f, ScreenHeight() / 2.0f - ScreenHeight() / 4.0f), ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize(ImVec2(500, 250), ImGuiCond_Appearing);
+
+	ImGui::Begin("Ability Import", &g_bImportingAbility);
+	ImGui::InputText("|", abl_import_filepath_name, 64);
+	HelpMarkerWithoutQuestion("Name of the file that will be imported. The file will be loaded from \"assets/TilesetData/Ability\". It is not necessary to add the XML extension");
+	ImGui::SameLine();
+	if (ImGui::SmallButton("OK"))
+	{
+		// Check for sanity.
+		std::string name = std::string(abl_import_filepath_name);
+
+		bool length = name.length() > 0;
+		bool result = false;
+		if (length)
+		{
+			g_pCurrentEditedAbility = ImportAbility(name);
+			result = (g_pCurrentEditedAbility != nullptr);
+		}
+
+		if (!length)
+		{
+			LOG_DBG_ERROR("[{:.4f}][DisplayAbilityEditorImportWindow] Error importing Ability: Filepath has 0 length!", APP_RUN_TIME);
+			LOG_FILE_ERROR("[{:.4f}][DisplayAbilityEditorImportWindow]  Error importing Ability: Filepath has 0 length!", APP_RUN_TIME);
+		}
+		if (result)
+		{
+			g_sCurrentEditedAbilityFilePath = name;
+
+			LOG_DBG_INFO("[{:.4f}][DisplayAbilityEditorImportWindow] Success importing Ability \"{}\"!", APP_RUN_TIME, g_pCurrentEditedStatusEffect->name);
+			LOG_FILE_INFO("[{:.4f}][DisplayAbilityEditorImportWindow]  Success importing Ability \"{}\"!", APP_RUN_TIME, g_pCurrentEditedStatusEffect->name);
+		}
+		else
+		{
+			LOG_DBG_ERROR("[{:.4f}][DisplayAbilityEditorImportWindow] Error importing Ability \"{}\"!", APP_RUN_TIME, name);
+			LOG_FILE_ERROR("[{:.4f}][DisplayAbilityEditorImportWindow]  Error importing Ability \"{}\"!", APP_RUN_TIME, name);
+		}
+
+		memset(&abl_import_filepath_name, 0, sizeof(abl_import_filepath_name));
+		g_bImportingAbility = false;
+	}
+
+	DisplayAbilityEditorQuickLoadDropDown();
+
+	ImGui::End();
 }
 
 void GameEditor::DisplayAbilityAppliedStatusEffectsEditorWindow()
@@ -4658,22 +4752,180 @@ void GameEditor::DisplayAbilityAppliedStatusEffectsEditorWindow()
 
 void GameEditor::DisplayAbilityEditorQuickLoadDropDown()
 {
+	auto open = ImGui::CollapsingHeader("Quick Load");
+	HelpMarkerWithoutQuestion("Select an Ability to load from all available in the Ability Cache. The Ability Cache consists of all saved Ability");
 
+	if (open)
+	{
+		for (auto& abl : m_abilityCacheMap)
+		{
+			if (ImGui::Button(abl.first.c_str()))
+			{
+				g_pCurrentEditedAbility = ImportAbility(abl.first);
+				if (g_pCurrentEditedAbility)
+				{
+					g_bImportingAbility = false;
+					g_sCurrentEditedAbilityFilePath = abl.first;
+				}
+				return;
+			}
+		}
+	}
 }
 
 bool GameEditor::ImportAbilityCache(const std::string& filepath)
 {
-	return false;
+	tinyxml2::XMLDocument cache;
+	if (cache.LoadFile(filepath.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		LOG_DBG_ERROR("[{:.4f}][ImportAbilityCache] Could not load Ability Cache: \"{}\"!", APP_RUN_TIME, filepath);
+		LOG_FILE_ERROR("[{:.4f}][ImportAbilityCache] Could not load Ability Cache: \"{}\"!", APP_RUN_TIME, filepath);
+		cache.Clear();
+		return false;
+	}
+
+	auto root = cache.RootElement();
+	auto se = root->FirstChildElement("Ability");
+	while (se)
+	{
+		m_abilityCacheMap.emplace(se->Attribute("path"), se->Attribute("name"));
+
+		se = se->NextSiblingElement("Ability");
+	}
+
+
+
+	LOG_DBG_INFO("[{:.4f}][ImportAbilityCache] Ability Cache loaded: \"{}\" with size: \"{}\"!", APP_RUN_TIME, filepath, m_abilityCacheMap.size());
+	LOG_FILE_INFO("[{:.4f}][ImportAbilityCache] Ability Cache loaded: \"{}\" with size: \"{}\"!", APP_RUN_TIME, filepath, m_abilityCacheMap.size());
+
+	m_abilityCacheLoaded = true;
+
+	return true;
 }
 
 bool GameEditor::ExportAbility(const std::string& filepath, SAbility* abl)
 {
-	return false;
+	tinyxml2::XMLDocument doc;
+	auto xmlRoot = doc.NewElement("Ability");
+	doc.InsertEndChild(xmlRoot);
+
+	auto data = xmlRoot->InsertNewChildElement("Data");
+
+	// Export default data.
+	data->SetAttribute("name", abl->name.c_str());
+	data->SetAttribute("displayName", abl->displayName.c_str());
+	data->SetAttribute("description", abl->description.c_str());
+	data->SetAttribute("timerValue", abl->applicableTo);
+	data->SetAttribute("sprite", abl->usableOnSelf);
+	data->SetAttribute("applicableTo", abl->usableOnFriendlies);
+	data->SetAttribute("applicationProbability", abl->usableOnEnemies);
+
+	// Export all status effects that will be applied on use.
+	auto applied_se = data->InsertNewChildElement("AppliedStatusEffectsOnUse");
+	for(auto& se: abl->appliedStatusEffectsOnUse)
+	{
+		auto seXml = applied_se->InsertNewChildElement("StatusEffect");
+		seXml->Attribute("name", se.c_str());
+	}
+
+
+	std::string path = "assets/TilesetData/Ability/" + filepath + ".xml";
+	if (doc.SaveFile(path.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		LOG_DBG_ERROR("[{:.4f}][ExportAbility] Could not save Ability: \"{}\"!", APP_RUN_TIME, path);
+		LOG_FILE_ERROR("[{:.4f}][ExportAbility] Could not save Ability: \"{}\"!", APP_RUN_TIME, path);
+		doc.Clear();
+		return false;
+	}
+
+	LOG_DBG_INFO("[{:.4f}][ExportAbility] Exported Ability: \"{}\" as \"{}\"!", APP_RUN_TIME, abl->name, path);
+	LOG_FILE_INFO("[{:.4f}][ExportAbility] Exported Ability: \"{}\" as \"{}\"!", APP_RUN_TIME, abl->name, path);
+
+
+
+	// Store the Ability in the Ability Cache
+	// Load.
+	std::string cache_path = "assets/TilesetData/Ability/StrategyEditor_AbilityCache.xml";
+	tinyxml2::XMLDocument cache;
+	if (cache.LoadFile(cache_path.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		LOG_DBG_ERROR("[{:.4f}][ExportAbility] Could not load Ability Cache: \"{}\"!", APP_RUN_TIME, cache_path);
+		LOG_FILE_ERROR("[{:.4f}][ExportAbility] Could not load Ability Cache: \"{}\"!", APP_RUN_TIME, cache_path);
+		cache.Clear();
+		return false;
+	}
+
+	// Add the new Prefab Element.
+	auto cache_root = cache.RootElement();
+	auto abl_element = cache_root->InsertNewChildElement("Ability");
+	abl_element->SetAttribute("name", abl->name.c_str());
+	abl_element->SetAttribute("path", filepath.c_str());
+
+	// Unload.
+	if (cache.SaveFile(cache_path.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		LOG_DBG_ERROR("[{:.4f}][ExportAbility] Could not save Ability in Ability Cache: \"{}\" as \"{}\"!", APP_RUN_TIME, abl->name, filepath);
+		LOG_FILE_ERROR("[{:.4f}][ExportAbility] Could not save Status Effect in Prefab Cache: \"{}\" as \"{}\"!", APP_RUN_TIME, abl->name, filepath);
+		cache.Clear();
+		return false;
+	}
+
+	LOG_DBG_INFO("[{:.4f}][ExportAbility] Saved Ability in Ability Cache: \"{}\" as \"{}\"!", APP_RUN_TIME, abl->name, filepath);
+	LOG_FILE_INFO("[{:.4f}][ExportAbility] Saved Ability in Ability Cache: \"{}\" as \"{}\"!", APP_RUN_TIME, abl->name, filepath);
+
+
+	return true;
 }
 
 SAbility* GameEditor::ImportAbility(const std::string& filepath)
 {
-	return false;
+	std::string path = "assets/TilesetData/Ability/" + filepath + ".xml";
+
+	tinyxml2::XMLDocument doc;
+	if (doc.LoadFile(path.c_str()) != tinyxml2::XMLError::XML_SUCCESS)
+	{
+		LOG_DBG_ERROR("[{:.4f}][ImportAbility] Could not load file: \"{}\"!", APP_RUN_TIME, path);
+		LOG_FILE_ERROR("[{:.4f}][ImportAbility] Could not load file: \"{}\"!", APP_RUN_TIME, path);
+		doc.Clear();
+		return nullptr;
+	}
+
+	SAbility* abl = new SAbility();
+
+	auto xmlRoot = doc.RootElement();
+	auto data = xmlRoot->FirstChildElement("Data");
+
+	if (abl)
+	{
+		abl->name = data->Attribute("name");
+		abl->displayName = data->Attribute("displayName");
+		abl->description = data->Attribute("description");
+		abl->applicableTo = data->IntAttribute("applicableTo");
+		abl->usableOnSelf = data->BoolAttribute("usableOnSelf");
+		abl->usableOnFriendlies = data->BoolAttribute("usableOnFriendlies");
+		abl->usableOnEnemies = data->BoolAttribute("usableOnEnemies");
+
+		auto applied_se_xml = data->FirstChildElement("AppliedStatusEffectsOnUse");
+		auto seXml = applied_se_xml->FirstChildElement("StatusEffect");
+		while(seXml)
+		{
+			abl->appliedStatusEffectsOnUse.push_back(seXml->Attribute("name"));
+			seXml = seXml->NextSiblingElement("StatusEffect");
+		}
+
+		LOG_DBG_INFO("[{:.4f}][ImportAbility] Loaded Ability: \"{}\"!", APP_RUN_TIME, path);
+		LOG_FILE_INFO("[{:.4f}][ImportAbility] Loaded Ability: \"{}\"!", APP_RUN_TIME, path);
+	}
+	else
+	{
+		LOG_DBG_ERROR("[{:.4f}][ImportAbility] Could not load Ability: \"{}\"!", APP_RUN_TIME, path);
+		LOG_FILE_ERROR("[{:.4f}][ImportAbility] Could not load Ability: \"{}\"!", APP_RUN_TIME, path);
+
+		delete abl;
+		abl = nullptr;
+	}
+
+	return abl;
 }
 
 void GameEditor::DisplayBuildingEditorNameEdit()
