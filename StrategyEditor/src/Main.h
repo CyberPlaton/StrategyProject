@@ -460,6 +460,7 @@ struct SPrefab
 	uint64_t ranged_range_max;
 	uint64_t movement_type;
 	uint64_t race;
+	int unit_progression_type;
 	std::string building_name; // Requirement for producing.
 	uint64_t building_level;   // Requirement for producing.
 	std::vector< std::string > starting_status_vec;

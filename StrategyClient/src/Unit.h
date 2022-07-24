@@ -53,6 +53,7 @@ namespace cherrysoda
 		DECLARE_GET_SET(float,			PositionY,			m_positionY);
 		DECLARE_GET_SET(size_t,			MovementType,		m_movementType);
 		DECLARE_GET_SET(size_t,			ActionPoints,		m_actionPoints);
+		DECLARE_GET_SET(size_t,			LevelProgressionType,m_levelProgressionType);
 
 
 		// QUERYING
@@ -79,6 +80,8 @@ namespace cherrysoda
 		size_t m_rangedMaxRange = 0;
 
 		size_t m_level = 1;
+		size_t m_levelProgressionType = INT_MAX;
+
 		size_t m_experience = 0;
 		size_t m_sightRadius = 1;
 		size_t m_tilePositionX = 0;

@@ -2701,6 +2701,8 @@ bool GameEditor::ExportUnitPrefab(const std::string& filepath, SPrefab* prefab)
 		data->SetAttribute("race", prefab->race);
 		data->SetAttribute("building_name", prefab->building_name.c_str());
 		data->SetAttribute("building_level", prefab->building_level);
+		data->SetAttribute("level_progression_type", prefab->unit_progression_type);
+
 
 		auto ranged = prefab->can_attack_ranged;
 		data->SetAttribute("ranged_unit", ranged);
@@ -2857,6 +2859,7 @@ SPrefab* GameEditor::ImportUnitPrefab(const std::string& filepath)
 		auto building_level = data->Int64Attribute("building_level");
 		auto gold_cost = data->Int64Attribute("gold_cost");
 		auto ranged = data->BoolAttribute("ranged_unit");
+		auto unit_progression_type = data->Int64Attribute("level_progression_type");
 		if(ranged)
 		{
 			prefab->ranged_attack_min = data->Int64Attribute("ranged_attack_min");
@@ -2869,6 +2872,7 @@ SPrefab* GameEditor::ImportUnitPrefab(const std::string& filepath)
 		prefab->health = health;
 		prefab->action_points = action_points;
 		prefab->level = level;
+		prefab->unit_progression_type = unit_progression_type;
 		prefab->armor = armor;
 		prefab->defense = defense;
 		prefab->attack_min = attack_min;
@@ -3477,6 +3481,9 @@ void GameEditor::DisplayUnitEditorLevelEdit()
 			HelpMarkerWithoutQuestion("The starting level of the unit/building. The unit/building will have this level on instancing in-game");
 
 			g_pCurrentEditedPrefab->level = lvl;
+
+
+			DisplayEditFieldNumber(g_pCurrentEditedPrefab->unit_progression_type, 0, 2, "Level Progression Type", "The level progression type can be 0=Melee, 1=Ranged, 2=Mage. This field is required in order to level-up the unit automatically in-game", lvl_id + 100010, lvl_scalar_id + 100011);
 		}
 	}
 }
