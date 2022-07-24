@@ -4815,17 +4815,17 @@ bool GameEditor::ExportAbility(const std::string& filepath, SAbility* abl)
 	data->SetAttribute("name", abl->name.c_str());
 	data->SetAttribute("displayName", abl->displayName.c_str());
 	data->SetAttribute("description", abl->description.c_str());
-	data->SetAttribute("timerValue", abl->applicableTo);
-	data->SetAttribute("sprite", abl->usableOnSelf);
-	data->SetAttribute("applicableTo", abl->usableOnFriendlies);
-	data->SetAttribute("applicationProbability", abl->usableOnEnemies);
+	data->SetAttribute("applicableTo", abl->applicableTo);
+	data->SetAttribute("usableOnSelf", abl->usableOnSelf);
+	data->SetAttribute("usableOnFriendlies", abl->usableOnFriendlies);
+	data->SetAttribute("usableOnEnemies", abl->usableOnEnemies);
 
 	// Export all status effects that will be applied on use.
 	auto applied_se = data->InsertNewChildElement("AppliedStatusEffectsOnUse");
 	for(auto& se: abl->appliedStatusEffectsOnUse)
 	{
 		auto seXml = applied_se->InsertNewChildElement("StatusEffect");
-		seXml->Attribute("name", se.c_str());
+		seXml->SetAttribute("name", se.c_str());
 	}
 
 

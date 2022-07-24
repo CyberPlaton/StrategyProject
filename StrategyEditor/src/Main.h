@@ -110,7 +110,15 @@
 *			 o Add newly created Audio System.
 * 
 * 
-* 
+* 24.07.2022 - version 0.5.0 complete:
+*			 o Status Effect Editor:
+*				 - Fast and easy creation, exporting and importing of Status Effects to be used in-game.
+*				 - Caching, to quickly load and refactor already existing Status Effects.
+*				 - Quick Save button; to save you from retyping the names every time.
+*			 o Ability Editor:
+*				 - Fast and easy creation, exporting and import of Abilities to be used in-game.
+*				 - Caching, to quickly load and refactor already existing Abilities.
+*				 - Quick Save button; to save you from retyping the names every time.
 * 
 * 
 * 
@@ -138,8 +146,8 @@
 
 
 #define EDITOR_MAJOR_VERSION 0
-#define EDITOR_MINOR_VERSION 4
-#define EDITOR_PATCH_VERSION 5
+#define EDITOR_MINOR_VERSION 5
+#define EDITOR_PATCH_VERSION 0
 
 
 
