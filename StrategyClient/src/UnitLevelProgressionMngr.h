@@ -20,6 +20,7 @@ namespace cherrysoda
 	private:
 		static CUnitLevelProgressionMngr* g_pCUnitLevelProgressionMngr;
 
+		size_t m_unitMaxLevel = 3;
 
 	private:
 		void _levelUpMeele(Unit* unit);

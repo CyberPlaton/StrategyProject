@@ -46,6 +46,7 @@
 
 // GAME SYSTEMS
 #include "StatusEffectUpdateEngine.h"
+#include "UnitLevelProgressionMngr.h"
 
 
 #define OFFLINE_GAME_CLIENT_TEST true

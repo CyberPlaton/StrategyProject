@@ -39,42 +39,92 @@ namespace cherrysoda
 
 	void CUnitLevelProgressionMngr::_levelUpMeele(Unit* unit)
 	{
-		auto minA = unit->GetMinAttack();
-		auto maxA = unit->GetMaxAttack();
-		auto def = unit->GetDefense();
-		auto ap = unit->GetActionPoints();
 		auto lvl = unit->GetLevel();
+		if (lvl >= m_unitMaxLevel) return;
 
-		unit->SetMinAttack(minA		+ 3);
-		unit->SetMaxAttack(maxA		+ 5);
-		unit->SetDefense(def		+ 5);
-		unit->SetActionPoints(ap	+ 3);
+		if(lvl == 1)
+		{
+			auto minA = unit->GetMinAttack();
+			auto maxA = unit->GetMaxAttack();
+			auto def = unit->GetDefense();
+			auto ap = unit->GetActionPoints();
+
+			unit->SetMinAttack(minA + 2);
+			unit->SetMaxAttack(maxA + 4);
+			unit->SetDefense(def + 4);
+			unit->SetActionPoints(ap + 2);
+		}
+		else if(lvl == 2)
+		{
+			auto minA = unit->GetMinAttack();
+			auto maxA = unit->GetMaxAttack();
+			auto def = unit->GetDefense();
+			auto ap = unit->GetActionPoints();
+
+			unit->SetMinAttack(minA + 3);
+			unit->SetMaxAttack(maxA + 5);
+			unit->SetDefense(def + 5);
+			unit->SetActionPoints(ap + 4);
+		}
+
 		unit->SetLevel(lvl			+ 1);
 	}
 
 	void CUnitLevelProgressionMngr::_levelUpRanged(Unit* unit)
 	{
-		auto minA = unit->GetRangedMinAttack();
-		auto maxA = unit->GetRangedMaxAttack();
-		auto def = unit->GetDefense();
-		auto ap = unit->GetActionPoints();
 		auto lvl = unit->GetLevel();
+		if (lvl >= m_unitMaxLevel) return;
 
-		unit->SetRangedMinAttack(minA + 3);
-		unit->SetRangedMaxAttack(maxA + 5);
-		unit->SetDefense(def + 5);
-		unit->SetActionPoints(ap + 3);
+		if (lvl == 1)
+		{
+			auto minA = unit->GetRangedMinAttack();
+			auto maxA = unit->GetRangedMaxAttack();
+			auto def = unit->GetDefense();
+			auto ap = unit->GetActionPoints();
+
+			unit->SetRangedMinAttack(minA + 2);
+			unit->SetRangedMaxAttack(maxA + 4);
+			unit->SetDefense(def + 3);
+			unit->SetActionPoints(ap + 3);
+		}
+		else if (lvl == 2)
+		{
+			auto minA = unit->GetRangedMinAttack();
+			auto maxA = unit->GetRangedMaxAttack();
+			auto def = unit->GetDefense();
+			auto ap = unit->GetActionPoints();
+
+			unit->SetRangedMinAttack(minA + 3);
+			unit->SetRangedMaxAttack(maxA + 5);
+			unit->SetDefense(def + 5);
+			unit->SetActionPoints(ap + 4);
+		}
+
 		unit->SetLevel(lvl + 1);
 	}
 
 	void CUnitLevelProgressionMngr::_levelUpMage(Unit* unit)
 	{
-		auto def = unit->GetDefense();
-		auto ap = unit->GetActionPoints();
 		auto lvl = unit->GetLevel();
+		if (lvl >= m_unitMaxLevel) return;
 
-		unit->SetDefense(def + 5);
-		unit->SetActionPoints(ap + 6);
+		if (lvl == 1)
+		{
+			auto def = unit->GetDefense();
+			auto ap = unit->GetActionPoints();
+
+			unit->SetDefense(def + 3);
+			unit->SetActionPoints(ap + 4);
+		}
+		else if (lvl == 2)
+		{
+			auto def = unit->GetDefense();
+			auto ap = unit->GetActionPoints();
+
+			unit->SetDefense(def + 5);
+			unit->SetActionPoints(ap + 7);
+		}
+
 		unit->SetLevel(lvl + 1);
 	}
 
