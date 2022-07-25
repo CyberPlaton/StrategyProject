@@ -351,6 +351,28 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 				stream.Write(m_unitRangedMinRange);
 				stream.Write(m_unitRangedMaxRange);
 			}
+
+			stream.Write(m_unitArmorPiercingWeapon);
+			stream.Write(m_unitAntiCavalry);
+			if(m_unitAntiCavalry)
+			{
+				stream.Write(m_unitAntiCavalryBonus);
+			}
+			stream.Write(m_unitFlankingBonus);
+			stream.Write(m_unitBackstabBonus);
+
+			// Serialize abilities and status effects.
+			stream.Write(m_unitAbilities.size());
+			for (auto abl : m_unitAbilities)
+			{
+				stream.Write(abl);
+			}
+			stream.Write(m_unitStartingStatusEffects.size());
+			for (auto se : m_unitStartingStatusEffects)
+			{
+				stream.Write(se);
+			}
+
 		}
 		void Deserialize(RakNet::BitStream& stream, bool ignore_id = false)  override final
 		{
@@ -388,6 +410,35 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 				stream.Read(m_unitRangedMinRange);
 				stream.Read(m_unitRangedMaxRange);
 			}
+
+			stream.Read(m_unitArmorPiercingWeapon);
+			stream.Read(m_unitAntiCavalry);
+			if(m_unitAntiCavalry)
+			{
+				stream.Read(m_unitAntiCavalryBonus);
+			}
+
+			stream.Read(m_unitFlankingBonus);
+			stream.Read(m_unitBackstabBonus);
+
+			// Deserialize Abilities and Status Effects.
+			int abilities_count = 0;
+			stream.Read(abilities_count);
+			for (int i = 0; i < abilities_count; i++)
+			{
+				RakNet::RakString ability;
+				stream.Read(ability);
+				m_unitAbilities.push_back(ability);
+			}
+			int status_effect_count = 0;
+			stream.Read(status_effect_count);
+			for (int i = 0; i < status_effect_count; i++)
+			{
+				RakNet::RakString se;
+				stream.Read(se);
+				m_unitStartingStatusEffects.push_back(se);
+			}
+
 		}
 
 		RakNet::RakString m_unitSprite;
@@ -412,6 +463,12 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 		int64_t m_unitRangedMaxAttack;
 		int64_t m_unitRangedMinRange;
 		int64_t m_unitRangedMaxRange;
+
+		bool m_unitArmorPiercingWeapon = false;
+		bool m_unitAntiCavalry = false;
+		int64_t m_unitAntiCavalryBonus = 0;
+		int64_t m_unitFlankingBonus = 0;
+		int64_t m_unitBackstabBonus = 0;
 
 		std::vector< RakNet::RakString > m_unitAbilities;
 		std::vector< RakNet::RakString > m_unitStartingStatusEffects;

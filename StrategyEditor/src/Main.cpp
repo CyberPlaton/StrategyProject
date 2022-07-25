@@ -2688,6 +2688,8 @@ bool GameEditor::ExportUnitPrefab(const std::string& filepath, SPrefab* prefab)
 	data->SetAttribute("defense", prefab->defense);
 	data->SetAttribute("health", prefab->health);
 	data->SetAttribute("level", prefab->level);
+	data->SetAttribute("sight_range", prefab->sight_range);
+	data->SetAttribute("detect_hidden", prefab->can_detect_hidden_units);
 
 	// Export unit prefab specific data.
 	if(g_bPrefabEditorEditingUnits)
@@ -2703,6 +2705,11 @@ bool GameEditor::ExportUnitPrefab(const std::string& filepath, SPrefab* prefab)
 		data->SetAttribute("building_level", prefab->building_level);
 		data->SetAttribute("level_progression_type", prefab->unit_progression_type);
 
+		data->SetAttribute("armor_piercing_weapon", prefab->armor_piercing_weapon);
+		data->SetAttribute("anti_cavalry", prefab->anti_cavalry);
+		data->SetAttribute("anti_cavalry_bonus", prefab->anti_cavalry_bonus);
+		data->SetAttribute("flanking_bonus", prefab->flanking_bonus);
+		data->SetAttribute("backstab_bonus", prefab->backstab_bonus);
 
 		auto ranged = prefab->can_attack_ranged;
 		data->SetAttribute("ranged_unit", ranged);
@@ -2738,7 +2745,6 @@ bool GameEditor::ExportUnitPrefab(const std::string& filepath, SPrefab* prefab)
 		data->SetAttribute("gold_production", prefab->gold_production);
 		data->SetAttribute("research_points_production", prefab->research_points_production);
 		data->SetAttribute("visibility_distance", prefab->visibility_distance_in_tiles);
-		data->SetAttribute("detect_hidden", prefab->can_detect_hidden_units);
 		data->SetAttribute("predecessor_building", prefab->predecessor_building_for_upgrade.c_str());
 	}
 
@@ -2860,6 +2866,15 @@ SPrefab* GameEditor::ImportUnitPrefab(const std::string& filepath)
 		auto gold_cost = data->Int64Attribute("gold_cost");
 		auto ranged = data->BoolAttribute("ranged_unit");
 		auto unit_progression_type = data->Int64Attribute("level_progression_type");
+		auto detect_hidden = data->BoolAttribute("detect_hidden");
+		auto sight_range = data->Int64Attribute("sight_range");
+
+		auto arm_pierc = data->BoolAttribute("armor_piercing_weapon");
+		auto anti_cav = data->BoolAttribute("anti_cavalry");
+		auto anti_cav_bonus = data->Int64Attribute("anti_cavalry_bonus");
+		auto flank_bonus = data->Int64Attribute("flanking_bonus");
+		auto backstab_bonus = data->Int64Attribute("backstab_bonus");
+
 		if(ranged)
 		{
 			prefab->ranged_attack_min = data->Int64Attribute("ranged_attack_min");
@@ -2883,6 +2898,14 @@ SPrefab* GameEditor::ImportUnitPrefab(const std::string& filepath)
 		prefab->building_level = building_level;
 		prefab->gold_cost = gold_cost;
 		prefab->can_attack_ranged = ranged;
+		prefab->can_detect_hidden_units = detect_hidden;
+		prefab->armor_piercing_weapon = arm_pierc;
+		prefab->anti_cavalry = anti_cav;
+		prefab->anti_cavalry_bonus = anti_cav_bonus;
+		prefab->flanking_bonus = flank_bonus;
+		prefab->backstab_bonus = backstab_bonus;
+		prefab->sight_range = sight_range;
+		
 		
 		auto statuses = data->FirstChildElement("StartingStatus");
 		auto abilities = data->FirstChildElement("Abilities");
@@ -2909,7 +2932,9 @@ SPrefab* GameEditor::ImportUnitPrefab(const std::string& filepath)
 
 	if(building_prefab)
 	{
-
+		// TODO
+		LOG_DBG_CRITICAL("[{:.4f}][ImportUnitPrefab] Loading Building Prefabs not implemented: \"{}\"!", APP_RUN_TIME, path);
+		LOG_FILE_CRITICAL("[{:.4f}][ImportUnitPrefab] Loading Building Prefabs not implemented: \"{}\"!", APP_RUN_TIME, path);
 	}
 
 	if(prefab)
@@ -3082,6 +3107,29 @@ void GameEditor::DisplayUnitEditor()
 		DisplayUnitEditorLayoutTemplateNameEdit();
 		DisplayUnitEditorHealthEdit();
 		DisplayUnitEditorActionPointsEdit();
+		if(g_pCurrentEditedPrefab)
+		{
+			// Sight Ranged
+			DisplayEditFieldNumber(g_pCurrentEditedPrefab->sight_range, 1, 100, "Sight Range", "Change how far the unit can see through fog of war", 90000, 90001);
+			// Whether detects hidden
+			DisplayEditFieldBoolean(g_pCurrentEditedPrefab->can_detect_hidden_units, "Detect Hidden", "Change whether unit can detect invisible units, such as spies and assassins", 99000);
+			
+			// Armor Piercing
+			DisplayEditFieldBoolean(g_pCurrentEditedPrefab->armor_piercing_weapon, "Armor Piercing Weapon", "Change whether units weapon ignores the enemies armor", 99001);
+
+			// Anti Cavalry
+			DisplayEditFieldBoolean(g_pCurrentEditedPrefab->anti_cavalry, "Anti Cavalry", "Change whether unit is Anti-Cavalry, dealing additional damage to mounted enemy units", 99002);
+			if(g_pCurrentEditedPrefab->anti_cavalry)
+			{
+				DisplayEditFieldNumber(g_pCurrentEditedPrefab->anti_cavalry_bonus, 1, 100, "Anti Cavalry Damage Bonus", "Change how much of additional damage the unit deals to enemy Cavalry units", 90003, 90004);
+			}
+
+			// Flanking Bonus
+			DisplayEditFieldNumber(g_pCurrentEditedPrefab->flanking_bonus, 0, 100, "Flanking Damage Bonus", "Change how much of additional damage the unit deals on flanking an enemy unit", 90005, 90006);
+
+			// Backstab Bonus
+			DisplayEditFieldNumber(g_pCurrentEditedPrefab->backstab_bonus, 0, 100, "Backstab Damage Bonus", "Change how much of additional damage the unit deals on attacking an enemy unit from behind", 90007, 90008);
+		}
 		DisplayUnitEditorLevelEdit();
 		DisplayUnitEditorArmorEdit();
 		DisplayUnitEditorAttackEdit();
@@ -3098,6 +3146,13 @@ void GameEditor::DisplayUnitEditor()
 	{
 		DisplayBuildingEditorNameEdit();
 		DisplayBuildingEditorLayoutTemplateEdit();
+		if (g_pCurrentEditedPrefab)
+		{
+			// Sight Ranged
+			DisplayEditFieldNumber(g_pCurrentEditedPrefab->sight_range, 1, 100, "Sight Range", "Change how far the building can see through fog of war", 20000, 20001);
+			// Whether detects hidden
+			DisplayEditFieldBoolean(g_pCurrentEditedPrefab->can_detect_hidden_units, "Detect Hidden", "Change whether building can detect invisible units, such as spies and assassins", 30000);
+		}
 		DisplayUnitEditorLevelEdit();
 		DisplayBuildingEditorProducerEdit();
 		DisplayBuildingEditorDefenseEdit();
@@ -3499,14 +3554,14 @@ void GameEditor::DisplayUnitEditorArmorEdit()
 		{
 			int arm = g_pCurrentEditedPrefab->armor;
 			ImGui::PushID(arm_id);
-			ImGui::SliderInt("Int", &arm, 1, 500, "%d");
+			ImGui::SliderInt("Int", &arm, 1, 60, "%d");
 			ImGui::PopID();
-			HelpMarkerWithoutQuestion("The Armor value of the unit. This affects how much damage the unit will take on being attacked");
+			HelpMarkerWithoutQuestion("The Armor value of the unit. This affects how much damage the unit will take on being attacked; E.g. with an armor value of 50, 50% of the incoming damage will be removed");
 			ImGui::SameLine();
 			ImGui::PushID(arm_scalar_id);
 			ImGui::InputScalar("ScalarInt", ImGuiDataType_U32, &arm, &u32_one);
 			ImGui::PopID();
-			HelpMarkerWithoutQuestion("The Armor value of the unit. This affects how much damage the unit will take on being attacked");
+			HelpMarkerWithoutQuestion("The Armor value of the unit. This affects how much damage the unit will take on being attacked; E.g. with an armor value of 50, 50% of the incoming damage will be removed");
 
 			g_pCurrentEditedPrefab->armor = arm;
 		}
@@ -3642,14 +3697,14 @@ void GameEditor::DisplayUnitEditorDefenseEdit()
 		{
 			int def = g_pCurrentEditedPrefab->defense;
 			ImGui::PushID(def_id);
-			ImGui::SliderInt("Int", &def, 1, 500, "%d");
+			ImGui::SliderInt("Int", &def, 1, 60, "%d");
 			ImGui::PopID();
-			HelpMarkerWithoutQuestion("The Defense value of the unit/building. This affects how much damage the unit/building will take on being attacked");
+			HelpMarkerWithoutQuestion("The Defense value of the unit/building. This affects how much damage the unit/building will take on being attacked; E.g. with a defense value of 50, 50% of the incoming damage will be removed");
 			ImGui::SameLine();
 			ImGui::PushID(def_scalar_id);
 			ImGui::InputScalar("ScalarInt", ImGuiDataType_U32, &def, &u32_one);
 			ImGui::PopID();
-			HelpMarkerWithoutQuestion("The Defense value of the unit/building. This affects how much damage the unit/building will take on being attacked");
+			HelpMarkerWithoutQuestion("The Defense value of the unit/building. This affects how much damage the unit/building will take on being attacked; E.g. with a defense value of 50, 50% of the incoming damage will be removed");
 
 			g_pCurrentEditedPrefab->defense = def;
 		}
@@ -5021,20 +5076,6 @@ void GameEditor::DisplayBuildingEditorVisibilityEdit()
 			HelpMarkerWithoutQuestion("The buildings visibility range in tiles");
 
 			g_pCurrentEditedPrefab->visibility_distance_in_tiles = range;
-		}
-	}
-
-	// Detect hidden enemies.
-	if (ImGui::CollapsingHeader("Detect Hidden"))
-	{
-		if (g_pCurrentEditedPrefab)
-		{
-			bool detect = g_pCurrentEditedPrefab->can_detect_hidden_units;
-			ImGui::PushID(button_id * 2);
-			ImGui::Checkbox("Bool", &detect);
-			ImGui::PopID();
-			HelpMarkerWithoutQuestion("Whether the building can detect hidden enemy units such as Assassins and Spies");
-			g_pCurrentEditedPrefab->can_detect_hidden_units = detect;
 		}
 	}
 }

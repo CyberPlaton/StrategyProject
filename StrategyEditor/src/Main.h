@@ -429,6 +429,8 @@ struct SPrefab
 	std::string prefab_name;
 	bool unit_prefab;
 	bool building_prefab;
+	int sight_range;
+	bool can_detect_hidden_units;
 
 	// For both sides.
 	uint64_t health;
@@ -443,7 +445,6 @@ struct SPrefab
 	uint64_t gold_production;
 	uint64_t research_points_production;
 	uint64_t visibility_distance_in_tiles;
-	bool can_detect_hidden_units; // Spies and Assassins.
 	std::string predecessor_building_for_upgrade; // The same building but one level below. If level=1, then this is empty.
 	
 
@@ -465,6 +466,19 @@ struct SPrefab
 	uint64_t building_level;   // Requirement for producing.
 	std::vector< std::string > starting_status_vec;
 	std::vector< std::string > abilities_vec;
+
+	// If a units weapon is armor piercing, it ignores the enemies armor value.
+	bool armor_piercing_weapon;
+
+	// If a unit is anti cavalry it does extra damage against mounted units.
+	bool anti_cavalry;
+	int anti_cavalry_bonus = 0;
+
+	// If a unit attacks from the side, it deals additional flanking bonus more damage.
+	int flanking_bonus = 0;
+
+	// If a unit attacks from behind, it deals additional backstab bonus more damage.
+	int backstab_bonus = 0;
 };
 
 
