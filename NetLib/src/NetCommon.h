@@ -438,7 +438,6 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 				stream.Read(se);
 				m_unitStartingStatusEffects.push_back(se);
 			}
-
 		}
 
 		RakNet::RakString m_unitSprite;

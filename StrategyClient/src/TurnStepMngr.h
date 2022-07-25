@@ -1,3 +1,5 @@
+#ifndef _TURN_STEP_MNGR_H_
+#define _TURN_STEP_MNGR_H_
 #pragma once
 
 // Calling CEntityStatusEffectMngr OnTurnEnd function.
@@ -31,3 +33,5 @@ private:
 private:
 	CTurnStepMngr() = default;
 };
+
+#endif
