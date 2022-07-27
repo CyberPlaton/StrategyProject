@@ -26,6 +26,8 @@ namespace cherrysoda
 
 			TT_REOCCURRING,		// Status Effect is persistent until it is removed, but after the removal condition is not more valid it is re-applied. 
 								// TimerValue defines how many turns the condition has to be invalid, in order to re-apply the SE again.
+
+			TT_PERMANENT,		// Status Effect is permanent and does not remove himself, however it can be removed by another ability.
 		};
 	public:
 		/// @brief Pointer to the entity this effect is applied to.
@@ -39,7 +41,7 @@ namespace cherrysoda
 
 		virtual void Terminate() = 0;
 
-
+		virtual bool TriviallyRemovable() = 0;
 
 		/// @brief Perform an update.
 		/// @return True, if this effect stays to the next update; False if it can be removed and deleted.
@@ -114,6 +116,8 @@ namespace cherrysoda
 		}
 
 
+
+
 		/// @brief Whether a SE is flagged to be removed. Meaning it will be checked and if the conditions are met, he will be deleted.
 		/// @param effect_name The name of the SE.
 		/// @return True, if the given SE if flagged to be removed.
@@ -161,7 +165,9 @@ namespace cherrysoda
 			}
 		}
 
-
+		/// @brief Retrieve all Status Effects which are applied on this Entity.
+		/// @return Vector reference which is constant and not refactorable.
+		const std::vector< IEntityStatusEffect* >& GetAllAppliedStatusEffects() { return m_statusEffectsVec; }
 
 	private:
 		static std::vector< CEntityStatusEffectMngr* > g_CEntityStatusEffectMngrVec;

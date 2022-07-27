@@ -100,7 +100,7 @@ namespace cherrysoda
 		float  m_positionX = 0.0f;
 		float  m_positionY = 0.0f;
 
-		/// @brief 0=INVALID, 1=WALK, 2=SWIM, 3=RIDING
+		/// @brief 0=INVALID, 1=WALK, 2=SWIM, 3=RIDING (TODO we have new one: 1=walk, 2=swim, 3=fly, 4=mounted)
 		size_t m_movementType = 0;
 
 		/// @brief Basically the Action Points of the unit. Define how many actions it can perform in one round.

@@ -1,9 +1,9 @@
+#ifndef _ABILITIES_DATA_MAP_H_
+#define _ABILITIES_DATA_MAP_H_
 #pragma once
 
-#include "NetCommon.h"
 #include "CommonDefines.h"
 #include "Ability.h"
-
 #include "HashMap.h"
 
 
@@ -36,3 +36,6 @@ namespace cherrysoda
 	};
 
 }
+
+
+#endif

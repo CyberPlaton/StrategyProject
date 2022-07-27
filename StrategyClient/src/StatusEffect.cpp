@@ -97,6 +97,11 @@ namespace cherrysoda
 		return m_data.m_effectName;
 	}
 
+	bool CEntityStatusEffect::TriviallyRemovable()
+	{
+		return m_data.m_effectRemovableByResting;
+	}
+
 	bool CEntityStatusEffect::_constructBehaviorTree(const std::string& tree_name, const std::string& implementation_name)
 	{
 		using namespace sakura;

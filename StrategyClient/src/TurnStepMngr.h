@@ -22,13 +22,19 @@ public:
 	/// @brief End the turn for the client and inform the master server, and call an update on all status effects for the units/buildings etc.
 	static void EndTurn();
 
+	/// @brief Start the turn for the client and inform listeners of the event.
 	static void StartTurn();
 
-	static bool ClientHasTurn();
+	/// @brief Whether the client has turn.
+	/// @return True if yes.
+	static const bool ClientHasTurn();
+
+	static const size_t CurrentTurnNumber();
 
 private:
 	static CTurnStepMngr* g_TurnStepMngr;
 	static bool g_clientHasTurn;
+	static size_t g_currentTurn;
 
 private:
 	CTurnStepMngr() = default;

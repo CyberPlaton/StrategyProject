@@ -1,13 +1,13 @@
+#ifndef _ABILITY_H_
+#define _ABILITY_H_
 #pragma once
 
 #include "ComponentCommon.h"
+#include "NetCommon.h"
+
 
 namespace cherrysoda
 {
-	// Forward decl.
-	struct SAbilityData;
-
-
 	/*
 	* EntityAbility defines different actions available for a unit or a building.
 	* We use the Command Pattern, meaning
@@ -32,7 +32,7 @@ namespace cherrysoda
 
 		/// @brief Set the data for the Ability.
 		/// @param The Ability data from SAbilityData.
-		virtual void Data(SAbilityData*) = 0;
+		virtual void Data(net::SAbilityData*) = 0;
 
 		/// @brief Retrieve the Ability Name.
 		/// @return Name.
@@ -88,3 +88,6 @@ auto map = using_entity->Get< EntityAbilityMap >(); \
 map->Use(ability_name, target_entity) \
 
 }
+
+
+#endif

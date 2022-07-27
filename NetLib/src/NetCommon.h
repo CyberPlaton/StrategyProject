@@ -261,7 +261,7 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 		RakNet::RakString m_name;
 		int64_t m_networkId;
 		int64_t m_playerId;
-		EGameobjectType m_gameobjectType;
+		int64_t m_gameobjectType;
 
 		// GENERAL INFORMATION
 		float m_positionX;
@@ -276,7 +276,7 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 			stream.Write(m_name);
 			stream.Write(m_networkId);
 			stream.Write(m_playerId);
-			stream.Write((EGameobjectType)m_gameobjectType);
+			stream.Write(m_gameobjectType);
 			stream.Write(m_positionX);
 			stream.Write(m_positionY);
 
@@ -291,7 +291,7 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 			stream.Read(m_name);
 			stream.Read(m_networkId);
 			stream.Read(m_playerId);
-			stream.Read((EGameobjectType)m_gameobjectType);
+			stream.Read(m_gameobjectType);
 			stream.Read(m_positionX);
 			stream.Read(m_positionY);
 			stream.Read(m_playerId);
@@ -323,7 +323,7 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 			stream.Write(m_name);
 			stream.Write(m_networkId);
 			stream.Write(m_playerId);
-			stream.Write((EGameobjectType)m_gameobjectType);
+			stream.Write(m_gameobjectType);
 			stream.Write(m_positionX);
 			stream.Write(m_positionY);
 			stream.Write(m_playerId);
@@ -382,7 +382,7 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 			stream.Read(m_name);
 			stream.Read(m_networkId);
 			stream.Read(m_playerId);
-			stream.Read((EGameobjectType)m_gameobjectType);
+			stream.Read(m_gameobjectType);
 			stream.Read(m_positionX);
 			stream.Read(m_positionY);
 			stream.Read(m_playerId);
@@ -480,7 +480,7 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 			stream.Write(m_name);
 			stream.Write(m_networkId);
 			stream.Write(m_playerId);
-			stream.Write((EGameobjectType)m_gameobjectType);
+			stream.Write(m_gameobjectType);
 			stream.Write(m_positionX);
 			stream.Write(m_positionY);
 			stream.Write(m_playerId);
@@ -495,7 +495,7 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 			stream.Read(m_name);
 			stream.Read(m_networkId);
 			stream.Read(m_playerId);
-			stream.Read((EGameobjectType)m_gameobjectType);
+			stream.Read(m_gameobjectType);
 			stream.Read(m_positionX);
 			stream.Read(m_positionY);
 			stream.Read(m_playerId);
@@ -514,7 +514,7 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 			stream.Write(m_name);
 			stream.Write(m_networkId);
 			stream.Write(m_playerId);
-			stream.Write((EGameobjectType)m_gameobjectType);
+			stream.Write(m_gameobjectType);
 			stream.Write(m_positionX);
 			stream.Write(m_positionY);
 			stream.Write(m_playerId);
@@ -529,7 +529,7 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 			stream.Read(m_name);
 			stream.Read(m_networkId);
 			stream.Read(m_playerId);
-			stream.Read((EGameobjectType)m_gameobjectType);
+			stream.Read(m_gameobjectType);
 			stream.Read(m_positionX);
 			stream.Read(m_positionY);
 			stream.Read(m_playerId);
@@ -556,6 +556,8 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 			stream.Write(m_effectDisplayName);
 			stream.Write(m_effectType);
 
+			stream.Write(m_effectRemovableByResting);
+
 			stream.Write(m_effectValueMin);
 			stream.Write(m_effectValueMax);
 			stream.Write(m_effectApplicationProbability);
@@ -577,6 +579,8 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 			stream.Read(m_effectName);
 			stream.Read(m_effectDisplayName);
 			stream.Read(m_effectType);
+
+			stream.Read(m_effectRemovableByResting);
 
 			stream.Read(m_effectValueMin);
 			stream.Read(m_effectValueMax);
@@ -601,6 +605,10 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 		/// @brief Whether this Effect does 'Damage' or 'Heal' etc.
 		RakNet::RakString m_effectType;
 		
+		/// @brief Whether this Effect is removed by merely resting (units RestAbility) or
+		/// if he requires a special Ability to remove it or unremovable at all.
+		bool m_effectRemovableByResting;
+
 		/// @brief How much minimally to apply. Whether healing or damaging or other effect type.
 		// The Applied value lies between m_effectValueMin and m_effectValueMax.
 		int64_t m_effectValueMin;
@@ -614,7 +622,7 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 		int64_t m_effectApplicationProbability;
 
 		/// @brief To what kind of entity the effect is applicable. E.g. 'Unit' or 'Townhall' (Building).
-		EGameobjectType m_effectApplicableTo;
+		int64_t m_effectApplicableTo;
 
 		/// @brief Either 'Turn' (meaning is applied for a number of turns) or ... .
 		RakNet::RakString m_effectTimerType;
@@ -641,6 +649,7 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 	struct SAbilityData : public SSerializable
 	{
 		SAbilityData() = default;
+		
 
 		void Serialize(RakNet::BitStream& stream) override final
 		{
@@ -699,6 +708,17 @@ RakNet::BitStream var(packet->data, packet->length, false) \
 		/// @brief On what kind of Game Objects the ability can be used. E.g. "Attack" can be used on NET_GO_UNIT and
 		// "Move" can be used on NET_GO_MAPTILE.
 		int64_t m_abilityApplicableTo;
+
+		/// @brief How far someone must be from the user in order to allow us to use on him.
+		/// E.g. 0 means on the map tile the unit is standing on.
+		int64_t m_abilityMinRange;
+
+		/// @brief How far someone must be from the user in order to allow us to use on him.
+		/// E.g. 1 means all the map tiles directly around the unit.
+		int64_t m_abilityMaxRange;
+
+		/// @brief How much does it cost for the unit to use this ability? Each ability should have a cost associated with it.
+		int64_t m_abilityActionPointCost;
 
 		/// @brief Whether the Ability can be used on the one unit or building using it = self.
 		bool m_abilityUsableOnSelf;

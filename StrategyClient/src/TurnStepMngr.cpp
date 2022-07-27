@@ -2,6 +2,8 @@
 
 CTurnStepMngr* CTurnStepMngr::g_TurnStepMngr = nullptr;
 bool CTurnStepMngr::g_clientHasTurn = false;
+size_t CTurnStepMngr::g_currentTurn = 0;
+
 
 bool CTurnStepMngr::Initialize()
 {
@@ -24,7 +26,12 @@ void CTurnStepMngr::StartTurn()
 	g_clientHasTurn = true;
 }
 
-bool CTurnStepMngr::ClientHasTurn()
+const bool CTurnStepMngr::ClientHasTurn()
 {
 	return g_clientHasTurn;
+}
+
+const size_t CTurnStepMngr::CurrentTurnNumber()
+{
+	return g_currentTurn;
 }

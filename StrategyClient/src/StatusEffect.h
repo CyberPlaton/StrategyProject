@@ -26,7 +26,7 @@ namespace cherrysoda
 		Entity* Self() override final;
 		bool OnUpdate() override final;
 		String Name() override final;
-
+		bool TriviallyRemovable() override final;
 
 
 	private:
@@ -62,6 +62,15 @@ else \
 #define ENTITY_REMOVE_STATUS_EFFECT(effect, entity) \
 auto mngr = entity->Get< CEntityStatusEffectMngr >(); \
 mngr->Remove(effect) \
+
+
+#define ENTITY_GET_ALL_STATUS_EFFECT_NAMES(entity, string_vec) \
+auto mngr = entity->Get< CEntityStatusEffectMngr >(); \
+auto const_se_vec = mngr->GetAllAppliedStatusEffects(); \
+for(const auto& se: const_se_vec) \
+{ \
+	string_vec.push_back(se->Name()); \
+} \
 
 
 #endif
