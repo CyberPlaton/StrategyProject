@@ -4566,6 +4566,9 @@ void GameEditor::DisplayAbilityEditor()
 		DisplayEditFieldString(g_cAbilityDisplayName, sizeof(g_cAbilityDisplayName), g_pCurrentEditedAbility->displayName, "Display Name", "Change the in-game name, that will be displayed to the player", 10002, 10003);
 		DisplayEditFieldString(g_cAbilityDescription, sizeof(g_cAbilityDescription), g_pCurrentEditedAbility->description, "Description", "Change the in-game description of the ability; the player will read it to know what the ability is doing and what it is for", 10004, 10005);
 		DisplayEditFieldNumber(g_pCurrentEditedAbility->applicableTo, 0, 3, "Applicable To", "Change the entity type on which the ability can be used: 0=Maptile, 1=Map Object, 2=Unit, 3=Building", 1006, 1007);
+		DisplayEditFieldNumber(g_pCurrentEditedAbility->minRange, 0, 100, "Min Range", "The minimal range of the distance that the Ability can be used, where 0 means the position where the caster is standing", 70001, 70002);
+		DisplayEditFieldNumber(g_pCurrentEditedAbility->maxRange, 0, 100, "Max Range", "The maximum range of the distance that the Ability can be used, where 0 means the position where the caster is standing", 70003, 70004);
+		DisplayEditFieldBoolean(g_pCurrentEditedAbility->triviallyRemovable, "Trivially Removable", "Change whether the ability can be trivially removed by using the \"Resting\" ability", 70007);
 		DisplayEditFieldBoolean(g_pCurrentEditedAbility->usableOnSelf, "Usable on self", "Change whether the ability is usable on the unit that is casting the ability itself", 10008);
 		DisplayEditFieldBoolean(g_pCurrentEditedAbility->usableOnFriendlies, "Usable on friendlies", "Change whether the ability is usable on the allies of the casting unit", 10009);
 		DisplayEditFieldBoolean(g_pCurrentEditedAbility->usableOnEnemies, "Usable on enemies", "Change whether the ability is usable on enemies of the casting unit", 10010);
@@ -4878,6 +4881,9 @@ bool GameEditor::ExportAbility(const std::string& filepath, SAbility* abl)
 	data->SetAttribute("displayName", abl->displayName.c_str());
 	data->SetAttribute("description", abl->description.c_str());
 	data->SetAttribute("applicableTo", abl->applicableTo);
+	data->SetAttribute("minRange", abl->minRange);
+	data->SetAttribute("maxRange", abl->maxRange);
+	data->SetAttribute("triviallyRemovable", abl->triviallyRemovable);
 	data->SetAttribute("usableOnSelf", abl->usableOnSelf);
 	data->SetAttribute("usableOnFriendlies", abl->usableOnFriendlies);
 	data->SetAttribute("usableOnEnemies", abl->usableOnEnemies);
@@ -4963,6 +4969,9 @@ SAbility* GameEditor::ImportAbility(const std::string& filepath)
 		abl->displayName = data->Attribute("displayName");
 		abl->description = data->Attribute("description");
 		abl->applicableTo = data->IntAttribute("applicableTo");
+		abl->minRange = data->IntAttribute("minRange");
+		abl->maxRange = data->IntAttribute("maxRange");
+		abl->triviallyRemovable = data->BoolAttribute("triviallyRemovable");
 		abl->usableOnSelf = data->BoolAttribute("usableOnSelf");
 		abl->usableOnFriendlies = data->BoolAttribute("usableOnFriendlies");
 		abl->usableOnEnemies = data->BoolAttribute("usableOnEnemies");

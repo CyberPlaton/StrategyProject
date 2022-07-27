@@ -507,6 +507,10 @@ struct SAbility
 	std::string displayName;
 	std::string description;
 
+	int minRange;
+	int maxRange;
+	bool triviallyRemovable;
+
 	int applicableTo;
 	bool usableOnSelf;
 	bool usableOnFriendlies;
