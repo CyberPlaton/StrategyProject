@@ -460,6 +460,18 @@ void Terminal::MainMenuBar()
 					LOG_TERMINAL_ERROR("[DBMS] LoadStatusEffectDefinitions failed!");
 				}
 			}
+			if (ImGui::MenuItem("Sync Ability Definitions"))
+			{
+				if (DBMS::get()->LoadAbilityDefinitions("../StrategyEditor/assets/TilesetData/Ability/", "../StrategyEditor/assets/TilesetData/Ability/StrategyEditor_AbilityCache.xml", "ability_cache_test"))
+				{
+					LOG_TERMINAL_SUCCESS("[DBMS] LoadAbilityDefinitions succeded!");
+				}
+				else
+				{
+					LOG_TERMINAL_ERROR("[DBMS] LoadAbilityDefinitions failed!");
+				}
+			}
+
 
 
 			ImGui::EndMenu();

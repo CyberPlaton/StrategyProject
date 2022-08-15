@@ -653,8 +653,29 @@ namespace dbms
 			net::SAbilityData data;
 
 			// Load ablility data.
+			data.m_abilityName = ablData->Attribute("name");
+			data.m_abilityDisplayName = ablData->Attribute("displayName");
+			data.m_abilityDesc = ablData->Attribute("description");
+			data.m_abilityApplicableTo = ablData->Int64Attribute("applicableTo");
+			data.m_abilityUsableOnSelf = ablData->BoolAttribute("usableOnSelf");
+			data.m_abilityUsableOnFriendlies = ablData->BoolAttribute("usableOnFriendlies");
+			data.m_abilityUsableOnEnemies = ablData->BoolAttribute("usableOnEnemies");
 
-			// Store Status Effect in DB.
+			// TODO in ability editor.
+			data.m_abilityActionPointCost = 0;
+			data.m_abilityMaxRange = 0;
+			data.m_abilityMinRange = 0;
+
+			auto applied_status_effects = ablData->FirstChildElement("AppliedStatusEffectsOnUse");
+			auto effect = applied_status_effects->FirstChildElement("StatusEffect");
+			while(effect)
+			{
+				data.m_appliedStatusEffectsOnUse.push_back(effect->Attribute("name"));
+				effect = effect->NextSiblingElement("StatusEffect");
+			}
+
+
+			// Store Abiliy in DB.
 			if (!StoreAbility(data, collection))
 			{
 				LOG_DBG_ERROR("[{:.4f}][DBMS::LoadAbilityDefinitions] Could not upload Ability: \"{}\"!", Logger::AppRunningTime(), data.m_abilityName);
@@ -694,6 +715,10 @@ namespace dbms
 			kvp("abilityName",						data.m_abilityName.C_String()),
 			kvp("abilityDisplayName",				data.m_abilityDisplayName.C_String()),
 			kvp("abilityDesc",						data.m_abilityDesc.C_String()),
+
+			kvp("abilityActionPointCost",			data.m_abilityActionPointCost),
+			kvp("abilityMaxRange",					data.m_abilityMaxRange),
+			kvp("abilityMinRange",					data.m_abilityMinRange),
 
 			kvp("abilityApplicableTo",				data.m_abilityApplicableTo),
 			kvp("abilityUsableOnSelf",				data.m_abilityUsableOnSelf),
